@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	app "github.com/ottemo/foundation/app"
-
 	"github.com/ottemo/foundation/models"
 
 	_ "github.com/ottemo/foundation/config/default_config"
@@ -12,11 +11,11 @@ import (
 	//_ "github.com/ottemo/foundation/database/sqlite"
 	_ "github.com/ottemo/foundation/database/mongodb"
 
-	_ "github.com/ottemo/foundation/rest_service/negroni"
 	_ "github.com/ottemo/foundation/rest_service"
+	_ "github.com/ottemo/foundation/rest_service/negroni"
 
-	_ "github.com/ottemo/foundation/models/product/default_product"
 	_ "github.com/ottemo/foundation/models/custom_attributes"
+	_ "github.com/ottemo/foundation/models/product/default_product"
 )
 
 func main() {
@@ -30,16 +29,13 @@ func main() {
 	// CreateNewProductAttribute("y")
 }
 
-
-
-
 func CreateNewProductAttribute(attrName string) {
 	model, err := models.GetModel("Product")
 	if err != nil {
 		fmt.Println("Product model not found: " + err.Error())
 	}
 
-	attribute := models.T_AttributeInfo {
+	attribute := models.T_AttributeInfo{
 		Model:      "product",
 		Collection: "product",
 		Attribute:  attrName,
