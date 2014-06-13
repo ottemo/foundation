@@ -78,10 +78,7 @@ func LoadProductRestAPI(req *http.Request) map[string]interface{} {
 	if model, err := models.GetModel("Product"); err == nil {
 		if model, ok := model.(product.I_Product); ok {
 
-			err = model.Set("id", productId)
-			if err != nil { return jsonError(err) }
-
-			err = model.Load()
+			err = model.Load( productId )
 			if err != nil { return jsonError(err) }
 
 			return model.ToHashMap()

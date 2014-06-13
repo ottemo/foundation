@@ -7,16 +7,19 @@ type I_Model interface {
 }
 
 type I_Storable interface {
+	GetId() string
+	SetId(string) error
+
 	Save() error
-	Load() error
+	Load(id string) error
+	Delete(Id string) error
 }
 
 type I_Object interface {
-	Has(Attribute string) bool
 	Get(Attribute string) interface{}
 	Set(Attribute string, Value interface{}) error
 
-	ListAttributes() []T_AttributeInfo
+	GetAttributesInfo() []T_AttributeInfo
 }
 
 type I_Mapable interface {

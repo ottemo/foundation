@@ -5,10 +5,6 @@ import (
 	"github.com/ottemo/foundation/models"
 )
 
-func (it *DefaultProductModel) Has(attribute string) bool {
-	return it.Get(attribute) == nil
-}
-
 func (it *DefaultProductModel) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
@@ -42,6 +38,44 @@ func (it *DefaultProductModel) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *DefaultProductModel) ListAttributes() []models.T_AttributeInfo {
-	return make([]models.T_AttributeInfo, 0)
+func (it *DefaultProductModel) GetAttributesInfo() []models.T_AttributeInfo {
+	staticInfo := []models.T_AttributeInfo {
+		models.T_AttributeInfo {
+			Model: "Product",
+			Collection: "product",
+			Attribute: "_id",
+			Type: "text",
+			Label: "ID",
+			Group: "General",
+			Editors: "not_editable",
+			Options: "",
+			Default: "",
+		},
+		models.T_AttributeInfo {
+			Model: "Product",
+			Collection: "product",
+			Attribute: "sku",
+			Type: "text",
+			Label: "SKU",
+			Group: "General",
+			Editors: "line_text",
+			Options: "",
+			Default: "",
+		},
+		models.T_AttributeInfo {
+			Model: "Product",
+			Collection: "product",
+			Attribute: "Name",
+			Type: "text",
+			Label: "Name",
+			Group: "General",
+			Editors: "line_text",
+			Options: "",
+			Default: "",
+		},
+	}
+
+	dynamicInfo := it.CustomAttributes.GetAttributesInfo()
+
+	return append(dynamicInfo, staticInfo...)
 }

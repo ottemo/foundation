@@ -5,17 +5,13 @@ import (
 	"github.com/ottemo/foundation/models"
 )
 
-func (it *CustomAttributes) Has(attribute string) bool {
-	_, present := it.attributes[attribute]
-	return present
-}
 
 func (it *CustomAttributes) Get(attribute string) interface{} {
 	return it.values[attribute]
 }
 
 func (it *CustomAttributes) Set(attribute string, value interface{}) error {
-	if it.Has(attribute) {
+	if _, present := it.attributes[attribute]; present {
 		it.values[attribute] = value
 	} else {
 		return errors.New("attribute '" + attribute + "' invalid")
@@ -24,10 +20,10 @@ func (it *CustomAttributes) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *CustomAttributes) ListAttributes() []models.T_AttributeInfo {
-	returnValue := make([]models.T_AttributeInfo, len(it.attributes))
+func (it *CustomAttributes) GetAttributesInfo() []models.T_AttributeInfo {
+	info := make([]models.T_AttributeInfo, len(it.attributes))
 	for _, attribute := range it.attributes {
-		returnValue = append(returnValue, attribute)
+		info = append(info, attribute)
 	}
-	return returnValue
+	return info
 }
