@@ -17,7 +17,7 @@ type DefaultConfigEntity struct {
 	Value     interface{}
 }
 
-// DefaultConfig is a map of all configuration entities.
+// DefaultConfig is a map container of configuration entities.
 type DefaultConfig struct {
 	configValues map[string]*DefaultConfigEntity
 }
