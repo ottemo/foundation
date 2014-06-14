@@ -1,13 +1,15 @@
 package config
 
-type I_IniConfig interface {
+// IniConfig is an initialization interface for reading INI file values
+type IniConfig interface {
 	GetValue(Name string) string
 	ListItems() []string
 }
 
-type I_Config interface {
-	RegisterItem(Name string, Validator func(interface{}) (interface{}, bool), Default interface{} ) error
-	UnregisterItem(Name string) error
+// Config is an interface for working with configuration entities and values
+type Config interface {
+	Register(Name string, Validator func(interface{}) (interface{}, bool), Default interface{}) error
+	Destroy(Name string) error
 
 	GetValue(Name string) interface{}
 	SetValue(Name string, Value interface{}) error
