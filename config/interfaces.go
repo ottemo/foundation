@@ -3,7 +3,7 @@ package config
 // IniConfig is an initialization interface for reading INI file values
 type IniConfig interface {
 	GetValue(Name string) string
-	ListItems() []string
+	List() []string
 }
 
 // Config is an interface for working with configuration entities and values
@@ -14,7 +14,7 @@ type Config interface {
 	GetValue(Name string) interface{}
 	SetValue(Name string, Value interface{}) error
 
-	ListItems() []string
+	List() []string
 
 	Load() error
 	Save() error

@@ -1,4 +1,4 @@
-package defaultconfig
+package entity
 
 import (
 	"errors"
@@ -64,9 +64,10 @@ func (dc *DefaultConfig) SetValue(Name string, Value interface{}) error {
 	if configItem, present := dc.configValues[Name]; present {
 		if configItem.Validator != nil {
 			if newVal, ok := configItem.Validator(Value); ok {
+				configItem.Value = newVal
+			} else {
 				return errors.New("Attempting to set invalid value to [ " + Name + " ] = " + fmt.Sprintf("%s", Value))
 			}
-			configItem.Value = newVal
 		} else {
 			configItem.Value = Value
 		}
@@ -77,7 +78,7 @@ func (dc *DefaultConfig) SetValue(Name string, Value interface{}) error {
 
 // List returns a list of entities.
 func (dc *DefaultConfig) List() []string {
-	result := make([]string, len(me.configValues))
+	result := make([]string, len(dc.configValues))
 	for itemName := range dc.configValues {
 		result = append(result, itemName)
 	}

@@ -5,8 +5,8 @@ import (
 
 	app "github.com/ottemo/foundation/app"
 
-	_ "github.com/ottemo/foundation/config/default_config"
-	_ "github.com/ottemo/foundation/config/default_ini_config"
+	_ "github.com/ottemo/foundation/config/entity"
+	_ "github.com/ottemo/foundation/config/ini"
 
 	//_ "github.com/ottemo/foundation/database/sqlite"
 	_ "github.com/ottemo/foundation/database/mongodb"
