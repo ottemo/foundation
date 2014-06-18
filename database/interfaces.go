@@ -1,16 +1,17 @@
 package database
 
-type I_DBEngine interface {
+// DBEngine is the interface that holds the necessary methods required for a database engine.
+type DBEngine interface {
 	GetName() string
 
 	CreateCollection(Name string) error
-	GetCollection(Name string) (I_DBCollection, error)
+	GetCollection(Name string) (DBCollection, error)
 	HasCollection(Name string) bool
 }
 
-
-type I_DBCollection interface {
-
+// DBCollection is the interface that contains all the necessary methods for a
+// collection when working with extendable objects.
+type DBCollection interface {
 	Load() ([]map[string]interface{}, error)
 	LoadById(id string) (map[string]interface{}, error)
 

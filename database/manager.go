@@ -4,13 +4,18 @@ import (
 	"errors"
 )
 
-var currentDBEngine I_DBEngine = nil
+var currentDBEngine DBEngine
 
-var callbacksOnDatabaseStart = []func() error {}
+var callbacksOnDatabaseStart = []func() error{}
 
+// RegisterOnDatabaseStart is a function to add a callback onto the callback
+// chain to be executed when a database is started.
 func RegisterOnDatabaseStart(callback func() error) {
 	callbacksOnDatabaseStart = append(callbacksOnDatabaseStart, callback)
 }
+
+// OnDatabaseStart is a function to execute the callback chain when a database
+// is started.
 func OnDatabaseStart() error {
 	for _, callback := range callbacksOnDatabaseStart {
 		if err := callback(); err != nil {
@@ -20,7 +25,8 @@ func OnDatabaseStart() error {
 	return nil
 }
 
-func RegisterDBEngine(newEngine I_DBEngine) error {
+//RegisterDBEngine registers a new database engine for use.
+func RegisterDBEngine(newEngine DBEngine) error {
 	if currentDBEngine == nil {
 		currentDBEngine = newEngine
 	} else {
@@ -29,6 +35,8 @@ func RegisterDBEngine(newEngine I_DBEngine) error {
 	return nil
 }
 
-func GetDBEngine() I_DBEngine {
+// GetDBEngine returns the current engine.  SQLite and MongoDB are supported i
+// at present.
+func GetDBEngine() DBEngine {
 	return currentDBEngine
 }
