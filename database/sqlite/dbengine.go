@@ -2,11 +2,47 @@ package sqlite
 
 import (
 	"strings"
+
+	sqlite3 "code.google.com/p/go-sqlite/go1/sqlite3"
+	config "github.com/ottemo/foundation/config"
 	database "github.com/ottemo/foundation/database"
 )
 
-func (it *SQLite) GetName() string { return  "Sqlite3" }
+var collections = map[string]database.DBCollection{}
 
+type SQLite struct {
+	Connection *sqlite3.Conn
+}
+
+func init() {
+	instance := new(SQLite)
+
+	config.RegisterOnConfigIniStart(instance.Startup)
+	database.RegisterDBEngine(instance)
+}
+
+func (it *SQLite) Startup() error {
+
+	var uri string = "ottemo.db"
+
+	if iniConfig := config.GetIniConfig(); iniConfig != nil {
+		if iniValue := iniConfig.GetValue("db.sqlite3.uri"); iniValue != "" {
+			uri = iniValue
+		}
+	}
+
+	if newConnection, err := sqlite3.Open(uri); err == nil {
+		it.Connection = newConnection
+	} else {
+		return err
+	}
+
+	database.OnDatabaseStart()
+
+	return nil
+}
+
+func (it *SQLite) GetName() string { return "Sqlite3" }
 
 func (it *SQLite) HasCollection(CollectionName string) bool {
 	CollectionName = strings.ToLower(CollectionName)
@@ -43,7 +79,7 @@ func (it *SQLite) GetCollection(CollectionName string) (database.I_DBCollection,
 		}
 
 		//TODO: find out why: Columns: map[string]string{} - needed
-		collection := &SQLiteCollection{TableName: CollectionName, Connection: it.Connection, Columns: map[string]string{} }
+		collection := &SQLiteCollection{TableName: CollectionName, Connection: it.Connection, Columns: map[string]string{}}
 		collections[CollectionName] = collection
 
 		return collection, nil

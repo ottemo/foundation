@@ -7,8 +7,8 @@ import (
 
 type SQLiteCollection struct {
 	Connection *sqlite3.Conn
-	TableName string
-	Columns map[string]string
+	TableName  string
+	Columns    map[string]string
 
 	Filters []string
 }
