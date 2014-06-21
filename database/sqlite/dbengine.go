@@ -10,6 +10,7 @@ import (
 
 var collections = map[string]database.DBCollection{}
 
+// SQLite structure holds the connection string for the database.
 type SQLite struct {
 	Connection *sqlite3.Conn
 }
@@ -21,9 +22,11 @@ func init() {
 	database.RegisterDBEngine(instance)
 }
 
-func (it *SQLite) Startup() error {
+// Startup opens the database connection using the connection string found in
+// the INI configuration file.
+func (sc *SQLite) Startup() error {
 
-	var uri string = "ottemo.db"
+	var uri = "ottemo.db"
 
 	if iniConfig := config.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("db.sqlite3.uri"); iniValue != "" {
@@ -32,7 +35,7 @@ func (it *SQLite) Startup() error {
 	}
 
 	if newConnection, err := sqlite3.Open(uri); err == nil {
-		it.Connection = newConnection
+		sc.Connection = newConnection
 	} else {
 		return err
 	}
@@ -42,46 +45,48 @@ func (it *SQLite) Startup() error {
 	return nil
 }
 
-func (it *SQLite) GetName() string { return "Sqlite3" }
+// GetName returns the string for SQLite3.
+func (sc *SQLite) GetName() string { return "Sqlite3" }
 
-func (it *SQLite) HasCollection(CollectionName string) bool {
+// HasCollection returns a boolean if the given collection is in the database.
+func (sc *SQLite) HasCollection(CollectionName string) bool {
 	CollectionName = strings.ToLower(CollectionName)
 
 	SQL := "SELECT name FROM sqlite_master WHERE type='table' AND name='" + CollectionName + "'"
-	if _, err := it.Connection.Query(SQL); err == nil {
+	if _, err := sc.Connection.Query(SQL); err == nil {
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
-func (it *SQLite) CreateCollection(CollectionName string) error {
+// CreateCollection will return nil if the collection has been created
+// successfully or an error if it cannot.
+func (sc *SQLite) CreateCollection(CollectionName string) error {
 	CollectionName = strings.ToLower(CollectionName)
 
 	SQL := "CREATE TABLE " + CollectionName + "(_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)"
-	if err := it.Connection.Exec(SQL); err == nil {
-		return nil
-	} else {
+	if err := sc.Connection.Exec(SQL); err != nil {
 		return err
 	}
+	return nil
 }
 
-func (it *SQLite) GetCollection(CollectionName string) (database.I_DBCollection, error) {
+// GetCollection returns a DBCollection
+func (sc *SQLite) GetCollection(CollectionName string) (database.DBCollection, error) {
 	CollectionName = strings.ToLower(CollectionName)
 
 	if collection, present := collections[CollectionName]; present {
 		return collection, nil
-	} else {
-		if !it.HasCollection(CollectionName) {
-			if err := it.CreateCollection(CollectionName); err != nil {
-				return nil, err
-			}
-		}
-
-		//TODO: find out why: Columns: map[string]string{} - needed
-		collection := &SQLiteCollection{TableName: CollectionName, Connection: it.Connection, Columns: map[string]string{}}
-		collections[CollectionName] = collection
-
-		return collection, nil
 	}
+	if !sc.HasCollection(CollectionName) {
+		if err := sc.CreateCollection(CollectionName); err != nil {
+			return nil, err
+		}
+	}
+
+	//TODO: find out why: Columns: map[string]string{} - needed
+	collection := &SQLiteCollection{TableName: CollectionName, Connection: sc.Connection, Columns: map[string]string{}}
+	collections[CollectionName] = collection
+
+	return collection, nil
 }

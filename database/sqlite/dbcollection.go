@@ -9,6 +9,7 @@ import (
 	sqlite3 "code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
+// SQLiteCollection holds the information related to collections in SQLite.
 type SQLiteCollection struct {
 	Connection *sqlite3.Conn
 	TableName  string
@@ -21,6 +22,8 @@ func sqlError(SQL string, err error) error {
 	return errors.New("SQL \"" + SQL + "\" error: " + err.Error())
 }
 
+// GetDBType returns a string holding the type information.  Valid types
+// include: integer, float, text, char, struct, data, decimal and money.
 func GetDBType(ColumnType string) (string, error) {
 	ColumnType = strings.ToLower(ColumnType)
 	switch {
@@ -39,34 +42,35 @@ func GetDBType(ColumnType string) (string, error) {
 	return "?", errors.New("Unknown type '" + ColumnType + "'")
 }
 
-func (coll *SQLiteCollection) LoadById(id string) (map[string]interface{}, error) {
+// LoadByID returns a map of IDs
+func (sc *SQLiteCollection) LoadByID(id string) (map[string]interface{}, error) {
 	row := make(sqlite3.RowMap)
 
-	SQL := "SELECT * FROM " + coll.TableName + " WHERE _id = " + id
-	if s, err := coll.Connection.Query(SQL); err == nil {
-		if err := s.Scan(row); err == nil {
-			return map[string]interface{}(row), nil
-		} else {
+	SQL := "SELECT * FROM " + sc.TableName + " WHERE _id = " + id
+	if s, err := sc.Connection.Query(SQL); err != nil {
+		return nil, err
+	} else {
+		if err := s.Scan(row); err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, err
 	}
+	return map[string]interface{}(row), nil
 }
 
-func (coll *SQLiteCollection) Load() ([]map[string]interface{}, error) {
+// Load returns a map based on the given filter.
+func (sc *SQLiteCollection) Load() ([]map[string]interface{}, error) {
 	result := make([]map[string]interface{}, 0, 10)
 	var err error = nil
 
 	row := make(sqlite3.RowMap)
 
-	sqlLoadFilter := strings.Join(it.Filters, " AND ")
+	sqlLoadFilter := strings.Join(sc.Filters, " AND ")
 	if sqlLoadFilter != "" {
 		sqlLoadFilter = " WHERE " + sqlLoadFilter
 	}
 
-	SQL := "SELECT * FROM " + coll.TableName + sqlLoadFilter
-	if s, err := coll.Connection.Query(SQL); err == nil {
+	SQL := "SELECT * FROM " + sc.TableName + sqlLoadFilter
+	if s, err := sc.Connection.Query(SQL); err == nil {
 		for ; err == nil; err = s.Next() {
 
 			if err := s.Scan(row); err == nil {
@@ -82,7 +86,7 @@ func (coll *SQLiteCollection) Load() ([]map[string]interface{}, error) {
 	return result, err
 }
 
-func (coll *SQLiteCollection) Save(Item map[string]interface{}) (string, error) {
+func (sc *SQLiteCollection) Save(Item map[string]interface{}) (string, error) {
 
 	// _id in SQLite supposed to be auto-incremented int but for MongoDB it forced to be string
 	// collection interface also forced us to use string but we still want it ti be int in DB
@@ -107,13 +111,13 @@ func (coll *SQLiteCollection) Save(Item map[string]interface{}) (string, error) 
 		values = append(values, v)
 	}
 
-	SQL := "INSERT OR REPLACE INTO  " + coll.TableName +
+	SQL := "INSERT OR REPLACE INTO  " + sc.TableName +
 		" (" + strings.Join(columns, ",") + ") VALUES " +
 		" (" + strings.Join(args, ",") + ")"
-	if err := coll.Connection.Exec(SQL, values...); err == nil {
+	if err := sc.Connection.Exec(SQL, values...); err == nil {
 
 		// auto-incremented _id back to string
-		newIdInt := coll.Connection.LastInsertId()
+		newIdInt := sc.Connection.LastInsertId()
 		newIdString := strconv.FormatInt(newIdInt, 10)
 		Item["_id"] = newIdString
 
@@ -125,29 +129,29 @@ func (coll *SQLiteCollection) Save(Item map[string]interface{}) (string, error) 
 	return "", nil
 }
 
-func (coll *SQLiteCollection) Delete() (int, error) {
-	sqlDeleteFilter := strings.Join(coll.Filters, " AND ")
+func (sc *SQLiteCollection) Delete() (int, error) {
+	sqlDeleteFilter := strings.Join(sc.Filters, " AND ")
 	if sqlDeleteFilter != "" {
 		sqlDeleteFilter = " WHERE " + sqlDeleteFilter
 	}
 
-	SQL := "DELETE FROM " + coll.TableName + sqlDeleteFilter
-	err := coll.Connection.Exec(SQL)
-	affected := coll.Connection.RowsAffected()
+	SQL := "DELETE FROM " + sc.TableName + sqlDeleteFilter
+	err := sc.Connection.Exec(SQL)
+	affected := sc.Connection.RowsAffected()
 
 	return affected, err
 }
 
-func (coll *SQLiteCollection) DeleteById(id string) error {
-	SQL := "DELETE FROM " + coll.TableName + " WHERE _id = " + id
-	return coll.Connection.Exec(SQL)
+func (sc *SQLiteCollection) DeleteByID(id string) error {
+	SQL := "DELETE FROM " + sc.TableName + " WHERE _id = " + id
+	return sc.Connection.Exec(SQL)
 }
 
-func (coll *SQLiteCollection) AddFilter(ColumnName string, Operator string, Value string) error {
-	if coll.HasColumn(ColumnName) {
+func (sc *SQLiteCollection) AddFilter(ColumnName string, Operator string, Value string) error {
+	if sc.HasColumn(ColumnName) {
 		Operator = strings.ToUpper(Operator)
 		if Operator == "" || Operator == "=" || Operator == "<>" || Operator == ">" || Operator == "<" || Operator == "LIKE" {
-			coll.Filters = append(coll.Filters, ColumnName+" "+Operator+" "+Value)
+			sc.Filters = append(sc.Filters, ColumnName+" "+Operator+" "+Value)
 		} else {
 			return errors.New("unknown operator '" + Operator + "' supposed  '', '=', '>', '<', '<>', 'LIKE' " + ColumnName + "'")
 		}
@@ -158,54 +162,54 @@ func (coll *SQLiteCollection) AddFilter(ColumnName string, Operator string, Valu
 	return nil
 }
 
-func (coll *SQLiteCollection) ClearFilters() error {
-	coll.Filters = make([]string, 0)
+func (sc *SQLiteCollection) ClearFilters() error {
+	sc.Filters = make([]string, 0)
 	return nil
 }
 
 // Collection columns stuff
 //--------------------------
 
-func (coll *SQLiteCollection) RefreshColumns() {
-	SQL := "PRAGMA table_info(" + coll.TableName + ")"
+func (sc *SQLiteCollection) RefreshColumns() {
+	SQL := "PRAGMA table_info(" + sc.TableName + ")"
 
 	row := make(sqlite3.RowMap)
-	for stmt, err := coll.Connection.Query(SQL); err == nil; err = stmt.Next() {
+	for stmt, err := sc.Connection.Query(SQL); err == nil; err = stmt.Next() {
 		stmt.Scan(row)
 
 		key := row["name"].(string)
 		value := row["type"].(string)
-		coll.Columns[key] = value
+		sc.Columns[key] = value
 	}
 }
 
-func (coll *SQLiteCollection) ListColumns() map[string]string {
-	coll.RefreshColumns()
-	return coll.Columns
+func (sc *SQLiteCollection) ListColumns() map[string]string {
+	sc.RefreshColumns()
+	return sc.Columns
 }
 
-func (coll *SQLiteCollection) HasColumn(ColumnName string) bool {
-	if _, present := coll.Columns[ColumnName]; present {
+func (sc *SQLiteCollection) HasColumn(ColumnName string) bool {
+	if _, present := sc.Columns[ColumnName]; present {
 		return true
 	} else {
-		coll.RefreshColumns()
-		_, present := coll.Columns[ColumnName]
+		sc.RefreshColumns()
+		_, present := sc.Columns[ColumnName]
 		return present
 	}
 }
 
-func (coll *SQLiteCollection) AddColumn(ColumnName string, ColumnType string, indexed bool) error {
+func (sc *SQLiteCollection) AddColumn(ColumnName string, ColumnType string, indexed bool) error {
 
 	// TODO: there probably need column name check to be only lowercase, exclude some chars, etc.
 
-	if coll.HasColumn(ColumnName) {
-		return errors.New("column '" + ColumnName + "' already exists for '" + coll.TableName + "' collection")
+	if sc.HasColumn(ColumnName) {
+		return errors.New("column '" + ColumnName + "' already exists for '" + sc.TableName + "' collection")
 	}
 
 	if ColumnType, err := GetDBType(ColumnType); err == nil {
 
-		SQL := "ALTER TABLE " + coll.TableName + " ADD COLUMN \"" + ColumnName + "\" " + ColumnType
-		if err := coll.Connection.Exec(SQL); err == nil {
+		SQL := "ALTER TABLE " + sc.TableName + " ADD COLUMN \"" + ColumnName + "\" " + ColumnType
+		if err := sc.Connection.Exec(SQL); err == nil {
 			return nil
 		} else {
 			return sqlError(SQL, err)
@@ -217,19 +221,19 @@ func (coll *SQLiteCollection) AddColumn(ColumnName string, ColumnType string, in
 
 }
 
-func (coll *SQLiteCollection) RemoveColumn(ColumnName string) error {
+func (sc *SQLiteCollection) RemoveColumn(ColumnName string) error {
 
-	if !coll.HasColumn(ColumnName) {
-		return errors.New("column '" + ColumnName + "' not exists in '" + coll.TableName + "' collection")
+	if !sc.HasColumn(ColumnName) {
+		return errors.New("column '" + ColumnName + "' not exists in '" + sc.TableName + "' collection")
 	}
 
-	coll.Connection.Begin()
-	defer coll.Connection.Commit()
+	sc.Connection.Begin()
+	defer sc.Connection.Commit()
 
 	var SQL string
 
-	SQL = "SELECT sql FROM sqlite_master WHERE tbl_name='" + coll.TableName + "' AND type='table'"
-	if stmt, err := coll.Connection.Query(SQL); err == nil {
+	SQL = "SELECT sql FROM sqlite_master WHERE tbl_name='" + sc.TableName + "' AND type='table'"
+	if stmt, err := sc.Connection.Query(SQL); err == nil {
 
 		var tableCreateSQL string = ""
 
@@ -258,33 +262,33 @@ func (coll *SQLiteCollection) RemoveColumn(ColumnName string) error {
 				return errors.New("can't find table create columns in '" + tableCreateSQL + "', found [" + strings.Join(regexMatch, ", ") + "]")
 			}
 
-			SQL = "CREATE TABLE " + coll.TableName + "_removecolumn (" + tableColumnsWTypes + ") "
-			if err := coll.Connection.Exec(SQL); err != nil {
+			SQL = "CREATE TABLE " + sc.TableName + "_removecolumn (" + tableColumnsWTypes + ") "
+			if err := sc.Connection.Exec(SQL); err != nil {
 				return sqlError(SQL, err)
 			}
 
-			SQL = "INSERT INTO " + coll.TableName + "_removecolumn (" + tableColumnsWoTypes + ") SELECT " + tableColumnsWoTypes + " FROM " + coll.TableName
-			if err := coll.Connection.Exec(SQL); err != nil {
+			SQL = "INSERT INTO " + sc.TableName + "_removecolumn (" + tableColumnsWoTypes + ") SELECT " + tableColumnsWoTypes + " FROM " + sc.TableName
+			if err := sc.Connection.Exec(SQL); err != nil {
 				return sqlError(SQL, err)
 			}
 
-			// SQL = "DROP TABLE " + coll.TableName
-			SQL = "ALTER TABLE " + coll.TableName + " RENAME TO " + coll.TableName + "_fordelete"
-			if err := coll.Connection.Exec(SQL); err != nil {
+			// SQL = "DROP TABLE " + sc.TableName
+			SQL = "ALTER TABLE " + sc.TableName + " RENAME TO " + sc.TableName + "_fordelete"
+			if err := sc.Connection.Exec(SQL); err != nil {
 				return sqlError(SQL, err)
 			}
 
-			SQL = "ALTER TABLE " + coll.TableName + "_removecolumn RENAME TO " + coll.TableName
-			if err := coll.Connection.Exec(SQL); err != nil {
+			SQL = "ALTER TABLE " + sc.TableName + "_removecolumn RENAME TO " + sc.TableName
+			if err := sc.Connection.Exec(SQL); err != nil {
 				return sqlError(SQL, err)
 			}
 
-			coll.Connection.Commit()
+			sc.Connection.Commit()
 
 			// TODO: Fix this issue with table lock on DROP table
 
-			// SQL = "DROP TABLE " + coll.TableName + "_fordelete"
-			// if err := coll.Connection.Exec(SQL); err != nil {
+			// SQL = "DROP TABLE " + sc.TableName + "_fordelete"
+			// if err := sc.Connection.Exec(SQL); err != nil {
 			// 	return sqlError(SQL, err)
 			// }
 

@@ -9,6 +9,7 @@ import (
 	"labix.org/v2/mgo"
 )
 
+// MongoDB struct holds the MongoDB database information.
 type MongoDB struct {
 	database *mgo.Database
 	session  *mgo.Session
@@ -24,7 +25,8 @@ func init() {
 	database.RegisterDBEngine(instance)
 }
 
-func (it *MongoDB) Startup() error {
+// Startup initializes and creates a new MongoDb instance.
+func (mdb *MongoDB) Startup() error {
 
 	var DBUri = "mongodb://localhost:27017/ottemo"
 	var DBName = "ottemo"
@@ -44,14 +46,14 @@ func (it *MongoDB) Startup() error {
 		return errors.New("Can't connect to MongoDB")
 	}
 
-	it.session = session
-	it.database = session.DB(DBName)
-	it.DBName = DBName
-	it.collections = map[string]bool{}
+	mdb.session = session
+	mdb.database = session.DB(DBName)
+	mdb.DBName = DBName
+	mdb.collections = map[string]bool{}
 
-	if collectionsList, err := it.database.CollectionNames(); err == nil {
+	if collectionsList, err := mdb.database.CollectionNames(); err == nil {
 		for _, collection := range collectionsList {
-			it.collections[collection] = true
+			mdb.collections[collection] = true
 		}
 	}
 
@@ -60,43 +62,48 @@ func (it *MongoDB) Startup() error {
 	return nil
 }
 
-func (it *MongoDB) GetName() string { return "MongoDB" }
+// GetName returns the datastore type of MongoDB.
+func (mdb *MongoDB) GetName() string { return "MongoDB" }
 
-func (it *MongoDB) HasCollection(CollectionName string) bool {
+// HasCollection returns a boolean true if the requested collection exists.
+func (mdb *MongoDB) HasCollection(CollectionName string) bool {
 	CollectionName = strings.ToLower(CollectionName)
 
 	return true
 }
 
-func (it *MongoDB) CreateCollection(CollectionName string) error {
+// CreateCollection will instantiate a new collection in MongoDB or return
+// an error.
+func (mdb *MongoDB) CreateCollection(CollectionName string) error {
 	CollectionName = strings.ToLower(CollectionName)
 
-	err := it.database.C(CollectionName).Create(new(mgo.CollectionInfo))
-	//it.database.C(CollectionName).EnsureIndex(mgo.Index{Key: []string{"_id"}, Unique: true})
+	err := mdb.database.C(CollectionName).Create(new(mgo.CollectionInfo))
+	//mdb.database.C(CollectionName).EnsureIndex(mgo.Index{Key: []string{"_id"}, Unique: true})
 
 	//CMD := "db.createCollection(\"" + CollectionName + "\")"
 	//println(CMD)
-	//err := it.database.Run(CMD, nil)
+	//err := mdb.database.Run(CMD, nil)
 
 	return err
 }
 
-func (it *MongoDB) GetCollection(CollectionName string) (database.DBCollection, error) {
+// GetCollection returns the requested MongoDB collection.
+func (mdb *MongoDB) GetCollection(CollectionName string) (database.DBCollection, error) {
 	CollectionName = strings.ToLower(CollectionName)
 
-	if _, present := it.collections[CollectionName]; !present {
-		if err := it.CreateCollection(CollectionName); err != nil {
+	if _, present := mdb.collections[CollectionName]; !present {
+		if err := mdb.CreateCollection(CollectionName); err != nil {
 			return nil, err
 		}
-		it.collections[CollectionName] = true
+		mdb.collections[CollectionName] = true
 	}
 
-	mgoCollection := it.database.C(CollectionName)
+	mgoCollection := mdb.database.C(CollectionName)
 
 	result := &MongoDBCollection{
 		Selector:   map[string]interface{}{},
 		Name:       CollectionName,
-		database:   it.database,
+		database:   mdb.database,
 		collection: mgoCollection}
 
 	return result, nil

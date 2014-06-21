@@ -13,12 +13,12 @@ type DBEngine interface {
 // collection when working with extendable objects.
 type DBCollection interface {
 	Load() ([]map[string]interface{}, error)
-	LoadById(id string) (map[string]interface{}, error)
+	LoadByID(id string) (map[string]interface{}, error)
 
 	Save(map[string]interface{}) (string, error)
 
 	Delete() (int, error)
-	DeleteById(id string) error
+	DeleteByID(id string) error
 
 	AddFilter(ColumnName string, Operator string, Value string) error
 	ClearFilters() error

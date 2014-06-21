@@ -8,6 +8,8 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
+// MongoDBCollection holds the database and collection data related to a
+// MongoDB instance.
 type MongoDBCollection struct {
 	database   *mgo.Database
 	collection *mgo.Collection
@@ -16,8 +18,9 @@ type MongoDBCollection struct {
 	Selector map[string]interface{}
 }
 
+// ColumnInfoCollection is a constant for meta information.
 const (
-	COLUMN_INFO_COLLECTION = "collection_column_info"
+	ColumnInfoCollection = "collection_column_info"
 )
 
 func sqlError(SQL string, err error) error {
@@ -41,23 +44,27 @@ func getMongoOperator(Operator string) (string, error) {
 	return "?", errors.New("Unknown operator '" + Operator + "'")
 }
 
-func (it *MongoDBCollection) LoadById(id string) (map[string]interface{}, error) {
+// LoadByID returns a single ID from the database.
+func (mc *MongoDBCollection) LoadByID(id string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
-	err := it.collection.FindId(id).One(&result)
+	err := mc.collection.FindId(id).One(&result)
 
 	return result, err
 }
 
-func (it *MongoDBCollection) Load() ([]map[string]interface{}, error) {
-	result := make([]map[string]interface{}, 0)
+// Load returns all found collections that match given selector string.
+func (mc *MongoDBCollection) Load() ([]map[string]interface{}, error) {
+	// result := make([]map[string]interface{}, 0)
+	var result []map[string]interface{}
 
-	err := it.collection.Find(it.Selector).All(&result)
+	err := mc.collection.Find(mc.Selector).All(&result)
 
 	return result, err
 }
 
-func (it *MongoDBCollection) Save(Item map[string]interface{}) (string, error) {
+// Save will create the new value in MongoDB.
+func (mc *MongoDBCollection) Save(Item map[string]interface{}) (string, error) {
 
 	id := bson.NewObjectId().Hex()
 
@@ -71,7 +78,7 @@ func (it *MongoDBCollection) Save(Item map[string]interface{}) (string, error) {
 
 	Item["_id"] = id
 
-	changeInfo, err := it.collection.UpsertId(id, Item)
+	changeInfo, err := mc.collection.UpsertId(id, Item)
 
 	if changeInfo != nil && changeInfo.UpsertedId != nil {
 		//id = changeInfo.UpsertedId
@@ -80,18 +87,21 @@ func (it *MongoDBCollection) Save(Item map[string]interface{}) (string, error) {
 	return id, err
 }
 
-func (it *MongoDBCollection) Delete() (int, error) {
-	changeInfo, err := it.collection.RemoveAll(it.Selector)
+// Delete will remove the given entity matching the selector.
+func (mc *MongoDBCollection) Delete() (int, error) {
+	changeInfo, err := mc.collection.RemoveAll(mc.Selector)
 
 	return changeInfo.Removed, err
 }
 
-func (it *MongoDBCollection) DeleteById(id string) error {
+// DeleteByID will remove the entity with the given ID.
+func (mc *MongoDBCollection) DeleteByID(id string) error {
 
-	return it.collection.RemoveId(id)
+	return mc.collection.RemoveId(id)
 }
 
-func (it *MongoDBCollection) AddFilter(ColumnName string, Operator string, Value string) error {
+// AddFilter will create an additional filter column.
+func (mc *MongoDBCollection) AddFilter(ColumnName string, Operator string, Value string) error {
 
 	Operator, err := getMongoOperator(Operator)
 	if err != nil {
@@ -105,24 +115,24 @@ func (it *MongoDBCollection) AddFilter(ColumnName string, Operator string, Value
 		filterValue = Value
 	}
 
-	it.Selector[ColumnName] = filterValue
+	mc.Selector[ColumnName] = filterValue
 
 	return nil
 }
 
-func (it *MongoDBCollection) ClearFilters() error {
-	it.Selector = make(map[string]interface{})
+// ClearFilters removes the filters for collection.
+func (mc *MongoDBCollection) ClearFilters() error {
+	mc.Selector = make(map[string]interface{})
 	return nil
 }
 
-// Collection columns stuff
-//--------------------------
-func (it *MongoDBCollection) ListColumns() map[string]string {
+// ListColumns will return a map of columns.
+func (mc *MongoDBCollection) ListColumns() map[string]string {
 
 	result := map[string]string{}
 
-	infoCollection := it.database.C(COLUMN_INFO_COLLECTION)
-	selector := map[string]string{"collection": it.Name}
+	infoCollection := mc.database.C(ColumnInfoCollection)
+	selector := map[string]string{"collection": mc.Name}
 	iter := infoCollection.Find(selector).Iter()
 
 	row := map[string]string{}
@@ -138,31 +148,34 @@ func (it *MongoDBCollection) ListColumns() map[string]string {
 	return result
 }
 
-func (it *MongoDBCollection) HasColumn(ColumnName string) bool {
+// HasColumn will return a boolean true if the column exists.
+func (mc *MongoDBCollection) HasColumn(ColumnName string) bool {
 
-	infoCollection := it.database.C(COLUMN_INFO_COLLECTION)
-	selector := map[string]interface{}{"collection": it.Name, "column": ColumnName}
+	infoCollection := mc.database.C(ColumnInfoCollection)
+	selector := map[string]interface{}{"collection": mc.Name, "column": ColumnName}
 	count, _ := infoCollection.Find(selector).Count()
 
 	return count > 0
 }
 
-func (it *MongoDBCollection) AddColumn(ColumnName string, ColumnType string, indexed bool) error {
+// AddColumn will append a column for the given collection.
+func (mc *MongoDBCollection) AddColumn(ColumnName string, ColumnType string, indexed bool) error {
 
-	infoCollection := it.database.C(COLUMN_INFO_COLLECTION)
+	infoCollection := mc.database.C(ColumnInfoCollection)
 
-	selector := map[string]interface{}{"collection": it.Name, "column": ColumnName}
-	data := map[string]interface{}{"collection": it.Name, "column": ColumnName, "type": ColumnType, "indexed": indexed}
+	selector := map[string]interface{}{"collection": mc.Name, "column": ColumnName}
+	data := map[string]interface{}{"collection": mc.Name, "column": ColumnName, "type": ColumnType, "indexed": indexed}
 
 	_, err := infoCollection.Upsert(selector, data)
 
 	return err
 }
 
-func (it *MongoDBCollection) RemoveColumn(ColumnName string) error {
+// RemoveColumn will remove the column of the collection.
+func (mc *MongoDBCollection) RemoveColumn(ColumnName string) error {
 
-	infoCollection := it.database.C(COLUMN_INFO_COLLECTION)
-	removeSelector := map[string]string{"collection": it.Name, "column": ColumnName}
+	infoCollection := mc.database.C(ColumnInfoCollection)
+	removeSelector := map[string]string{"collection": mc.Name, "column": ColumnName}
 
 	err := infoCollection.Remove(removeSelector)
 	if err != nil {
@@ -172,7 +185,7 @@ func (it *MongoDBCollection) RemoveColumn(ColumnName string) error {
 	updateSelector := map[string]interface{}{ColumnName: map[string]interface{}{"$exists": true}}
 	data := map[string]interface{}{"$unset": map[string]interface{}{ColumnName: ""}}
 
-	_, err = it.collection.UpdateAll(updateSelector, data)
+	_, err = mc.collection.UpdateAll(updateSelector, data)
 
 	if err != nil {
 		return err
