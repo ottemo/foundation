@@ -1,13 +1,11 @@
-package sqlite_test
+package sqlite
 
 import (
 	"testing"
-
-	"github.com/ottemo/foundation/database/sqlite"
 )
 
 func TestCollection(t *testing.T) {
-	sqliteEngine := new(sqlite.SQLite)
+	sqliteEngine := new(SQLite)
 
 	sqliteEngine.Startup()
 
