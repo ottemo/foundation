@@ -4,20 +4,20 @@ import (
 	"github.com/ottemo/foundation/database"
 )
 
-func (it *DefaultProductModel) GetId() string {
-	return it.id
+func (dpm *DefaultProductModel) GetId() string {
+	return dpm.id
 }
 
-func (it *DefaultProductModel) SetId(NewId string) error {
-	it.id = NewId
+func (dpm *DefaultProductModel) SetId(NewId string) error {
+	dpm.id = NewId
 	return nil
 }
 
-func (it *DefaultProductModel) Load(loadId string) error {
+func (dpm *DefaultProductModel) Load(loadId string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
 			if values, err := collection.LoadById(loadId); err == nil {
-				if err := it.FromHashMap(values); err != nil {
+				if err := dpm.FromHashMap(values); err != nil {
 					return err
 				}
 			} else {
@@ -30,7 +30,7 @@ func (it *DefaultProductModel) Load(loadId string) error {
 	return nil
 }
 
-func (it *DefaultProductModel) Delete(id string) error {
+func (dpm *DefaultProductModel) Delete(id string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
 			err := collection.DeleteById(Id)
@@ -44,11 +44,11 @@ func (it *DefaultProductModel) Delete(id string) error {
 	return nil
 }
 
-func (it *DefaultProductModel) Save() error {
+func (dpm *DefaultProductModel) Save() error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
 			if newId, err := collection.Save(it.ToHashMap()); err == nil {
-				it.Set("_id", newId)
+				dpm.Set("_id", newId)
 				return err
 			} else {
 				return err

@@ -1,6 +1,6 @@
 package defaultproduct
 
-func (it *DefaultProductModel) GetSku() string  { return it.Sku }
-func (it *DefaultProductModel) GetName() string { return it.Name }
+func (dpm *DefaultProductModel) GetSku() string  { return dpm.Sku }
+func (dpm *DefaultProductModel) GetName() string { return dpm.Name }
 
-func (it *DefaultProductModel) GetPrice() float64 { return 10.5 }
+func (dpm *DefaultProductModel) GetPrice() float64 { return 10.5 }

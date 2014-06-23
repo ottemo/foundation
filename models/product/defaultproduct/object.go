@@ -6,31 +6,31 @@ import (
 	"github.com/ottemo/foundation/models"
 )
 
-func (it *DefaultProductModel) Get(attribute string) interface{} {
+func (dpm *DefaultProductModel) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
-		return it.id
+		return dpm.id
 	case "sku":
-		return it.Sku
+		return dpm.Sku
 	case "name":
-		return it.Name
+		return dpm.Name
 	default:
-		return it.CustomAttributes.Get(attribute)
+		return dpm.CustomAttributes.Get(attribute)
 	}
 
 	return nil
 }
 
-func (it *DefaultProductModel) Set(attribute string, value interface{}) error {
+func (dpm *DefaultProductModel) Set(attribute string, value interface{}) error {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
-		it.id = value.(string)
+		dpm.id = value.(string)
 	case "sku":
-		it.Sku = value.(string)
+		dpm.Sku = value.(string)
 	case "name":
-		it.Name = value.(string)
+		dpm.Name = value.(string)
 	default:
-		if err := it.CustomAttributes.Set(attribute, value); err != nil {
+		if err := dpm.CustomAttributes.Set(attribute, value); err != nil {
 			return err
 		}
 
@@ -39,7 +39,7 @@ func (it *DefaultProductModel) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *DefaultProductModel) GetAttributesInfo() []models.AttributeInfo {
+func (dpm *DefaultProductModel) GetAttributesInfo() []models.AttributeInfo {
 	staticInfo := []models.AttributeInfo{
 		models.AttributeInfo{
 			Model:      "Product",
@@ -76,7 +76,7 @@ func (it *DefaultProductModel) GetAttributesInfo() []models.AttributeInfo {
 		},
 	}
 
-	dynamicInfo := it.CustomAttributes.GetAttributesInfo()
+	dynamicInfo := dpm.CustomAttributes.GetAttributesInfo()
 
 	return append(dynamicInfo, staticInfo...)
 }
