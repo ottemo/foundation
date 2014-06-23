@@ -5,23 +5,12 @@ import (
 )
 
 var registeredConfig Config
-var registeredIniConfig IniConfig
 var callbacksOnConfigStart = []func() error{}
-var callbacksOnConfigIniStart = []func() error{}
 
-// RegisterOnConfigStart allows the registration of callbacks to be executed upon application start.
-func RegisterOnConfigStart(callback func() error) {
-	callbacksOnConfigStart = append(callbacksOnConfigStart, callback)
-}
-
-// OnConfigStart executes the registered callbacks upon application start.
-func OnConfigStart() error {
-	for _, callback := range callbacksOnConfigStart {
-		if err := callback(); err != nil {
-			return err
-		}
-	}
-	return nil
+// IniConfig is an initialization interface for reading INI file values
+type IniConfig interface {
+	GetValue(Name string) string
+	List() []string
 }
 
 // RegisterOnConfigIniStart will register the ini file upon application start.
@@ -48,19 +37,6 @@ func RegisterIniConfig(IniConfig IniConfig) error {
 	}
 	return nil
 }
-
-// RegisterConfig registers the configuration upon application start.
-func RegisterConfig(Config Config) error {
-	if registeredConfig == nil {
-		registeredConfig = Config
-	} else {
-		return errors.New("Configuration file already registered. Unable to register configuration.")
-	}
-	return nil
-}
-
-// GetConfig returns the registered configuration.
-func GetConfig() Config { return registeredConfig }
 
 // GetIniConfig returns the registered INI configuration that has been initialized.
 func GetIniConfig() IniConfig { return registeredIniConfig }
