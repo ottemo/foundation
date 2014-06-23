@@ -53,7 +53,7 @@ func AddProductAttributeRestAPI(req *http.Request) map[string]interface{} {
 		}
 	}
 
-	if prod, ok := model.(models.CustomAttributes); ok {
+	if prod, ok := model.(models.Attribute); ok {
 		if err := prod.AddNewAttribute(attribute); err != nil {
 			return jsonError(errors.New("Product new attribute error: " + err.Error()))
 		}
@@ -97,7 +97,7 @@ func CreateProductRestAPI(req *http.Request) map[string]interface{} {
 	}
 
 	if model, err := models.GetModel("Product"); err == nil {
-		if model, ok := model.(product.I_Product); ok {
+		if model, ok := model.(product.Product); ok {
 
 			for attribute, value := range queryParams {
 				err := model.Set(attribute, value[0])

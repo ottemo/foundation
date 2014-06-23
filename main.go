@@ -5,8 +5,7 @@ import (
 
 	app "github.com/ottemo/foundation/app"
 
-	_ "github.com/ottemo/foundation/config/entity"
-	_ "github.com/ottemo/foundation/config/ini"
+	_ "github.com/ottemo/foundation/config"
 
 	//_ "github.com/ottemo/foundation/database/sqlite"
 	_ "github.com/ottemo/foundation/database/mongodb"
@@ -14,8 +13,8 @@ import (
 	_ "github.com/ottemo/foundation/rest_service"
 	_ "github.com/ottemo/foundation/rest_service/negroni"
 
-	_ "github.com/ottemo/foundation/models/custom_attributes"
-	_ "github.com/ottemo/foundation/models/product/default_product"
+	_ "github.com/ottemo/foundation/models"
+	_ "github.com/ottemo/foundation/models/product/defaultproduct"
 	_ "github.com/ottemo/foundation/models/visitor/default_address"
 	_ "github.com/ottemo/foundation/models/visitor/default_visitor"
 )

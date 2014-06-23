@@ -1,17 +1,17 @@
 package default_address
 
-import(
+import (
 	"github.com/ottemo/foundation/models"
 )
 
-func (it *DefaultVisitorAddress) GetModelName() string {
+func (dva *DefaultVisitorAddress) GetModelName() string {
 	return "VisitorAddress"
 }
 
-func (it *DefaultVisitorAddress) GetImplementationName() string {
+func (dva *DefaultVisitorAddress) GetImplementationName() string {
 	return "DefaultVisitorAddress"
 }
 
-func (it *DefaultVisitorAddress) New() (models.I_Model, error) {
-	return &DefaultVisitorAddress{ }, nil
+func (dva *DefaultVisitorAddress) New() (models.Model, error) {
+	return &DefaultVisitorAddress{}, nil
 }

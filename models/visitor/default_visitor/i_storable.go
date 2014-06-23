@@ -13,11 +13,11 @@ func (it *DefaultVisitor) SetId(NewId string) error {
 	return nil
 }
 
-func (it *DefaultVisitor) Load(Id string) error {
+func (it *DefaultVisitor) Load(id string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection(VISITOR_COLLECTION_NAME); err == nil {
 
-			values, err := collection.LoadById(Id)
+			values, err := collection.LoadByID(id)
 			if err != nil {
 				return err
 			}
@@ -37,7 +37,7 @@ func (it *DefaultVisitor) Load(Id string) error {
 func (it *DefaultVisitor) Delete(id string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection(VISITOR_COLLECTION_NAME); err == nil {
-			err := collection.DeleteById(Id)
+			err := collection.DeleteByID(id)
 			if err != nil {
 				return err
 			}

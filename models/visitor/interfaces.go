@@ -1,6 +1,8 @@
 package visitor
 
-import("github.com/ottemo/foundation/models")
+import (
+	"github.com/ottemo/foundation/models"
+)
 
 type I_VisitorAddress interface {
 	GetStreet() string
@@ -9,10 +11,10 @@ type I_VisitorAddress interface {
 	GetPhone() string
 	GetZipCode() string
 
-	models.I_Model
-	models.I_Object
-	models.I_Storable
-	models.I_Mapable
+	models.Model
+	models.Object
+	models.Storable
+	models.Mapable
 }
 
 type I_Visitor interface {
@@ -28,8 +30,8 @@ type I_Visitor interface {
 	SetShippingAddress(address I_VisitorAddress) error
 	SetBillingAddress(address I_VisitorAddress) error
 
-	models.I_Model
-	models.I_Object
-	models.I_Storable
-	models.I_Mapable
+	models.Model
+	models.Object
+	models.Storable
+	models.Mapable
 }

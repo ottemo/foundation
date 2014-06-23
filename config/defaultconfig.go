@@ -1,10 +1,9 @@
-package defaults
+package config
 
 import (
 	"errors"
 	"fmt"
 
-	config "github.com/ottemo/foundation/config"
 	db "github.com/ottemo/foundation/database"
 )
 
@@ -26,7 +25,7 @@ func init() {
 	instance := new(DefaultConfig)
 
 	db.RegisterOnDatabaseStart(instance.Load)
-	config.RegisterConfig(new(DefaultConfig))
+	RegisterConfig(new(DefaultConfig))
 }
 
 // Register returns nil or an error if an entity has already been registered.
@@ -93,7 +92,7 @@ func (dc *DefaultConfig) Save() error {
 // Load will executes the registered callbacks for this entity upon start.
 func (dc *DefaultConfig) Load() error {
 
-	config.OnConfigStart()
+	OnConfigStart()
 
 	return nil
 }

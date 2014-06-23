@@ -15,7 +15,7 @@ func (dpm *DefaultProductModel) Get(attribute string) interface{} {
 	case "name":
 		return dpm.Name
 	default:
-		return dpm.CustomAttributes.Get(attribute)
+		return dpm.CustomAttribute.Get(attribute)
 	}
 
 	return nil
@@ -30,7 +30,7 @@ func (dpm *DefaultProductModel) Set(attribute string, value interface{}) error {
 	case "name":
 		dpm.Name = value.(string)
 	default:
-		if err := dpm.CustomAttributes.Set(attribute, value); err != nil {
+		if err := dpm.CustomAttribute.Set(attribute, value); err != nil {
 			return err
 		}
 
@@ -76,7 +76,7 @@ func (dpm *DefaultProductModel) GetAttributesInfo() []models.AttributeInfo {
 		},
 	}
 
-	dynamicInfo := dpm.CustomAttributes.GetAttributesInfo()
+	dynamicInfo := dpm.CustomAttribute.GetAttributesInfo()
 
 	return append(dynamicInfo, staticInfo...)
 }

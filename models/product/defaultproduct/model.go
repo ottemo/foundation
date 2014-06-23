@@ -14,10 +14,10 @@ func (dpm *DefaultProductModel) GetImplementationName() string {
 
 func (dpm *DefaultProductModel) New() (models.Model, error) {
 
-	customAttributes, err := new(custom_attributes.CustomAttributes).Init("product")
+	customAttributes, err := new(models.CustomAttribute).Init("product")
 	if err != nil {
 		return nil, err
 	}
 
-	return &DefaultProductModel{CustomAttributes: customAttributes}, nil
+	return &DefaultProductModel{CustomAttribute: customAttributes}, nil
 }

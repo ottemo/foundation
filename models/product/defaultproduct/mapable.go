@@ -22,13 +22,13 @@ func (dpm *DefaultProductModel) FromHashMap(input map[string]interface{}) error 
 		}
 	}
 
-	dpm.CustomAttributes.FromHashMap(input)
+	dpm.CustomAttribute.FromHashMap(input)
 
 	return nil
 }
 
 func (dpm *DefaultProductModel) ToHashMap() map[string]interface{} {
-	result := dpm.CustomAttributes.ToHashMap()
+	result := dpm.CustomAttribute.ToHashMap()
 
 	result["_id"] = dpm.id
 	result["sku"] = dpm.Sku

@@ -1,11 +1,11 @@
 package default_visitor
 
 import (
-	"strings"
-	"github.com/ottemo/foundation/models"
-
-	"github.com/ottemo/foundation/models/visitor"
 	"errors"
+	"strings"
+
+	"github.com/ottemo/foundation/models"
+	"github.com/ottemo/foundation/models/visitor"
 )
 
 func (it *DefaultVisitor) Get(attribute string) interface{} {
@@ -32,7 +32,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	attribute = strings.ToLower(attribute)
 
-	switch  attribute {
+	switch attribute {
 	case "_id", "id":
 		it.id = value.(string)
 	case "email", "e_mail", "e-mail":
@@ -44,7 +44,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 
 	// only address id coming - trying to get it from DB
 	case "billing_address_id", "shipping_address_id":
-		address := it.getVisitorAddressById( value.(string) )
+		address := it.getVisitorAddressById(value.(string))
 		if address != nil && address.GetId() != "" {
 
 			if attribute == "billing_address_id" {
@@ -72,11 +72,15 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 		// we have sub-map, supposedly I_VisitorAddress capable
 		case map[string]interface{}:
 			model, err := models.GetModel("VisitorAddress")
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 
 			if address, ok := model.(visitor.I_VisitorAddress); ok {
 				err := address.FromHashMap(value)
-				if err != nil { return err }
+				if err != nil {
+					return err
+				}
 
 				if attribute == "billing_address" {
 					it.BillingAddress = address
@@ -94,63 +98,63 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
+func (it *DefaultVisitor) GetAttributesInfo() []models.AttributeInfo {
 
-	info := []models.T_AttributeInfo {
-		models.T_AttributeInfo {
-			Model: "Visitor",
+	info := []models.AttributeInfo{
+		models.AttributeInfo{
+			Model:      "Visitor",
 			Collection: "Visitor",
-			Attribute: "_id",
-			Type: "text",
-			Label: "ID",
-			Group: "General",
-			Editors: "not_editable",
-			Options: "",
-			Default: "",
+			Attribute:  "_id",
+			Type:       "text",
+			Label:      "ID",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Visitor",
+		models.AttributeInfo{
+			Model:      "Visitor",
 			Collection: "Visitor",
-			Attribute: "email",
-			Type: "text",
-			Label: "E-mail",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "email",
+			Type:       "text",
+			Label:      "E-mail",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Visitor",
+		models.AttributeInfo{
+			Model:      "Visitor",
 			Collection: "Visitor",
-			Attribute: "first_name",
-			Type: "text",
-			Label: "First Name",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "first_name",
+			Type:       "text",
+			Label:      "First Name",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Visitor",
+		models.AttributeInfo{
+			Model:      "Visitor",
 			Collection: "Visitor",
-			Attribute: "billing_address",
-			Type: "text",
-			Label: "Billing Address",
-			Group: "General",
-			Editors: "model_selector",
-			Options: "model:VisitorAddress",
-			Default: "",
+			Attribute:  "billing_address",
+			Type:       "text",
+			Label:      "Billing Address",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model:VisitorAddress",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Visitor",
+		models.AttributeInfo{
+			Model:      "Visitor",
 			Collection: "Visitor",
-			Attribute: "shipping_address",
-			Type: "text",
-			Label: "Shipping Address",
-			Group: "General",
-			Editors: "model_selector",
-			Options: "model:VisitorAddress",
-			Default: "",
+			Attribute:  "shipping_address",
+			Type:       "text",
+			Label:      "Shipping Address",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model:VisitorAddress",
+			Default:    "",
 		},
 	}
 

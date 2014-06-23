@@ -1,6 +1,6 @@
 package default_visitor
 
-import(
+import (
 	"github.com/ottemo/foundation/models"
 )
 
@@ -12,6 +12,6 @@ func (it *DefaultVisitor) GetImplementationName() string {
 	return "DefaultVisitor"
 }
 
-func (it *DefaultVisitor) New() (models.I_Model, error) {
-	return &DefaultVisitor{ }, nil
+func (it *DefaultVisitor) New() (models.Model, error) {
+	return &DefaultVisitor{}, nil
 }

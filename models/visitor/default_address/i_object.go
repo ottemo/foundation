@@ -2,102 +2,103 @@ package default_address
 
 import (
 	"strings"
+
 	"github.com/ottemo/foundation/models"
 )
 
-func (it *DefaultVisitorAddress) Get(attribute string) interface{} {
+func (dva *DefaultVisitorAddress) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
-		return it.id
+		return dva.id
 	case "street":
-		return it.Street
+		return dva.Street
 	case "city":
-		return it.City
+		return dva.City
 	case "state":
-		return it.State
+		return dva.State
 	case "phone":
-		return it.Phone
+		return dva.Phone
 	case "zip", "zip_code":
-		return it.ZipCode
+		return dva.ZipCode
 	}
 
 	return nil
 }
 
-func (it *DefaultVisitorAddress) Set(attribute string, value interface{}) error {
+func (dva *DefaultVisitorAddress) Set(attribute string, value interface{}) error {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
-		it.id = value.(string)
+		dva.id = value.(string)
 	case "street":
-		it.Street = value.(string)
+		dva.Street = value.(string)
 	case "city":
-		it.City = value.(string)
+		dva.City = value.(string)
 	case "state":
-		it.State = value.(string)
+		dva.State = value.(string)
 	case "phone":
-		it.Phone = value.(string)
+		dva.Phone = value.(string)
 	case "zip", "zip_code":
-		it.ZipCode = value.(string)
+		dva.ZipCode = value.(string)
 	}
 	return nil
 }
 
-func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
-	info := []models.T_AttributeInfo {
-		models.T_AttributeInfo {
-			Model: "VisitorAddress",
+func (dva *DefaultVisitorAddress) GetAttributesInfo() []models.AttributeInfo {
+	info := []models.AttributeInfo{
+		models.AttributeInfo{
+			Model:      "VisitorAddress",
 			Collection: "visitor_address",
-			Attribute: "_id",
-			Type: "text",
-			Label: "ID",
-			Group: "General",
-			Editors: "not_editable",
-			Options: "",
-			Default: "",
+			Attribute:  "_id",
+			Type:       "text",
+			Label:      "ID",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "VisitorAddress",
+		models.AttributeInfo{
+			Model:      "VisitorAddress",
 			Collection: "visitor_address",
-			Attribute: "street",
-			Type: "text",
-			Label: "Street",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "street",
+			Type:       "text",
+			Label:      "Street",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "VisitorAddress",
+		models.AttributeInfo{
+			Model:      "VisitorAddress",
 			Collection: "visitor_address",
-			Attribute: "city",
-			Type: "text",
-			Label: "City",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "city",
+			Type:       "text",
+			Label:      "City",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "VisitorAddress",
+		models.AttributeInfo{
+			Model:      "VisitorAddress",
 			Collection: "visitor_address",
-			Attribute: "phone",
-			Type: "text",
-			Label: "Phone",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "phone",
+			Type:       "text",
+			Label:      "Phone",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "VisitorAddress",
+		models.AttributeInfo{
+			Model:      "VisitorAddress",
 			Collection: "visitor_address",
-			Attribute: "zip_code",
-			Type: "text",
-			Label: "Zip",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "zip_code",
+			Type:       "text",
+			Label:      "Zip",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
 	}
 

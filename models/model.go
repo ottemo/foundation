@@ -31,7 +31,7 @@ type Mapable interface {
 	ToHashMap() map[string]interface{}
 }
 
-type CustomAttributes interface {
+type Attribute interface {
 	AddNewAttribute(newAttribute AttributeInfo) error
 	RemoveAttribute(attributeName string) error
 }

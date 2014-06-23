@@ -1,8 +1,7 @@
-package ini
+package config
 
 import (
 	app "github.com/ottemo/foundation/app"
-	config "github.com/ottemo/foundation/config"
 	ini "github.com/vaughan0/go-ini"
 )
 
@@ -15,7 +14,7 @@ func init() {
 	instance := new(DefaultIniConfig)
 
 	app.OnAppStart(instance.startup)
-	config.RegisterIniConfig(instance)
+	RegisterIniConfig(instance)
 }
 
 func (dic *DefaultIniConfig) startup() error {
@@ -23,7 +22,7 @@ func (dic *DefaultIniConfig) startup() error {
 	iniFile, _ := ini.LoadFile("ottemo.ini")
 	dic.iniFileValues = iniFile.Section("")
 
-	err := config.OnConfigIniStart()
+	err := OnConfigIniStart()
 
 	return err
 }

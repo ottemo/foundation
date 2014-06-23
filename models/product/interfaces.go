@@ -15,5 +15,5 @@ type Product interface {
 	models.Storable
 	models.Mapable
 
-	models.CustomAttributes
+	models.Attribute
 }

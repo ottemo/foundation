@@ -16,7 +16,7 @@ func (dpm *DefaultProductModel) SetId(NewId string) error {
 func (dpm *DefaultProductModel) Load(loadId string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
-			if values, err := collection.LoadById(loadId); err == nil {
+			if values, err := collection.LoadByID(loadId); err == nil {
 				if err := dpm.FromHashMap(values); err != nil {
 					return err
 				}
@@ -33,7 +33,7 @@ func (dpm *DefaultProductModel) Load(loadId string) error {
 func (dpm *DefaultProductModel) Delete(id string) error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
-			err := collection.DeleteById(Id)
+			err := collection.DeleteByID(id)
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func (dpm *DefaultProductModel) Delete(id string) error {
 func (dpm *DefaultProductModel) Save() error {
 	if dbEngine := database.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Product"); err == nil {
-			if newId, err := collection.Save(it.ToHashMap()); err == nil {
+			if newId, err := collection.Save(dpm.ToHashMap()); err == nil {
 				dpm.Set("_id", newId)
 				return err
 			} else {
