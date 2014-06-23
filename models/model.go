@@ -16,7 +16,7 @@ type Storable interface {
 
 	Save() error
 	Load(id string) error
-	Delete(Id string) error
+	Delete(id string) error
 }
 
 type Object interface {

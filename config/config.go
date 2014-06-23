@@ -4,8 +4,8 @@ import (
 	"errors"
 )
 
-var registeredIniConfig IniConfig
-var callbacksOnConfigIniStart = []func() error{}
+var registeredConfig Config
+var callbacksOnConfigStart = []func() error{}
 
 // Config is an interface for working with configuration entities and values
 type Config interface {

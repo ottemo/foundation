@@ -4,8 +4,8 @@ import (
 	"errors"
 )
 
-var registeredConfig Config
-var callbacksOnConfigStart = []func() error{}
+var registeredIniConfig IniConfig
+var callbacksOnConfigIniStart = []func() error{}
 
 // IniConfig is an initialization interface for reading INI file values
 type IniConfig interface {
