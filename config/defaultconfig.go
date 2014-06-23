@@ -1,4 +1,4 @@
-package entity
+package defaults
 
 import (
 	"errors"
