@@ -1,6 +1,8 @@
-package default_product
+package defaultproduct
 
-import ("strconv")
+import (
+	"strconv"
+)
 
 func (it *DefaultProductModel) FromHashMap(input map[string]interface{}) error {
 

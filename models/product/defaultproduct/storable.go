@@ -1,4 +1,4 @@
-package default_product
+package defaultproduct
 
 import (
 	"github.com/ottemo/foundation/database"

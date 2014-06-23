@@ -20,17 +20,17 @@ type CustomAttributes struct {
 	values map[string]interface{}
 }
 
-func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
-	it.model = model
-	it.values = make(map[string]interface{})
+func (ca *CustomAttributes) Init(model string) (*CustomAttributes, error) {
+	ca.model = model
+	ca.values = make(map[string]interface{})
 
 	_, present := globalCustomAttributes[model]
 
 	if present {
-		it.attributes = globalCustomAttributes[model]
+		ca.attributes = globalCustomAttributes[model]
 	} else {
 
-		it.attributes = make(map[string]models.AttributeInfo)
+		ca.attributes = make(map[string]models.AttributeInfo)
 
 		dbEngine := database.GetDBEngine()
 		if dbEngine == nil {
@@ -42,10 +42,10 @@ func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
 			return it, errors.New("Can't get collection 'custom_attributes': " + err.Error())
 		}
 
-		caCollection.AddFilter("model", "=", it.model)
+		caCollection.AddFilter("model", "=", ca.model)
 		dbValues, err := caCollection.Load()
 		if err != nil {
-			return it, errors.New("Can't load custom attributes information for '" + it.model + "'")
+			return ca, errors.New("Can't load custom attributes information for '" + ca.model + "'")
 		}
 
 		for _, row := range dbValues {
@@ -61,25 +61,25 @@ func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
 				Default:    row["default"].(string),
 			}
 
-			it.attributes[attribute.Attribute] = attribute
+			ca.attributes[attribute.Attribute] = attribute
 		}
 
-		globalCustomAttributes[it.model] = it.attributes
+		globalCustomAttributes[ca.model] = ca.attributes
 	}
 
-	return it, nil
+	return ca, nil
 }
 
-func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
+func (ca *CustomAttributes) RemoveAttribute(attributeName string) error {
 
 	dbEngine := database.GetDBEngine()
 	if dbEngine == nil {
 		return errors.New("There is no database engine")
 	}
 
-	attribute, present := it.attributes[attributeName]
+	attribute, present := ca.attributes[attributeName]
 	if !present {
-		return errors.New("There is no attribute '" + attributeName + "' for model '" + it.model + "'")
+		return errors.New("There is no attribute '" + attributeName + "' for model '" + ca.model + "'")
 	}
 
 	caCollection, err := dbEngine.GetCollection(CustomAttributesCollection)
@@ -107,10 +107,10 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 	return nil
 }
 
-func (it *CustomAttributes) AddNewAttribute(newAttribute models.T_AttributeInfo) error {
+func (ca *CustomAttributes) AddNewAttribute(newAttribute models.AttributeInfo) error {
 
 	if _, present := it.attributes[newAttribute.Attribute]; present {
-		return errors.New("There is already atribute '" + newAttribute.Attribute + "' for model '" + it.model + "'")
+		return errors.New("There is already atribute '" + newAttribute.Attribute + "' for model '" + ca.model + "'")
 	}
 
 	dbEngine := database.GetDBEngine()
@@ -157,27 +157,27 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.T_AttributeInfo)
 		return errors.New("Can't insert attribute '" + newAttribute.Attribute + "' in collection '" + newAttribute.Collection + "': " + err.Error())
 	}
 
-	it.attributes[newAttribute.Attribute] = newAttribute
+	ca.attributes[newAttribute.Attribute] = newAttribute
 
 	return err
 }
 
-func (it *CustomAttributes) FromHashMap(input map[string]interface{}) error {
-	it.values = input
+func (ca *CustomAttributes) FromHashMap(input map[string]interface{}) error {
+	ca.values = input
 	return nil
 }
 
-func (it *CustomAttributes) ToHashMap() map[string]interface{} {
-	return it.values
+func (ca *CustomAttributes) ToHashMap() map[string]interface{} {
+	return ca.values
 }
 
-func (it *CustomAttributes) Get(attribute string) interface{} {
-	return it.values[attribute]
+func (ca *CustomAttributes) Get(attribute string) interface{} {
+	return ca.values[attribute]
 }
 
-func (it *CustomAttributes) Set(attribute string, value interface{}) error {
-	if _, present := it.attributes[attribute]; present {
-		it.values[attribute] = value
+func (ca *CustomAttributes) Set(attribute string, value interface{}) error {
+	if _, present := ca.attributes[attribute]; present {
+		ca.values[attribute] = value
 	} else {
 		return errors.New("attribute '" + attribute + "' invalid")
 	}
@@ -185,9 +185,9 @@ func (it *CustomAttributes) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *CustomAttributes) GetAttributesInfo() []models.AttributeInfo {
-	info := make([]models.AttributeInfo, len(it.attributes))
-	for _, attribute := range it.attributes {
+func (ca *CustomAttributes) GetAttributesInfo() []models.AttributeInfo {
+	info := make([]models.AttributeInfo, len(ca.attributes))
+	for _, attribute := range ca.attributes {
 		info = append(info, attribute)
 	}
 	return info

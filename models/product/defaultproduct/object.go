@@ -1,7 +1,8 @@
-package default_product
+package defaultproduct
 
 import (
 	"strings"
+
 	"github.com/ottemo/foundation/models"
 )
 
@@ -38,40 +39,40 @@ func (it *DefaultProductModel) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-func (it *DefaultProductModel) GetAttributesInfo() []models.T_AttributeInfo {
-	staticInfo := []models.T_AttributeInfo {
-		models.T_AttributeInfo {
-			Model: "Product",
+func (it *DefaultProductModel) GetAttributesInfo() []models.AttributeInfo {
+	staticInfo := []models.AttributeInfo{
+		models.AttributeInfo{
+			Model:      "Product",
 			Collection: "product",
-			Attribute: "_id",
-			Type: "text",
-			Label: "ID",
-			Group: "General",
-			Editors: "not_editable",
-			Options: "",
-			Default: "",
+			Attribute:  "_id",
+			Type:       "text",
+			Label:      "ID",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Product",
+		models.AttributeInfo{
+			Model:      "Product",
 			Collection: "product",
-			Attribute: "sku",
-			Type: "text",
-			Label: "SKU",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "sku",
+			Type:       "text",
+			Label:      "SKU",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
-		models.T_AttributeInfo {
-			Model: "Product",
+		models.AttributeInfo{
+			Model:      "Product",
 			Collection: "product",
-			Attribute: "Name",
-			Type: "text",
-			Label: "Name",
-			Group: "General",
-			Editors: "line_text",
-			Options: "",
-			Default: "",
+			Attribute:  "Name",
+			Type:       "text",
+			Label:      "Name",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
 		},
 	}
 

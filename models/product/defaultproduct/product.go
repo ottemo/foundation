@@ -1,5 +1,4 @@
-package default_product
-
+package defaultproduct
 
 func (it *DefaultProductModel) GetSku() string  { return it.Sku }
 func (it *DefaultProductModel) GetName() string { return it.Name }

@@ -1,4 +1,4 @@
-package default_product
+package defaultproduct
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 func jsonError(err error) map[string]interface{} {
-	return map[string]interface{} { "error": err.Error() }
+	return map[string]interface{}{"error": err.Error()}
 }
 
 // http://127.0.0.1:9000/AddProductAttribute
@@ -18,9 +18,11 @@ func AddProductAttributeRestAPI(req *http.Request) map[string]interface{} {
 	queryParams := req.URL.Query()
 
 	model, err := models.GetModel("Product")
-	if err != nil { return jsonError(err) }
+	if err != nil {
+		return jsonError(err)
+	}
 
-	attribute := models.T_AttributeInfo {
+	attribute := models.AttributeInfo{
 		Model:      "product",
 		Collection: "product",
 		Attribute:  "test",
@@ -31,7 +33,6 @@ func AddProductAttributeRestAPI(req *http.Request) map[string]interface{} {
 		Options:    "",
 		Default:    "",
 	}
-
 
 	for param, value := range queryParams {
 		switch param {
@@ -52,19 +53,16 @@ func AddProductAttributeRestAPI(req *http.Request) map[string]interface{} {
 		}
 	}
 
-
-	if prod, ok := model.(models.I_CustomAttributes); ok {
+	if prod, ok := model.(models.CustomAttributes); ok {
 		if err := prod.AddNewAttribute(attribute); err != nil {
-			return jsonError( errors.New("Product new attribute error: " + err.Error()) )
+			return jsonError(errors.New("Product new attribute error: " + err.Error()))
 		}
 	} else {
-		return jsonError( errors.New("product model is not I_CustomAttributes") )
+		return jsonError(errors.New("product model is not CustomAttributes"))
 	}
 
-
-	return map[string]interface{} {"ok": true, "attribute": attribute}
+	return map[string]interface{}{"ok": true, "attribute": attribute}
 }
-
 
 // http://127.0.0.1:9000/LoadProduct?id=5
 func LoadProductRestAPI(req *http.Request) map[string]interface{} {
@@ -72,29 +70,30 @@ func LoadProductRestAPI(req *http.Request) map[string]interface{} {
 
 	productId := queryParams.Get("id")
 	if productId == "" {
-		return jsonError( errors.New("product 'id' was not specified") )
+		return jsonError(errors.New("product 'id' was not specified"))
 	}
 
 	if model, err := models.GetModel("Product"); err == nil {
-		if model, ok := model.(product.I_Product); ok {
+		if model, ok := model.(product.Product); ok {
 
-			err = model.Load( productId )
-			if err != nil { return jsonError(err) }
+			err = model.Load(productId)
+			if err != nil {
+				return jsonError(err)
+			}
 
 			return model.ToHashMap()
 		}
 	}
 
-	return jsonError( errors.New("Something went wrong...") )
+	return jsonError(errors.New("Something went wrong..."))
 }
-
 
 // http://127.0.0.1:9000/CreateProduct/xx-25/some
 func CreateProductRestAPI(req *http.Request) map[string]interface{} {
 	queryParams := req.URL.Query()
 
 	if queryParams.Get("sku") == "" || queryParams.Get("name") == "" {
-		return jsonError( errors.New("product 'name' and/or 'sku' was not specified") )
+		return jsonError(errors.New("product 'name' and/or 'sku' was not specified"))
 	}
 
 	if model, err := models.GetModel("Product"); err == nil {
@@ -102,15 +101,19 @@ func CreateProductRestAPI(req *http.Request) map[string]interface{} {
 
 			for attribute, value := range queryParams {
 				err := model.Set(attribute, value[0])
-				if err != nil { return jsonError(err) }
+				if err != nil {
+					return jsonError(err)
+				}
 			}
 
 			err := model.Save()
-			if err != nil { return jsonError(err) }
+			if err != nil {
+				return jsonError(err)
+			}
 
 			return model.ToHashMap()
 		}
 	}
 
-	return jsonError( errors.New("Something went wrong...") )
+	return jsonError(errors.New("Something went wrong..."))
 }
