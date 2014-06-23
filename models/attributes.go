@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	CUSTOM_ATTRIBUTES_COLLECTION = "custom_attributes"
+	CustomAttributesCollection = "custom_attributes"
 )
 
-var global_custom_attributes = map[string]map[string]models.AttributeInfo{}
+var globalCustomAttributes = map[string]map[string]models.AttributeInfo{}
 
 type CustomAttributes struct {
 	model      string
@@ -24,20 +24,20 @@ func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
 	it.model = model
 	it.values = make(map[string]interface{})
 
-	_, present := global_custom_attributes[model]
+	_, present := globalCustomAttributes[model]
 
 	if present {
-		it.attributes = global_custom_attributes[model]
+		it.attributes = globalCustomAttributes[model]
 	} else {
 
-		it.attributes = make(map[string]models.T_AttributeInfo)
+		it.attributes = make(map[string]models.AttributeInfo)
 
 		dbEngine := database.GetDBEngine()
 		if dbEngine == nil {
 			return it, errors.New("There is no database engine")
 		}
 
-		caCollection, err := dbEngine.GetCollection(CUSTOM_ATTRIBUTES_COLLECTION)
+		caCollection, err := dbEngine.GetCollection(CustomAttributesCollection)
 		if err != nil {
 			return it, errors.New("Can't get collection 'custom_attributes': " + err.Error())
 		}
@@ -49,7 +49,7 @@ func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
 		}
 
 		for _, row := range dbValues {
-			attribute := models.T_AttributeInfo{
+			attribute := models.AttributeInfo{
 				Model:      row["model"].(string),
 				Collection: row["collection"].(string),
 				Attribute:  row["attribute"].(string),
@@ -64,7 +64,7 @@ func (it *CustomAttributes) Init(model string) (*CustomAttributes, error) {
 			it.attributes[attribute.Attribute] = attribute
 		}
 
-		global_custom_attributes[it.model] = it.attributes
+		globalCustomAttributes[it.model] = it.attributes
 	}
 
 	return it, nil
@@ -82,7 +82,7 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 		return errors.New("There is no attribute '" + attributeName + "' for model '" + it.model + "'")
 	}
 
-	caCollection, err := dbEngine.GetCollection(CUSTOM_ATTRIBUTES_COLLECTION)
+	caCollection, err := dbEngine.GetCollection(CustomAttributesCollection)
 	if err != nil {
 		return errors.New("Can't get collection 'custom_attributes': " + err.Error())
 	}
@@ -119,7 +119,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.T_AttributeInfo)
 	}
 
 	// getting collection where custom attribute information stores
-	caCollection, err := dbEngine.GetCollection(CUSTOM_ATTRIBUTES_COLLECTION)
+	caCollection, err := dbEngine.GetCollection(CustomAttributesCollection)
 	if err != nil {
 		return errors.New("Can't get collection 'custom_attributes': " + err.Error())
 	}

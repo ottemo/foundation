@@ -1,8 +1,7 @@
 package default_product
 
-import(
+import (
 	"github.com/ottemo/foundation/models"
-	"github.com/ottemo/foundation/models/custom_attributes"
 )
 
 func (it *DefaultProductModel) GetModelName() string {
@@ -16,7 +15,9 @@ func (it *DefaultProductModel) GetImplementationName() string {
 func (it *DefaultProductModel) New() (models.I_Model, error) {
 
 	customAttributes, err := new(custom_attributes.CustomAttributes).Init("product")
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
-	return &DefaultProductModel{ CustomAttributes: customAttributes }, nil
+	return &DefaultProductModel{CustomAttributes: customAttributes}, nil
 }
