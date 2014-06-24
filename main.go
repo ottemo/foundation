@@ -3,15 +3,12 @@ package main
 import (
 	"fmt"
 
-	app "github.com/ottemo/foundation/app"
+	config "github.com/ottemo/foundation/config"
 
-	_ "github.com/ottemo/foundation/config"
+	app "github.com/ottemo/foundation/app"
 
 	//_ "github.com/ottemo/foundation/database/sqlite"
 	_ "github.com/ottemo/foundation/database/mongodb"
-
-	_ "github.com/ottemo/foundation/rest_service"
-	_ "github.com/ottemo/foundation/rest_service/negroni"
 
 	_ "github.com/ottemo/foundation/models"
 	_ "github.com/ottemo/foundation/models/product/defaultproduct"
@@ -20,6 +17,10 @@ import (
 )
 
 func main() {
+	iniConfig := config.NewDefaultIniConfig()
+	app.OnAppStart(iniConfig.Startup)
+	config.RegisterIniConfig(iniConfig)
+
 	if err := app.Start(); err != nil {
 		fmt.Println(err.Error())
 	}

@@ -1,26 +1,28 @@
 package config
 
-import (
-	app "github.com/ottemo/foundation/app"
-	ini "github.com/vaughan0/go-ini"
-)
+import ini "github.com/vaughan0/go-ini"
 
 // DefaultIniConfig contains all values defined in the INI configuration file
 type DefaultIniConfig struct {
 	iniFileValues map[string]string
 }
 
-func init() {
-	instance := new(DefaultIniConfig)
+// func init() {
+// 	instance := new(DefaultIniConfig)
+//
+// 	app.OnAppStart(instance.startup)
+// 	RegisterIniConfig(instance)
+// }
 
-	app.OnAppStart(instance.startup)
-	RegisterIniConfig(instance)
+func NewDefaultIniConfig() *DefaultIniConfig {
+	dc := new(DefaultIniConfig)
+	return dc
 }
 
-func (dic *DefaultIniConfig) startup() error {
+func (dc *DefaultIniConfig) Startup() error {
 
 	iniFile, _ := ini.LoadFile("ottemo.ini")
-	dic.iniFileValues = iniFile.Section("")
+	dc.iniFileValues = iniFile.Section("")
 
 	err := OnConfigIniStart()
 
@@ -28,17 +30,17 @@ func (dic *DefaultIniConfig) startup() error {
 }
 
 // List contains all INI values
-func (dic *DefaultIniConfig) List() []string {
-	result := make([]string, len(dic.iniFileValues))
-	for itemName := range dic.iniFileValues {
+func (dc *DefaultIniConfig) List() []string {
+	result := make([]string, len(dc.iniFileValues))
+	for itemName := range dc.iniFileValues {
 		result = append(result, itemName)
 	}
 	return result
 }
 
 // GetValue retrieves the given value of the INI entity.
-func (dic *DefaultIniConfig) GetValue(Name string) string {
-	if value, present := dic.iniFileValues[Name]; present {
+func (dc *DefaultIniConfig) GetValue(Name string) string {
+	if value, present := dc.iniFileValues[Name]; present {
 		return value
 	}
 

@@ -3,17 +3,16 @@ package defaultproduct
 import (
 	"errors"
 
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/database"
 	"github.com/ottemo/foundation/models"
-
-	"github.com/ottemo/foundation/rest_service"
 )
 
 func init() {
 	models.RegisterModel("Product", new(DefaultProductModel))
 	database.RegisterOnDatabaseStart(SetupModel)
 
-	rest_service.RegisterOnRestServiceStart(SetupAPI)
+	api.RegisterOnEndPointStart(SetupAPI)
 }
 
 func SetupModel() error {
@@ -33,17 +32,17 @@ func SetupModel() error {
 }
 
 func SetupAPI() error {
-	err := rest_service.GetRestService().RegisterJsonAPI("product", "addAttribute", AddProductAttributeRestAPI)
+	err := api.GetEndPoint().RegisterJsonAPI("product", "addAttribute", AddProductAttributeRestAPI)
 	if err != nil {
 		return err
 	}
 
-	err = rest_service.GetRestService().RegisterJsonAPI("product", "createProduct", CreateProductRestAPI)
+	err = api.GetEndPoint().RegisterJsonAPI("product", "createProduct", CreateProductRestAPI)
 	if err != nil {
 		return err
 	}
 
-	err = rest_service.GetRestService().RegisterJsonAPI("product", "loadProduct", LoadProductRestAPI)
+	err = api.GetEndPoint().RegisterJsonAPI("product", "loadProduct", LoadProductRestAPI)
 	if err != nil {
 		return err
 	}

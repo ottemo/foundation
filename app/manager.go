@@ -1,8 +1,6 @@
 package app
 
-import (
-	"github.com/ottemo/foundation/rest_service"
-)
+import "github.com/ottemo/foundation/api"
 
 var callbacksOnAppStart = []func() error{}
 
@@ -22,7 +20,7 @@ func Start() error {
 	return nil
 }
 
-// Serve starts and returns the REST service
+// Serve starts and returns the REST Endpoint
 func Serve() error {
-	return rest_service.GetRestService().Run()
+	return api.GetEndPoint().Run()
 }
