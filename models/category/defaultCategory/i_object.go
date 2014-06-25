@@ -1,4 +1,4 @@
-package category
+package defaultCategory
 
 import (
 	"errors"

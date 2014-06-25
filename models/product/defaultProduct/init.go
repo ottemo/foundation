@@ -1,4 +1,4 @@
-package product
+package defaultProduct
 
 import (
 	"errors"

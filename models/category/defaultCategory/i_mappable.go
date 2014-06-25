@@ -1,4 +1,4 @@
-package category
+package defaultCategory
 
 func (it *DefaultCategory) FromHashMap(input map[string]interface{}) error {
 

@@ -1,4 +1,4 @@
-package visitor
+package defaultVisitor
 
 func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
