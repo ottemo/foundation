@@ -1,4 +1,4 @@
-package visitor
+package defaultVisitor
 
 import (
 	"github.com/ottemo/foundation/database"

@@ -1,4 +1,4 @@
-package category
+package defaultCategory
 
 import "github.com/ottemo/foundation/models/product"
 

@@ -1,4 +1,4 @@
-package visitor
+package defaultVisitor
 
 import (
 	"strings"
