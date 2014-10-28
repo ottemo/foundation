@@ -46,10 +46,6 @@ import (
 )
 
 func main() {
-	if err := app.Init(); err != nil {
-		fmt.Println(err.Error())
-	}
-
 	if err := app.Start(); err != nil {
 		fmt.Println(err.Error())
 	}
