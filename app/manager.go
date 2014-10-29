@@ -10,12 +10,15 @@ import (
 var (
 	initFlag  bool
 	startFlag bool
+	endFlag   bool
 
 	initMutex  sync.RWMutex
 	startMutex sync.RWMutex
+	endMutex   sync.RWMutex
 
 	callbacksOnAppInit  = []func() error{}
 	callbacksOnAppStart = []func() error{}
+	callbacksOnAppEnd   = []func() error{}
 )
 
 // registers callback function on application init event
@@ -26,6 +29,11 @@ func OnAppInit(callback func() error) {
 // registers callback function on application start event
 func OnAppStart(callback func() error) {
 	callbacksOnAppStart = append(callbacksOnAppStart, callback)
+}
+
+// registers callback function on application start event
+func OnAppEnd(callback func() error) {
+	callbacksOnAppEnd = append(callbacksOnAppEnd, callback)
 }
 
 // fires application init event for all registered modules
@@ -69,6 +77,28 @@ func Start() error {
 			}
 		}
 		startFlag = true
+	}
+
+	return nil
+}
+
+// fires application end event for all registered modules
+func End() error {
+	endMutex.Lock()
+	defer endMutex.Unlock()
+
+	if !endFlag {
+		endFlag = true
+
+		for _, callback := range callbacksOnAppEnd {
+			if err := callback(); err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
+
+		initFlag = false
+		startFlag = false
+		endFlag = false
 	}
 
 	return nil

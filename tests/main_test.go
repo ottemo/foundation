@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/app/models/product"
 )
 
+
 func TestGetAllProducts(t *testing.T) {
 	app.Start()
 
@@ -38,21 +39,21 @@ func BenchmarkGetAllProducts(b *testing.B) {
 
 }
 
-func BenchmarkGetAllProductsParallel(b *testing.B) {
-	app.Start()
-
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			productCollection, err := product.GetProductCollectionModel()
-			if err != nil {
-				b.Error(err)
-			}
-
-			_, err = productCollection.List()
-			if err != nil {
-				b.Error(err)
-			}
-		}
-	})
-}
+// func BenchmarkGetAllProductsParallel(b *testing.B) {
+// 	app.Start()
+//
+// 	b.ResetTimer()
+// 	b.RunParallel(func(pb *testing.PB) {
+// 		for pb.Next() {
+// 			productCollection, err := product.GetProductCollectionModel()
+// 			if err != nil {
+// 				b.Error(err)
+// 			}
+//
+// 			_, err = productCollection.List()
+// 			if err != nil {
+// 				b.Error(err)
+// 			}
+// 		}
+// 	})
+// }
