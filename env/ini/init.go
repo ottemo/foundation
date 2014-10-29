@@ -104,8 +104,8 @@ func (it *DefaultIniConfig) appInitEvent() error {
 	}
 	it.iniFilePath = iniFilePath
 
-	if envSectionName := os.Getenv(ENVIRONMENT_INI_SECTION) {
-
+	if envSectionName := os.Getenv(ENVIRONMENT_INI_SECTION); envSectionName != "" {
+		it.currentSection = envSectionName
 	}
 
 	// checking command line args for additional parameters

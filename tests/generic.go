@@ -4,8 +4,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/env/ini"
+	"github.com/ottemo/foundation/app"
 )
+
+// switches ini config to use value from test section instead of general
+func SwitchToTestIniSection() {
+	os.Setenv(ini.ENVIRONMENT_INI_SECTION, ini.TEST_SECTION_NAME)
+}
 
 // modifies current working directory to be same for all packages
 func UpdateWorkingDirectory() error {
@@ -38,10 +44,21 @@ func UpdateWorkingDirectory() error {
 
 // validates currently using database
 func CheckDB() error {
-	env.IniValue()
+
 }
 
 // prepares database to be used for tests
 func SetupDB() {
 
+}
+
+
+// you should use that function in your package GO tests to run application and init modules
+func StartAppTestingMode() {
+	UpdateWorkingDirectory()
+	SwitchToTestIniSection()
+
+	app.Start()
+
+	CheckDB()
 }
