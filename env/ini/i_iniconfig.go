@@ -28,7 +28,7 @@ func (it *DefaultIniConfig) ListItems() []string {
 	return result
 }
 
-// returns specified value from ini file
+// returns specified value from ini file, looks for value in current section then in global
 func (it *DefaultIniConfig) GetValue(valueName string, defaultValue string) string {
 
 	// looking for value in current section and global section
@@ -54,10 +54,56 @@ func (it *DefaultIniConfig) GetValue(valueName string, defaultValue string) stri
 		}
 
 		it.iniFileValues[it.currentSection][valueName] = value
-		it.keysToStore = append(it.keysToStore, valueName)
+		it.keysToStore[valueName] = true
 
 		return value
 	} else {
 		return defaultValue
 	}
+}
+
+// changes working ini section to specified
+func (it *DefaultIniConfig) SetWorkingSection(sectionName string) error {
+	it.currentSection = sectionName
+	return nil
+}
+
+// returns value assigned to specified ini section only, or [defaultValue] if not assigned
+func (it *DefaultIniConfig) GetSectionValue(sectionName string, valueName string, defaultValue string) string {
+	if value, present := it.iniFileValues[sectionName][valueName]; present {
+		return value
+	}
+	return defaultValue
+}
+
+// enumerates currently used ini sections
+func (it *DefaultIniConfig) ListSections() []string {
+	result := make([]string, 0, len(it.iniFileValues))
+	for sectionName, _ := range it.iniFileValues {
+		result = append(result, sectionName)
+	}
+	return result
+}
+
+// enumerates value names within specified ini section
+func (it *DefaultIniConfig) ListSectionItems(sectionName string) []string {
+	result := make([]string, 0)
+	if sectionValues, present := it.iniFileValues[sectionName]; present {
+		for valueName, _ := range sectionValues {
+			result = append(result, valueName)
+		}
+	}
+	return result
+}
+
+// sets/updates current working section value, modified value marks for saving
+func (it *DefaultIniConfig) SetValue(valueName string, value string) error {
+	if _, present := it.iniFileValues[it.currentSection]; !present {
+		it.iniFileValues[it.currentSection] = make(map[string]string)
+	}
+
+	it.iniFileValues[it.currentSection][valueName] = value
+	it.keysToStore[valueName] = true
+
+	return nil
 }

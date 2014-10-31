@@ -22,6 +22,8 @@ func init() {
 
 func (it *SQLite) Startup() error {
 
+	it.attributeTypes = make(map[string]map[string]string)
+
 	// opening connection
 	var uri string = "ottemo.db"
 

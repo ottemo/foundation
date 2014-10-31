@@ -13,14 +13,14 @@ import (
 
 const (
 	CMD_ARG_STORE_ALL_FLAG = "--iniStoreAll"
-	CMD_ARG_SECTION_NAME = "--iniSection="
-	CMD_ARG_TEST_FLAG = "--test"
+	CMD_ARG_SECTION_NAME   = "--iniSection="
+	CMD_ARG_TEST_FLAG      = "--test"
 
-	ENVIRONMENT_INI_FILE = "OTTEMO_INI"
+	ENVIRONMENT_INI_FILE    = "OTTEMO_INI"
 	ENVIRONMENT_INI_SECTION = "OTTEMO_MODE"
 
 	TEST_SECTION_NAME = "test"
-	DEFAULT_INI_FILE = "ottemo.ini"
+	DEFAULT_INI_FILE  = "ottemo.ini"
 )
 
 // module entry point before app start
@@ -29,7 +29,7 @@ func init() {
 	var _ env.I_IniConfig = instance
 
 	instance.iniFileValues = make(map[string]map[string]string)
-	instance.keysToStore = make([]string, 0)
+	instance.keysToStore = make(map[string]bool)
 
 	app.OnAppInit(instance.appInitEvent)
 	app.OnAppEnd(instance.appEndEvent)
@@ -43,7 +43,7 @@ func (it *DefaultIniConfig) appEndEvent() error {
 	// checking that we have to store ini file
 	if len(it.keysToStore) > 0 || it.storeAll {
 		// opening ini file
-		iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE | os.O_WRONLY, 0644)
+		iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 		defer iniFile.Close()
 
 		if err != nil {
@@ -61,31 +61,39 @@ func (it *DefaultIniConfig) appEndEvent() error {
 		for _, sectionName := range sortedSections {
 			sectionValues := it.iniFileValues[sectionName]
 
-			storingKeys := it.keysToStore
-			if it.storeAll {
-				allKeys := make([]string, 0, len(sectionValues))
-				for iniItem, _ := range sectionValues {
-					allKeys = append(allKeys, iniItem)
+			// section creation, global section have no header, instead of others
+			if sectionName != "" {
+				_, err := iniFile.WriteString("\n[" + sectionName + "]\n")
+				if err != nil {
+					return env.ErrorDispatch(err)
 				}
-				storingKeys = allKeys
 			}
-			sort.Strings(storingKeys)
+
+			var storingValueNames []string
+
+			if it.storeAll {
+				storingValueNames := make([]string, 0, len(sectionValues))
+				for iniItem, _ := range sectionValues {
+					storingValueNames = append(storingValueNames, iniItem)
+				}
+			} else {
+				storingValueNames = make([]string, 0, len(it.keysToStore))
+				for valueName, store := range it.keysToStore {
+					if store {
+						storingValueNames = append(storingValueNames, valueName)
+					}
+				}
+			}
+
+			sort.Strings(storingValueNames)
 
 			// loop over alphabetically sorted section values
-			for _, key := range it.keysToStore {
+			for _, key := range storingValueNames {
 				if value, present := sectionValues[key]; present {
 					_, err := iniFile.WriteString(key + "=" + value + "\n")
 					if err != nil {
 						env.ErrorDispatch(err)
 					}
-				}
-			}
-
-			// global section have no header, instead of others
-			if sectionName != "" {
-				_, err := iniFile.WriteString("\n[" + sectionName + "]\n")
-				if err != nil {
-					return env.ErrorDispatch(err)
 				}
 			}
 		}

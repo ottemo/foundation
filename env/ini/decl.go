@@ -10,6 +10,6 @@ type DefaultIniConfig struct {
 	iniFileValues  map[string]map[string]string
 	currentSection string
 
-	keysToStore []string
+	keysToStore map[string]bool
 	storeAll    bool
 }
