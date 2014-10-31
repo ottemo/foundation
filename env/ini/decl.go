@@ -1,6 +1,7 @@
 package ini
 
 const (
+	INI_GLOBAL_SECTION   = ""
 	ASK_FOR_VALUE_PREFIX = "?"
 )
 

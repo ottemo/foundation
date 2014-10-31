@@ -43,7 +43,7 @@ func (it *DefaultIniConfig) appEndEvent() error {
 	// checking that we have to store ini file
 	if len(it.keysToStore) > 0 || it.storeAll {
 		// opening ini file
-		iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+		iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		defer iniFile.Close()
 
 		if err != nil {
@@ -72,7 +72,7 @@ func (it *DefaultIniConfig) appEndEvent() error {
 			var storingValueNames []string
 
 			if it.storeAll {
-				storingValueNames := make([]string, 0, len(sectionValues))
+				storingValueNames = make([]string, 0, len(sectionValues))
 				for iniItem, _ := range sectionValues {
 					storingValueNames = append(storingValueNames, iniItem)
 				}
@@ -112,6 +112,9 @@ func (it *DefaultIniConfig) appInitEvent() error {
 	}
 	it.iniFilePath = iniFilePath
 
+	it.currentSection = INI_GLOBAL_SECTION
+	it.iniFileValues[INI_GLOBAL_SECTION] = make(map[string]string)
+
 	if envSectionName := os.Getenv(ENVIRONMENT_INI_SECTION); envSectionName != "" {
 		it.currentSection = envSectionName
 	}
@@ -136,6 +139,11 @@ func (it *DefaultIniConfig) appInitEvent() error {
 	iniFile, _ := goini.LoadFile(iniFilePath)
 	for sectionName, sectionValue := range iniFile {
 		it.iniFileValues[sectionName] = sectionValue
+
+		// so all the keys we read from file should be stored back
+		for valueName, _ := range sectionValue {
+			it.keysToStore[valueName] = true
+		}
 	}
 
 	// firing event for other packages waiting for ini

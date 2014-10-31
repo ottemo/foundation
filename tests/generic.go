@@ -122,7 +122,7 @@ func CheckTestIniDefaults() error {
 
 	if iniConfig.GetSectionValue(ini.TEST_SECTION_NAME, "mongodb.db", "") == "" {
 		dbValue := iniConfig.GetValue("mongodb.db", "ottemo") + "_test"
-		iniConfig.SetValue("mongodb.uri", dbValue)
+		iniConfig.SetValue("mongodb.db", dbValue)
 
 		changesMade = true
 	}

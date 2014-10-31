@@ -75,6 +75,21 @@ func TestProductsOperations(tst *testing.T) {
 		tst.Error(err)
 	}
 
+	// looking for "test" custom attribute
+	found := false
+	for _, attributeInfo := range productModel.GetAttributesInfo() {
+		if attributeInfo.Attribute == "test" {
+			found = true
+			break
+		}
+	}
+	if found {
+		err = productModel.RemoveAttribute("test")
+		if err != nil {
+			tst.Error(err)
+		}
+	}
+
 	// adding new attribute to system
 	err = productModel.AddNewAttribute(models.T_AttributeInfo{
 		Model:      product.MODEL_NAME_PRODUCT,
@@ -95,17 +110,6 @@ func TestProductsOperations(tst *testing.T) {
 		tst.Error(err)
 	}
 
-	// looking for just added custom attribute
-	found := false
-	for _, attributeInfo := range productModel.GetAttributesInfo() {
-		if attributeInfo.Attribute == "test" {
-			found = true
-		}
-	}
-	if !found {
-		tst.Error("custom attriute was not added")
-	}
-
 	// making data for test object
 	productData, err := utils.DecodeJsonToStringKeyMap(`{
 		"sku": "test",
@@ -115,7 +119,7 @@ func TestProductsOperations(tst *testing.T) {
 		"default_image": "",
 		"price": 1.1,
 		"weight": 0.5,
-		"test": "test value",
+		"test": "ok",
 		"options" : {
 			"Color" : {
 				"type" : "select", "required" : true, "price_type" : "fixed", "label" : "Color",
@@ -150,6 +154,12 @@ func TestProductsOperations(tst *testing.T) {
 
 	// deleting product
 	err = productModel.Delete()
+	if err != nil {
+		tst.Error(err)
+	}
+
+	// removing added attribute
+	err = productModel.RemoveAttribute("test")
 	if err != nil {
 		tst.Error(err)
 	}

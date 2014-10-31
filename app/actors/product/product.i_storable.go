@@ -60,12 +60,12 @@ func (it *DefaultProduct) Save() error {
 	}
 
 	newId, err := collection.Save(it.ToHashMap())
-	if err == nil {
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	err = it.SetId(newId)
-	if err == nil {
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 

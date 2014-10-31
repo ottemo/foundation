@@ -487,6 +487,8 @@ func (it *SQLiteCollection) AddColumn(columnName string, columnType string, inde
 		return sqlError(SQL, err)
 	}
 
+	it.ListColumns()
+
 	return nil
 }
 
@@ -509,28 +511,30 @@ func (it *SQLiteCollection) RemoveColumn(columnName string) error {
 	var tableCreateSQL string = ""
 
 	SQL := "SELECT sql FROM sqlite_master WHERE tbl_name='" + it.Name + "' AND type='table'"
-
 	stmt, err := connectionQuery(SQL)
-	defer closeStatement(stmt)
-	defer it.ListColumns()
-
 	if err != nil {
+		closeStatement(stmt)
 		return sqlError(SQL, err)
 	}
 
 	err = stmt.Scan(&tableCreateSQL)
 	if err != nil {
+		closeStatement(stmt)
 		return err
 	}
-
 	closeStatement(stmt)
+
+	SQL = "DELETE FROM " + COLLECTION_NAME_COLUMN_INFO + " WHERE collection='" + it.Name + "' AND column='" + columnName + "'"
+	if err := connectionExec(SQL); err != nil {
+		return sqlError(SQL, err)
+	}
 
 	// parsing create SQL, making same but w/o deleting column
 	//--------------------------------------------------------
 	tableColumnsWTypes := ""
 	tableColumnsWoTypes := ""
 
-	re := regexp.MustCompile("CREATE TABLE .*\\((.*)\\)")
+	re := regexp.MustCompile("CREATE TABLE [^(]*\\((.*)\\)$")
 	if regexMatch := re.FindStringSubmatch(tableCreateSQL); len(regexMatch) >= 2 {
 		tableColumnsList := strings.Split(regexMatch[1], ", ")
 
@@ -579,6 +583,8 @@ func (it *SQLiteCollection) RemoveColumn(columnName string) error {
 	if err := connectionExec(SQL); err != nil {
 		return sqlError(SQL, err)
 	}
+
+	it.ListColumns()
 
 	return nil
 }
