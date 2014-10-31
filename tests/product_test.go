@@ -15,7 +15,7 @@ import (
 )
 
 // function checks products count in DB and adds missing if needed
-func CheckAndUpdateProductsCount(countShouldBe int) error {
+func MakeSureProductsCount(countShouldBe int) error {
 
 	// getting database products count
 	productCollection, err := product.GetProductCollectionModel()
@@ -165,21 +165,21 @@ func TestProductsOperations(tst *testing.T) {
 	}
 }
 
-// idle benchmark test
-func BenchmarkSleep1000(b *testing.B) {
+// idle benchmark test, to check go bench not lying
+func BenchmarkSleep1sec(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		time.Sleep(1000)
+		time.Sleep(1000000000)
 	}
 }
 
 // benchmarks product list obtain operation
-func BenchmarkListProducts(b *testing.B) {
+func BenchmarkList50Products(b *testing.B) {
 	err := StartAppInTestingMode()
 	if err != nil {
 		b.Error(err)
 	}
 
-	err = CheckAndUpdateProductsCount(100)
+	err = MakeSureProductsCount(100)
 	if err != nil {
 		b.Error(err)
 	}
@@ -190,12 +190,46 @@ func BenchmarkListProducts(b *testing.B) {
 		if err != nil {
 			b.Error(err)
 		}
+
+		productCollection.ListLimit(0, 50)
+		if err != nil {
+			b.Error(err)
+		}
+
 		_, err = productCollection.List()
 		if err != nil {
 			b.Error(err)
 		}
 	}
+}
 
+// benchmarks product list obtain operation
+func BenchmarkRandomProductLoad(b *testing.B) {
+	err := StartAppInTestingMode()
+	if err != nil {
+		b.Error(err)
+	}
+
+	err = MakeSureProductsCount(100)
+	if err != nil {
+		b.Error(err)
+	}
+
+	productCollection, err := product.GetProductCollectionModel()
+	if err != nil {
+		b.Error(err)
+	}
+
+	productDBCollection := productCollection.GetDBCollection()
+	productDBCollection.SetResultColumns("_id")
+	productIds, err := productDBCollection.Load()
+	count := len(productIds)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		randomId := utils.InterfaceToString(productIds[rand.Intn(count)]["_id"])
+		product.LoadProductById(randomId)
+	}
 }
 
 // func BenchmarkGetAllProductsParallel(b *testing.B) {
