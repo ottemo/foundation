@@ -234,7 +234,6 @@ func BenchmarkRandomProductLoad(b *testing.B) {
 
 // func BenchmarkGetAllProductsParallel(b *testing.B) {
 // 	app.Start()
-//
 // 	b.ResetTimer()
 // 	b.RunParallel(func(pb *testing.PB) {
 // 		for pb.Next() {
@@ -242,7 +241,6 @@ func BenchmarkRandomProductLoad(b *testing.B) {
 // 			if err != nil {
 // 				b.Error(err)
 // 			}
-//
 // 			_, err = productCollection.List()
 // 			if err != nil {
 // 				b.Error(err)

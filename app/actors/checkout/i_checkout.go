@@ -1,12 +1,17 @@
 package checkout
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
-
-	"github.com/ottemo/foundation/api"
 )
 
 // SetShippingAddress sets shipping address for checkout
@@ -228,4 +233,156 @@ func (it *DefaultCheckout) GetOrder() order.I_Order {
 		}
 	}
 	return nil
+}
+
+// Submits checkout collected information and makes order
+func (it *DefaultCheckout) Submit() (interface{}, error) {
+
+	if it.GetBillingAddress() == nil {
+		return nil, env.ErrorNew("Billing address is not set")
+	}
+
+	if it.GetShippingAddress() == nil {
+		return nil, env.ErrorNew("Shipping address is not set")
+	}
+
+	if it.GetPaymentMethod() == nil {
+		return nil, env.ErrorNew("Payment method is not set")
+	}
+
+	if it.GetShippingMethod() == nil {
+		return nil, env.ErrorNew("Shipping method is not set")
+	}
+
+	currentCart := it.GetCart()
+	if currentCart == nil {
+		return nil, env.ErrorNew("Cart is not specified")
+	}
+
+	cartItems := currentCart.GetItems()
+	if len(cartItems) == 0 {
+		return nil, env.ErrorNew("Cart have no products inside")
+	}
+
+	// making new order if needed
+	//---------------------------
+	currentTime := time.Now()
+
+	checkoutOrder := it.GetOrder()
+	if checkoutOrder == nil {
+		newOrder, err := order.GetOrderModel()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		newOrder.Set("created_at", currentTime)
+
+		checkoutOrder = newOrder
+	}
+
+	// updating order information
+	//---------------------------
+	checkoutOrder.Set("updated_at", currentTime)
+
+	checkoutOrder.Set("status", "new")
+	if currentVisitor := it.GetVisitor(); currentVisitor != nil {
+		checkoutOrder.Set("visitor_id", currentVisitor.GetId())
+
+		checkoutOrder.Set("customer_email", currentVisitor.GetEmail())
+		checkoutOrder.Set("customer_name", currentVisitor.GetFullName())
+	}
+
+	billingAddress := it.GetBillingAddress().ToHashMap()
+	checkoutOrder.Set("billing_address", billingAddress)
+
+	shippingAddress := it.GetShippingAddress().ToHashMap()
+	checkoutOrder.Set("shipping_address", shippingAddress)
+
+	checkoutOrder.Set("cart_id", currentCart.GetId())
+	checkoutOrder.Set("payment_method", it.GetPaymentMethod().GetCode())
+	checkoutOrder.Set("shipping_method", it.GetShippingMethod().GetCode()+"/"+it.GetShippingRate().Code)
+
+	discountAmount, _ := it.GetDiscounts()
+	taxAmount, _ := it.GetTaxes()
+
+	checkoutOrder.Set("discount", discountAmount)
+	checkoutOrder.Set("tax_amount", taxAmount)
+	checkoutOrder.Set("shipping_amount", it.GetShippingRate().Price)
+
+	generateDescriptionFlag := false
+	orderDescription := utils.InterfaceToString(it.GetInfo("order_description"))
+	if orderDescription == "" {
+		generateDescriptionFlag = true
+	}
+
+	for _, cartItem := range cartItems {
+		orderItem, err := checkoutOrder.AddItem(cartItem.GetProductId(), cartItem.GetQty(), cartItem.GetOptions())
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		if generateDescriptionFlag {
+			if orderDescription != "" {
+				orderDescription += ", "
+			}
+			orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
+		}
+	}
+	checkoutOrder.Set("description", orderDescription)
+
+	err := checkoutOrder.CalculateTotals()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = checkoutOrder.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	it.SetOrder(checkoutOrder)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// trying to process payment
+	//--------------------------
+	paymentInfo := make(map[string]interface{})
+	paymentInfo["sessionId"] = it.GetSession().GetId()
+
+	result, err := it.GetPaymentMethod().Authorize(checkoutOrder, paymentInfo)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// TODO: should be different way to do that, result should be some interface or just error but not this
+	if result != nil {
+		return result, nil
+	}
+
+	// assigning new order increment id after success payment
+	//-------------------------------------------------------
+	checkoutOrder.NewIncrementId()
+
+	checkoutOrder.Set("status", "pending")
+
+	err = checkoutOrder.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = it.SendOrderConfirmationMail()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// cleanup checkout information
+	//-----------------------------
+	currentCart.Deactivate()
+	currentCart.Save()
+
+	it.GetSession().Set(cart.SESSION_KEY_CURRENT_CART, nil)
+	it.GetSession().Set(checkout.SESSION_KEY_CURRENT_CHECKOUT, nil)
+
+	return checkoutOrder.ToHashMap(), nil
 }

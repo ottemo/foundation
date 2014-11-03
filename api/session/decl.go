@@ -24,6 +24,36 @@ var (
 	gcRate int64 = 10
 )
 
+// returns session object for request or creates new one
+func StartSession(request *http.Request, responseWriter http.ResponseWriter) (*Session, error) {
+
+	// check session-cookie
+	cookie, err := request.Cookie(SESSION_COOKIE_NAME)
+	if err != nil {
+		if err != http.ErrNoCookie {
+			return nil, err
+		}
+	}
+
+	// looking for cookie-based session
+	sessionId := cookie.Value
+	if session, ok := Sessions[sessionId]; ok == true {
+		return session, nil
+	}
+
+	// cookie session is not set or expired, making new
+	result, err := NewSession()
+	if err != nil {
+		return nil, err
+	}
+
+	// storing session id to cookie
+	cookie = &http.Cookie{Name: SESSION_COOKIE_NAME, Value: sessionId, Path: "/"}
+	http.SetCookie(responseWriter, cookie)
+
+	return result, nil
+}
+
 // returns session object for given id or nil
 func GetSessionById(sessionId string) (*Session, error) {
 	if session, ok := Sessions[sessionId]; ok == true {
@@ -33,29 +63,8 @@ func GetSessionById(sessionId string) (*Session, error) {
 	}
 }
 
-// returns session object for request or creates new one
-func StartSession(request *http.Request, responseWriter http.ResponseWriter) (*Session, error) {
-
-	// check session-cookie
-	cookie, err := request.Cookie(SESSION_COOKIE_NAME)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			return newSession(responseWriter)
-		}
-		return nil, err
-	}
-
-	// session-cookie found
-	sessionId := cookie.Value
-	if session, ok := Sessions[sessionId]; ok == true {
-		return session, nil
-	}
-
-	return newSession(responseWriter)
-}
-
 // initializes new session
-func newSession(responseWriter http.ResponseWriter) (*Session, error) {
+func NewSession() (*Session, error) {
 
 	// receiving new session id
 	sessionId, err := newSessionId()
@@ -69,10 +78,6 @@ func newSession(responseWriter http.ResponseWriter) (*Session, error) {
 		id:     sessionId,
 		values: make(map[string]interface{}),
 		time:   time.Now()}
-
-	// updating cookies
-	cookie := &http.Cookie{Name: SESSION_COOKIE_NAME, Value: sessionId, Path: "/"}
-	http.SetCookie(responseWriter, cookie)
 
 	// garbage collecting
 	randomNumber, err := rand.Int(rand.Reader, big.NewInt(gcRate))

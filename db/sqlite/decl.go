@@ -10,7 +10,7 @@ import (
 const (
 	UUID_ID = true
 
-	DEBUG_SQL = true
+	DEBUG_SQL = false
 
 	FILTER_GROUP_STATIC  = "static"
 	FILTER_GROUP_DEFAULT = "default"

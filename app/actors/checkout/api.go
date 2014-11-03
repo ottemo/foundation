@@ -1,13 +1,8 @@
 package checkout
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 
@@ -338,171 +333,10 @@ func restCheckoutSetShippingMethod(params *api.T_APIHandlerParams) (interface{},
 // WEB REST API function to submit checkout information and make order
 func restSubmit(params *api.T_APIHandlerParams) (interface{}, error) {
 
-	// TODO: should be splited on smaller functions
-	// TODO: order for checkout perhaps should be associated with cart
-
-	// checking for needed information
-	//--------------------------------
 	currentCheckout, err := checkout.GetCurrentCheckout(params)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if currentCheckout.GetBillingAddress() == nil {
-		return nil, env.ErrorNew("Billing address is not set")
-	}
-
-	if currentCheckout.GetShippingAddress() == nil {
-		return nil, env.ErrorNew("Shipping address is not set")
-	}
-
-	if currentCheckout.GetPaymentMethod() == nil {
-		return nil, env.ErrorNew("Payment method is not set")
-	}
-
-	if currentCheckout.GetShippingMethod() == nil {
-		return nil, env.ErrorNew("Shipping method is not set")
-	}
-
-	currentCart := currentCheckout.GetCart()
-	if currentCart == nil {
-		return nil, env.ErrorNew("Cart is not specified")
-	}
-
-	cartItems := currentCart.GetItems()
-	if len(cartItems) == 0 {
-		return nil, env.ErrorNew("Cart have no products inside")
-	}
-
-	// checking for additional info
-	//-----------------------------
-	contentValues := make(map[string]interface{})
-
-	if params.Request.Method == "POST" {
-		postValues, err := api.GetRequestContentAsMap(params)
-		if err == nil {
-			contentValues = postValues
-		}
-	}
-
-	contentValues["sessionId"] = params.Session.GetId()
-	// making new order if needed
-	//---------------------------
-	currentTime := time.Now()
-
-	checkoutOrder := currentCheckout.GetOrder()
-	if checkoutOrder == nil {
-		newOrder, err := order.GetOrderModel()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
-		newOrder.Set("created_at", currentTime)
-
-		checkoutOrder = newOrder
-	}
-
-	// updating order information
-	//---------------------------
-	checkoutOrder.Set("updated_at", currentTime)
-
-	checkoutOrder.Set("status", "new")
-	if currentVisitor := currentCheckout.GetVisitor(); currentVisitor != nil {
-		checkoutOrder.Set("visitor_id", currentVisitor.GetId())
-
-		checkoutOrder.Set("customer_email", currentVisitor.GetEmail())
-		checkoutOrder.Set("customer_name", currentVisitor.GetFullName())
-	}
-
-	billingAddress := currentCheckout.GetBillingAddress().ToHashMap()
-	checkoutOrder.Set("billing_address", billingAddress)
-
-	shippingAddress := currentCheckout.GetShippingAddress().ToHashMap()
-	checkoutOrder.Set("shipping_address", shippingAddress)
-
-	checkoutOrder.Set("cart_id", currentCart.GetId())
-	checkoutOrder.Set("payment_method", currentCheckout.GetPaymentMethod().GetCode())
-	checkoutOrder.Set("shipping_method", currentCheckout.GetShippingMethod().GetCode()+"/"+currentCheckout.GetShippingRate().Code)
-
-	discountAmount, _ := currentCheckout.GetDiscounts()
-	taxAmount, _ := currentCheckout.GetTaxes()
-
-	checkoutOrder.Set("discount", discountAmount)
-	checkoutOrder.Set("tax_amount", taxAmount)
-	checkoutOrder.Set("shipping_amount", currentCheckout.GetShippingRate().Price)
-
-	generateDescriptionFlag := false
-	orderDescription := utils.InterfaceToString(currentCheckout.GetInfo("order_description"))
-	if orderDescription == "" {
-		generateDescriptionFlag = true
-	}
-
-	for _, cartItem := range cartItems {
-		orderItem, err := checkoutOrder.AddItem(cartItem.GetProductId(), cartItem.GetQty(), cartItem.GetOptions())
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
-		if generateDescriptionFlag {
-			if orderDescription != "" {
-				orderDescription += ", "
-			}
-			orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
-		}
-	}
-	checkoutOrder.Set("description", orderDescription)
-
-	err = checkoutOrder.CalculateTotals()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	err = checkoutOrder.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	currentCheckout.SetOrder(checkoutOrder)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// trying to process payment
-	//--------------------------
-	result, err := currentCheckout.GetPaymentMethod().Authorize(checkoutOrder, contentValues)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if result != nil {
-		return result, nil
-	}
-
-	// assigning new order increment id after success payment
-	//-------------------------------------------------------
-	checkoutOrder.NewIncrementId()
-
-	checkoutOrder.Set("status", "pending")
-
-	err = checkoutOrder.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if currentCheckout, ok := currentCheckout.(*DefaultCheckout); ok {
-		err = currentCheckout.SendOrderConfirmationMail()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-	}
-
-	// cleanup checkout information
-	//-----------------------------
-	currentCart.Deactivate()
-	currentCart.Save()
-
-	params.Session.Set(cart.SESSION_KEY_CURRENT_CART, nil)
-	params.Session.Set(checkout.SESSION_KEY_CURRENT_CHECKOUT, nil)
-
-	return checkoutOrder.ToHashMap(), nil
+	return currentCheckout.Submit()
 }
