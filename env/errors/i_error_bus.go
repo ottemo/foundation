@@ -92,6 +92,8 @@ func (it *DefaultErrorBus) Dispatch(err error) error {
 			return ottemoErr
 		}
 
+		ottemoErr.handled = true
+
 		for _, listener := range it.listeners {
 			if listener(ottemoErr) {
 				break

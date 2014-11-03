@@ -39,7 +39,7 @@ func SendMail(to string, subject string, body string) error {
 	if mailPort != "" {
 		mailPort = ":" + mailPort
 	} else {
-		mailPort = ":25"
+		return nil
 	}
 
 	context := map[string]interface{}{

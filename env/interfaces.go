@@ -36,8 +36,15 @@ type I_Logger interface {
 }
 
 type I_IniConfig interface {
-	GetValue(Name string, Default string) string
+	SetWorkingSection(sectionName string) error
+	SetValue(valueName string, value string) error
+
+	GetSectionValue(sectionName string, valueName string, defaultValue string) string
+	GetValue(valueName string, defaultValue string) string
+
+	ListSections() []string
 	ListItems() []string
+	ListSectionItems(sectionName string) []string
 }
 
 type I_Config interface {

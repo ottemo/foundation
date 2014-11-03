@@ -47,6 +47,8 @@ type I_Checkout interface {
 
 	SendOrderConfirmationMail() error
 
+	Submit() (interface{}, error)
+
 	models.I_Model
 }
 

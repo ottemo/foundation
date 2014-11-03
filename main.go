@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ottemo/foundation/app"
 
@@ -46,9 +49,20 @@ import (
 )
 
 func main() {
-	if err := app.Init(); err != nil {
-		fmt.Println(err.Error())
-	}
+	defer app.End()
+
+	signalChain := make(chan os.Signal, 1)
+	signal.Notify(signalChain, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		for _ = range signalChain {
+			err := app.End()
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
+			os.Exit(0)
+		}
+	}()
 
 	if err := app.Start(); err != nil {
 		fmt.Println(err.Error())

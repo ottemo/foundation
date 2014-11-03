@@ -119,7 +119,7 @@ func GetDBType(ColumnType string) (string, error) {
 		return "INTEGER", nil
 	case ColumnType == "real" || ColumnType == "float":
 		return "REAL", nil
-	case ColumnType == "string" || ColumnType == "text" || strings.Contains(ColumnType, "char"):
+	case ColumnType == "string" || ColumnType == "text" || ColumnType == "json" || strings.Contains(ColumnType, "char"):
 		return "TEXT", nil
 	case ColumnType == "blob" || ColumnType == "struct" || ColumnType == "data":
 		return "BLOB", nil

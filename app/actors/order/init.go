@@ -83,7 +83,6 @@ func setupDB() error {
 
 		collection.AddColumn("price", "decimal(10,2)", false)
 		collection.AddColumn("weight", "decimal(10,2)", false)
-		collection.AddColumn("size", "decimal(10,2)", false)
 
 	} else {
 		return env.ErrorNew("Can't get database engine")
