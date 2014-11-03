@@ -1,65 +1,14 @@
 package tests
 
 import (
-	"errors"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
-
-	golorem "github.com/drhodes/golorem"
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/utils"
 )
-
-// function checks products count in DB and adds missing if needed
-func MakeSureProductsCount(countShouldBe int) error {
-
-	// getting database products count
-	productCollection, err := product.GetProductCollectionModel()
-	if err != nil {
-		return err
-	}
-
-	productDBCollection := productCollection.GetDBCollection()
-	if productDBCollection == nil {
-		return errors.New("can't get db collection")
-	}
-
-	count, err := productDBCollection.Count()
-	if err != nil {
-		return err
-	}
-
-	// adding missed products
-	for i := count; i <= countShouldBe; i++ {
-		productModel, err := product.GetProductModel()
-		if err != nil {
-			return err
-		}
-
-		productModel.Set("sku", fmt.Sprintf("test-%d", i))
-		productModel.Set("name", fmt.Sprintf("Test Product %d", i))
-
-		productModel.Set("short_description", golorem.Paragraph(1, 5))
-		productModel.Set("description", golorem.Paragraph(5, 10))
-
-		productModel.Set("default_image", "")
-		productModel.Set("price", utils.RoundPrice(rand.Float64()*10))
-		productModel.Set("weight", utils.RoundPrice(rand.Float64()*10))
-
-		// productModel.Set("options", "")
-
-		err = productModel.Save()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 // function used to test most product model operations
 func TestProductsOperations(tst *testing.T) {
@@ -203,8 +152,42 @@ func BenchmarkList50Products(b *testing.B) {
 	}
 }
 
-// benchmarks product list obtain operation
-func BenchmarkRandomProductLoad(b *testing.B) {
+// benchmarks product load operation throught collection
+func BenchmarkProductCntLoad(b *testing.B) {
+	err := StartAppInTestingMode()
+	if err != nil {
+		b.Error(err)
+	}
+
+	err = MakeSureProductsCount(100)
+	if err != nil {
+		b.Error(err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		productCollection, err := product.GetProductCollectionModel()
+		if err != nil {
+			b.Error(err)
+		}
+
+		productsCount, err := productCollection.GetDBCollection().Count()
+		if err != nil {
+			b.Error(err)
+		}
+		//productsCount := 100
+
+		err = productCollection.ListLimit(rand.Intn(productsCount), 1)
+		if err != nil {
+			b.Error(err)
+		}
+
+		productCollection.ListProducts()
+	}
+}
+
+// benchmarks product load operation
+func BenchmarkProductLoad(b *testing.B) {
 	err := StartAppInTestingMode()
 	if err != nil {
 		b.Error(err)
