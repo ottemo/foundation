@@ -29,16 +29,16 @@ func StartSession(request *http.Request, responseWriter http.ResponseWriter) (*S
 
 	// check session-cookie
 	cookie, err := request.Cookie(SESSION_COOKIE_NAME)
-	if err != nil {
+	if err == nil {
+		// looking for cookie-based session
+		sessionId := cookie.Value
+		if session, ok := Sessions[sessionId]; ok == true {
+			return session, nil
+		}
+	} else {
 		if err != http.ErrNoCookie {
 			return nil, err
 		}
-	}
-
-	// looking for cookie-based session
-	sessionId := cookie.Value
-	if session, ok := Sessions[sessionId]; ok == true {
-		return session, nil
 	}
 
 	// cookie session is not set or expired, making new
@@ -48,7 +48,7 @@ func StartSession(request *http.Request, responseWriter http.ResponseWriter) (*S
 	}
 
 	// storing session id to cookie
-	cookie = &http.Cookie{Name: SESSION_COOKIE_NAME, Value: sessionId, Path: "/"}
+	cookie = &http.Cookie{Name: SESSION_COOKIE_NAME, Value: result.GetId(), Path: "/"}
 	http.SetCookie(responseWriter, cookie)
 
 	return result, nil
