@@ -107,8 +107,8 @@ func restUpdateVisitorAddress(params *api.T_APIHandlerParams) (interface{}, erro
 
 	// check request params
 	//---------------------
-	addressId, isSpecifiedId := params.RequestURLParams["id"]
-	if !isSpecifiedId {
+	addressID, isSpecifiedID := params.RequestURLParams["id"]
+	if !isSpecifiedID {
 		return nil, env.ErrorNew("visitor address 'id' was not specified")
 	}
 
@@ -117,7 +117,7 @@ func restUpdateVisitorAddress(params *api.T_APIHandlerParams) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorAddressModel, err := visitor.LoadVisitorAddressById(addressId)
+	visitorAddressModel, err := visitor.LoadVisitorAddressById(addressID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -152,12 +152,12 @@ func restDeleteVisitorAddress(params *api.T_APIHandlerParams) (interface{}, erro
 
 	// check request params
 	//--------------------
-	addressId, isSpecifiedId := params.RequestURLParams["id"]
-	if !isSpecifiedId {
+	addressID, isSpecifiedID := params.RequestURLParams["id"]
+	if !isSpecifiedID {
 		return nil, env.ErrorNew("visitor address id was not specified")
 	}
 
-	visitorAddressModel, err := visitor.LoadVisitorAddressById(addressId)
+	visitorAddressModel, err := visitor.LoadVisitorAddressById(addressID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -225,24 +225,24 @@ func restListVisitorAddress(params *api.T_APIHandlerParams) (interface{}, error)
 	if !ok {
 		if params.Request.Method == "POST" {
 			return nil, env.ErrorNew("unexpected request content")
-		} else {
-			reqData = make(map[string]interface{})
 		}
+
+		reqData = make(map[string]interface{})
 	}
 
-	visitorId, isSpecifiedId := params.RequestURLParams["visitorId"]
-	if !isSpecifiedId {
+	visitorID, isSpecifiedID := params.RequestURLParams["visitorId"]
+	if !isSpecifiedID {
 
-		sessionVisitorId := visitor.GetCurrentVisitorId(params)
-		if sessionVisitorId == "" {
+		sessionVisitorID := visitor.GetCurrentVisitorId(params)
+		if sessionVisitorID == "" {
 			return nil, env.ErrorNew("you are not logined in")
 		}
-		visitorId = sessionVisitorId
+		visitorID = sessionVisitorID
 	}
 
 	// check rights
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitorId != visitor.GetCurrentVisitorId(params) {
+		if visitorID != visitor.GetCurrentVisitorId(params) {
 			return nil, env.ErrorDispatch(err)
 		}
 	}
@@ -254,7 +254,7 @@ func restListVisitorAddress(params *api.T_APIHandlerParams) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 	dbCollection := visitorAddressCollectionModel.GetDBCollection()
-	dbCollection.AddStaticFilter("visitor_id", "=", visitorId)
+	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
 
 	// limit parameter handle
 	visitorAddressCollectionModel.ListLimit(api.GetListLimit(params))
@@ -279,12 +279,12 @@ func restListVisitorAddress(params *api.T_APIHandlerParams) (interface{}, error)
 // WEB REST API used to get visitor address object
 //   - visitor address id must be specified in request URI
 func restGetVisitorAddress(params *api.T_APIHandlerParams) (interface{}, error) {
-	visitorAddressId, isSpecifiedId := params.RequestURLParams["id"]
-	if !isSpecifiedId {
+	visitorAddressID, isSpecifiedID := params.RequestURLParams["id"]
+	if !isSpecifiedID {
 		return nil, env.ErrorNew("visitor 'id' was not specified")
 	}
 
-	visitorAddressModel, err := visitor.LoadVisitorAddressById(visitorAddressId)
+	visitorAddressModel, err := visitor.LoadVisitorAddressById(visitorAddressID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

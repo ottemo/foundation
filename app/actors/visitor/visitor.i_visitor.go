@@ -29,13 +29,13 @@ func (it *DefaultVisitor) passwdEncode(passwd string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-// returns visitor e-mail, which also used as login
+// GetEmail returns visitor e-mail, which also used as login
 func (it *DefaultVisitor) GetEmail() string {
 	return it.Email
 }
 
-// returns visitor facebook id
-func (it *DefaultVisitor) GetFacebookId() string {
+// GetFacebookID returns visitor facebook id
+func (it *DefaultVisitor) GetFacebookID() string {
 	return it.FacebookId
 }
 

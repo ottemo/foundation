@@ -9,7 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// returns object attribute value or nil
+// Get returns the requested default attribute value for the Visitor or nil
 func (it *DefaultVisitor) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
@@ -45,7 +45,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	return it.CustomAttributes.Get(attribute)
 }
 
-// sets attribute value to object or returns error
+// Set takes a string and will set the provided attribute value on the Visitor or returns error
 func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	attribute = strings.ToLower(attribute)
 
@@ -77,8 +77,8 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "billing_address_id", "shipping_address_id":
 		value := utils.InterfaceToString(value)
 
-		var address visitor.I_VisitorAddress = nil
-		var err error = nil
+		var address visitor.I_VisitorAddress
+		var err error
 
 		if value != "" {
 			address, err = visitor.LoadVisitorAddressById(value)
@@ -111,8 +111,8 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 
 		// we have sub-map, supposedly I_VisitorAddress capable
 		case map[string]interface{}:
-			var addressModel visitor.I_VisitorAddress = nil
-			var err error = nil
+			var addressModel visitor.I_VisitorAddress
+			var err error
 
 			if len(typedValue) != 0 {
 				addressModel, err = visitor.GetVisitorAddressModel()
@@ -145,7 +145,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-// fills object attributes from map[string]interface{}
+// FromHashMap will populate the Visitor object attributes from the given map[string]interface{}
 func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
@@ -157,7 +157,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 	return nil
 }
 
-// represents object as map[string]interface{}
+// ToHashMap will return the Visitor represented as a map[string]interface{}
 func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
 	result := it.CustomAttributes.ToHashMap()
@@ -189,7 +189,7 @@ func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 	return result
 }
 
-// returns information about object attributes
+// GetAttributesInfo will return the current Visitor object attributes and related information
 func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 
 	result := []models.T_AttributeInfo{

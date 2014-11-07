@@ -1,23 +1,26 @@
 package visitor
 
 import (
-	"github.com/ottemo/foundation/app/models"
 	"time"
+
+	"github.com/ottemo/foundation/app/models"
 )
 
+// Constants related to working with Visitors and their attributes
 const (
-	MODEL_NAME_VISITOR                    = "Visitor"
-	MODEL_NAME_VISITOR_COLLECTION         = "VisitorCollection"
-	MODEL_NAME_VISITOR_ADDRESS            = "VisitorAddress"
-	MODEL_NAME_VISITOR_ADDRESS_COLLECTION = "VisitorAddressCollection"
+	ModelNameVisitor                  = "Visitor"
+	ModelNameVisitorCollection        = "VisitorCollection"
+	ModelNameVisitorAddress           = "VisitorAddress"
+	ModelNameVisitorAddressCollection = "VisitorAddressCollection"
 
-	SESSION_KEY_VISITOR_ID = "visitor_id"
+	SessionKeyVisitorID = "visitor_id"
 )
 
+// I_Visitor is the default Visitor interface
 type I_Visitor interface {
 	GetEmail() string
-	GetFacebookId() string
-	GetGoogleId() string
+	GetFacebookID() string
+	GetGoogleID() string
 
 	GetFullName() string
 	GetFirstName() string
@@ -43,8 +46,8 @@ type I_Visitor interface {
 	Validate(key string) error
 
 	LoadByEmail(email string) error
-	LoadByFacebookId(facebookId string) error
-	LoadByGoogleId(googleId string) error
+	LoadByFacebookID(facebookID string) error
+	LoadByGoogleID(googleID string) error
 
 	models.I_Model
 	models.I_Object
@@ -53,12 +56,14 @@ type I_Visitor interface {
 	models.I_CustomAttributes
 }
 
+// I_VisitorCollection is the interface for working with groups of Visitors
 type I_VisitorCollection interface {
 	ListVisitors() []I_Visitor
 
 	models.I_Collection
 }
 
+// I_VisitorAddress is the interface which holds address information for Visitors
 type I_VisitorAddress interface {
 	GetVisitorId() string
 
@@ -83,6 +88,7 @@ type I_VisitorAddress interface {
 	models.I_Storable
 }
 
+// I_VisitorAddressCollection is the interfac for working wiht groups of addresses
 type I_VisitorAddressCollection interface {
 	ListVisitorsAddresses() []I_VisitorAddress
 
