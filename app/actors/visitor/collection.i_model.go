@@ -7,19 +7,19 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// returns model name
+// GetModelName returns model name
 func (it *DefaultVisitorCollection) GetModelName() string {
-	return visitor.MODEL_NAME_VISITOR_COLLECTION
+	return visitor.ModelNameVisitorCollection
 }
 
-// returns model implementation name
+// GetImplementationName returns model implementation name
 func (it *DefaultVisitorCollection) GetImplementationName() string {
-	return "Default" + visitor.MODEL_NAME_VISITOR_COLLECTION
+	return "Default" + visitor.ModelNameVisitorCollection
 }
 
-// returns new instance of model implementation object
+// New returns new instance of model implementation object
 func (it *DefaultVisitorCollection) New() (models.I_Model, error) {
-	dbCollection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	dbCollection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

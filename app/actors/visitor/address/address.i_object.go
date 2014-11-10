@@ -1,11 +1,12 @@
 package address
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 func (it *DefaultVisitorAddress) Get(attribute string) interface{} {
@@ -120,7 +121,7 @@ func (it *DefaultVisitorAddress) ToHashMap() map[string]interface{} {
 func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 	info := []models.T_AttributeInfo{
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "_id",
 			Type:       "id",
@@ -131,7 +132,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "visitor_id",
 			Type:       "id",
@@ -142,7 +143,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "address_line1",
 			Type:       "varchar(255)",
@@ -153,7 +154,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "address_line2",
 			Type:       "varchar(255)",
@@ -164,7 +165,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "first_name",
 			Type:       "varchar(100)",
@@ -175,7 +176,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "last_name",
 			Type:       "varchar(100)",
@@ -186,7 +187,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "company",
 			Type:       "varchar(100)",
@@ -197,7 +198,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "country",
 			Type:       "varchar(50)",
@@ -208,7 +209,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "city",
 			Type:       "varchar(100)",
@@ -219,7 +220,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "phone",
 			Type:       "varchar(100)",
@@ -230,7 +231,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "state",
 			Type:       "varchar(2)",
@@ -241,7 +242,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR_ADDRESS,
+			Model:      visitor.ModelNameVisitorAddress,
 			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
 			Attribute:  "zip_code",
 			Type:       "varchar(10)",

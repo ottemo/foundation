@@ -12,11 +12,11 @@ import (
 func init() {
 	visitorAddressInstance := new(DefaultVisitorAddress)
 	var _ visitor.I_VisitorAddress = visitorAddressInstance
-	models.RegisterModel(visitor.MODEL_NAME_VISITOR_ADDRESS, visitorAddressInstance)
+	models.RegisterModel(visitor.ModelNameVisitorAddress, visitorAddressInstance)
 
 	visitorAddressCollectionInstance := new(DefaultVisitorAddressCollection)
 	var _ visitor.I_VisitorAddressCollection = visitorAddressCollectionInstance
-	models.RegisterModel(visitor.MODEL_NAME_VISITOR_ADDRESS_COLLECTION, visitorAddressCollectionInstance)
+	models.RegisterModel(visitor.ModelNameVisitorAddressCollection, visitorAddressCollectionInstance)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)

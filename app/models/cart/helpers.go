@@ -8,7 +8,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// retrieves current I_Cart model implementation
+// GetCartModel retrieves current I_Cart model implementation
 func GetCartModel() (I_Cart, error) {
 	model, err := models.GetModel(CART_MODEL_NAME)
 	if err != nil {
@@ -23,7 +23,7 @@ func GetCartModel() (I_Cart, error) {
 	return cartModel, nil
 }
 
-// retrieves current I_Cart model implementation and sets its ID to some value
+// GetCartModelAndSetId retrieves current I_Cart model implementation and sets its ID to some value
 func GetCartModelAndSetId(cartId string) (I_Cart, error) {
 
 	cartModel, err := GetCartModel()
@@ -39,7 +39,7 @@ func GetCartModelAndSetId(cartId string) (I_Cart, error) {
 	return cartModel, nil
 }
 
-// loads cart data into current I_Cart model implementation
+// LoadCartById loads cart data into current I_Cart model implementation
 func LoadCartById(cartId string) (I_Cart, error) {
 
 	cartModel, err := GetCartModel()
@@ -55,7 +55,7 @@ func LoadCartById(cartId string) (I_Cart, error) {
 	return cartModel, nil
 }
 
-// loads cart for visitor or creates new one
+// GetCartForVisitor loads cart for visitor or creates new one
 func GetCartForVisitor(visitorId string) (I_Cart, error) {
 	cartModel, err := GetCartModel()
 	if err != nil {
@@ -87,7 +87,7 @@ func GetCurrentCart(params *api.T_APIHandlerParams) (I_Cart, error) {
 	} else {
 
 		// no cart id was in session, trying to get cart for visitor
-		visitorId := params.Session.Get(visitor.SESSION_KEY_VISITOR_ID)
+		visitorId := params.Session.Get(visitor.SessionKeyVisitorID)
 		if visitorId != nil {
 			currentCart, err := GetCartForVisitor(utils.InterfaceToString(visitorId))
 			if err != nil {

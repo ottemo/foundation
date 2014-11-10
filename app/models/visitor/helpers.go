@@ -90,7 +90,7 @@ func GetVisitorModelAndSetID(visitorID string) (I_Visitor, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorModel.SetId(visitorId)
+	err = visitorModel.SetId(visitorID)
 	if err != nil {
 		return visitorModel, env.ErrorDispatch(err)
 	}
@@ -130,24 +130,24 @@ func LoadVisitorByID(visitorID string) (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// returns visitor id for current session if registered or ""
-func GetCurrentVisitorId(params *api.T_APIHandlerParams) string {
-	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+// GetCurrentVisitorID returns visitor id for current session if registered or ""
+func GetCurrentVisitorID(params *api.T_APIHandlerParams) string {
+	sessionVisitorID, ok := params.Session.Get(SessionKeyVisitorID).(string)
 	if !ok {
 		return ""
 	}
 
-	return sessionVisitorId
+	return sessionVisitorID
 }
 
-// returns visitor for current session if registered or error
+// GetCurrentVisitor returns visitor for current session if registered or error
 func GetCurrentVisitor(params *api.T_APIHandlerParams) (I_Visitor, error) {
-	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+	sessionVisitorID, ok := params.Session.Get(SessionKeyVisitorID).(string)
 	if !ok {
 		return nil, env.ErrorNew("not registered visitor")
 	}
 
-	visitorInstance, err := LoadVisitorById(sessionVisitorId)
+	visitorInstance, err := LoadVisitorByID(sessionVisitorID)
 
 	return visitorInstance, env.ErrorDispatch(err)
 }

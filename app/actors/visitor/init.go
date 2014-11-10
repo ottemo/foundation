@@ -12,11 +12,11 @@ import (
 func init() {
 	visitorInstance := new(DefaultVisitor)
 	var _ visitor.I_Visitor = visitorInstance
-	models.RegisterModel(visitor.MODEL_NAME_VISITOR, visitorInstance)
+	models.RegisterModel(visitor.ModelNameVisitor, visitorInstance)
 
 	visitorCollectionInstance := new(DefaultVisitorCollection)
 	var _ visitor.I_VisitorCollection = visitorCollectionInstance
-	models.RegisterModel(visitor.MODEL_NAME_VISITOR_COLLECTION, visitorCollectionInstance)
+	models.RegisterModel(visitor.ModelNameVisitorCollection, visitorCollectionInstance)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)
@@ -25,7 +25,7 @@ func init() {
 // setups database tables for model usage
 func setupDB() error {
 
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	collection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

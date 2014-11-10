@@ -31,9 +31,9 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "validate":
 		return it.ValidateKey
 	case "facebook_id":
-		return it.FacebookId
+		return it.FacebookID
 	case "google_id":
-		return it.GoogleId
+		return it.GoogleID
 	case "birthday":
 		return it.Birthday
 	case "is_admin":
@@ -63,9 +63,9 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "validate":
 		it.ValidateKey = utils.InterfaceToString(value)
 	case "facebook_id":
-		it.FacebookId = utils.InterfaceToString(value)
+		it.FacebookID = utils.InterfaceToString(value)
 	case "google_id":
-		it.GoogleId = utils.InterfaceToString(value)
+		it.GoogleID = utils.InterfaceToString(value)
 	case "birthday":
 		it.Birthday = utils.InterfaceToTime(value)
 	case "is_admin":
@@ -81,7 +81,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 		var err error
 
 		if value != "" {
-			address, err = visitor.LoadVisitorAddressById(value)
+			address, err = visitor.LoadVisitorAddressByID(value)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}

@@ -171,7 +171,7 @@ func restUpdateVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 	visitorID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
 
-		sessionValue := params.Session.Get(visitor.SESSION_KEY_VISITOR_ID)
+		sessionValue := params.Session.Get(visitor.SessionKeyVisitorID)
 		sessionVisitorID, ok := sessionValue.(string)
 		if !ok {
 			return nil, env.ErrorNew("you are not logined in")
@@ -185,7 +185,7 @@ func restUpdateVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitor.GetCurrentVisitorId(params) != visitorID {
+		if visitor.GetCurrentVisitorID(params) != visitorID {
 			return nil, env.ErrorDispatch(err)
 		}
 
@@ -196,7 +196,7 @@ func restUpdateVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// update operation
 	//-----------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorByID(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -233,7 +233,7 @@ func restDeleteVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// delete operation
 	//-----------------
-	visitorModel, err := visitor.GetVisitorModelAndSetId(visitorID)
+	visitorModel, err := visitor.GetVisitorModelAndSetID(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -263,7 +263,7 @@ func restGetVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// get operation
 	//--------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorByID(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -377,8 +377,8 @@ func restAddVisitorAttribute(params *api.T_APIHandlerParams) (interface{}, error
 	}
 
 	attribute := models.T_AttributeInfo{
-		Model:      visitor.MODEL_NAME_VISITOR,
-		Collection: COLLECTION_NAME_VISITOR,
+		Model:      visitor.ModelNameVisitor,
+		Collection: CollectionNameVisitor,
 		Attribute:  utils.InterfaceToString(attributeName),
 		Type:       "text",
 		IsRequired: false,
@@ -542,7 +542,7 @@ func restForgotPassword(params *api.T_APIHandlerParams) (interface{}, error) {
 //   - visitor id must be specified in request URI
 func restInfo(params *api.T_APIHandlerParams) (interface{}, error) {
 
-	sessionValue := params.Session.Get(visitor.SESSION_KEY_VISITOR_ID)
+	sessionValue := params.Session.Get(visitor.SessionKeyVisitorID)
 	visitorID, ok := sessionValue.(string)
 	if !ok {
 		if api.ValidateAdminRights(params) == nil {
@@ -554,14 +554,14 @@ func restInfo(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// visitor info
 	//--------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorByID(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	result := visitorModel.ToHashMap()
-	result["facebook_id"] = visitorModel.GetFacebookId()
-	result["google_id"] = visitorModel.GetGoogleId()
+	result["facebook_id"] = visitorModel.GetFacebookID()
+	result["google_id"] = visitorModel.GetGoogleID()
 
 	return result, nil
 }
@@ -624,7 +624,7 @@ func restLogin(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// api session updates
 	if visitorModel.IsValidated() {
-		params.Session.Set(visitor.SESSION_KEY_VISITOR_ID, visitorModel.GetId())
+		params.Session.Set(visitor.SessionKeyVisitorID, visitorModel.GetId())
 	} else {
 		return nil, env.ErrorNew("visitor is not validated")
 	}
@@ -706,7 +706,7 @@ func restLoginFacebook(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	// trying to load visitor by facebook_id
-	err = visitorModel.LoadByFacebookId(reqData["user_id"].(string))
+	err = visitorModel.LoadByFacebookID(reqData["user_id"].(string))
 	if err != nil && strings.Contains(err.Error(), "not found") {
 
 		// there is no such facebook_id in DB, trying to find by e-mail
@@ -739,7 +739,7 @@ func restLoginFacebook(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	// api session updates
-	params.Session.Set(visitor.SESSION_KEY_VISITOR_ID, visitorModel.GetId())
+	params.Session.Set(visitor.SessionKeyVisitorID, visitorModel.GetId())
 
 	if visitorModel.IsAdmin() {
 		params.Session.Set(api.SESSION_KEY_ADMIN_RIGHTS, true)
@@ -814,7 +814,7 @@ func restLoginGoogle(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	// trying to load visitor by google_id
-	err = visitorModel.LoadByGoogleId(jsonMap["email"].(string))
+	err = visitorModel.LoadByGoogleID(jsonMap["email"].(string))
 	if err != nil && strings.Contains(err.Error(), "not found") {
 
 		// there is no such google_id in DB, trying to find by e-mail
@@ -849,7 +849,7 @@ func restLoginGoogle(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	// api session updates
-	params.Session.Set(visitor.SESSION_KEY_VISITOR_ID, visitorModel.GetId())
+	params.Session.Set(visitor.SessionKeyVisitorID, visitorModel.GetId())
 
 	if visitorModel.IsAdmin() {
 		params.Session.Set(api.SESSION_KEY_ADMIN_RIGHTS, true)
@@ -860,7 +860,7 @@ func restLoginGoogle(params *api.T_APIHandlerParams) (interface{}, error) {
 
 // WEB REST API function used to get visitor order details information
 func restVisitorOrderDetails(params *api.T_APIHandlerParams) (interface{}, error) {
-	visitorID := visitor.GetCurrentVisitorId(params)
+	visitorID := visitor.GetCurrentVisitorID(params)
 	if visitorID == "" {
 		return "you are not logined in", nil
 	}
@@ -892,7 +892,7 @@ func restListVisitorOrders(params *api.T_APIHandlerParams) (interface{}, error) 
 
 	// list operation
 	//---------------
-	visitorID := visitor.GetCurrentVisitorId(params)
+	visitorID := visitor.GetCurrentVisitorID(params)
 	if visitorID == "" {
 		return "you are not logined in", nil
 	}
@@ -942,7 +942,7 @@ func restVisitorSendMail(params *api.T_APIHandlerParams) (interface{}, error) {
 	visitorIDs := utils.InterfaceToArray(reqData["visitor_ids"])
 
 	for _, visitorID := range visitorIDs {
-		visitorModel, err := visitor.LoadVisitorById(utils.InterfaceToString(visitorID))
+		visitorModel, err := visitor.LoadVisitorByID(utils.InterfaceToString(visitorID))
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
