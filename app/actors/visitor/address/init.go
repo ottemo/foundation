@@ -24,7 +24,7 @@ func init() {
 
 // DB preparations for current model implementation
 func setupDB() error {
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR_ADDRESS)
+	collection, err := db.GetCollection(CollectionNameVisitorAddress)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

@@ -176,16 +176,16 @@ func checkoutObtainAddress(params *api.T_APIHandlerParams) (visitor.I_VisitorAdd
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if addressId, present := reqData["id"]; present {
+	if addressID, present := reqData["id"]; present {
 
 		// Address id was specified - trying to load
-		visitorAddress, err := visitor.LoadVisitorAddressByID(utils.InterfaceToString(addressId))
+		visitorAddress, err := visitor.LoadVisitorAddressByID(utils.InterfaceToString(addressID))
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		currentVisitorId := utils.InterfaceToString(params.Session.Get(visitor.SessionKeyVisitorID))
-		if visitorAddress.GetVisitorId() != currentVisitorId {
+		currentVisitorID := utils.InterfaceToString(params.Session.Get(visitor.SessionKeyVisitorID))
+		if visitorAddress.GetVisitorID() != currentVisitorID {
 			return nil, env.ErrorNew("wrong address id")
 		}
 
@@ -205,8 +205,8 @@ func checkoutObtainAddress(params *api.T_APIHandlerParams) (visitor.I_VisitorAdd
 			}
 		}
 
-		visitorId := utils.InterfaceToString(params.Session.Get(visitor.SessionKeyVisitorID))
-		visitorAddressModel.Set("visitor_id", visitorId)
+		visitorID := utils.InterfaceToString(params.Session.Get(visitor.SessionKeyVisitorID))
+		visitorAddressModel.Set("visitorID", visitorID)
 
 		err = visitorAddressModel.Save()
 		if err != nil {

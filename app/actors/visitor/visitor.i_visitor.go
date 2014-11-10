@@ -151,7 +151,7 @@ func (it *DefaultVisitor) Validate(key string) error {
 	for _, record := range records {
 		if visitorID, present := record["_id"]; present {
 			if visitorID, ok := visitorID.(string); ok {
-				visitorIds = append(visitorIDs, visitorID)
+				visitorIDs = append(visitorIDs, visitorID)
 			}
 		}
 
@@ -169,7 +169,7 @@ func (it *DefaultVisitor) Validate(key string) error {
 	stamp.UnmarshalBinary(data)
 	timeWas := stamp.Unix()
 
-	validationExpired := (timeNow - timeWas) > EMAIL_VALIDATE_EXPIRE
+	validationExpired := (timeNow - timeWas) > EmailValidateExpire
 
 	// processing visitors for given validation key
 	for _, visitorID := range visitorIDs {

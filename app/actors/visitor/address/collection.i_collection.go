@@ -8,9 +8,9 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
-// enumerates items of VisitorAddress model type
+// List enumerates items of VisitorAddress model type
 func (it *DefaultVisitorAddressCollection) List() ([]models.T_ListItem, error) {
-	result := make([]models.T_ListItem, 0)
+	var result []models.T_ListItem
 
 	dbRecords, err := it.listCollection.Load()
 	if err != nil {
@@ -50,10 +50,10 @@ func (it *DefaultVisitorAddressCollection) List() ([]models.T_ListItem, error) {
 	return result, nil
 }
 
-// allows to obtain additional attributes from  List() function
+// ListAddExtraAttribute allows to obtain additional attributes from  List() function
 func (it *DefaultVisitorAddressCollection) ListAddExtraAttribute(attribute string) error {
 
-	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "visitorId", "fname", "first_name", "lname", "last_name",
+	if utils.IsAmongStr(attribute, "_id", "id", "visitorID", "visitorID", "fname", "first_name", "lname", "last_name",
 		"address_line1", "address_line2", "company", "country", "city", "state", "phone", "zip", "zip_code") {
 
 		if utils.IsInListStr(attribute, it.listExtraAtributes) {
@@ -68,19 +68,19 @@ func (it *DefaultVisitorAddressCollection) ListAddExtraAttribute(attribute strin
 	return nil
 }
 
-// adds selection filter to List() function
+// ListFilterAdd adds selection filter to List() function
 func (it *DefaultVisitorAddressCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
 	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
 	return nil
 }
 
-// clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
+// ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultVisitorAddressCollection) ListFilterReset() error {
 	it.listCollection.ClearFilters()
 	return nil
 }
 
-// sets select pagination
+// ListLimit sets select pagination
 func (it *DefaultVisitorAddressCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
 }

@@ -9,12 +9,13 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
+// Get will retrieve the requested Visitor address attribute
 func (it *DefaultVisitorAddress) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
 		return it.id
-	case "visitor_id", "visitorId":
-		return it.visitor_id
+	case "visitorID", "visitorID":
+		return it.visitorID
 	case "fname", "first_name":
 		return it.FirstName
 	case "lname", "last_name":
@@ -40,13 +41,14 @@ func (it *DefaultVisitorAddress) Get(attribute string) interface{} {
 	return nil
 }
 
+// Set will assign the value to the given Visitor attribute
 func (it *DefaultVisitorAddress) Set(attribute string, value interface{}) error {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
 		it.id = utils.InterfaceToString(value)
 
-	case "visitor_id", "visitorId":
-		it.visitor_id = utils.InterfaceToString(value)
+	case "visitorID", "visitorID":
+		it.visitorID = utils.InterfaceToString(value)
 
 	case "fname", "first_name":
 		it.FirstName = utils.InterfaceToString(value)
@@ -81,6 +83,7 @@ func (it *DefaultVisitorAddress) Set(attribute string, value interface{}) error 
 	return nil
 }
 
+// FromHashMap will assign Visitor address attributes when provided a has map of values.
 func (it *DefaultVisitorAddress) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
@@ -92,13 +95,14 @@ func (it *DefaultVisitorAddress) FromHashMap(input map[string]interface{}) error
 	return nil
 }
 
+// ToHashMap will take map[string] interface and assign Visitor address attributes
 func (it *DefaultVisitorAddress) ToHashMap() map[string]interface{} {
 
 	result := make(map[string]interface{})
 
 	result["_id"] = it.id
 
-	result["visitor_id"] = it.visitor_id
+	result["visitorID"] = it.visitorID
 
 	result["first_name"] = it.FirstName
 	result["last_name"] = it.LastName
@@ -118,11 +122,12 @@ func (it *DefaultVisitorAddress) ToHashMap() map[string]interface{} {
 	return result
 }
 
+// GetAttributesInfo will retrieve information about the address attributes
 func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 	info := []models.T_AttributeInfo{
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "_id",
 			Type:       "id",
 			Label:      "ID",
@@ -133,8 +138,8 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
-			Attribute:  "visitor_id",
+			Collection: CollectionNameVisitorAddress,
+			Attribute:  "visitorID",
 			Type:       "id",
 			Label:      "Visitor ID",
 			Group:      "General",
@@ -144,7 +149,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "address_line1",
 			Type:       "varchar(255)",
 			Label:      "Address Line 1",
@@ -155,7 +160,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "address_line2",
 			Type:       "varchar(255)",
 			Label:      "Address Line 2",
@@ -166,7 +171,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "first_name",
 			Type:       "varchar(100)",
 			Label:      "First Name",
@@ -177,7 +182,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "last_name",
 			Type:       "varchar(100)",
 			Label:      "Last Name",
@@ -188,7 +193,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "company",
 			Type:       "varchar(100)",
 			Label:      "Company",
@@ -199,7 +204,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "country",
 			Type:       "varchar(50)",
 			Label:      "Country",
@@ -210,7 +215,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "city",
 			Type:       "varchar(100)",
 			Label:      "City",
@@ -221,7 +226,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "phone",
 			Type:       "varchar(100)",
 			Label:      "Phone",
@@ -232,7 +237,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "state",
 			Type:       "varchar(2)",
 			Label:      "State",
@@ -243,7 +248,7 @@ func (it *DefaultVisitorAddress) GetAttributesInfo() []models.T_AttributeInfo {
 		},
 		models.T_AttributeInfo{
 			Model:      visitor.ModelNameVisitorAddress,
-			Collection: COLLECTION_NAME_VISITOR_ADDRESS,
+			Collection: CollectionNameVisitorAddress,
 			Attribute:  "zip_code",
 			Type:       "varchar(10)",
 			Label:      "Zip",

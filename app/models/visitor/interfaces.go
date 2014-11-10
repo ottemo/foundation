@@ -65,7 +65,7 @@ type I_VisitorCollection interface {
 
 // I_VisitorAddress is the interface which holds address information for Visitors
 type I_VisitorAddress interface {
-	GetVisitorId() string
+	GetVisitorID() string
 
 	GetFirstName() string
 	GetLastName() string

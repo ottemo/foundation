@@ -194,8 +194,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 
 	result := []models.T_AttributeInfo{
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "_id",
 			Type:       "id",
 			IsRequired: false,
@@ -207,8 +207,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "email",
 			Type:       "text",
 			IsRequired: true,
@@ -220,8 +220,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "first_name",
 			Type:       "text",
 			IsRequired: true,
@@ -233,8 +233,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "last_name",
 			Type:       "text",
 			IsRequired: true,
@@ -246,8 +246,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "password",
 			Type:       "text",
 			IsRequired: false,
@@ -259,8 +259,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "billing_address_id",
 			Type:       "text",
 			IsRequired: false,
@@ -272,8 +272,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "shipping_address_id",
 			Type:       "text",
 			IsRequired: false,
@@ -285,8 +285,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "birthday",
 			Type:       "datetime",
 			IsRequired: false,
@@ -298,8 +298,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "created_at",
 			Type:       "datetime",
 			IsRequired: false,
@@ -311,8 +311,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "is_admin",
 			Type:       "bool",
 			IsRequired: true,

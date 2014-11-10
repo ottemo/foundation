@@ -124,7 +124,7 @@ func restUpdateVisitorAddress(params *api.T_APIHandlerParams) (interface{}, erro
 
 	// check rights
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitorAddressModel.GetVisitorId() != visitor.GetCurrentVisitorID(params) {
+		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(params) {
 			return nil, env.ErrorDispatch(err)
 		}
 	}
@@ -164,7 +164,7 @@ func restDeleteVisitorAddress(params *api.T_APIHandlerParams) (interface{}, erro
 
 	// check rights
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitorAddressModel.GetVisitorId() != visitor.GetCurrentVisitorID(params) {
+		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(params) {
 			return nil, env.ErrorDispatch(err)
 		}
 	}
@@ -291,7 +291,7 @@ func restGetVisitorAddress(params *api.T_APIHandlerParams) (interface{}, error) 
 
 	// check rights
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitorAddressModel.GetVisitorId() != visitor.GetCurrentVisitorID(params) {
+		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(params) {
 			return nil, env.ErrorDispatch(err)
 		}
 	}

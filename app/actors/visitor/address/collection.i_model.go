@@ -19,7 +19,7 @@ func (it *DefaultVisitorAddressCollection) GetImplementationName() string {
 
 // New creates a new address for a Visitor
 func (it *DefaultVisitorAddressCollection) New() (models.I_Model, error) {
-	dbCollection, err := db.GetCollection(COLLECTION_NAME_VISITOR_ADDRESS)
+	dbCollection, err := db.GetCollection(CollectionNameVisitorAddress)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

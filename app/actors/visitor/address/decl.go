@@ -4,13 +4,15 @@ import (
 	"github.com/ottemo/foundation/db"
 )
 
+// Constants for working with the Visitor Adddress collections
 const (
-	COLLECTION_NAME_VISITOR_ADDRESS = "visitor_address"
+	CollectionNameVisitorAddress = "visitor_address"
 )
 
+// DefaultVisitorAddress is the base struct for holding a Visitor address
 type DefaultVisitorAddress struct {
-	id         string
-	visitor_id string
+	id        string
+	visitorID string
 
 	FirstName string
 	LastName  string
@@ -28,6 +30,7 @@ type DefaultVisitorAddress struct {
 	ZipCode string
 }
 
+// DefaultVisitorAddressCollection holds the customm attributes for addresses
 type DefaultVisitorAddressCollection struct {
 	listCollection     db.I_DBCollection
 	listExtraAtributes []string
