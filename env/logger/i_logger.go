@@ -25,7 +25,11 @@ func (it *DefaultLogger) Log(storage string, prefix string, msg string) {
 
 // makes error log
 func (it *DefaultLogger) LogError(err error) {
-	it.Log(defaultErrorsFile, env.LOG_PREFIX_ERROR, err.Error())
+	if ottemoErr, ok := err.(env.I_OttemoError); ok {
+		it.Log(defaultErrorsFile, env.LOG_PREFIX_ERROR, ottemoErr.ErrorFull())
+	} else {
+		it.Log(defaultErrorsFile, env.LOG_PREFIX_ERROR, err.Error())
+	}
 }
 
 // log message to separate file

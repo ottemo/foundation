@@ -85,7 +85,7 @@ func (it *AuthorizeNetDPM) Authorize(orderInstance order.I_Order, paymentInfo ma
 		"x_zip":        billingAddress.GetZipCode(),
 		"x_country":    billingAddress.GetCountry(),
 		"x_phone":      billingAddress.GetPhone(),
-		"x_cust_id":    billingAddress.GetVisitorId(),
+		"x_cust_id":    billingAddress.GetVisitorID(),
 		"x_email":      utils.InterfaceToString(orderInstance.Get("customer_email")),
 
 		"x_ship_to_first_name": shippingAddress.GetFirstName(),
@@ -115,7 +115,7 @@ func (it *AuthorizeNetDPM) Authorize(orderInstance order.I_Order, paymentInfo ma
 	htmlText += "</form>"
 
 	env.Log("authorizenet.log", env.LOG_PREFIX_INFO, "NEW TRANSACTION: "+
-		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitorID"))+", "+
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetId()))
 
 	return api.T_RestRedirect{Result: htmlText, Location: utils.InterfaceToString(env.ConfigGetValue(app.CONFIG_PATH_FOUNDATION_URL)) + "authorizenet/relay"}, nil

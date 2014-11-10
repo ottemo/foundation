@@ -161,6 +161,12 @@ func (it *SQLiteCollection) Count() (int, error) {
 // stores record in DB for current collection
 func (it *SQLiteCollection) Save(item map[string]interface{}) (string, error) {
 
+	// prevents saving of blank records
+	if len(item) == 0 {
+		return "", nil
+	}
+
+	// we should make new _id column if it was not set
 	if UUID_ID {
 		if idValue, present := item["_id"]; !present || idValue == nil {
 			item["_id"] = it.makeUUID("")

@@ -11,8 +11,8 @@ type I_Model interface {
 }
 
 type I_Storable interface {
-	GetId() string
-	SetId(string) error
+	GetID() string
+	SetID(string) error
 
 	Save() error
 	Load(id string) error

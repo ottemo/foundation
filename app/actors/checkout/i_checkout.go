@@ -22,7 +22,7 @@ func (it *DefaultCheckout) SetShippingAddress(address visitor.I_VisitorAddress) 
 
 // GetShippingAddress returns checkout shipping address
 func (it *DefaultCheckout) GetShippingAddress() visitor.I_VisitorAddress {
-	shippingAddress, _ := visitor.LoadVisitorAddressById(it.ShippingAddressId)
+	shippingAddress, _ := visitor.LoadVisitorAddressByID(it.ShippingAddressId)
 	return shippingAddress
 }
 
@@ -34,7 +34,7 @@ func (it *DefaultCheckout) SetBillingAddress(address visitor.I_VisitorAddress) e
 
 // GetBillingAddress returns checkout billing address
 func (it *DefaultCheckout) GetBillingAddress() visitor.I_VisitorAddress {
-	billingAddress, _ := visitor.LoadVisitorAddressById(it.BillingAddressId)
+	billingAddress, _ := visitor.LoadVisitorAddressByID(it.BillingAddressId)
 	return billingAddress
 }
 
@@ -114,7 +114,7 @@ func (it *DefaultCheckout) SetVisitor(checkoutVisitor visitor.I_Visitor) error {
 
 // GetVisitor return checkout visitor
 func (it *DefaultCheckout) GetVisitor() visitor.I_Visitor {
-	visitorInstance, _ := visitor.LoadVisitorById(it.VisitorId)
+	visitorInstance, _ := visitor.LoadVisitorByID(it.VisitorId)
 	return visitorInstance
 }
 

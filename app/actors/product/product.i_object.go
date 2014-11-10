@@ -62,18 +62,17 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.Options = utils.InterfaceToMap(value)
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
+
 		switch typedValue := value.(type) {
+		case []product.I_Product:
+			for _, productItem := range typedValue {
+				it.RelatedProductIds = append(it.RelatedProductIds, productItem.GetId())
+			}
 
 		case []interface{}:
-
 			for _, listItem := range typedValue {
-				productID, ok := listItem.(string)
-				// excludes myself
-				if it.id == productID {
-					continue
-				}
-
-				if ok {
+				if productID, ok := listItem.(string); ok && productID != "" && it.id == productID {
+					// checking product existance
 					productModel, err := product.LoadProductById(productID)
 					if err != nil {
 						return env.ErrorDispatch(err)
@@ -83,15 +82,10 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 				}
 			}
 
-		case []product.I_Product:
-
-			it.RelatedProductIds = make([]string, 0)
-			for _, productItem := range typedValue {
-				it.RelatedProductIds = append(it.RelatedProductIds, productItem.GetId())
-			}
-
 		default:
-			return env.ErrorNew("unsupported 'related_pids' value")
+			if value != nil {
+				return env.ErrorNew("unsupported 'related_pids' attribute value")
+			}
 		}
 
 	default:

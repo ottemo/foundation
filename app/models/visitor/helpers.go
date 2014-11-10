@@ -6,9 +6,9 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// retrieves current I_VisitorAddressCollection model implementation
+// GetVisitorAddressCollectionModel retrieves current I_VisitorAddressCollection model implementation
 func GetVisitorAddressCollectionModel() (I_VisitorAddressCollection, error) {
-	model, err := models.GetModel(MODEL_NAME_VISITOR_ADDRESS_COLLECTION)
+	model, err := models.GetModel(ModelNameVisitorAddressCollection)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -21,9 +21,9 @@ func GetVisitorAddressCollectionModel() (I_VisitorAddressCollection, error) {
 	return visitorAddressCollectionModel, nil
 }
 
-// retrieves current I_VisitorAddress model implementation
+// GetVisitorAddressModel retrieves current I_VisitorAddress model implementation
 func GetVisitorAddressModel() (I_VisitorAddress, error) {
-	model, err := models.GetModel(MODEL_NAME_VISITOR_ADDRESS)
+	model, err := models.GetModel(ModelNameVisitorAddress)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -36,9 +36,9 @@ func GetVisitorAddressModel() (I_VisitorAddress, error) {
 	return visitorAddressModel, nil
 }
 
-// retrieves current I_VisitorCollection model implementation
+// GetVisitorCollectionModel retrieves current I_VisitorCollection model implementation
 func GetVisitorCollectionModel() (I_VisitorCollection, error) {
-	model, err := models.GetModel(MODEL_NAME_VISITOR_COLLECTION)
+	model, err := models.GetModel(ModelNameVisitorCollection)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -51,9 +51,9 @@ func GetVisitorCollectionModel() (I_VisitorCollection, error) {
 	return visitorCollectionModel, nil
 }
 
-// retrieves current I_Visitor model implementation
+// GetVisitorModel retrieves current I_Visitor model implementation
 func GetVisitorModel() (I_Visitor, error) {
-	model, err := models.GetModel(MODEL_NAME_VISITOR)
+	model, err := models.GetModel(ModelNameVisitor)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -66,15 +66,15 @@ func GetVisitorModel() (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// retrieves current I_VisitorAddress model implementation and sets its ID to some value
-func GetVisitorAddressModelAndSetId(visitorAddressId string) (I_VisitorAddress, error) {
+// GetVisitorAddressModelAndSetID retrieves current I_VisitorAddress model implementation and sets its ID to some value
+func GetVisitorAddressModelAndSetID(visitorAddressID string) (I_VisitorAddress, error) {
 
 	visitorAddressModel, err := GetVisitorAddressModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorAddressModel.SetId(visitorAddressId)
+	err = visitorAddressModel.SetId(visitorAddressID)
 	if err != nil {
 		return visitorAddressModel, env.ErrorDispatch(err)
 	}
@@ -82,15 +82,15 @@ func GetVisitorAddressModelAndSetId(visitorAddressId string) (I_VisitorAddress, 
 	return visitorAddressModel, nil
 }
 
-// retrieves current I_Visitor model implementation and sets its ID to some value
-func GetVisitorModelAndSetId(visitorId string) (I_Visitor, error) {
+// GetVisitorModelAndSetID retrieves current I_Visitor model implementation and sets its ID to some value
+func GetVisitorModelAndSetID(visitorID string) (I_Visitor, error) {
 
 	visitorModel, err := GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorModel.SetId(visitorId)
+	err = visitorModel.SetId(visitorID)
 	if err != nil {
 		return visitorModel, env.ErrorDispatch(err)
 	}
@@ -98,15 +98,15 @@ func GetVisitorModelAndSetId(visitorId string) (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// loads visitor address data into current I_VisitorAddress model implementation
-func LoadVisitorAddressById(visitorAddressId string) (I_VisitorAddress, error) {
+// LoadVisitorAddressByID loads visitor address data into current I_VisitorAddress model implementation
+func LoadVisitorAddressByID(visitorAddressID string) (I_VisitorAddress, error) {
 
 	visitorAddressModel, err := GetVisitorAddressModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorAddressModel.Load(visitorAddressId)
+	err = visitorAddressModel.Load(visitorAddressID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -114,15 +114,15 @@ func LoadVisitorAddressById(visitorAddressId string) (I_VisitorAddress, error) {
 	return visitorAddressModel, nil
 }
 
-// loads visitor data into current I_Visitor model implementation
-func LoadVisitorById(visitorId string) (I_Visitor, error) {
+// LoadVisitorByID loads visitor data into current I_Visitor model implementation
+func LoadVisitorByID(visitorID string) (I_Visitor, error) {
 
 	visitorModel, err := GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorModel.Load(visitorId)
+	err = visitorModel.Load(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -130,24 +130,24 @@ func LoadVisitorById(visitorId string) (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// returns visitor id for current session if registered or ""
-func GetCurrentVisitorId(params *api.T_APIHandlerParams) string {
-	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+// GetCurrentVisitorID returns visitor id for current session if registered or ""
+func GetCurrentVisitorID(params *api.T_APIHandlerParams) string {
+	sessionVisitorID, ok := params.Session.Get(SessionKeyVisitorID).(string)
 	if !ok {
 		return ""
 	}
 
-	return sessionVisitorId
+	return sessionVisitorID
 }
 
-// returns visitor for current session if registered or error
+// GetCurrentVisitor returns visitor for current session if registered or error
 func GetCurrentVisitor(params *api.T_APIHandlerParams) (I_Visitor, error) {
-	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+	sessionVisitorID, ok := params.Session.Get(SessionKeyVisitorID).(string)
 	if !ok {
 		return nil, env.ErrorNew("not registered visitor")
 	}
 
-	visitorInstance, err := LoadVisitorById(sessionVisitorId)
+	visitorInstance, err := LoadVisitorByID(sessionVisitorID)
 
 	return visitorInstance, env.ErrorDispatch(err)
 }

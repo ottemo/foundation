@@ -250,7 +250,7 @@ func (it *DefaultCart) SetVisitorId(visitorId string) error {
 
 // returns visitor model represents owner or current cart or nil if visitor was not set to cart
 func (it *DefaultCart) GetVisitor() visitor.I_Visitor {
-	visitor, _ := visitor.LoadVisitorById(it.VisitorId)
+	visitor, _ := visitor.LoadVisitorByID(it.VisitorId)
 	return visitor
 }
 

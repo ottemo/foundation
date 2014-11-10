@@ -270,6 +270,10 @@ func InterfaceToMap(value interface{}) map[string]interface{} {
 
 // converts interface{} to string
 func InterfaceToString(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+
 	switch value := value.(type) {
 	case bool:
 		return strconv.FormatBool(value)
@@ -288,6 +292,10 @@ func InterfaceToString(value interface{}) string {
 
 // converts interface{} to integer
 func InterfaceToInt(value interface{}) int {
+	if value == nil {
+		return 0
+	}
+
 	switch typedValue := value.(type) {
 	case int:
 		return typedValue
@@ -315,6 +323,10 @@ func InterfaceToInt(value interface{}) int {
 
 // converts interface{} to float64
 func InterfaceToFloat64(value interface{}) float64 {
+	if value == nil {
+		return 0
+	}
+
 	switch typedValue := value.(type) {
 	case float64:
 		return typedValue

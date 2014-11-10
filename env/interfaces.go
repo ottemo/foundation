@@ -62,6 +62,15 @@ type I_Config interface {
 	Reload() error
 }
 
+type I_OttemoError interface {
+	ErrorFull() string
+	ErrorLevel() int
+	ErrorCode() string
+	ErrorStack() string
+
+	error
+}
+
 type F_ConfigValueValidator func(interface{}) (interface{}, error)
 type F_EventListener func(string, map[string]interface{}) bool
 type F_ErrorListener func(error) bool

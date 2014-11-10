@@ -1,24 +1,27 @@
 package visitor
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/helpers/attributes"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
-	"time"
 )
 
+// Constants for Visitor
 const (
-	COLLECTION_NAME_VISITOR = "visitor"
+	CollectionNameVisitor = "visitor"
 
-	EMAIL_VALIDATE_EXPIRE = 60 * 60 * 24
+	EmailValidateExpire = 60 * 60 * 24
 )
 
+// DefaultVisitor struct with default values
 type DefaultVisitor struct {
 	id string
 
 	Email      string
-	FacebookId string
-	GoogleId   string
+	FacebookID string
+	GoogleID   string
 
 	FirstName string
 	LastName  string
@@ -37,6 +40,7 @@ type DefaultVisitor struct {
 	*attributes.CustomAttributes
 }
 
+// DefaultVisitorCollection struct holds the db collection and custom attributes
 type DefaultVisitorCollection struct {
 	listCollection     db.I_DBCollection
 	listExtraAtributes []string

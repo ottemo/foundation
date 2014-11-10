@@ -9,7 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// returns object attribute value or nil
+// Get returns the requested default attribute value for the Visitor or nil
 func (it *DefaultVisitor) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
@@ -31,9 +31,9 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "validate":
 		return it.ValidateKey
 	case "facebook_id":
-		return it.FacebookId
+		return it.FacebookID
 	case "google_id":
-		return it.GoogleId
+		return it.GoogleID
 	case "birthday":
 		return it.Birthday
 	case "is_admin":
@@ -45,7 +45,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	return it.CustomAttributes.Get(attribute)
 }
 
-// sets attribute value to object or returns error
+// Set takes a string and will set the provided attribute value on the Visitor or returns error
 func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	attribute = strings.ToLower(attribute)
 
@@ -63,9 +63,9 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "validate":
 		it.ValidateKey = utils.InterfaceToString(value)
 	case "facebook_id":
-		it.FacebookId = utils.InterfaceToString(value)
+		it.FacebookID = utils.InterfaceToString(value)
 	case "google_id":
-		it.GoogleId = utils.InterfaceToString(value)
+		it.GoogleID = utils.InterfaceToString(value)
 	case "birthday":
 		it.Birthday = utils.InterfaceToTime(value)
 	case "is_admin":
@@ -77,11 +77,11 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "billing_address_id", "shipping_address_id":
 		value := utils.InterfaceToString(value)
 
-		var address visitor.I_VisitorAddress = nil
-		var err error = nil
+		var address visitor.I_VisitorAddress
+		var err error
 
 		if value != "" {
-			address, err = visitor.LoadVisitorAddressById(value)
+			address, err = visitor.LoadVisitorAddressByID(value)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
@@ -99,23 +99,31 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 
 	// address detailed information was specified
 	case "billing_address", "shipping_address":
-		switch value := value.(type) {
+		switch typedValue := value.(type) {
 
 		// we have already have structure
 		case visitor.I_VisitorAddress:
 			if attribute == "billing_address" {
-				it.BillingAddress = value
+				it.BillingAddress = typedValue
 			} else {
-				it.ShippingAddress = value
+				it.ShippingAddress = typedValue
 			}
 
 		// we have sub-map, supposedly I_VisitorAddress capable
 		case map[string]interface{}:
-			addressModel, err := visitor.GetVisitorAddressModel()
+			var addressModel visitor.I_VisitorAddress
+			var err error
 
-			err = addressModel.FromHashMap(value)
-			if err != nil {
-				return env.ErrorDispatch(err)
+			if len(typedValue) != 0 {
+				addressModel, err = visitor.GetVisitorAddressModel()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = addressModel.FromHashMap(typedValue)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
 			}
 
 			if attribute == "billing_address" {
@@ -137,7 +145,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-// fills object attributes from map[string]interface{}
+// FromHashMap will populate the Visitor object attributes from the given map[string]interface{}
 func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
@@ -149,7 +157,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 	return nil
 }
 
-// represents object as map[string]interface{}
+// ToHashMap will return the Visitor represented as a map[string]interface{}
 func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
 	result := it.CustomAttributes.ToHashMap()
@@ -181,13 +189,13 @@ func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 	return result
 }
 
-// returns information about object attributes
+// GetAttributesInfo will return the current Visitor object attributes and related information
 func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 
 	result := []models.T_AttributeInfo{
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "_id",
 			Type:       "id",
 			IsRequired: false,
@@ -199,8 +207,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "email",
 			Type:       "text",
 			IsRequired: true,
@@ -212,8 +220,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "first_name",
 			Type:       "text",
 			IsRequired: true,
@@ -225,8 +233,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "last_name",
 			Type:       "text",
 			IsRequired: true,
@@ -238,8 +246,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "password",
 			Type:       "text",
 			IsRequired: false,
@@ -251,8 +259,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "billing_address_id",
 			Type:       "text",
 			IsRequired: false,
@@ -264,8 +272,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "shipping_address_id",
 			Type:       "text",
 			IsRequired: false,
@@ -277,8 +285,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "birthday",
 			Type:       "datetime",
 			IsRequired: false,
@@ -290,8 +298,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "created_at",
 			Type:       "datetime",
 			IsRequired: false,
@@ -303,8 +311,8 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 			Default:    "",
 		},
 		models.T_AttributeInfo{
-			Model:      visitor.MODEL_NAME_VISITOR,
-			Collection: COLLECTION_NAME_VISITOR,
+			Model:      visitor.ModelNameVisitor,
+			Collection: CollectionNameVisitor,
 			Attribute:  "is_admin",
 			Type:       "bool",
 			IsRequired: true,

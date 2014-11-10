@@ -29,7 +29,7 @@ func parseErrorMessage(message string) *OttemoError {
 	}
 
 	// primitive stack trace
-	if INCLUDE_STACK {
+	if COLLECT_STACK {
 		cutStopFlag := false
 		skip := 0
 		_, file, line, ok := runtime.Caller(skip)

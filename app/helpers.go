@@ -36,7 +36,7 @@ func SendMail(to string, subject string, body string) error {
 
 	mailServer := utils.InterfaceToString(env.ConfigGetValue(CONFIG_PATH_MAIL_SERVER))
 	mailPort := utils.InterfaceToString(env.ConfigGetValue(CONFIG_PATH_MAIL_PORT))
-	if mailPort != "" {
+	if mailPort != "" && mailPort != "0" {
 		mailPort = ":" + mailPort
 	} else {
 		return nil

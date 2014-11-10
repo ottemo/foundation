@@ -4,8 +4,8 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// retrieves current model implementation and sets its ID to some value
-func GetModelAndSetId(modelName string, modelId string) (I_Storable, error) {
+// GetModelAndSetID retrieves current model implementation and sets its ID to some value
+func GetModelAndSetID(modelName string, modelID string) (I_Storable, error) {
 	someModel, err := GetModel(modelName)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -16,7 +16,7 @@ func GetModelAndSetId(modelName string, modelId string) (I_Storable, error) {
 		return nil, env.ErrorNew("model is not I_Storable capable")
 	}
 
-	err = storableModel.SetId(modelId)
+	err = storableModel.SetID(modelID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -24,8 +24,8 @@ func GetModelAndSetId(modelName string, modelId string) (I_Storable, error) {
 	return storableModel, nil
 }
 
-// loads model data in current implementation
-func LoadModelById(modelName string, modelId string) (I_Storable, error) {
+// LoadModelByID loads model data in current implementation
+func LoadModelByID(modelName string, modelID string) (I_Storable, error) {
 
 	someModel, err := GetModel(modelName)
 	if err != nil {
@@ -37,7 +37,7 @@ func LoadModelById(modelName string, modelId string) (I_Storable, error) {
 		return nil, env.ErrorNew("model is not I_Storable capable")
 	}
 
-	err = storableModel.Load(modelId)
+	err = storableModel.Load(modelID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

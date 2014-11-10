@@ -29,79 +29,79 @@ func (it *DefaultVisitor) passwdEncode(passwd string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-// returns visitor e-mail, which also used as login
+// GetEmail returns visitor e-mail, which also used as login
 func (it *DefaultVisitor) GetEmail() string {
 	return it.Email
 }
 
-// returns visitor facebook id
-func (it *DefaultVisitor) GetFacebookId() string {
-	return it.FacebookId
+// GetFacebookID returns visitor facebook id
+func (it *DefaultVisitor) GetFacebookID() string {
+	return it.FacebookID
 }
 
-// returns visitor google id
-func (it *DefaultVisitor) GetGoogleId() string {
-	return it.GoogleId
+// GetGoogleID returns visitor google id
+func (it *DefaultVisitor) GetGoogleID() string {
+	return it.GoogleID
 }
 
-// returns visitor full name
+// GetFullName returns visitor full name
 func (it *DefaultVisitor) GetFullName() string {
 	return it.FirstName + " " + it.LastName
 }
 
-// returns visitor first name
+// GetFirstName returns visitor first name
 func (it *DefaultVisitor) GetFirstName() string {
 	return it.FirstName
 }
 
-// returns visitor last name
+// GetLastName returns visitor last name
 func (it *DefaultVisitor) GetLastName() string {
 	return it.LastName
 }
 
-// returns visitor birthday
+// GetBirthday returns visitor birthday
 func (it *DefaultVisitor) GetBirthday() time.Time {
 	return it.Birthday
 }
 
-// returns visitor created at date
+// GetCreatedAt returns visitor created at date
 func (it *DefaultVisitor) GetCreatedAt() time.Time {
 	return it.CreatedAt
 }
 
-// returns shipping address for visitor
+// GetShippingAddress returns shipping address for visitor
 func (it *DefaultVisitor) GetShippingAddress() visitor.I_VisitorAddress {
 	return it.ShippingAddress
 }
 
-// updates shipping address for visitor
+// SetShippingAddress updates shipping address for visitor
 func (it *DefaultVisitor) SetShippingAddress(address visitor.I_VisitorAddress) error {
 	it.ShippingAddress = address
 	return nil
 }
 
-// returns billing address for visitor
+// GetBillingAddress returns billing address for visitor
 func (it *DefaultVisitor) GetBillingAddress() visitor.I_VisitorAddress {
 	return it.BillingAddress
 }
 
-// updates billing address for visitor
+// SetBillingAddress updates billing address for visitor
 func (it *DefaultVisitor) SetBillingAddress(address visitor.I_VisitorAddress) error {
 	it.BillingAddress = address
 	return nil
 }
 
-// returns true if visitor is admin
+// IsAdmin returns true if visitor is admin
 func (it *DefaultVisitor) IsAdmin() bool {
 	return it.Admin
 }
 
-// returns true if visitor e-mail was validated
+// IsValidated returns true if visitor e-mail was validated
 func (it *DefaultVisitor) IsValidated() bool {
 	return it.ValidateKey == ""
 }
 
-// marks visitor e-mail as not validated, sends to visitor e-mail with new validation key
+// Invalidate marks visitor e-mail as not validated, sends to visitor e-mail with new validation key
 func (it *DefaultVisitor) Invalidate() error {
 
 	if it.GetEmail() == "" {
@@ -126,14 +126,14 @@ func (it *DefaultVisitor) Invalidate() error {
 	return env.ErrorDispatch(err)
 }
 
-// validates visitors e-mails for given key
+// Validate validates visitors e-mails for given key
 //   - if key was expired, user will receive new one validation code
 func (it *DefaultVisitor) Validate(key string) error {
 
 	// looking for visitors with given validation key in DB and collecting ids
-	visitorIds := make([]string, 0)
+	var visitorIDs []string
 
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	collection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -149,9 +149,9 @@ func (it *DefaultVisitor) Validate(key string) error {
 	}
 
 	for _, record := range records {
-		if visitorId, present := record["_id"]; present {
-			if visitorId, ok := visitorId.(string); ok {
-				visitorIds = append(visitorIds, visitorId)
+		if visitorID, present := record["_id"]; present {
+			if visitorID, ok := visitorID.(string); ok {
+				visitorIDs = append(visitorIDs, visitorID)
 			}
 		}
 
@@ -169,12 +169,12 @@ func (it *DefaultVisitor) Validate(key string) error {
 	stamp.UnmarshalBinary(data)
 	timeWas := stamp.Unix()
 
-	validationExpired := (timeNow - timeWas) > EMAIL_VALIDATE_EXPIRE
+	validationExpired := (timeNow - timeWas) > EmailValidateExpire
 
 	// processing visitors for given validation key
-	for _, visitorId := range visitorIds {
+	for _, visitorID := range visitorIDs {
 
-		visitorModel, err := visitor.LoadVisitorById(visitorId)
+		visitorModel, err := visitor.LoadVisitorByID(visitorID)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -196,7 +196,7 @@ func (it *DefaultVisitor) Validate(key string) error {
 	return nil
 }
 
-// updates password for visitor
+// SetPassword updates password for visitor
 func (it *DefaultVisitor) SetPassword(passwd string) error {
 	if len(passwd) > 0 {
 		if utils.IsMD5(passwd) {
@@ -211,12 +211,12 @@ func (it *DefaultVisitor) SetPassword(passwd string) error {
 	return nil
 }
 
-// validates password for visitor
+// CheckPassword validates password for visitor
 func (it *DefaultVisitor) CheckPassword(passwd string) bool {
 	return it.passwdEncode(passwd) == it.Password
 }
 
-// generates new password for user
+// GenerateNewPassword generates new password for user
 func (it *DefaultVisitor) GenerateNewPassword() error {
 	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	const n = 10
@@ -250,22 +250,22 @@ func (it *DefaultVisitor) GenerateNewPassword() error {
 	return nil
 }
 
-// loads visitor information from DB based on google account id
-func (it *DefaultVisitor) LoadByGoogleId(googleId string) error {
+// LoadByGoogleID loads visitor information from DB based on google account id
+func (it *DefaultVisitor) LoadByGoogleID(googleID string) error {
 
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	collection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("google_id", "=", googleId)
+	collection.AddFilter("google_id", "=", googleID)
 	rows, err := collection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew("visitor was not found")
+		return env.ErrorNew("visitor not found")
 	}
 
 	if len(rows) > 1 {
@@ -280,22 +280,22 @@ func (it *DefaultVisitor) LoadByGoogleId(googleId string) error {
 	return nil
 }
 
-// loads visitor information from DB based on facebook account id
-func (it *DefaultVisitor) LoadByFacebookId(facebookId string) error {
+// LoadByFacebookID loads visitor information from DB based on facebook account id
+func (it *DefaultVisitor) LoadByFacebookID(facebookID string) error {
 
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	collection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("facebook_id", "=", facebookId)
+	collection.AddFilter("facebook_id", "=", facebookID)
 	rows, err := collection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew("visitor was not found")
+		return env.ErrorNew("visitor not found")
 	}
 
 	if len(rows) > 1 {
@@ -310,10 +310,10 @@ func (it *DefaultVisitor) LoadByFacebookId(facebookId string) error {
 	return nil
 }
 
-// loads visitor information from DB based on email which must be unique
+// LoadByEmail loads visitor information from DB based on email which must be unique
 func (it *DefaultVisitor) LoadByEmail(email string) error {
 
-	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
+	collection, err := db.GetCollection(CollectionNameVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -325,7 +325,7 @@ func (it *DefaultVisitor) LoadByEmail(email string) error {
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew("visitor was not found")
+		return env.ErrorNew("visitor not found")
 	}
 
 	if len(rows) > 1 {
