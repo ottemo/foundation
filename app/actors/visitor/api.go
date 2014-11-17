@@ -168,15 +168,15 @@ func restUpdateVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	// check request params
 	//---------------------
-	visitorID, isSpecifiedID := params.RequestURLParams["id"]
-	if !isSpecifiedID {
+	visitorId, isSpecifiedId := params.RequestURLParams["id"]
+	if !isSpecifiedId {
 
 		sessionValue := params.Session.Get(visitor.SESSION_KEY_VISITOR_ID)
-		sessionVisitorID, ok := sessionValue.(string)
+		sessionVisitorId, ok := sessionValue.(string)
 		if !ok {
 			return nil, env.ErrorNew("you are not logined in")
 		}
-		visitorID = sessionVisitorID
+		visitorId = sessionVisitorId
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -185,17 +185,18 @@ func restUpdateVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 	}
 
 	if err := api.ValidateAdminRights(params); err != nil {
-		if visitor.GetCurrentVisitorId(params) != visitorID {
+		if visitor.GetCurrentVisitorId(params) != visitorId {
 			return nil, env.ErrorDispatch(err)
-		}
-		if _, present := reqData["is_admin"]; present {
-			return nil, env.ErrorDispatch(err)
+		} else {
+			if _, present := reqData["is_admin"]; present {
+				return nil, env.ErrorDispatch(err)
+			}
 		}
 	}
 
 	// update operation
 	//-----------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorById(visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -225,14 +226,14 @@ func restDeleteVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorID, isSpecifiedID := params.RequestURLParams["id"]
-	if !isSpecifiedID {
+	visitorId, isSpecifiedId := params.RequestURLParams["id"]
+	if !isSpecifiedId {
 		return nil, env.ErrorNew("visitor id was not specified")
 	}
 
 	// delete operation
 	//-----------------
-	visitorModel, err := visitor.GetVisitorModelAndSetId(visitorID)
+	visitorModel, err := visitor.GetVisitorModelAndSetId(visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -255,14 +256,14 @@ func restGetVisitor(params *api.T_APIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorID, isSpecifiedID := params.RequestURLParams["id"]
-	if !isSpecifiedID {
+	visitorId, isSpecifiedId := params.RequestURLParams["id"]
+	if !isSpecifiedId {
 		return nil, env.ErrorNew("visitor id was not specified")
 	}
 
 	// get operation
 	//--------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorById(visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -301,8 +302,9 @@ func restListVisitors(params *api.T_APIHandlerParams) (interface{}, error) {
 	if !ok {
 		if params.Request.Method == "POST" {
 			return nil, env.ErrorNew("unexpected request content")
+		} else {
+			reqData = make(map[string]interface{})
 		}
-		reqData = make(map[string]interface{})
 	}
 
 	// operation start
@@ -539,17 +541,18 @@ func restForgotPassword(params *api.T_APIHandlerParams) (interface{}, error) {
 func restInfo(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	sessionValue := params.Session.Get(visitor.SESSION_KEY_VISITOR_ID)
-	visitorID, ok := sessionValue.(string)
+	visitorId, ok := sessionValue.(string)
 	if !ok {
 		if api.ValidateAdminRights(params) == nil {
 			return map[string]interface{}{"is_admin": true}, nil
+		} else {
+			return "you are not logined in", nil
 		}
-		return "you are not logined in", nil
 	}
 
 	// visitor info
 	//--------------
-	visitorModel, err := visitor.LoadVisitorById(visitorID)
+	visitorModel, err := visitor.LoadVisitorById(visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -595,8 +598,9 @@ func restLogin(params *api.T_APIHandlerParams) (interface{}, error) {
 			params.Session.Set(api.SESSION_KEY_ADMIN_RIGHTS, true)
 
 			return "ok", nil
+		} else {
+			return nil, env.ErrorNew("wrong login - should be email")
 		}
-		return nil, env.ErrorNew("wrong login - should be email")
 	}
 
 	// visitor info
@@ -852,8 +856,8 @@ func restLoginGoogle(params *api.T_APIHandlerParams) (interface{}, error) {
 
 // WEB REST API function used to get visitor order details information
 func restVisitorOrderDetails(params *api.T_APIHandlerParams) (interface{}, error) {
-	visitorID := visitor.GetCurrentVisitorId(params)
-	if visitorID == "" {
+	visitorId := visitor.GetCurrentVisitorId(params)
+	if visitorId == "" {
 		return "you are not logined in", nil
 	}
 
@@ -862,7 +866,7 @@ func restVisitorOrderDetails(params *api.T_APIHandlerParams) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
+	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorId {
 		return nil, env.ErrorNew("order is not belongs to logined user")
 	}
 
@@ -884,8 +888,8 @@ func restListVisitorOrders(params *api.T_APIHandlerParams) (interface{}, error) 
 
 	// list operation
 	//---------------
-	visitorID := visitor.GetCurrentVisitorId(params)
-	if visitorID == "" {
+	visitorId := visitor.GetCurrentVisitorId(params)
+	if visitorId == "" {
 		return "you are not logined in", nil
 	}
 
@@ -894,7 +898,7 @@ func restListVisitorOrders(params *api.T_APIHandlerParams) (interface{}, error) 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorID)
+	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -931,10 +935,10 @@ func restVisitorSendMail(params *api.T_APIHandlerParams) (interface{}, error) {
 
 	subject := utils.InterfaceToString(reqData["subject"])
 	content := utils.InterfaceToString(reqData["content"])
-	visitorIDs := utils.InterfaceToArray(reqData["visitor_ids"])
+	visitor_ids := utils.InterfaceToArray(reqData["visitor_ids"])
 
-	for _, visitorID := range visitorIDs {
-		visitorModel, err := visitor.LoadVisitorById(utils.InterfaceToString(visitorID))
+	for _, visitor_id := range visitor_ids {
+		visitorModel, err := visitor.LoadVisitorById(utils.InterfaceToString(visitor_id))
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}

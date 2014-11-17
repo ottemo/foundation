@@ -6,26 +6,26 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// GetId returns current ID of the Visitor
+// returns current product id
 func (it *DefaultVisitor) GetId() string {
 	return it.id
 }
 
-// SetId sets current ID of the current Visitor
-func (it *DefaultVisitor) SetId(NewID string) error {
-	it.id = NewID
+// sets current product id
+func (it *DefaultVisitor) SetId(NewId string) error {
+	it.id = NewId
 	return nil
 }
 
-// Load will retrieve the Visitor information from database
-func (it *DefaultVisitor) Load(ID string) error {
+// loads visitor information from DB
+func (it *DefaultVisitor) Load(Id string) error {
 
 	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	values, err := collection.LoadById(ID)
+	values, err := collection.LoadById(Id)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -38,7 +38,7 @@ func (it *DefaultVisitor) Load(ID string) error {
 	return nil
 }
 
-// Delete removes current Visitor from the database
+// removes current visitor from DB
 func (it *DefaultVisitor) Delete() error {
 
 	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
@@ -63,7 +63,7 @@ func (it *DefaultVisitor) Delete() error {
 	return nil
 }
 
-// Save stores current Visitor to the database
+// stores current visitor to DB
 func (it *DefaultVisitor) Save() error {
 
 	collection, err := db.GetCollection(COLLECTION_NAME_VISITOR)
@@ -117,8 +117,8 @@ func (it *DefaultVisitor) Save() error {
 	}
 
 	// saving visitor
-	if newID, err := collection.Save(storableValues); err == nil {
-		it.Set("_id", newID)
+	if newId, err := collection.Save(storableValues); err == nil {
+		it.Set("_id", newId)
 	} else {
 		return env.ErrorDispatch(err)
 	}

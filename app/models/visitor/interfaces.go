@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// Model Constants for Visitor and related collections
 const (
 	MODEL_NAME_VISITOR                    = "Visitor"
 	MODEL_NAME_VISITOR_COLLECTION         = "VisitorCollection"
@@ -15,7 +14,6 @@ const (
 	SESSION_KEY_VISITOR_ID = "visitor_id"
 )
 
-// I_Visitor is the primary interface for working with Visitors
 type I_Visitor interface {
 	GetEmail() string
 	GetFacebookId() string
@@ -45,8 +43,8 @@ type I_Visitor interface {
 	Validate(key string) error
 
 	LoadByEmail(email string) error
-	LoadByFacebookId(facebookID string) error
-	LoadByGoogleId(googleID string) error
+	LoadByFacebookId(facebookId string) error
+	LoadByGoogleId(googleId string) error
 
 	models.I_Model
 	models.I_Object
@@ -55,14 +53,12 @@ type I_Visitor interface {
 	models.I_CustomAttributes
 }
 
-// I_VisitorCollection is the holds the model for Visitor collections
 type I_VisitorCollection interface {
 	ListVisitors() []I_Visitor
 
 	models.I_Collection
 }
 
-// I_VisitorAddress is the Visitor address interface
 type I_VisitorAddress interface {
 	GetVisitorId() string
 
@@ -87,7 +83,6 @@ type I_VisitorAddress interface {
 	models.I_Storable
 }
 
-// I_VisitorAddressCollection holds the Visitor address collection
 type I_VisitorAddressCollection interface {
 	ListVisitorsAddresses() []I_VisitorAddress
 

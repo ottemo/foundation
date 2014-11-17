@@ -5,23 +5,20 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// GetId returns the Default Visitor Address as a string
 func (it *DefaultVisitorAddress) GetId() string {
 	return it.id
 }
 
-// SetId takes a string as input and sets the ID on the Visitor Address
-func (it *DefaultVisitorAddress) SetId(NewID string) error {
-	it.id = NewID
+func (it *DefaultVisitorAddress) SetId(NewId string) error {
+	it.id = NewId
 	return nil
 }
 
-// Load will take Visitor Address ID and retrieve it from the database
-func (it *DefaultVisitorAddress) Load(ID string) error {
+func (it *DefaultVisitorAddress) Load(Id string) error {
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection(COLLECTION_NAME_VISITOR_ADDRESS); err == nil {
 
-			if values, err := collection.LoadById(ID); err == nil {
+			if values, err := collection.LoadById(Id); err == nil {
 				if err := it.FromHashMap(values); err != nil {
 					return env.ErrorDispatch(err)
 				}
@@ -36,7 +33,6 @@ func (it *DefaultVisitorAddress) Load(ID string) error {
 	return nil
 }
 
-// Delete will remove the Visitor Address from the database
 func (it *DefaultVisitorAddress) Delete() error {
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection(COLLECTION_NAME_VISITOR_ADDRESS); err == nil {
@@ -51,7 +47,6 @@ func (it *DefaultVisitorAddress) Delete() error {
 	return nil
 }
 
-// Save will persiste the Visitor Address to the database
 func (it *DefaultVisitorAddress) Save() error {
 
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
@@ -61,12 +56,15 @@ func (it *DefaultVisitorAddress) Save() error {
 			//	return env.ErrorNew("Zip code for address - required")
 			//}
 
-			if newID, err := collection.Save(it.ToHashMap()); err == nil {
-				it.Set("_id", newID)
+			if newId, err := collection.Save(it.ToHashMap()); err == nil {
+				it.Set("_id", newId)
+				return env.ErrorDispatch(err)
+			} else {
 				return env.ErrorDispatch(err)
 			}
-			return env.ErrorDispatch(err)
 
+		} else {
+			return env.ErrorDispatch(err)
 		}
 	}
 	return nil

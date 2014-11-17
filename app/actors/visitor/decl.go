@@ -7,14 +7,12 @@ import (
 	"time"
 )
 
-// Defined constants for the Visitor object
 const (
 	COLLECTION_NAME_VISITOR = "visitor"
 
 	EMAIL_VALIDATE_EXPIRE = 60 * 60 * 24
 )
 
-// DefaultVisitor is a struct representing the default Visitor object
 type DefaultVisitor struct {
 	id string
 
@@ -39,7 +37,6 @@ type DefaultVisitor struct {
 	*attributes.CustomAttributes
 }
 
-// DefaultVisitorCollection is the struct holding the Visitor Collection information
 type DefaultVisitorCollection struct {
 	listCollection     db.I_DBCollection
 	listExtraAtributes []string
