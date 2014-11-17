@@ -9,7 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// Get returns object attribute value or nil for the requested Visitor attribute
+// returns object attribute value or nil
 func (it *DefaultVisitor) Get(attribute string) interface{} {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
@@ -45,7 +45,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	return it.CustomAttributes.Get(attribute)
 }
 
-// Set will set attribute value of the Visitor to object or return an error
+// sets attribute value to object or returns error
 func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	attribute = strings.ToLower(attribute)
 
@@ -77,8 +77,8 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "billing_address_id", "shipping_address_id":
 		value := utils.InterfaceToString(value)
 
-		var address visitor.I_VisitorAddress
-		var err error
+		var address visitor.I_VisitorAddress = nil
+		var err error = nil
 
 		if value != "" {
 			address, err = visitor.LoadVisitorAddressById(value)
@@ -137,7 +137,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	return nil
 }
 
-// FromHashMap fills Visitor object attributes from a map[string]interface{}
+// fills object attributes from map[string]interface{}
 func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
@@ -149,7 +149,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 	return nil
 }
 
-// ToHashMap represents Visitor object as map[string]interface{}
+// represents object as map[string]interface{}
 func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
 	result := it.CustomAttributes.ToHashMap()
@@ -181,7 +181,7 @@ func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 	return result
 }
 
-// GetAttributesInfo returns the Visitor attributes information in an array
+// returns information about object attributes
 func (it *DefaultVisitor) GetAttributesInfo() []models.T_AttributeInfo {
 
 	result := []models.T_AttributeInfo{

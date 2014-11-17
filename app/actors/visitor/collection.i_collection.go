@@ -8,9 +8,9 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
-// List enumerates items of Visitor model type in a Visitor collection
+// enumerates items of Visitor model type
 func (it *DefaultVisitorCollection) List() ([]models.T_ListItem, error) {
-	var result []models.T_ListItem
+	result := make([]models.T_ListItem, 0)
 
 	dbRecords, err := it.listCollection.Load()
 	if err != nil {
@@ -47,7 +47,7 @@ func (it *DefaultVisitorCollection) List() ([]models.T_ListItem, error) {
 	return result, nil
 }
 
-// ListAddExtraAttribute provides the ability to add additional attributes if the attribute does not already exist
+// allows to obtain additional attributes from  List() function
 func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) error {
 
 	visitorModel, err := visitor.GetVisitorModel()
@@ -55,7 +55,7 @@ func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) erro
 		return env.ErrorDispatch(err)
 	}
 
-	var allowedAttributes []string
+	allowedAttributes := make([]string, 0)
 	for _, attributeInfo := range visitorModel.GetAttributesInfo() {
 		allowedAttributes = append(allowedAttributes, attributeInfo.Attribute)
 	}
@@ -74,19 +74,19 @@ func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) erro
 	return nil
 }
 
-// ListFilterAdd provides the ability to add a selection filter to List() function
+// adds selection filter to List() function
 func (it *DefaultVisitorCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
 	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
 	return nil
 }
 
-// ListFilterReset clears the presets made by ListFilterAdd() and ListAddExtraAttribute() functions
+// clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultVisitorCollection) ListFilterReset() error {
 	it.listCollection.ClearFilters()
 	return nil
 }
 
-// ListLimit sets the pagination when provided offset and limit values
+// sets select pagination
 func (it *DefaultVisitorCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
 }

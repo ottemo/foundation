@@ -6,7 +6,7 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// GetVisitorAddressCollectionModel retrieves current I_VisitorAddressCollection model implementation
+// retrieves current I_VisitorAddressCollection model implementation
 func GetVisitorAddressCollectionModel() (I_VisitorAddressCollection, error) {
 	model, err := models.GetModel(MODEL_NAME_VISITOR_ADDRESS_COLLECTION)
 	if err != nil {
@@ -21,7 +21,7 @@ func GetVisitorAddressCollectionModel() (I_VisitorAddressCollection, error) {
 	return visitorAddressCollectionModel, nil
 }
 
-// GetVisitorAddressModel retrieves current I_VisitorAddress model implementation
+// retrieves current I_VisitorAddress model implementation
 func GetVisitorAddressModel() (I_VisitorAddress, error) {
 	model, err := models.GetModel(MODEL_NAME_VISITOR_ADDRESS)
 	if err != nil {
@@ -36,7 +36,7 @@ func GetVisitorAddressModel() (I_VisitorAddress, error) {
 	return visitorAddressModel, nil
 }
 
-// GetVisitorCollectionModel retrieves current I_VisitorCollection model implementation
+// retrieves current I_VisitorCollection model implementation
 func GetVisitorCollectionModel() (I_VisitorCollection, error) {
 	model, err := models.GetModel(MODEL_NAME_VISITOR_COLLECTION)
 	if err != nil {
@@ -51,7 +51,7 @@ func GetVisitorCollectionModel() (I_VisitorCollection, error) {
 	return visitorCollectionModel, nil
 }
 
-// GetVisitorModel retrieves current I_Visitor model implementation
+// retrieves current I_Visitor model implementation
 func GetVisitorModel() (I_Visitor, error) {
 	model, err := models.GetModel(MODEL_NAME_VISITOR)
 	if err != nil {
@@ -66,15 +66,15 @@ func GetVisitorModel() (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// GetVisitorAddressModelAndSetId retrieves current I_VisitorAddress model implementation and sets its ID to some value
-func GetVisitorAddressModelAndSetId(visitorAddressID string) (I_VisitorAddress, error) {
+// retrieves current I_VisitorAddress model implementation and sets its ID to some value
+func GetVisitorAddressModelAndSetId(visitorAddressId string) (I_VisitorAddress, error) {
 
 	visitorAddressModel, err := GetVisitorAddressModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorAddressModel.SetId(visitorAddressID)
+	err = visitorAddressModel.SetId(visitorAddressId)
 	if err != nil {
 		return visitorAddressModel, env.ErrorDispatch(err)
 	}
@@ -82,15 +82,15 @@ func GetVisitorAddressModelAndSetId(visitorAddressID string) (I_VisitorAddress, 
 	return visitorAddressModel, nil
 }
 
-// GetVisitorModelAndSetId retrieves current I_Visitor model implementation and sets its ID to some value
-func GetVisitorModelAndSetId(visitorID string) (I_Visitor, error) {
+// retrieves current I_Visitor model implementation and sets its ID to some value
+func GetVisitorModelAndSetId(visitorId string) (I_Visitor, error) {
 
 	visitorModel, err := GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorModel.SetId(visitorID)
+	err = visitorModel.SetId(visitorId)
 	if err != nil {
 		return visitorModel, env.ErrorDispatch(err)
 	}
@@ -98,15 +98,15 @@ func GetVisitorModelAndSetId(visitorID string) (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// LoadVisitorAddressById loads visitor address data into current I_VisitorAddress model implementation
-func LoadVisitorAddressById(visitorAddressID string) (I_VisitorAddress, error) {
+// loads visitor address data into current I_VisitorAddress model implementation
+func LoadVisitorAddressById(visitorAddressId string) (I_VisitorAddress, error) {
 
 	visitorAddressModel, err := GetVisitorAddressModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorAddressModel.Load(visitorAddressID)
+	err = visitorAddressModel.Load(visitorAddressId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -114,15 +114,15 @@ func LoadVisitorAddressById(visitorAddressID string) (I_VisitorAddress, error) {
 	return visitorAddressModel, nil
 }
 
-// LoadVisitorById loads visitor data into current I_Visitor model implementation
-func LoadVisitorById(visitorID string) (I_Visitor, error) {
+// loads visitor data into current I_Visitor model implementation
+func LoadVisitorById(visitorId string) (I_Visitor, error) {
 
 	visitorModel, err := GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = visitorModel.Load(visitorID)
+	err = visitorModel.Load(visitorId)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -130,24 +130,24 @@ func LoadVisitorById(visitorID string) (I_Visitor, error) {
 	return visitorModel, nil
 }
 
-// GetCurrentVisitorId returns visitor id for current session if registered or ""
+// returns visitor id for current session if registered or ""
 func GetCurrentVisitorId(params *api.T_APIHandlerParams) string {
-	sessionVisitorID, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
 	if !ok {
 		return ""
 	}
 
-	return sessionVisitorID
+	return sessionVisitorId
 }
 
-// GetCurrentVisitor returns visitor for current session if registered or error
+// returns visitor for current session if registered or error
 func GetCurrentVisitor(params *api.T_APIHandlerParams) (I_Visitor, error) {
-	sessionVisitorID, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
+	sessionVisitorId, ok := params.Session.Get(SESSION_KEY_VISITOR_ID).(string)
 	if !ok {
 		return nil, env.ErrorNew("not registered visitor")
 	}
 
-	visitorInstance, err := LoadVisitorById(sessionVisitorID)
+	visitorInstance, err := LoadVisitorById(sessionVisitorId)
 
 	return visitorInstance, env.ErrorDispatch(err)
 }

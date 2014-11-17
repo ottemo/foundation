@@ -8,9 +8,9 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
-// List enumerates items of VisitorAddress model type
+// enumerates items of VisitorAddress model type
 func (it *DefaultVisitorAddressCollection) List() ([]models.T_ListItem, error) {
-	var result []models.T_ListItem
+	result := make([]models.T_ListItem, 0)
 
 	dbRecords, err := it.listCollection.Load()
 	if err != nil {
@@ -50,7 +50,7 @@ func (it *DefaultVisitorAddressCollection) List() ([]models.T_ListItem, error) {
 	return result, nil
 }
 
-// ListAddExtraAttribute allows to obtain additional attributes from  List() function
+// allows to obtain additional attributes from  List() function
 func (it *DefaultVisitorAddressCollection) ListAddExtraAttribute(attribute string) error {
 
 	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "visitorId", "fname", "first_name", "lname", "last_name",
@@ -68,19 +68,19 @@ func (it *DefaultVisitorAddressCollection) ListAddExtraAttribute(attribute strin
 	return nil
 }
 
-// ListFilterAdd adds selection filter to List() function
+// adds selection filter to List() function
 func (it *DefaultVisitorAddressCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
 	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
 	return nil
 }
 
-// ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
+// clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultVisitorAddressCollection) ListFilterReset() error {
 	it.listCollection.ClearFilters()
 	return nil
 }
 
-// ListLimit sets select pagination
+// sets select pagination
 func (it *DefaultVisitorAddressCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
 }
