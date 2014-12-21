@@ -1,56 +1,50 @@
 package visitor
 
 import (
-	"errors"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/db"
-
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
+// init makes package self-initialization routine
 func init() {
-	instance := new(DefaultVisitor)
+	visitorInstance := new(DefaultVisitor)
+	var _ visitor.InterfaceVisitor = visitorInstance
+	models.RegisterModel(visitor.ConstModelNameVisitor, visitorInstance)
 
-	models.RegisterModel("Visitor", instance)
-	db.RegisterOnDatabaseStart(instance.setupModel)
+	visitorCollectionInstance := new(DefaultVisitorCollection)
+	var _ visitor.InterfaceVisitorCollection = visitorCollectionInstance
+	models.RegisterModel(visitor.ConstModelNameVisitorCollection, visitorCollectionInstance)
 
-	api.RegisterOnRestServiceStart(instance.setupAPI)
+	db.RegisterOnDatabaseStart(setupDB)
+	api.RegisterOnRestServiceStart(setupAPI)
 }
 
-func (it *DefaultVisitor) setupModel() error {
+// setupDB prepares system database for package usage
+func setupDB() error {
 
-	if dbEngine := db.GetDBEngine(); dbEngine != nil {
-		if collection, err := dbEngine.GetCollection(VISITOR_COLLECTION_NAME); err == nil {
-			collection.AddColumn("email", "text", true)
-			collection.AddColumn("first_name", "text", false)
-			collection.AddColumn("last_name", "text", false)
-			collection.AddColumn("billing_address_id", "int", false)
-			collection.AddColumn("shipping_address_id", "int", false)
-		} else {
-			return err
-		}
-	} else {
-		return errors.New("Can't get database engine")
-	}
-
-	return nil
-}
-
-func (it *DefaultVisitor) setupAPI() error {
-	err := api.GetRestService().RegisterAPI("visitor", "POST", "create", it.CreateVisitorAPI)
+	collection, err := db.GetCollection(ConstCollectionNameVisitor)
 	if err != nil {
-		return err
+		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("visitor", "PUT", "update", it.UpdateVisitorAPI)
-	if err != nil {
-		return err
-	}
+	collection.AddColumn("email", "id", true)
+	collection.AddColumn("validate", "varchar(128)", false)
+	collection.AddColumn("password", "varchar(128)", false)
+	collection.AddColumn("first_name", "varchar(50)", true)
+	collection.AddColumn("last_name", "varchar(50)", true)
 
-	err = api.GetRestService().RegisterAPI("visitor", "GET", "load", it.LoadVisitorAPI)
-	if err != nil {
-		return err
-	}
+	collection.AddColumn("facebook_id", "varchar(100)", true)
+	collection.AddColumn("google_id", "varchar(100)", true)
+
+	collection.AddColumn("billing_address_id", "id", false)
+	collection.AddColumn("shipping_address_id", "id", false)
+
+	collection.AddColumn("birthday", "datetime", false)
+	collection.AddColumn("is_admin", "bool", false)
+	collection.AddColumn("created_at", "datetime", false)
 
 	return nil
 }

@@ -1,21 +1,29 @@
 package sqlite
 
 import (
-	"code.google.com/p/go-sqlite/go1/sqlite3"
+	"github.com/mxk/go-sqlite/sqlite3"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 )
 
+// init makes package self-initialization routine
 func init() {
-	instance := new(SQLite)
+	dbEngine = new(DBEngine)
+	dbEngine.attributeTypes = make(map[string]map[string]string)
 
-	env.RegisterOnConfigIniStart(instance.Startup)
-	db.RegisterDBEngine(instance)
+	var _ db.InterfaceDBEngine = dbEngine
+
+	env.RegisterOnConfigIniStart(dbEngine.Startup)
+	db.RegisterDBEngine(dbEngine)
 }
 
-func (it *SQLite) Startup() error {
+// Startup is a database engine startup routines
+func (it *DBEngine) Startup() error {
 
-	var uri string = "ottemo.db"
+	it.attributeTypes = make(map[string]map[string]string)
+
+	// opening connection
+	uri := "ottemo.db"
 
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("db.sqlite3.uri", uri); iniValue != "" {
@@ -24,9 +32,22 @@ func (it *SQLite) Startup() error {
 	}
 
 	if newConnection, err := sqlite3.Open(uri); err == nil {
-		it.Connection = newConnection
+		it.connection = newConnection
 	} else {
-		return err
+		return env.ErrorDispatch(err)
+	}
+
+	// making column info table
+	SQL := "CREATE TABLE IF NOT EXISTS " + ConstCollectionNameColumnInfo + ` (
+		_id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+		collection VARCHAR(255),
+		column     VARCHAR(255),
+		type       VARCHAR(255),
+		indexed    NUMERIC)`
+
+	err := it.connection.Exec(SQL)
+	if err != nil {
+		return sqlError(SQL, err)
 	}
 
 	db.OnDatabaseStart()

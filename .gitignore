@@ -9,6 +9,7 @@ _test
 tags
 .idea
 tmp
+.vagrant
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -31,3 +32,6 @@ foundation
 *.sublime-project
 *.sublime-workspace
 *.iml
+
+# test dbs
+db/sqlite/test/ottemo.db

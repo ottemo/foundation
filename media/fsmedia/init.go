@@ -1,39 +1,52 @@
 package fsmedia
 
 import (
-	"errors"
+	"os"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 )
 
+// init makes package self-initialization routine
 func init() {
 	instance := new(FilesystemMediaStorage)
-	if err := media.RegisterMediaStorage(instance); err == nil {
-		instance.setupWaitCnt = 2
 
-		env.RegisterOnConfigIniStart(instance.setupOnIniConfig)
-		db.RegisterOnDatabaseStart(instance.setupOnDatabase)
+	if err := media.RegisterMediaStorage(instance); err == nil {
+		instance.imageSizes = make(map[string]string)
+		instance.setupWaitCnt = 3
+
+		env.RegisterOnConfigIniStart(instance.setupOnIniConfigStart)
+		env.RegisterOnConfigStart(instance.setupConfig)
+		db.RegisterOnDatabaseStart(instance.setupOnDatabaseStart)
 	}
 }
 
+// setupCheckDone performs callback event if setup was done
 func (it *FilesystemMediaStorage) setupCheckDone() {
+
+	// so, we are not sure on events sequence order
 	if it.setupWaitCnt--; it.setupWaitCnt == 0 {
 		media.OnMediaStorageStart()
 	}
 }
 
-func (it *FilesystemMediaStorage) setupOnIniConfig() error {
+// setupOnIniConfigStart is a initialization based on ini config service
+func (it *FilesystemMediaStorage) setupOnIniConfigStart() error {
 
-	var storageFolder = MEDIA_DEFAULT_FOLDER
+	var storageFolder = ConstMediaDefaultFolder
 
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
-		if iniValue := iniConfig.GetValue("media.fsmedia.folder", "?"); iniValue != "" {
+		if iniValue := iniConfig.GetValue("media.fsmedia.folder", "?"+ConstMediaDefaultFolder); iniValue != "" {
 			storageFolder = iniValue
 		}
 	}
 
-	// TODO: add checks for folder existence and rights
+	err := os.MkdirAll(storageFolder, os.ModePerm)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	it.storageFolder = storageFolder
 
 	if it.storageFolder != "" && it.storageFolder[len(it.storageFolder)-1] != '/' {
@@ -45,23 +58,23 @@ func (it *FilesystemMediaStorage) setupOnIniConfig() error {
 	return nil
 }
 
-func (it *FilesystemMediaStorage) setupOnDatabase() error {
+// setupOnDatabaseStart is a initialization based on config service
+func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return errors.New("Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b50f7128a32f4d92866e1ee35ba079df", "Can't get database engine")
 	}
 
-	collection, err := dbEngine.GetCollection(MEDIA_DB_COLLECTION)
+	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
 	if err != nil {
-		return err
+		return env.ErrorDispatch(err)
 	}
 
-	// TODO: make 3 column PK constraint (model, object, media)
-	collection.AddColumn("model", "text", true)
-	collection.AddColumn("object", "text", true)
-	collection.AddColumn("type", "text", true)
-	collection.AddColumn("media", "text", false)
+	dbCollection.AddColumn("model", "text", true)
+	dbCollection.AddColumn("object", "text", true)
+	dbCollection.AddColumn("type", "text", true)
+	dbCollection.AddColumn("media", "text", false)
 
 	it.setupCheckDone()
 

@@ -1,59 +1,73 @@
+// Package models represents abstraction of business layer object and basic access interfaces for it
 package models
 
-type I_Model interface {
+import (
+	"github.com/ottemo/foundation/db"
+)
+
+// InterfaceModel represents interface for basic business layer implementation object
+type InterfaceModel interface {
 	GetModelName() string
 	GetImplementationName() string
-	New() (I_Model, error)
+	New() (InterfaceModel, error)
 }
 
-type I_Storable interface {
-	GetId() string
-	SetId(string) error
+// InterfaceStorable represents interface load/store business layer implementation object from database
+type InterfaceStorable interface {
+	GetID() string
+	SetID(string) error
 
 	Save() error
 	Load(id string) error
-	Delete(Id string) error
+	Delete() error
 }
 
-type I_Object interface {
-	Get(Attribute string) interface{}
-	Set(Attribute string, Value interface{}) error
+// InterfaceObject represents interface to access business layer implementation object via get/set functions
+type InterfaceObject interface {
+	Get(attribute string) interface{}
+	Set(attribute string, value interface{}) error
 
-	FromHashMap(HashMap map[string]interface{}) error
+	FromHashMap(hashMap map[string]interface{}) error
 	ToHashMap() map[string]interface{}
 
-	GetAttributesInfo() []T_AttributeInfo
+	GetAttributesInfo() []StructAttributeInfo
 }
 
-type I_Listable interface {
-	List() ([]interface{}, error)
-	ListFilterAdd(Attribute string, Operator string, Value interface{}) error
-	ListFilterReset() error
+// InterfaceListable represents interface to access business layer implementation collection via object instance
+type InterfaceListable interface {
+	GetCollection() InterfaceCollection
 }
 
-type I_CustomAttributes interface {
-	AddNewAttribute(newAttribute T_AttributeInfo) error
+// InterfaceCustomAttributes represents interface to access business layer implementation object custom attributes
+type InterfaceCustomAttributes interface {
+	GetCustomAttributeCollectionName() string
+
+	AddNewAttribute(newAttribute StructAttributeInfo) error
 	RemoveAttribute(attributeName string) error
+	EditAttribute(attributeName string, attributeValues StructAttributeInfo) error
 }
 
-type I_Media interface {
+// InterfaceMedia represents interface to access business layer implementation object assigned media resources
+type InterfaceMedia interface {
 	AddMedia(mediaType string, mediaName string, content []byte) error
 	RemoveMedia(mediaType string, mediaName string) error
+
 	ListMedia(mediaType string) ([]string, error)
+
 	GetMedia(mediaType string, mediaName string) ([]byte, error)
 	GetMediaPath(mediaType string) (string, error)
 }
 
-type T_AttributeInfo struct {
-	Model      string
-	Collection string
-	Attribute  string
-	Type       string
-	Label      string
-	IsRequired bool
-	IsStatic   bool
-	Group      string
-	Editors    string
-	Options    string
-	Default    string
+// InterfaceCollection represents interface to access business layer implementation collection
+type InterfaceCollection interface {
+	GetDBCollection() db.InterfaceDBCollection
+
+	List() ([]StructListItem, error)
+
+	ListAddExtraAttribute(attribute string) error
+
+	ListFilterAdd(attribute string, operator string, value interface{}) error
+	ListFilterReset() error
+
+	ListLimit(offset int, limit int) error
 }

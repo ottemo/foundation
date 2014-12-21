@@ -1,23 +1,62 @@
+// Package sqlite is a SQLite implementation of interfaces declared in
+// "github.com/ottemo/foundation/db" package
 package sqlite
 
 import (
-	"code.google.com/p/go-sqlite/go1/sqlite3"
-	"github.com/ottemo/foundation/db"
+	"regexp"
+	"sync"
+
+	"github.com/mxk/go-sqlite/sqlite3"
+	"github.com/ottemo/foundation/env"
 )
 
-type SQLiteCollection struct {
-	Connection *sqlite3.Conn
-	TableName  string
-	Columns    map[string]string
+// Package global constants
+const (
+	ConstUseUUIDids = true  // flag which indicates to use UUID "_id" column type instead of default integer
+	ConstDebugSQL   = false // flag which indicates to perform log on each SQL operation
 
-	Filters []string
-	Order   []string
+	ConstFilterGroupStatic  = "static"  // name for static filter, ref. to AddStaticFilter(...)
+	ConstFilterGroupDefault = "default" // name for default filter, ref. to by AddFilter(...)
+
+	ConstCollectionNameColumnInfo = "collection_column_info" // table name to hold Ottemo types of columns
+
+	ConstErrorModule = "db/sqlite"
+	ConstErrorLevel  = env.ConstErrorLevelService
+)
+
+// Package global variables
+var (
+	// dbEngine is an instance of database engine (one per application)
+	dbEngine *DBEngine
+
+	// ConstSQLNameValidator is a regex expression used to check names used within SQL queries
+	ConstSQLNameValidator = regexp.MustCompile("^[A-Za-z_][A-Za-z0-9_]*$")
+)
+
+// StructDBFilterGroup is a structure to hold information of named collection filter
+type StructDBFilterGroup struct {
+	Name         string
+	FilterValues []string
+	ParentGroup  string
+	OrSequence   bool
+}
+
+// DBCollection is a InterfaceDBCollection implementer
+type DBCollection struct {
+	Name string
+
+	ResultColumns []string
+	FilterGroups  map[string]*StructDBFilterGroup
+	Order         []string
 
 	Limit string
 }
 
-type SQLite struct {
-	Connection *sqlite3.Conn
-}
+// DBEngine is a InterfaceDBEngine implementer
+type DBEngine struct {
+	connection      *sqlite3.Conn
+	connectionMutex sync.RWMutex
 
-var collections = map[string]db.I_DBCollection{}
+	attributeTypes      map[string]map[string]string
+	attributeTypesMutex sync.RWMutex
+}

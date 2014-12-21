@@ -1,24 +1,62 @@
+// Package product represents abstraction of business layer product object
 package product
 
 import (
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/env"
 )
 
-type I_Product interface {
+// Package global constants
+const (
+	ConstModelNameProduct           = "Product"
+	ConstModelNameProductCollection = "ProductCollection"
+
+	ConstErrorModule = "product"
+	ConstErrorLevel  = env.ConstErrorLevelModel
+)
+
+// InterfaceProduct represents interface to access business layer implementation of product object
+type InterfaceProduct interface {
+	GetEnabled() bool
+
 	GetSku() string
 	GetName() string
 
+	GetShortDescription() string
 	GetDescription() string
 
 	GetDefaultImage() string
 
 	GetPrice() float64
+	GetWeight() float64
 
-	models.I_Model
-	models.I_Object
-	models.I_Storable
-	models.I_Listable
-	models.I_Media
+	GetQty() int
 
-	models.I_CustomAttributes
+	GetAppliedOptions() map[string]interface{}
+	GetOptions() map[string]interface{}
+
+	ApplyOptions(map[string]interface{}) error
+
+	models.InterfaceModel
+	models.InterfaceObject
+	models.InterfaceStorable
+	models.InterfaceMedia
+	models.InterfaceListable
+	models.InterfaceCustomAttributes
+}
+
+// InterfaceProductCollection represents interface to access business layer implementation of product collection
+type InterfaceProductCollection interface {
+	ListProducts() []InterfaceProduct
+
+	models.InterfaceCollection
+}
+
+// InterfaceStock represents interface to access business layer implementation of stock management
+type InterfaceStock interface {
+	SetProductQty(productID string, options map[string]interface{}, qty int) error
+	GetProductQty(productID string, options map[string]interface{}) int
+
+	RemoveProductQty(productID string, options map[string]interface{}) error
+	UpdateProductQty(productID string, options map[string]interface{}, deltaQty int) error
 }

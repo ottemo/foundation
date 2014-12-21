@@ -1,15 +1,42 @@
+// Package address is a default implementation of models/visitor package visitor address related  interfaces
 package address
 
-const (
-	VISITOR_ADDRESS_COLLECTION_NAME = "visitor_address"
+import (
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
-type DefaultVisitorAddress struct {
-	id string
+// Package global constants
+const (
+	ConstCollectionNameVisitorAddress = "visitor_address"
 
-	Street  string
-	City    string
+	ConstErrorModule = "visitor/address"
+	ConstErrorLevel  = env.ConstErrorLevelActor
+)
+
+// DefaultVisitorAddress is a default implementer of InterfaceVisitorAddress
+type DefaultVisitorAddress struct {
+	id        string
+	visitorID string
+
+	FirstName string
+	LastName  string
+
+	Company string
+
+	Country string
 	State   string
+	City    string
+
+	AddressLine1 string
+	AddressLine2 string
+
 	Phone   string
 	ZipCode string
+}
+
+// DefaultVisitorAddressCollection is a default implementer of InterfaceVisitorAddressCollection
+type DefaultVisitorAddressCollection struct {
+	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
 }

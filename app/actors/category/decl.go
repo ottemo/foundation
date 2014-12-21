@@ -1,19 +1,35 @@
+// Package category is a default implementation of interfaces declared in
+// "github.com/ottemo/foundation/app/models/category" package
 package category
 
 import (
 	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
+// Package global constants
 const (
-	CATEGORY_COLLECTION_NAME                  = "category"
-	CATEGORY_PRODUCT_JUNCTION_COLLECTION_NAME = "category_product"
+	ConstCollectionNameCategory                = "category"
+	ConstCollectionNameCategoryProductJunction = "category_product"
+
+	ConstErrorModule = "category"
+	ConstErrorLevel  = env.ConstErrorLevelActor
 )
 
+// DefaultCategory is a default implementer of InterfaceCategory
 type DefaultCategory struct {
 	id string
 
-	Name     string
-	Parent   category.I_Category
-	Products []product.I_Product
+	Enabled    bool
+	Name       string
+	Parent     category.InterfaceCategory
+	Path       string
+	ProductIds []string
+}
+
+// DefaultCategoryCollection is a default implementer of InterfaceCategoryCollection
+type DefaultCategoryCollection struct {
+	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
 }

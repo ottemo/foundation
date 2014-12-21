@@ -1,49 +1,46 @@
 package category
 
 import (
-	"errors"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/db"
-
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/category"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
+// init makes package self-initialization routine
 func init() {
-	instance := new(DefaultCategory)
+	categoryInstance := new(DefaultCategory)
+	var _ category.InterfaceCategory = categoryInstance
+	models.RegisterModel(category.ConstModelNameCategory, categoryInstance)
 
-	models.RegisterModel("Visitor", instance)
-	db.RegisterOnDatabaseStart(instance.setupModel)
+	categoryCollectionInstance := new(DefaultCategoryCollection)
+	var _ category.InterfaceCategoryCollection = categoryCollectionInstance
+	models.RegisterModel(category.ConstModelNameCategoryCollection, categoryCollectionInstance)
 
-	api.RegisterOnRestServiceStart(instance.setupAPI)
+	db.RegisterOnDatabaseStart(categoryInstance.setupDB)
+	api.RegisterOnRestServiceStart(setupAPI)
 }
 
-func (it *DefaultCategory) setupModel() error {
-
-	if dbEngine := db.GetDBEngine(); dbEngine != nil {
-		collection, err := dbEngine.GetCollection(CATEGORY_COLLECTION_NAME)
-		if err != nil {
-			return err
-		}
-
-		collection.AddColumn("parent_id", "id", true)
-		collection.AddColumn("name", "text", true)
-
-		collection, err = dbEngine.GetCollection(CATEGORY_PRODUCT_JUNCTION_COLLECTION_NAME)
-		if err != nil {
-			return err
-		}
-
-		collection.AddColumn("category_id", "id", true)
-		collection.AddColumn("product_id", "id", true)
-
-	} else {
-		return errors.New("Can't get database engine")
+// setupDB prepares system database for package usage
+func (it *DefaultCategory) setupDB() error {
+	collection, err := db.GetCollection(ConstCollectionNameCategory)
+	if err != nil {
+		return env.ErrorDispatch(err)
 	}
 
-	return nil
-}
+	collection.AddColumn("enabled", db.ConstDBBasetypeBoolean, true)
+	collection.AddColumn("parent_id", db.ConstDBBasetypeID, true)
+	collection.AddColumn("path", db.ConstDBBasetypeVarchar, true)
+	collection.AddColumn("name", db.ConstDBBasetypeVarchar, true)
 
-func (it *DefaultCategory) setupAPI() error {
+	collection, err = db.GetCollection(ConstCollectionNameCategoryProductJunction)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	collection.AddColumn("category_id", db.ConstDBBasetypeID, true)
+	collection.AddColumn("product_id", db.ConstDBBasetypeID, true)
 
 	return nil
 }

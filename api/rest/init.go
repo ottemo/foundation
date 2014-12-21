@@ -10,7 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// package self registration function
+// init makes package self-initialization routine
 func init() {
 	instance := new(DefaultRestService)
 
@@ -29,6 +29,11 @@ func (it *DefaultRestService) startup() error {
 	}
 
 	it.Router = httprouter.New()
+
+	it.Router.PanicHandler = func(resp http.ResponseWriter, req *http.Request, params interface{}) {
+		resp.WriteHeader(404)
+		resp.Write([]byte("page not found"))
+	}
 
 	// our homepage - shows all registered API in text representation
 	it.Router.GET("/",
