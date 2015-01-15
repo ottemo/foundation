@@ -19,7 +19,7 @@ build:
         - script:
             name: go build
             code: |
-                go build ./...
+                go build -tags mongo ./...
 
                 # Test the project
         - script:
