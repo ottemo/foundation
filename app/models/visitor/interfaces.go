@@ -30,7 +30,6 @@ type InterfaceVisitor interface {
 	GetFirstName() string
 	GetLastName() string
 
-	GetBirthday() time.Time
 	GetCreatedAt() time.Time
 
 	GetShippingAddress() InterfaceVisitorAddress

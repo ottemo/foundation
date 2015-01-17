@@ -194,6 +194,10 @@ func restCheckoutSetInfo(params *api.StructAPIHandlerParams) (interface{}, error
 			return nil, env.ErrorDispatch(err)
 		}
 	}
+
+	// updating session
+	checkout.SetCurrentCheckout(params, currentCheckout)
+
 	return "ok", nil
 }
 
@@ -215,7 +219,7 @@ func checkoutObtainAddress(params *api.StructAPIHandlerParams) (visitor.Interfac
 
 		currentVisitorID := utils.InterfaceToString(params.Session.Get(visitor.ConstSessionKeyVisitorID))
 		if visitorAddress.GetVisitorID() != currentVisitorID {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bef277144ac54705b59a47c8e0bc5aa4", "address id is not related to current visitor")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bef27714-4ac5-4705-b59a-47c8e0bc5aa4", "address id is not related to current visitor")
 		}
 
 		return visitorAddress, nil
@@ -264,6 +268,9 @@ func restCheckoutSetShippingAddress(params *api.StructAPIHandlerParams) (interfa
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// updating session
+	checkout.SetCurrentCheckout(params, currentCheckout)
+
 	return address.ToHashMap(), nil
 }
 
@@ -283,6 +290,9 @@ func restCheckoutSetBillingAddress(params *api.StructAPIHandlerParams) (interfac
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+
+	// updating session
+	checkout.SetCurrentCheckout(params, currentCheckout)
 
 	return address.ToHashMap(), nil
 }
@@ -315,13 +325,16 @@ func restCheckoutSetPaymentMethod(params *api.StructAPIHandlerParams) (interface
 				eventData := map[string]interface{}{"session": params.Session, "paymentMethod": paymentMethod, "checkout": currentCheckout}
 				env.Event("api.checkout.setPayment", eventData)
 
+				// updating session
+				checkout.SetCurrentCheckout(params, currentCheckout)
+
 				return "ok", nil
 			}
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bd07849e87894316924c9c754efbc348", "payment method not allowed")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bd07849e-8789-4316-924c-9c754efbc348", "payment method not allowed")
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8384a4788064a5490fccccb5e958b4e", "payment method not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8384a47-8806-4a54-90fc-cccb5e958b4e", "payment method not found")
 }
 
 // WEB REST API function to set payment method
@@ -350,17 +363,20 @@ func restCheckoutSetShippingMethod(params *api.StructAPIHandlerParams) (interfac
 							return nil, env.ErrorDispatch(err)
 						}
 
+						// updating session
+						checkout.SetCurrentCheckout(params, currentCheckout)
+
 						return "ok", nil
 					}
 				}
 
 			} else {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d7fb6ff2b914467bbf56b8d2bea472ef", "shipping method not allowed")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d7fb6ff2-b914-467b-bf56-b8d2bea472ef", "shipping method not allowed")
 			}
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "279a645c6a0344de95c02651a51440fa", "shipping method and/or rate were not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "279a645c-6a03-44de-95c0-2651a51440fa", "shipping method and/or rate were not found")
 }
 
 // WEB REST API function to submit checkout information and make order

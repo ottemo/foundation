@@ -11,8 +11,8 @@ const (
 	ConstMediaDBCollection  = "media"    // database collection name to store media assignment information into
 	ConstMediaDefaultFolder = "./media/" // filesystem folder path to store media files in there
 
-	ConstDefaultImageSize  = "800x400"    // "800x400"
-	ConstDefaultImageSizes = "large: 0x0" // "small: 75x75, thumb: 260x300, big: 560x650"
+	ConstDefaultImageSize  = "1000x1000"      // "800x400"
+	ConstDefaultImageSizes = "thumb: 280x350" // "small: 75x75, thumb: 260x300, big: 560x650"
 
 	ConstConfigPathMediaImageSize  = "general.app.image_size"  // base image size
 	ConstConfigPathMediaImageSizes = "general.app.image_sizes" // other image sizes required

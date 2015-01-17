@@ -73,7 +73,7 @@ func restReviewAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776659b4c1d8590a61f00a9d969", "guest visitor is no allowed to add review")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to add review")
 	}
 
 	productObject, err := product.LoadProductByID(params.RequestURLParams["pid"])
@@ -93,7 +93,7 @@ func restReviewAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 		starsNum := utils.InterfaceToInt(starsValue)
 		if starsNum <= 0 || starsNum > 5 {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a7d1a3daa794722b02bc030bffb7557", "stars should be value integer beetween 1 and 5")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a7d1a3d-aa79-4722-b02b-c030bffb7557", "stars should be value integer beetween 1 and 5")
 		}
 
 		reviewCollection.AddFilter("product_id", "=", productObject.GetID())
@@ -106,7 +106,7 @@ func restReviewAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 		}
 
 		if records > 0 {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "930320888575475492cb0146b9c4fa97", "you have already vote for that product")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "93032088-8575-4754-92cb-0146b9c4fa97", "you have already vote for that product")
 		}
 
 		ratingValue = starsNum
@@ -176,7 +176,7 @@ func restReviewRemove(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776659b4c1d8590a61f00a9d969", "guest visitor is no allowed to edit review")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to edit review")
 	}
 
 	collection, err := db.GetCollection(ConstReviewCollectionName)

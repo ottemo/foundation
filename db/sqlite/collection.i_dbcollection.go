@@ -49,9 +49,6 @@ func (it *DBCollection) Load() ([]map[string]interface{}, error) {
 func (it *DBCollection) Iterate(iteratorFunc func(record map[string]interface{}) bool) error {
 
 	SQL := it.getSelectSQL()
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
 
 	stmt, err := connectionQuery(SQL)
 	defer closeStatement(stmt)
@@ -85,9 +82,6 @@ func (it *DBCollection) Distinct(columnName string) ([]interface{}, error) {
 	it.SetResultColumns(columnName)
 
 	SQL := "SELECT DISTINCT " + it.getSQLResultColumns() + " FROM " + it.Name + it.getSQLFilters() + it.getSQLOrder() + it.Limit
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
 
 	it.ResultColumns = prevResultColumns
 
@@ -153,10 +147,6 @@ func (it *DBCollection) Count() (int, error) {
 
 	SQL := "SELECT COUNT(*) AS cnt FROM " + it.Name + sqlLoadFilter
 
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
-
 	stmt, err := connectionQuery(SQL)
 	defer closeStatement(stmt)
 
@@ -209,7 +199,7 @@ func (it *DBCollection) Save(item map[string]interface{}) (string, error) {
 				}
 
 			} else {
-				return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3c32afc6eb74432497a89425724be0d1", "unexpected _id value '"+fmt.Sprint(item)+"'")
+				return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3c32afc6-eb74-4324-97a8-9425724be0d1", "unexpected _id value '"+fmt.Sprint(item)+"'")
 			}
 		} else {
 			item["_id"] = nil
@@ -219,39 +209,60 @@ func (it *DBCollection) Save(item map[string]interface{}) (string, error) {
 	// SQL generation
 	columns := make([]string, 0, len(item))
 	args := make([]string, 0, len(item))
+	columnEqArg := make([]string, 0, len(item))
+
 	values := make([]interface{}, 0, len(item))
 
-	for k, v := range item {
-		if item[k] != nil {
-			columns = append(columns, "`"+k+"`")
-			args = append(args, convertValueForSQL(v))
+	for key, value := range item {
+		if item[key] != nil {
+			columns = append(columns, "`"+key+"`")
+			args = append(args, convertValueForSQL(value))
 
-			//args = append(args, "$_"+k)
-			//values = append(values, convertValueForSQL(v))
+			if key != "_id" {
+				columnEqArg = append(columnEqArg, "`"+key+"`="+convertValueForSQL(value))
+			}
+
+			//args = append(args, "$_"+key)
+			//values = append(values, convertValueForSQL(value))
 		}
 	}
 
-	SQL := "INSERT OR REPLACE INTO " + it.Name +
-		" (" + strings.Join(columns, ",") + ") VALUES" +
-		" (" + strings.Join(args, ",") + ")"
+	makeInsertFlag := true
 
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
+	// trying to make update first, it we have _id
+	if item["_id"] != nil && item["_id"] != "" {
+		SQL := "UPDATE " + it.Name + " SET " + strings.Join(columnEqArg, ", ") +
+			" WHERE `_id`=" + convertValueForSQL(item["_id"])
 
-	if !ConstUseUUIDids {
-		newIDInt64, err := connectionExecWLastInsertID(SQL, values...)
+		affected, err := connectionExecWAffected(SQL)
 		if err != nil {
 			return "", sqlError(SQL, err)
 		}
+		if affected > 0 {
+			makeInsertFlag = false
+		}
+	}
 
-		// auto-incremented _id back to string
-		newIDString := strconv.FormatInt(newIDInt64, 10)
-		item["_id"] = newIDString
-	} else {
-		err := connectionExec(SQL, values...)
-		if err != nil {
-			return "", sqlError(SQL, err)
+	// so if update fas successful we do not need to insert
+	if makeInsertFlag {
+		SQL := "INSERT INTO " + it.Name +
+			" (" + strings.Join(columns, ",") + ") VALUES" +
+			" (" + strings.Join(args, ",") + ")"
+
+		if !ConstUseUUIDids {
+			newIDInt64, err := connectionExecWLastInsertID(SQL, values...)
+			if err != nil {
+				return "", sqlError(SQL, err)
+			}
+
+			// auto-incremented _id back to string
+			newIDString := strconv.FormatInt(newIDInt64, 10)
+			item["_id"] = newIDString
+		} else {
+			err := connectionExec(SQL, values...)
+			if err != nil {
+				return "", sqlError(SQL, err)
+			}
 		}
 	}
 
@@ -265,10 +276,6 @@ func (it *DBCollection) Delete() (int, error) {
 
 	SQL := "DELETE FROM " + it.Name + sqlDeleteFilter
 
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
-
 	affected, err := connectionExecWAffected(SQL)
 
 	return affected, env.ErrorDispatch(err)
@@ -278,17 +285,13 @@ func (it *DBCollection) Delete() (int, error) {
 func (it *DBCollection) DeleteByID(id string) error {
 	SQL := "DELETE FROM " + it.Name + " WHERE _id = " + convertValueForSQL(id)
 
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
-
 	return connectionExec(SQL)
 }
 
 // SetupFilterGroup setups filter group params for collection
 func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, parentGroup string) error {
 	if _, present := it.FilterGroups[parentGroup]; !present && parentGroup != "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa3d4f48d6a9020d29476940aa", "invalid parent group")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
 	}
 
 	filterGroup := it.getFilterGroup(groupName)
@@ -301,7 +304,7 @@ func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, pare
 // RemoveFilterGroup removes filter group for collection
 func (it *DBCollection) RemoveFilterGroup(groupName string) error {
 	if _, present := it.FilterGroups[groupName]; !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9eb6f989782d41f198655977c3dc64ef", "invalid group name")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9eb6f989-782d-41f1-9865-5977c3dc64ef", "invalid group name")
 	}
 
 	delete(it.FilterGroups, groupName)
@@ -360,7 +363,7 @@ func (it *DBCollection) AddSort(ColumnName string, Desc bool) error {
 			it.Order = append(it.Order, ColumnName)
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f308617079954f0a94ff3344c18502b7", "can't find column '"+ColumnName+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3086170-7995-4f0a-94ff-3344c18502b7", "can't find column '"+ColumnName+"'")
 	}
 
 	return nil
@@ -376,7 +379,7 @@ func (it *DBCollection) ClearSort() error {
 func (it *DBCollection) SetResultColumns(columns ...string) error {
 	for _, columnName := range columns {
 		if !it.HasColumn(columnName) {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e1fe347f32324921b03dafcff93be895", "there is no column "+columnName+" found")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e1fe347f-3232-4921-b03d-afcff93be895", "there is no column "+columnName+" found")
 		}
 
 		it.ResultColumns = append(it.ResultColumns, columnName)
@@ -471,38 +474,20 @@ func (it *DBCollection) AddColumn(columnName string, columnType string, indexed 
 
 	// checking column name
 	if !ConstSQLNameValidator.MatchString(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bf49191958004fd188026b78846bd6b4", "not valid column name for DB engine: "+columnName)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bf491919-5800-4fd1-8802-6b78846bd6b4", "not valid column name for DB engine: "+columnName)
 	}
 
 	// checking if column already present
 	if it.HasColumn(columnName) {
 		if currentType := it.GetColumnType(columnName); currentType != columnType {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f568e952db014b3bb5b78d0d1acb2d08", "column '"+columnName+"' already exists with type '"+currentType+"' for '"+it.Name+"' collection. Requested type '"+columnType+"'")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f568e952-db01-4b3b-b5b7-8d0d1acb2d08", "column '"+columnName+"' already exists with type '"+currentType+"' for '"+it.Name+"' collection. Requested type '"+columnType+"'")
 		}
 		return nil
 	}
 
-	// updating physical table
-	//-------------------------
-	ColumnType, err := GetDBType(columnType)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	SQL := "ALTER TABLE " + it.Name + " ADD COLUMN \"" + columnName + "\" " + ColumnType
-
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
-	}
-
-	err = connectionExec(SQL)
-	if err != nil {
-		return sqlError(SQL, err)
-	}
-
 	// updating collection info table
 	//--------------------------------
-	SQL = "INSERT INTO " + ConstCollectionNameColumnInfo + "(collection, column, type, indexed) VALUES (" +
+	SQL := "INSERT INTO " + ConstCollectionNameColumnInfo + "(collection, column, type, indexed) VALUES (" +
 		"'" + it.Name + "', " +
 		"'" + columnName + "', " +
 		"'" + columnType + "', "
@@ -512,15 +497,26 @@ func (it *DBCollection) AddColumn(columnName string, columnType string, indexed 
 		SQL += "0)"
 	}
 
-	if ConstDebugSQL {
-		env.Log("sqlite", env.ConstLogPrefixInfo, SQL)
+	err := connectionExec(SQL)
+	if err != nil {
+		return sqlError(SQL, err)
 	}
+
+	// updating physical table
+	//-------------------------
+	ColumnType, err := GetDBType(columnType)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	SQL = "ALTER TABLE " + it.Name + " ADD COLUMN \"" + columnName + "\" " + ColumnType
 
 	err = connectionExec(SQL)
 	if err != nil {
 		return sqlError(SQL, err)
 	}
 
+	// updating collection columns list
 	it.ListColumns()
 
 	return nil
@@ -533,11 +529,11 @@ func (it *DBCollection) RemoveColumn(columnName string) error {
 	// checking column in table
 	//-------------------------
 	if columnName == "_id" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5d68214b26044ebda20d522fbbc61afe", "you can't remove _id column")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5d68214b-2604-4ebd-a20d-522fbbc61afe", "you can't remove _id column")
 	}
 
 	if !it.HasColumn(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e0b589cd29549aebc472fbe1e243248", "column '"+columnName+"' not exists in '"+it.Name+"' collection")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e0b589c-d295-49ae-bc47-2fbe1e243248", "column '"+columnName+"' not exists in '"+it.Name+"' collection")
 	}
 
 	// getting table create SQL to take columns from
@@ -586,7 +582,7 @@ func (it *DBCollection) RemoveColumn(columnName string) error {
 
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ac7aef2e4b794e8286aa27e7ec0ab6ae", "can't find table create columns in '"+tableCreateSQL+"', found ["+strings.Join(regexMatch, ", ")+"]")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ac7aef2e-4b79-4e82-86aa-27e7ec0ab6ae", "can't find table create columns in '"+tableCreateSQL+"', found ["+strings.Join(regexMatch, ", ")+"]")
 	}
 
 	// making new table without removing column, and filling with values from old table
@@ -616,6 +612,12 @@ func (it *DBCollection) RemoveColumn(columnName string) error {
 	SQL = "DROP TABLE " + it.Name + "_fordelete"
 	if err := connectionExec(SQL); err != nil {
 		return sqlError(SQL, err)
+	}
+
+	if _, present := dbEngine.attributeTypes[it.Name]; present {
+		if _, present = dbEngine.attributeTypes[it.Name][columnName]; present {
+			delete(dbEngine.attributeTypes[it.Name], columnName)
+		}
 	}
 
 	it.ListColumns()

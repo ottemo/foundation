@@ -55,30 +55,30 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("product_id", "id", true)
-	collection.AddColumn("created_at", "datetime", false)
-	collection.AddColumn("count", "int", false)
+	collection.AddColumn("product_id", db.ConstTypeID, true)
+	collection.AddColumn("created_at", db.ConstTypeDatetime, false)
+	collection.AddColumn("count", db.ConstTypeInteger, false)
 
 	collection, err = db.GetCollection(ConstCollectionNameRTSSales)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("product_id", "id", true)
-	collection.AddColumn("count", "int", false)
-	collection.AddColumn("range", "varchar(21)", false)
+	collection.AddColumn("product_id", db.ConstTypeID, true)
+	collection.AddColumn("count", db.ConstTypeInteger, false)
+	collection.AddColumn("range", db.TypeWPrecision(db.ConstTypeVarchar, 21), false)
 
 	collection, err = db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("day", "datetime", false)
-	collection.AddColumn("visitors", "int", false)
-	collection.AddColumn("cart", "int", false)
-	collection.AddColumn("checkout", "int", false)
-	collection.AddColumn("sales", "int", false)
-	collection.AddColumn("details", "text", false)
+	collection.AddColumn("day", db.ConstTypeDatetime, false)
+	collection.AddColumn("visitors", db.ConstTypeInteger, false)
+	collection.AddColumn("cart", db.ConstTypeInteger, false)
+	collection.AddColumn("checkout", db.ConstTypeInteger, false)
+	collection.AddColumn("sales", db.ConstTypeInteger, false)
+	collection.AddColumn("details", db.ConstTypeText, false)
 
 	return nil
 }

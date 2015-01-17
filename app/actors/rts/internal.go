@@ -22,13 +22,13 @@ func GetReferrer(url string) (string, error) {
 	r := regexp.MustCompile(`^(http|https):\/\/(.+)\/.*$`)
 	groups := r.FindStringSubmatch(url)
 	if len(groups) == 0 {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9ee22d7f62d4379b48eec9a59e388c8", "Invalid URL in referrer")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9ee22d7-f62d-4379-b48e-ec9a59e388c8", "Invalid URL in referrer")
 	}
 	result := groups[2]
 
 	for index := 0; index < len(excludeURLs); index++ {
 		if strings.Contains(excludeURLs[index], result) {
-			return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "841fa275e0fb4d29868f2bca20d5fe4e", "Invalid URL in referrer")
+			return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "841fa275-e0fb-4d29-868f-2bca20d5fe4e", "Invalid URL in referrer")
 		}
 	}
 
@@ -105,12 +105,9 @@ func GetDateFrom() (time.Time, error) {
 
 		if len(dbRecord) > 0 {
 			datetime := utils.InterfaceToTime(dbRecord[0]["created_at"])
-			year := datetime.Year()
-			month := datetime.Month()
-			day := datetime.Day()
-			result := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+			result := time.Date(datetime.Year(), datetime.Month(), datetime.Day(), 0, 0, 0, 0, datetime.Location())
 			if time.Now().Format("2006-01-02") == datetime.Format("2006-01-02") {
-				return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ead00ed31d1e45e7b3305dcd73c88764", "Sales history has last data")
+				return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ead00ed3-1d1e-45e7-b330-5dcd73c88764", "Sales history has last data")
 			}
 
 			return result, nil
@@ -120,10 +117,7 @@ func GetDateFrom() (time.Time, error) {
 	orderCollectionModel, err := order.GetOrderCollectionModel()
 	dateFrom := time.Now()
 	if err != nil {
-		year := dateFrom.Year()
-		month := dateFrom.Month()
-		day := dateFrom.Day()
-		result := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		result := time.Date(dateFrom.Year(), dateFrom.Month(), dateFrom.Day(), dateFrom.Hour(), 0, 0, 0, dateFrom.Location())
 		return result, nil
 	}
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
@@ -132,10 +126,7 @@ func GetDateFrom() (time.Time, error) {
 	dbRecord, err := dbOrderCollection.Load()
 	if len(dbRecord) > 0 {
 		dateFrom = utils.InterfaceToTime(dbRecord[0]["created_at"])
-		year := dateFrom.Year()
-		month := dateFrom.Month()
-		day := dateFrom.Day()
-		result := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		result := time.Date(dateFrom.Year(), dateFrom.Month(), dateFrom.Day(), dateFrom.Hour(), 0, 0, 0, dateFrom.Location())
 		return result, nil
 	}
 
@@ -160,11 +151,8 @@ func GetOrderItems(date time.Time, productID string) ([]map[string]interface{}, 
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
 	dbOrderCollection.SetResultColumns("_id")
 
-	year := date.Year()
-	month := date.Month()
-	day := date.Day()
-	todayFrom := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-	todayTo := time.Date(year, month, day, 23, 59, 59, 0, time.Local)
+	todayFrom := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+	todayTo := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 0, date.Location())
 	dbOrderCollection.AddFilter("created_at", ">=", todayFrom)
 	dbOrderCollection.AddFilter("created_at", "<=", todayTo)
 
@@ -294,11 +282,8 @@ func GetTotalSales(fromDate time.Time, toDate time.Time) error {
 
 	dbCollection := orderCollectionModelT.GetDBCollection()
 
-	year := fromDate.Year()
-	month := fromDate.Month()
-	day := fromDate.Day()
-	todayFrom := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-	todayTo := time.Date(year, month, day, 23, 59, 59, 0, time.Local)
+	todayFrom := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
+	todayTo := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 23, 59, 59, 0, fromDate.Location())
 
 	dbCollection.AddFilter("created_at", ">=", todayFrom)
 	dbCollection.AddFilter("created_at", "<=", todayTo)
@@ -310,11 +295,8 @@ func GetTotalSales(fromDate time.Time, toDate time.Time) error {
 	}
 
 	dbCollection.ClearFilters()
-	year = toDate.Year()
-	month = toDate.Month()
-	day = toDate.Day()
-	yesterdayFrom := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-	yesterdayTo := time.Date(year, month, day, 23, 59, 59, 0, time.Local)
+	yesterdayFrom := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
+	yesterdayTo := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 23, 59, 59, 0, toDate.Location())
 
 	dbCollection.AddFilter("created_at", ">=", yesterdayFrom)
 	dbCollection.AddFilter("created_at", "<=", yesterdayTo)
@@ -350,16 +332,10 @@ func GetSalesDetail(fromDate time.Time, toDate time.Time, hash string) error {
 	dbCollection.SetResultColumns("_id", "created_at")
 	dbCollection.AddSort("created_at", false)
 
-	year := fromDate.Year()
-	month := fromDate.Month()
-	day := fromDate.Day()
-	dateFrom := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+	dateFrom := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
 	dbCollection.AddFilter("created_at", ">=", dateFrom)
 
-	year = toDate.Year()
-	month = toDate.Month()
-	day = toDate.Day()
-	dateTo := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+	dateTo := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
 	dbCollection.AddFilter("created_at", "<=", dateTo)
 
 	// filters handle for yesterday
@@ -389,11 +365,9 @@ func GetSalesDetail(fromDate time.Time, toDate time.Time, hash string) error {
 
 		for date := fromDate; int32(date.Unix()) < int32(toDate.Unix()); date = date.AddDate(0, 0, 1) {
 			timestamp := int64(date.Unix())
-			year := time.Unix(int64(timestamp), 0).Year()
-			month := time.Unix(int64(timestamp), 0).Month()
-			day := time.Unix(int64(timestamp), 0).Day()
+			currentTime := time.Unix(int64(timestamp), 0)
 			for hour := 0; hour < 24; hour++ {
-				timeGroup := time.Date(year, month, day, hour, 0, 0, 0, time.Local)
+				timeGroup := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), hour, 0, 0, 0, currentTime.Location())
 				if timeGroup.Unix() > time.Now().Unix() {
 					break
 				}
@@ -416,15 +390,13 @@ func GetSalesDetail(fromDate time.Time, toDate time.Time, hash string) error {
 
 // GetDayForTimestamp returns the day or hour for the given time
 func GetDayForTimestamp(timestamp int64, byHour bool) string {
+	currentTime := time.Unix(timestamp, 0)
 	hour := 0
 	if byHour {
-		hour = time.Unix(timestamp, 0).Hour()
+		hour = currentTime.Hour()
 	}
 
-	year := time.Unix(timestamp, 0).Year()
-	month := time.Unix(timestamp, 0).Month()
-	day := time.Unix(timestamp, 0).Day()
-	timeGroup := time.Date(year, month, day, hour, 0, 0, 0, time.Local)
+	timeGroup := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), hour, 0, 0, 0, currentTime.Location())
 	mapIndex := fmt.Sprintf("%v", int32(timeGroup.Unix()))
 
 	return mapIndex
@@ -432,19 +404,14 @@ func GetDayForTimestamp(timestamp int64, byHour bool) string {
 
 // GetTodayVisitorsData will return Visitor data for Today
 func GetTodayVisitorsData() error {
-	year := time.Now().Year()
-	month := time.Now().Month()
-	day := time.Now().Day()
-	today := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	currentTime := time.Now()
+	today := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, currentTime.Location())
 
-	if visitorsInfoToday.Day == today.In(time.Local) {
+	if visitorsInfoToday.Day == today.In(time.UTC) {
 		return nil
 	}
 
-	year = time.Now().AddDate(0, 0, -1).Year()
-	month = time.Now().AddDate(0, 0, -1).Month()
-	day = time.Now().AddDate(0, 0, -1).Day()
-	yesterday := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	yesterday := time.Date(currentTime.AddDate(0, 0, -1).Year(), currentTime.AddDate(0, 0, -1).Month(), currentTime.AddDate(0, 0, -1).Day(), currentTime.AddDate(0, 0, -1).Hour(), 0, 0, 0, currentTime.Location())
 	if visitorsInfoToday.Day == yesterday {
 		SaveVisitorData()
 		visitorsInfoYesterday = visitorsInfoToday
@@ -477,10 +444,8 @@ func GetTodayVisitorsData() error {
 
 // GetYesterdayVisitorsData will build a collection of data representing yesterdays Visitor statistics
 func GetYesterdayVisitorsData() error {
-	year := time.Now().AddDate(0, 0, -1).Year()
-	month := time.Now().AddDate(0, 0, -1).Month()
-	day := time.Now().AddDate(0, 0, -1).Day()
-	yesterday := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+	currentTime := time.Now().AddDate(0, 0, -1)
+	yesterday := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, currentTime.Location())
 
 	if visitorsInfoYesterday.Day == yesterday {
 		return nil

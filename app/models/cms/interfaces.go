@@ -22,6 +22,8 @@ type InterfaceCMSPage interface {
 	GetEnabled() bool
 	SetEnabled(bool) error
 
+	LoadByIdentifier(identifier string) error
+
 	GetIdentifier() string
 	SetIdentifier(string) error
 
@@ -30,6 +32,8 @@ type InterfaceCMSPage interface {
 
 	GetContent() string
 	SetContent(string) error
+
+	EvaluateContent() string
 
 	models.InterfaceModel
 	models.InterfaceObject
@@ -46,11 +50,15 @@ type InterfaceCMSPageCollection interface {
 
 // InterfaceCMSBlock represents interface to access business layer implementation of cms block object
 type InterfaceCMSBlock interface {
+	LoadByIdentifier(identifier string) error
+
 	GetIdentifier() string
 	SetIdentifier(string) error
 
 	GetContent() string
 	SetContent(string) error
+
+	EvaluateContent() string
 
 	models.InterfaceModel
 	models.InterfaceObject

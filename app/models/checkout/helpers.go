@@ -17,7 +17,7 @@ func GetCheckoutModel() (InterfaceCheckout, error) {
 
 	checkoutModel, ok := model.(InterfaceCheckout)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3e5976af4d4841d7a1cf72696907bce8", "model "+model.GetImplementationName()+" is not 'InterfaceCheckout' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3e5976af-4d48-41d7-a1cf-72696907bce8", "model "+model.GetImplementationName()+" is not 'InterfaceCheckout' capable")
 	}
 
 	return checkoutModel, nil
@@ -54,10 +54,24 @@ func GetCurrentCheckout(params *api.StructAPIHandlerParams) (InterfaceCheckout, 
 	var checkoutInstance InterfaceCheckout
 
 	// trying to get checkout object from session, otherwise creating new one
-	if sessionCheckout, ok := sessionObject.(InterfaceCheckout); ok {
-		checkoutInstance = sessionCheckout
+	switch typedvalue := sessionObject.(type) {
+	case InterfaceCheckout:
+		checkoutInstance = typedvalue
 
-	} else {
+	case map[string]interface{}:
+		checkoutModel, err := GetCheckoutModel()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		err = checkoutModel.FromHashMap(typedvalue)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		checkoutInstance = checkoutModel
+
+	default:
 
 		// making new checkout object
 		newCheckoutInstance, err := GetCheckoutModel()
@@ -65,14 +79,14 @@ func GetCurrentCheckout(params *api.StructAPIHandlerParams) (InterfaceCheckout, 
 			return nil, env.ErrorDispatch(err)
 		}
 
-		// storing checkout object to session
-		params.Session.Set(ConstSessionKeyCurrentCheckout, newCheckoutInstance)
-
 		//setting session
 		newCheckoutInstance.SetSession(params.Session)
 
 		checkoutInstance = newCheckoutInstance
 	}
+
+	// storing checkout object to session
+	params.Session.Set(ConstSessionKeyCurrentCheckout, checkoutInstance)
 
 	// updating checkout object
 	//-------------------------
@@ -92,4 +106,10 @@ func GetCurrentCheckout(params *api.StructAPIHandlerParams) (InterfaceCheckout, 
 	checkoutInstance.SetVisitor(currentVisitor)
 
 	return checkoutInstance, nil
+}
+
+// SetCurrentCheckout assigns given checkout to current session
+func SetCurrentCheckout(params *api.StructAPIHandlerParams, checkout InterfaceCheckout) error {
+	params.Session.Set(ConstSessionKeyCurrentCheckout, checkout)
+	return nil
 }

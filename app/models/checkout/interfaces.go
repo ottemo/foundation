@@ -53,6 +53,7 @@ type InterfaceCheckout interface {
 	Submit() (interface{}, error)
 
 	models.InterfaceModel
+	models.InterfaceObject
 }
 
 // InterfaceShippingMethod represents interface to access business layer implementation of checkout shipping method

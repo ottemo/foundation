@@ -15,7 +15,7 @@ func (it *CustomAttributes) Set(attribute string, value interface{}) error {
 	if _, present := it.attributes[attribute]; present {
 		it.values[attribute] = value
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "154b03ed0e75416d890b8775fcd74063", "attribute '"+attribute+"' invalid")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "154b03ed-0e75-416d-890b-8775fcd74063", "attribute '"+attribute+"' invalid")
 	}
 
 	return nil

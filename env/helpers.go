@@ -2,6 +2,7 @@ package env
 
 import (
 	"errors"
+	"github.com/ottemo/foundation/utils"
 )
 
 // ConfigGetValue returns config value or nil if not present
@@ -117,4 +118,39 @@ func Event(event string, args map[string]interface{}) {
 	if eventBus := GetEventBus(); eventBus != nil {
 		eventBus.New(event, args)
 	}
+}
+
+// TypeParse shortcut for utils.DataTypeParse
+func TypeParse(typeName string) utils.DataType {
+	return utils.DataTypeParse(typeName)
+}
+
+// TypeWPrecisionAndScale shortcut for utils.DataTypeWPrecisionAndScale
+func TypeWPrecisionAndScale(dataType string, precision int, scale int) string {
+	return utils.DataTypeWPrecisionAndScale(dataType, precision, scale)
+}
+
+// TypeWPrecision shortcut for utils.DataTypeWPrecision
+func TypeWPrecision(dataType string, precision int) string {
+	return utils.DataTypeWPrecision(dataType, precision)
+}
+
+// TypeArrayOf shortcut for utils.DataTypeArrayOf
+func TypeArrayOf(dataType string) string {
+	return utils.DataTypeArrayOf(dataType)
+}
+
+// TypeIsArray shortcut for utils.DataTypeIsArray
+func TypeIsArray(dataType string) bool {
+	return utils.DataTypeIsArray(dataType)
+}
+
+// TypeIsString shortcut for utils.DataTypeIsString
+func TypeIsString(dataType string) bool {
+	return utils.DataTypeIsString(dataType)
+}
+
+// TypeIsFloat shortcut for utils.DataTypeIsFloat
+func TypeIsFloat(dataType string) bool {
+	return utils.DataTypeIsFloat(dataType)
 }

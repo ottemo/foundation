@@ -15,7 +15,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/api/session"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -33,7 +32,7 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f631f4f38a916579bf822908b", "API call fail")
+				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail")
 			}
 		}()
 
@@ -127,12 +126,6 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		// Handling request
 		//------------------
 
-		// starting session for request
-		currentSession, err := session.StartSession(req, resp)
-		if err != nil {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8215f4dffb0e73d0d102ad02d", "Session init fail: "+err.Error())
-		}
-
 		// preparing struct for API handler
 		apiParams := new(api.StructAPIHandlerParams)
 		apiParams.Request = req
@@ -140,6 +133,12 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		apiParams.RequestGETParams = urlGETParams
 		apiParams.RequestContent = content
 		apiParams.ResponseWriter = resp
+
+		// starting session for request
+		currentSession, err := api.StartSession(apiParams)
+		if err != nil {
+			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
+		}
 		apiParams.Session = currentSession
 
 		if ConstUseDebugLog {
@@ -182,9 +181,26 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 
 			// JSON encode
 			if resp.Header().Get("Content-Type") == "application/json" {
-				errorMsg := ""
+				var errorMsg map[string]interface{}
 				if err != nil {
-					errorMsg = err.Error()
+					if _, ok := err.(env.InterfaceOttemoError); !ok {
+						err = env.ErrorDispatch(err)
+					}
+
+					if ottemoError, ok := err.(env.InterfaceOttemoError); ok {
+						errorMsg = map[string]interface{}{
+							"message": ottemoError.Error(),
+							"level":   ottemoError.ErrorLevel(),
+							"code":    ottemoError.ErrorCode(),
+						}
+					} else {
+						env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bdbb8627-18e8-4969-a048-c8b482235f39", "can't convert error to ottemoError")
+						errorMsg = map[string]interface{}{
+							"message": err.Error(),
+							"level":   env.ConstErrorLevelAPI,
+							"code":    "bdbb8627-18e8-4969-a048-c8b482235f39",
+						}
+					}
 				}
 
 				result, _ = json.Marshal(map[string]interface{}{"result": result, "error": errorMsg, "redirect": redirectLocation})
@@ -218,7 +234,7 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 	case "DELETE":
 		it.Router.DELETE(path, wrappedHandler)
 	default:
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dccf5e44aaeb6df9dd55041a21e", "unsupported method '"+method+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dcc-f5e4-4aae-b6df-9dd55041a21e", "unsupported method '"+method+"'")
 	}
 
 	key := path + " {" + method + "}"

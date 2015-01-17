@@ -44,7 +44,7 @@ func TestProductsOperations(tst *testing.T) {
 		Model:      product.ConstModelNameProduct,
 		Collection: "product", // TODO: Custom attribute helper should set this by self
 		Attribute:  "test",
-		Type:       "text",
+		Type:       utils.ConstDataTypeText,
 		IsRequired: true,
 		IsStatic:   false,
 		Label:      "Test Attribute",

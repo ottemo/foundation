@@ -5,6 +5,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 
 	"github.com/ottemo/foundation/utils"
@@ -55,7 +56,7 @@ func (it *DefaultCMSPage) Set(attribute string, value interface{}) error {
 		return nil
 	}
 
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6af9084fddc45bfa90c9c3d6ff88a57", "unknown attribute '"+attribute+"'")
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6af9084-fddc-45bf-a90c-9c3d6ff88a57", "unknown attribute '"+attribute+"'")
 }
 
 // FromHashMap fills object attributes from map[string]interface{}
@@ -94,7 +95,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "_id",
-			Type:       "id",
+			Type:       db.ConstTypeID,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "ID",
@@ -107,7 +108,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "enabled",
-			Type:       "bool",
+			Type:       db.ConstTypeBoolean,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Enabled",
@@ -120,7 +121,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "identifier",
-			Type:       "varchar(255)",
+			Type:       db.ConstTypeVarchar,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Identifier",
@@ -134,7 +135,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "title",
-			Type:       "varchar(255)",
+			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Title",
@@ -148,7 +149,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "content",
-			Type:       "html",
+			Type:       db.ConstTypeText,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Content",
@@ -161,7 +162,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "created_at",
-			Type:       "datetime",
+			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Created At",
@@ -174,7 +175,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "updated_at",
-			Type:       "datetime",
+			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Updated At",

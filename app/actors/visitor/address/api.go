@@ -68,7 +68,7 @@ func restCreateVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, 
 	}
 
 	if _, ok := reqData["visitor_id"]; !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9da4ac4d07348f3b0622ba536d2c577", "visitor id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9da4ac4-d073-48f3-b062-2ba536d2c577", "visitor id was not specified")
 	}
 
 	// check rights
@@ -109,7 +109,7 @@ func restUpdateVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, 
 	//---------------------
 	addressID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c085fe4d60a134415f7ac12075", "visitor address 'id' was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c0-85fe-4d60-a134-415f7ac12075", "visitor address 'id' was not specified")
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -154,7 +154,7 @@ func restDeleteVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, 
 	//--------------------
 	addressID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "eec1ef1b25d94dbe8bd2b907a0897203", "visitor address id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "eec1ef1b-25d9-4dbe-8bd2-b907a0897203", "visitor address id was not specified")
 	}
 
 	visitorAddressModel, err := visitor.LoadVisitorAddressByID(addressID)
@@ -224,7 +224,7 @@ func restListVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, er
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5f49924d5d934c82b7d2eb0bb998055f", "unexpected request content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5f49924d-5d93-4c82-b7d2-eb0bb998055f", "unexpected request content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -234,7 +234,7 @@ func restListVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, er
 
 		sessionVisitorID := visitor.GetCurrentVisitorID(params)
 		if sessionVisitorID == "" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b9241406eb35a399813bb6ca5", "you are not logined in")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "you are not logined in")
 		}
 		visitorID = sessionVisitorID
 	}
@@ -280,7 +280,7 @@ func restListVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, er
 func restGetVisitorAddress(params *api.StructAPIHandlerParams) (interface{}, error) {
 	visitorAddressID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b94882c6bbdd428d88b07ea5623d80f7", "visitor 'id' was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b94882c6-bbdd-428d-88b0-7ea5623d80f7", "visitor 'id' was not specified")
 	}
 
 	visitorAddressModel, err := visitor.LoadVisitorAddressByID(visitorAddressID)

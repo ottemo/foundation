@@ -69,7 +69,7 @@ func (it *DefaultOrder) Load(ID string) error {
 // Delete removes current order from DB
 func (it *DefaultOrder) Delete() error {
 	if it.GetID() == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "05e078712c784852ab06505bf8d708c1", "order id is not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "05e07871-2c78-4852-ab06-505bf8d708c1", "order id is not set")
 	}
 
 	// deleting order items

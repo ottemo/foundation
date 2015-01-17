@@ -12,7 +12,7 @@ func setupConfig() error {
 		err := config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathGroup,
 			Value:       nil,
-			Type:        env.ConstConfigItemGroupType,
+			Type:        env.ConstConfigTypeGroup,
 			Editor:      "",
 			Options:     nil,
 			Label:       "Stock",
@@ -36,7 +36,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
-			Type:        "bool",
+			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
 			Options:     nil,
 			Label:       "Enabled",

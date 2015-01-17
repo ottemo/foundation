@@ -174,7 +174,8 @@ func (it *DefaultCheckout) SetSession(checkoutSession api.InterfaceSession) erro
 
 // GetSession return checkout visitor
 func (it *DefaultCheckout) GetSession() api.InterfaceSession {
-	return api.GetSessionByID(it.SessionID)
+	sessionInstance, _ := api.GetSessionByID(it.SessionID)
+	return sessionInstance
 }
 
 // GetTaxes collects taxes applied for current checkout
@@ -299,34 +300,34 @@ func (it *DefaultCheckout) GetOrder() order.InterfaceOrder {
 func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	if it.GetBillingAddress() == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "080db3c0dbb54398b1f14c3fefef79b4", "Billing address is not set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "080db3c0-dbb5-4398-b1f1-4c3fefef79b4", "Billing address is not set")
 	}
 
 	if it.GetShippingAddress() == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1c069d54284746cbbccd76fc13d229ea", "Shipping address is not set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1c069d54-2847-46cb-bccd-76fc13d229ea", "Shipping address is not set")
 	}
 
 	if it.GetPaymentMethod() == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c06280383e0647e99252480351d903c0", "Payment method is not set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c0628038-3e06-47e9-9252-480351d903c0", "Payment method is not set")
 	}
 
 	if it.GetShippingMethod() == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e22877fe248d4b5ead2f10843cb9890c", "Shipping method is not set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e22877fe-248d-4b5e-ad2f-10843cb9890c", "Shipping method is not set")
 	}
 
 	currentCart := it.GetCart()
 	if currentCart == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea211827202546cabe47d09841021890", "Cart is not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea211827-2025-46ca-be47-d09841021890", "Cart is not specified")
 	}
 
 	cartItems := currentCart.GetItems()
 	if len(cartItems) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84ad4db529e9430caecfb675cbafbcec", "Cart is empty")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84ad4db5-29e9-430c-aecf-b675cbafbcec", "Cart is empty")
 	}
 
 	currentVisitor := it.GetVisitor()
 	if (it.VisitorID == "" || currentVisitor == nil) && utils.InterfaceToString(it.GetInfo("customer_email")) == "" {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c5f53ede63b740ea952d4d4c04337563", "customer e-mail was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c5f53ede-63b7-40ea-952d-4d4c04337563", "customer e-mail was not specified")
 	}
 
 	if err := currentCart.ValidateCart(); err != nil {

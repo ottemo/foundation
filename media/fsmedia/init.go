@@ -63,7 +63,7 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b50f7128a32f4d92866e1ee35ba079df", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b50f7128-a32f-4d92-866e-1ee35ba079df", "Can't get database engine")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -71,10 +71,10 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 		return env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddColumn("model", "text", true)
-	dbCollection.AddColumn("object", "text", true)
-	dbCollection.AddColumn("type", "text", true)
-	dbCollection.AddColumn("media", "text", false)
+	dbCollection.AddColumn("model", db.ConstTypeVarchar, true)
+	dbCollection.AddColumn("object", db.ConstTypeVarchar, true)
+	dbCollection.AddColumn("type", db.ConstTypeVarchar, true)
+	dbCollection.AddColumn("media", db.ConstTypeVarchar, false)
 
 	it.setupCheckDone()
 

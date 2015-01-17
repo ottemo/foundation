@@ -66,7 +66,7 @@ func restTaxCSVDownload(params *api.StructAPIHandlerParams) (interface{}, error)
 			return nil, nil
 		}
 	} else {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4cc9eb51663e4ebc9b235e7dee56e078", "can't get DB engine")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4cc9eb51-663e-4ebc-9b23-5e7dee56e078", "can't get DB engine")
 	}
 
 	return nil, nil
@@ -110,7 +110,7 @@ func restTaxCSVUpload(params *api.StructAPIHandlerParams) (interface{}, error) {
 			return nil, env.ErrorDispatch(err)
 		}
 	} else {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc1f5af3fd1c4da8a4c2f40613eb682f", "can't get DB engine")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc1f5af3-fd1c-4da8-a4c2-f40613eb682f", "can't get DB engine")
 	}
 
 	return "ok", nil

@@ -49,7 +49,7 @@ func (it *DBEngine) CreateCollection(collectionName string) error {
 // GetCollection returns collection(table) by name or creates new one
 func (it *DBEngine) GetCollection(collectionName string) (db.InterfaceDBCollection, error) {
 	if !ConstSQLNameValidator.MatchString(collectionName) {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "71bf95ddd2714ea999a052fe561b72bf", "not valid collection name for DB engine")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "71bf95dd-d271-4ea9-99a0-52fe561b72bf", "not valid collection name for DB engine")
 	}
 
 	if !it.HasCollection(collectionName) {

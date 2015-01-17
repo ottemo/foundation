@@ -8,7 +8,7 @@ import (
 func (it *FilesystemMediaStorage) setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "7c6d90929a174d96a796fd0f7b64c00a", "can't obtain config")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "7c6d9092-9a17-4d96-a796-fd0f7b64c00a", "can't obtain config")
 	}
 
 	imageSizesValidator := func(newValue interface{}) (interface{}, error) {
@@ -19,13 +19,13 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			}
 			return newValue, nil
 		}
-		return ConstDefaultImageSizes, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "165834bdd8ca4b1d8cfab8a153288913", "unexpected image sizes value")
+		return ConstDefaultImageSizes, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "165834bd-d8ca-4b1d-8cfa-b8a153288913", "unexpected image sizes value")
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMediaImageSizes,
 		Value:       ConstDefaultImageSizes,
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "Image sizes",
@@ -47,13 +47,13 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			}
 			return newValue, nil
 		}
-		return ConstDefaultImageSize, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "165834bdd8ca4b1d8cfab8a153288913", "Unexpected value for image size")
+		return ConstDefaultImageSize, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "165834bd-d8ca-4b1d-8cfa-b8a153288913", "Unexpected value for image size")
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMediaImageSize,
 		Value:       ConstDefaultImageSize,
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "Base image size",

@@ -10,7 +10,7 @@ import (
 func GetCollection(CollectionName string) (InterfaceDBCollection, error) {
 	dbEngine := GetDBEngine()
 	if dbEngine == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7f379d36eb934addb1eedf2c3a35a590", "Can't get DBEngine")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7f379d36-eb93-4add-b1ee-df2c3a35a590", "Can't get DBEngine")
 	}
 
 	return dbEngine.GetCollection(CollectionName)
@@ -38,29 +38,64 @@ func ConvertTypeFromDbToGo(value interface{}, valueType string) interface{} {
 		}
 		return result
 
-	case strings.HasPrefix(valueType, ConstDBBasetypeBoolean):
+	case strings.HasPrefix(valueType, ConstTypeBoolean):
 		return utils.InterfaceToBool(value)
 
-	case strings.HasPrefix(valueType, ConstDBBasetypeInteger):
+	case strings.HasPrefix(valueType, ConstTypeInteger):
 		return utils.InterfaceToInt(value)
 
-	case strings.HasPrefix(valueType, ConstDBBasetypeDecimal),
-		strings.HasPrefix(valueType, ConstDBBasetypeFloat),
-		strings.HasPrefix(valueType, ConstDBBasetypeMoney):
+	case strings.HasPrefix(valueType, ConstTypeDecimal),
+		strings.HasPrefix(valueType, ConstTypeFloat),
+		strings.HasPrefix(valueType, ConstTypeMoney):
 
 		return utils.InterfaceToFloat64(value)
 
-	case valueType == ConstDBBasetypeDatetime:
+	case valueType == ConstTypeDatetime:
 		return utils.InterfaceToTime(value)
 
-	case valueType == ConstDBBasetypeJSON:
+	case valueType == ConstTypeJSON:
 		result, _ := utils.DecodeJSONToStringKeyMap(value)
 		return result
 
-	case strings.HasPrefix(valueType, ConstDBBasetypeVarchar), valueType == ConstDBBasetypeText, valueType == ConstDBBasetypeID:
+	case strings.HasPrefix(valueType, ConstTypeVarchar), valueType == ConstTypeText, valueType == ConstTypeID:
 		return utils.InterfaceToString(value)
 
 	}
 
 	return value
+}
+
+// TypeParse shortcut for utils.DataTypeParse
+func TypeParse(typeName string) utils.DataType {
+	return utils.DataTypeParse(typeName)
+}
+
+// TypeWPrecisionAndScale shortcut for utils.DataTypeWPrecisionAndScale
+func TypeWPrecisionAndScale(dataType string, precision int, scale int) string {
+	return utils.DataTypeWPrecisionAndScale(dataType, precision, scale)
+}
+
+// TypeWPrecision shortcut for utils.DataTypeWPrecision
+func TypeWPrecision(dataType string, precision int) string {
+	return utils.DataTypeWPrecision(dataType, precision)
+}
+
+// TypeArrayOf shortcut for utils.DataTypeArrayOf
+func TypeArrayOf(dataType string) string {
+	return utils.DataTypeArrayOf(dataType)
+}
+
+// TypeIsArray shortcut for utils.DataTypeIsArray
+func TypeIsArray(dataType string) bool {
+	return utils.DataTypeIsArray(dataType)
+}
+
+// TypeIsString shortcut for utils.DataTypeIsString
+func TypeIsString(dataType string) bool {
+	return utils.DataTypeIsString(dataType)
+}
+
+// TypeIsFloat shortcut for utils.DataTypeIsFloat
+func TypeIsFloat(dataType string) bool {
+	return utils.DataTypeIsFloat(dataType)
 }

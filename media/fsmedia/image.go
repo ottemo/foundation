@@ -2,6 +2,7 @@ package fsmedia
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"io"
 	"os"
@@ -96,15 +97,16 @@ func (it *FilesystemMediaStorage) GetSizeDimensions(size string) (uint, uint, er
 		size = sizeValue
 	}
 
-	if size == "" {
+	if size == "" && it.baseSize != "" {
 		size = it.baseSize
+	} else {
+		return 0, 0, nil
 	}
 
 	value := strings.Split(size, "x")
-
 	width, err := strconv.ParseUint(value[0], 10, 0)
 	if err != nil {
-		return 0, 0, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f92ff65d86454ee383e4adea0fdb3588", "Invalid size")
+		return 0, 0, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f92ff65d-8645-4ee3-83e4-adea0fdb3588", "Invalid size")
 	}
 
 	if len(value) > 1 {
@@ -122,25 +124,26 @@ func (it *FilesystemMediaStorage) GetResizedMediaName(mediaName string, size str
 		return mediaName
 	}
 
-	return size + "_" + mediaName
-	//	// checking file extension
-	//	var fileExtension string
-	//	fileName := mediaName
-	//
-	//	idx := strings.LastIndex(mediaName, ".")
-	//	if idx != -1 {
-	//		fileExtension = mediaName[idx:]
-	//		fileName = mediaName[0:idx]
-	//	}
-	//
-	//	// if we have predefined size
-	//	if _, present := it.imageSizes[size]; present {
-	//		return fmt.Sprintf("%s_%s%s", fileName, size, fileExtension)
-	//	}
-	//
-	//	// otherwise
-	//	width, height, _ := it.GetSizeDimensions(size)
-	//	return fmt.Sprintf("%s_%dx%d", fileName, width, height)
+	// return size + "_" + mediaName
+
+	// checking file extension
+	var fileExtension string
+	fileName := mediaName
+
+	idx := strings.LastIndex(mediaName, ".")
+	if idx != -1 {
+		fileExtension = mediaName[idx:]
+		fileName = mediaName[0:idx]
+	}
+
+	// if we have predefined size
+	if _, present := it.imageSizes[size]; present {
+		return fmt.Sprintf("%s_%s%s", fileName, size, fileExtension)
+	}
+
+	// otherwise
+	width, height, _ := it.GetSizeDimensions(size)
+	return fmt.Sprintf("%s_%dx%d", fileName, width, height)
 }
 
 // TODO: need to refactor this method to several smaller methods to reduce complexity - jwv
@@ -250,7 +253,7 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 		case "png":
 			err = png.Encode(resizedFile, resizedImage)
 		default:
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "42f0cbb391874e1689535829ea8d2da8", "Unknown image format to encode")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "42f0cbb3-9187-4e16-8953-5829ea8d2da8", "Unknown image format to encode")
 		}
 
 		if err != nil {

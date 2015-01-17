@@ -16,7 +16,7 @@ func GetVisitorAddressCollectionModel() (InterfaceVisitorAddressCollection, erro
 
 	visitorAddressCollectionModel, ok := model.(InterfaceVisitorAddressCollection)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "470605da1e564bb2a19d43ed7610e3fd", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorAddressCollection' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "470605da-1e56-4bb2-a19d-43ed7610e3fd", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorAddressCollection' capable")
 	}
 
 	return visitorAddressCollectionModel, nil
@@ -31,7 +31,7 @@ func GetVisitorAddressModel() (InterfaceVisitorAddress, error) {
 
 	visitorAddressModel, ok := model.(InterfaceVisitorAddress)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26af56affd7e4d32a5c9805873d7d03e", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorAddress' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26af56af-fd7e-4d32-a5c9-805873d7d03e", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorAddress' capable")
 	}
 
 	return visitorAddressModel, nil
@@ -46,7 +46,7 @@ func GetVisitorCollectionModel() (InterfaceVisitorCollection, error) {
 
 	visitorCollectionModel, ok := model.(InterfaceVisitorCollection)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "65701c43f2e14950a1001bf92104a701", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorCollection' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "65701c43-f2e1-4950-a100-1bf92104a701", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorCollection' capable")
 	}
 
 	return visitorCollectionModel, nil
@@ -61,7 +61,7 @@ func GetVisitorModel() (InterfaceVisitor, error) {
 
 	visitorModel, ok := model.(InterfaceVisitor)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "04e350af4a734f39b35a95fda724fb93", "model "+model.GetImplementationName()+" is not 'InterfaceVisitor' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "04e350af-4a73-4f39-b35a-95fda724fb93", "model "+model.GetImplementationName()+" is not 'InterfaceVisitor' capable")
 	}
 
 	return visitorModel, nil
@@ -153,7 +153,7 @@ func GetCurrentVisitor(params *api.StructAPIHandlerParams) (InterfaceVisitor, er
 			return visitorInstance, nil
 		}
 
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5acb5eef6894dd8a85ff2ec47425ba1", "not registered visitor")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5acb5ee-f689-4dd8-a85f-f2ec47425ba1", "not registered visitor")
 	}
 
 	visitorInstance, err := LoadVisitorByID(sessionVisitorID)

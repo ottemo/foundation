@@ -18,7 +18,7 @@ func UnRegisterStock() error {
 // RegisterStock registers given stock manager in system
 func RegisterStock(stock InterfaceStock) error {
 	if registeredStock != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "80dc18f2da63418e84305a832a4c3bd2", "Already registered")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "80dc18f2-da63-418e-8430-5a832a4c3bd2", "Already registered")
 	}
 	registeredStock = stock
 

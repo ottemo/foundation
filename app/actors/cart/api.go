@@ -100,7 +100,7 @@ func restCartAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 	reqPid, present := params.RequestURLParams["productID"]
 	pid = utils.InterfaceToString(reqPid)
 	if !present || pid == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c21dac874f9348dcb997bbbe558cfd29", "pid should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c21dac87-4f93-48dc-b997-bbbe558cfd29", "pid should be specified")
 	}
 
 	qty := 1
@@ -124,26 +124,11 @@ func restCartAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	addItemFlag := true
-	cartItems := currentCart.GetItems()
-	for _, item := range cartItems {
-		cartItemOptions := utils.EncodeToJSONString(item.GetOptions())
-		newItemOptions := utils.EncodeToJSONString(options)
-		if item.GetProductID() == pid && cartItemOptions == newItemOptions {
-			err = item.SetQty(item.GetQty() + qty)
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-			addItemFlag = false
-		}
+	_, err = currentCart.AddItem(pid, qty, options)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
-	if addItemFlag {
-		_, err := currentCart.AddItem(pid, qty, options)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-	}
 	currentCart.Save()
 
 	eventData := map[string]interface{}{"session": params.Session, "cart": currentCart, "pid": pid, "qty": qty, "options": options}
@@ -159,7 +144,7 @@ func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 	// check request params
 	//---------------------
 	if !utils.KeysInMapAndNotBlank(params.RequestURLParams, "itemIdx", "qty") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "16311f443f38436d82ca8a9c08c47928", "itemIdx and qty should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "16311f44-3f38-436d-82ca-8a9c08c47928", "itemIdx and qty should be specified")
 	}
 
 	itemIdx, err := utils.StringToInteger(params.RequestURLParams["itemIdx"])
@@ -172,7 +157,7 @@ func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 	if qty <= 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "701264ec114b4e18971b9965b70d534c", "qty should be greather then 0")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "701264ec-114b-4e18-971b-9965b70d534c", "qty should be greather then 0")
 	}
 
 	// operation
@@ -194,7 +179,7 @@ func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if !found {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b1ae8e413aef4f2eb417bd6975ff7bb1", "wrong itemIdx was specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b1ae8e41-3aef-4f2e-b417-bd6975ff7bb1", "wrong itemIdx was specified")
 	}
 
 	currentCart.Save()
@@ -208,7 +193,7 @@ func restCartDelete(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	_, present := params.RequestURLParams["itemIdx"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6afc9a4e9fb44c31b8c5f46b514ef86e", "itemIdx should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6afc9a4e-9fb4-4c31-b8c5-f46b514ef86e", "itemIdx should be specified")
 	}
 
 	itemIdx, err := utils.StringToInteger(params.RequestURLParams["itemIdx"])

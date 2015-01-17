@@ -84,7 +84,7 @@ func cleanupGuestCarts() error {
 	}
 	for _, record := range records {
 		sessionID := utils.InterfaceToString(record["session_id"])
-		if sessionInstance := api.GetSessionByID(sessionID); sessionInstance == nil {
+		if sessionInstance, err := api.GetSessionByID(sessionID); err != nil || sessionInstance == nil {
 			cartID := utils.InterfaceToString(record["_id"])
 			err = cartCollection.DeleteByID(cartID)
 			if err != nil {
@@ -112,25 +112,25 @@ func (it *DefaultCart) setupDB() error {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("visitor_id", db.ConstDBBasetypeID, true)
-		collection.AddColumn("session_id", db.ConstDBBasetypeID, true)
-		collection.AddColumn("updated_at", db.ConstDBBasetypeDatetime, true)
-		collection.AddColumn("active", db.ConstDBBasetypeBoolean, true)
-		collection.AddColumn("info", db.ConstDBBasetypeJSON, false)
+		collection.AddColumn("visitor_id", db.ConstTypeID, true)
+		collection.AddColumn("session_id", db.ConstTypeID, true)
+		collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
+		collection.AddColumn("active", db.ConstTypeBoolean, true)
+		collection.AddColumn("info", db.ConstTypeJSON, false)
 
 		collection, err = dbEngine.GetCollection(ConstCartItemsCollectionName)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("idx", db.ConstDBBasetypeInteger, false)
-		collection.AddColumn("cart_id", db.ConstDBBasetypeID, true)
-		collection.AddColumn("product_id", db.ConstDBBasetypeID, true)
-		collection.AddColumn("qty", db.ConstDBBasetypeInteger, false)
-		collection.AddColumn("options", db.ConstDBBasetypeJSON, false)
+		collection.AddColumn("idx", db.ConstTypeInteger, false)
+		collection.AddColumn("cart_id", db.ConstTypeID, true)
+		collection.AddColumn("product_id", db.ConstTypeID, true)
+		collection.AddColumn("qty", db.ConstTypeInteger, false)
+		collection.AddColumn("options", db.ConstTypeJSON, false)
 
 	} else {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "33076d0b5c6541ddaa84e4b68e1efa5b", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "33076d0b-5c65-41dd-aa84-e4b68e1efa5b", "Can't get database engine")
 	}
 
 	return nil

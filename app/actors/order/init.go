@@ -40,56 +40,56 @@ func setupDB() error {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("increment_id", "varchar(50)", true)
-		collection.AddColumn("status", "varchar(50)", true)
+		collection.AddColumn("increment_id", db.TypeWPrecision(db.ConstTypeVarchar, 50), true)
+		collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), true)
 
-		collection.AddColumn("visitor_id", "id", true)
-		collection.AddColumn("cart_id", "id", true)
+		collection.AddColumn("visitor_id", db.ConstTypeID, true)
+		collection.AddColumn("cart_id", db.ConstTypeID, true)
 
-		collection.AddColumn("billing_address", "text", true)
-		collection.AddColumn("shipping_address", "text", true)
+		collection.AddColumn("billing_address", db.ConstTypeJSON, true)
+		collection.AddColumn("shipping_address", db.ConstTypeJSON, true)
 
-		collection.AddColumn("customer_email", "varchar(100)", true)
-		collection.AddColumn("customer_name", "varchar(100)", false)
+		collection.AddColumn("customer_email", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
+		collection.AddColumn("customer_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 
-		collection.AddColumn("payment_method", "varchar(100)", false)
-		collection.AddColumn("shipping_method", "varchar(100)", false)
+		collection.AddColumn("payment_method", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+		collection.AddColumn("shipping_method", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 
-		collection.AddColumn("subtotal", "decimal(10,2)", false)
-		collection.AddColumn("discount", "decimal(10,2)", false)
-		collection.AddColumn("tax_amount", "decimal(10,2)", false)
-		collection.AddColumn("shipping_amount", "decimal(10,2)", false)
-		collection.AddColumn("grand_total", "decimal(10,2)", false)
+		collection.AddColumn("subtotal", db.ConstTypeMoney, false)
+		collection.AddColumn("discount", db.ConstTypeMoney, false)
+		collection.AddColumn("tax_amount", db.ConstTypeMoney, false)
+		collection.AddColumn("shipping_amount", db.ConstTypeMoney, false)
+		collection.AddColumn("grand_total", db.ConstTypeMoney, false)
 
-		collection.AddColumn("created_at", "datetime", false)
-		collection.AddColumn("updated_at", "datetime", false)
+		collection.AddColumn("created_at", db.ConstTypeDatetime, false)
+		collection.AddColumn("updated_at", db.ConstTypeDatetime, false)
 
-		collection.AddColumn("description", "text", false)
-		collection.AddColumn("payment_info", "text", false)
+		collection.AddColumn("description", db.ConstTypeText, false)
+		collection.AddColumn("payment_info", db.ConstTypeJSON, false)
 
 		collection, err = dbEngine.GetCollection(ConstCollectionNameOrderItems)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("idx", "int", false)
+		collection.AddColumn("idx", db.ConstTypeInteger, false)
 
-		collection.AddColumn("order_id", "id", true)
-		collection.AddColumn("product_id", "id", true)
+		collection.AddColumn("order_id", db.ConstTypeID, true)
+		collection.AddColumn("product_id", db.ConstTypeID, true)
 
-		collection.AddColumn("qty", "int", false)
+		collection.AddColumn("qty", db.ConstTypeInteger, false)
 
-		collection.AddColumn("name", "varchar(150)", false)
-		collection.AddColumn("sku", "varchar(100)", false)
-		collection.AddColumn("short_description", "varchar(255)", false)
+		collection.AddColumn("name", db.TypeWPrecision(db.ConstTypeVarchar, 150), false)
+		collection.AddColumn("sku", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+		collection.AddColumn("short_description", db.ConstTypeVarchar, false)
 
-		collection.AddColumn("options", "text", false)
+		collection.AddColumn("options", db.ConstTypeJSON, false)
 
-		collection.AddColumn("price", "decimal(10,2)", false)
-		collection.AddColumn("weight", "decimal(10,2)", false)
+		collection.AddColumn("price", db.ConstTypeMoney, false)
+		collection.AddColumn("weight", db.ConstTypeDecimal, false)
 
 	} else {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "9d0358f103ab44d1a0802c62fed5fd81", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "9d0358f1-03ab-44d1-a080-2c62fed5fd81", "Can't get database engine")
 	}
 
 	return nil

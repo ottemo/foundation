@@ -141,7 +141,7 @@ func restCreateVisitor(params *api.StructAPIHandlerParams) (interface{}, error) 
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "email") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9610b78add94ae5b75759462b646d2b", "'email' was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9610b78-add9-4ae5-b757-59462b646d2b", "'email' was not specified")
 	}
 
 	// create operation
@@ -180,7 +180,7 @@ func restUpdateVisitor(params *api.StructAPIHandlerParams) (interface{}, error) 
 		sessionValue := params.Session.Get(visitor.ConstSessionKeyVisitorID)
 		sessionVisitorID, ok := sessionValue.(string)
 		if !ok {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7a97b45a22a48c596f8f4ecd3f8380f", "Not logged in, please login")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7a97b45-a22a-48c5-96f8-f4ecd3f8380f", "Not logged in, please login")
 		}
 		visitorID = sessionVisitorID
 	}
@@ -233,7 +233,7 @@ func restDeleteVisitor(params *api.StructAPIHandlerParams) (interface{}, error) 
 
 	visitorID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fad7754934af94b77ef8c826e9", "visitor id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "visitor id was not specified")
 	}
 
 	// delete operation
@@ -263,7 +263,7 @@ func restGetVisitor(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	visitorID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5863091923f544068676a7d1a629b35f", "visitor id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "58630919-23f5-4406-8676-a7d1a629b35f", "visitor id was not specified")
 	}
 
 	// get operation
@@ -306,7 +306,7 @@ func restListVisitors(params *api.StructAPIHandlerParams) (interface{}, error) {
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "be46cecfa4a14d8ba176a2658ae3b4d7", "Unexpected request for content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "be46cecf-a4a1-4d8b-a176-a2658ae3b4d7", "Unexpected request for content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -365,12 +365,12 @@ func restAddVisitorAttribute(params *api.StructAPIHandlerParams) (interface{}, e
 
 	attributeName, isSpecified := reqData["Attribute"]
 	if !isSpecified {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f91e2342d19d4d838c6df7dc4237a49f", "attribute name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f91e2342-d19d-4d83-8c6d-f7dc4237a49f", "attribute name was not specified")
 	}
 
 	attributeLabel, isSpecified := reqData["Label"]
 	if !isSpecified {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23c7d427ab414183b446bf5ffef2e8fc", "attribute label was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23c7d427-ab41-4183-b446-bf5ffef2e8fc", "attribute label was not specified")
 	}
 
 	// make product attribute operation
@@ -384,7 +384,7 @@ func restAddVisitorAttribute(params *api.StructAPIHandlerParams) (interface{}, e
 		Model:      visitor.ConstModelNameVisitor,
 		Collection: ConstCollectionNameVisitor,
 		Attribute:  utils.InterfaceToString(attributeName),
-		Type:       "text",
+		Type:       utils.ConstDataTypeText,
 		IsRequired: false,
 		IsStatic:   false,
 		Label:      utils.InterfaceToString(attributeLabel),
@@ -436,7 +436,7 @@ func restRemoveVisitorAttribute(params *api.StructAPIHandlerParams) (interface{}
 
 	attributeName, isSpecified := params.RequestURLParams["attribute"]
 	if !isSpecified {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0f0edf692642d8a6257d4d424ee819", "attribute name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0f0edf-6926-42d8-a625-7d4d424ee819", "attribute name was not specified")
 	}
 
 	// remove attribute actions
@@ -467,7 +467,7 @@ func restRegister(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "email") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a37ff1e868e34201a7b4c9b4356dcbeb", "email was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a37ff1e8-68e3-4201-a7b4-c9b4356dcbeb", "email was not specified")
 	}
 
 	// register visitor operation
@@ -504,7 +504,7 @@ func restValidate(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	validationKey, isKeySpecified := params.RequestURLParams["key"]
 	if !isKeySpecified {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0b1c841418bf4c448b29c462d38d5498", "validation key was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0b1c8414-18bf-4c44-8b29-c462d38d5498", "validation key was not specified")
 	}
 
 	visitorModel, err := visitor.GetVisitorModel()
@@ -631,7 +631,7 @@ func restLogin(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "email", "password") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "02b0583b28c34072afe2f392a163ed87", "email and/or password were not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "02b0583b-28c3-4072-afe2-f392a163ed87", "email and/or password were not specified")
 	}
 
 	requestLogin := utils.InterfaceToString(reqData["email"])
@@ -646,7 +646,7 @@ func restLogin(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 			return "ok", nil
 		}
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3f10710a748442acaf49c69bce11ec13", "wrong login - should be email")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3f10710a-7484-42ac-af49-c69bce11ec13", "wrong login - should be email")
 	}
 
 	// visitor info
@@ -663,14 +663,14 @@ func restLogin(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	ok := visitorModel.CheckPassword(requestPassword)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1d44e4a90979cea6914d9c012", "wrong password")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "wrong password")
 	}
 
 	// api session updates
 	if visitorModel.IsValidated() {
 		params.Session.Set(visitor.ConstSessionKeyVisitorID, visitorModel.GetID())
 	} else {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29fba7a4bd85400e81c269189c50d0d0", "visitor is not validated, please check "+visitorModel.GetEmail()+" for a verify link we sent you")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29fba7a4-bd85-400e-81c2-69189c50d0d0", "visitor is not validated, please check "+visitorModel.GetEmail()+" for a verify link we sent you")
 	}
 
 	if visitorModel.IsAdmin() {
@@ -692,11 +692,11 @@ func restLoginFacebook(params *api.StructAPIHandlerParams) (interface{}, error) 
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "access_token") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b4b0356d6c174b63bc720cfc943535e2", "access_token was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b4b0356d-6c17-4b63-bc72-0cfc943535e2", "access_token was not specified")
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "user_id") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "17b8481dcf784edbb866f067d496915d", "user_id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "17b8481d-cf78-4edb-b866-f067d496915d", "user_id was not specified")
 	}
 
 	// facebook login operation
@@ -710,7 +710,7 @@ func restLoginFacebook(params *api.StructAPIHandlerParams) (interface{}, error) 
 	}
 
 	if facebookResponse.StatusCode != 200 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b304209107a4ba58329ebfaebb70ff5", "Can't use google API: "+facebookResponse.Status)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b304209-107a-4ba5-8329-ebfaebb70ff5", "Can't use google API: "+facebookResponse.Status)
 	}
 
 	responseData, err := ioutil.ReadAll(facebookResponse.Body)
@@ -726,7 +726,7 @@ func restLoginFacebook(params *api.StructAPIHandlerParams) (interface{}, error) 
 	}
 
 	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name", "verified") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff833649ef9aafdd15f578a16f", "unexpected facebook response")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "unexpected facebook response")
 	}
 
 	// trying to load visitor from our DB
@@ -737,7 +737,7 @@ func restLoginFacebook(params *api.StructAPIHandlerParams) (interface{}, error) 
 
 	visitorModel, ok := model.(visitor.InterfaceVisitor)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "42144bb637a24dd087d8542270e3c5b7", "visitor model is not InterfaceVisitor campatible")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "42144bb6-37a2-4dd0-87d8-542270e3c5b7", "visitor model is not InterfaceVisitor campatible")
 	}
 
 	// trying to load visitor by facebook_id
@@ -761,7 +761,7 @@ func restLoginFacebook(params *api.StructAPIHandlerParams) (interface{}, error) 
 		} else {
 			// we have visitor with that e-mail just updating token, if it verified
 			if value, ok := jsonMap["verified"].(bool); !(ok && value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "904b3ad7435048238f8c6f278b032168", "facebook account email unverified")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "904b3ad7-4350-4823-8f8c-6f278b032168", "facebook account email unverified")
 			}
 
 			visitorModel.Set("facebook_id", jsonMap["id"])
@@ -791,11 +791,11 @@ func restLoginGoogle(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	reqData, err := api.GetRequestContentAsMap(params)
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "03a6782ee34f46218e1a0d5d5d0dc0c3", "unexpected request content")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "03a6782e-e34f-4621-8e1a-0d5d5d0dc0c3", "unexpected request content")
 	}
 
 	if !utils.KeysInMapAndNotBlank(reqData, "access_token") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6838cf4fc1bc41fbb73e426be0ee6f17", "access_token was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6838cf4f-c1bc-41fb-b73e-426be0ee6f17", "access_token was not specified")
 	}
 
 	// google login operation
@@ -809,7 +809,7 @@ func restLoginGoogle(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if googleResponse.StatusCode != 200 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6bc2fd248ca3442c91d8341428c3d45d", "Can't use google API: "+googleResponse.Status)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6bc2fd24-8ca3-442c-91d8-341428c3d45d", "Can't use google API: "+googleResponse.Status)
 	}
 
 	responseData, err := ioutil.ReadAll(googleResponse.Body)
@@ -825,7 +825,7 @@ func restLoginGoogle(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if !utils.StrKeysInMap(jsonMap, "id", "email", "verified_email", "given_name", "family_name") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d793e87298b444c8ac74351a177dab68", "unexpected google response")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d793e872-98b4-44c8-ac74-351a177dab68", "unexpected google response")
 	}
 
 	// trying to load visitor from our DB
@@ -836,7 +836,7 @@ func restLoginGoogle(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	visitorModel, ok := model.(visitor.InterfaceVisitor)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ec3f04a0a9fb4096abcf38062355e0a6", "visitor model is not InterfaceVisitor campatible")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ec3f04a0-a9fb-4096-abcf-38062355e0a6", "visitor model is not InterfaceVisitor campatible")
 	}
 
 	// trying to load visitor by google_id
@@ -862,7 +862,7 @@ func restLoginGoogle(params *api.StructAPIHandlerParams) (interface{}, error) {
 		} else {
 			// we have visitor with that e-mail just updating token, if it verified
 			if value, ok := jsonMap["verified_email"].(bool); !(ok && value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b7b65d5c03724c9f816ac5157110894d", "google account email unverified")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b7b65d5c-0372-4c9f-816a-c5157110894d", "google account email unverified")
 			}
 
 			visitorModel.Set("google_id", jsonMap["id"])
@@ -897,7 +897,7 @@ func restVisitorOrderDetails(params *api.StructAPIHandlerParams) (interface{}, e
 	}
 
 	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb70084a1ca1689df544df9825", "order is not belongs to logined user")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "order is not belongs to logined user")
 	}
 
 	result := orderModel.ToHashMap()
@@ -960,7 +960,7 @@ func restVisitorSendMail(params *api.StructAPIHandlerParams) (interface{}, error
 	}
 
 	if !utils.StrKeysInMap(reqData, "subject", "content", "visitor_ids") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "21ac9f9d956f4963b37dfbd0469b8890", "'visitor_ids', 'subject' or 'content' field was not set")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "21ac9f9d-956f-4963-b37d-fbd0469b8890", "'visitor_ids', 'subject' or 'content' field was not set")
 	}
 
 	subject := utils.InterfaceToString(reqData["subject"])

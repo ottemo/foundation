@@ -14,7 +14,7 @@ func GetProductCollectionModel() (InterfaceProductCollection, error) {
 
 	productModel, ok := model.(InterfaceProductCollection)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "343218b7587f47e583a8a372615116d9", "model "+model.GetImplementationName()+" is not 'InterfaceProductCollection' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "343218b7-587f-47e5-83a8-a372615116d9", "model "+model.GetImplementationName()+" is not 'InterfaceProductCollection' capable")
 	}
 
 	return productModel, nil
@@ -29,7 +29,7 @@ func GetProductModel() (InterfaceProduct, error) {
 
 	productModel, ok := model.(InterfaceProduct)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a21db3439d5d4ae3819d29cf32154eb6", "model "+model.GetImplementationName()+" is not 'InterfaceProduct' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a21db343-9d5d-4ae3-819d-29cf32154eb6", "model "+model.GetImplementationName()+" is not 'InterfaceProduct' capable")
 	}
 
 	return productModel, nil

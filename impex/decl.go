@@ -11,6 +11,8 @@ import (
 const (
 	ConstErrorModule = "impex"
 	ConstErrorLevel  = env.ConstErrorLevelService
+
+	ConstLogFileName = "impex.log"
 )
 
 // Package global variables
@@ -21,6 +23,7 @@ var (
 	// ConstCSVColumnRegexp is a regular expression used to grab csv column information
 	//
 	//	column format: [flags]path [memorize] [type] [convertors]
+	//                 [~|^|?][@a.b.c.]path [={name}|>{name}] [<{type}>]
 	//
 	//	flags - optional column modificator
 	//		format: [~|^|?]
@@ -46,8 +49,12 @@ var (
 	//		format: see (http://golang.org/pkg/text/template/)
 	ConstCSVColumnRegexp = regexp.MustCompile(`^\s*([~^?])?((?:@?\w+\.)*@?\w+)(\s+(?:=|>)\s*\w+)?(?:\s+<([^>]+)>)?\s*(.*)$`)
 
+	ConversionFuncs = map[string]interface{}{}
+
 	// set of service import commands
 	importCmd = make(map[string]InterfaceImpexImportCmd)
+
+	impexModels = make(map[string]InterfaceImpexModel)
 )
 
 // ImportCmdAttributeAdd is a implementer of InterfaceImpexImportCmd
@@ -55,6 +62,13 @@ var (
 type ImportCmdAttributeAdd struct {
 	model     models.InterfaceModel
 	attribute models.StructAttributeInfo
+}
+
+// ImportCmdImport is a implementer of InterfaceImpexImportCmd
+//  - command allows to work with InterfaceImpexModel instances
+type ImportCmdImport struct {
+	model      InterfaceImpexModel
+	attributes map[string]bool
 }
 
 // ImportCmdInsert is a implementer of InterfaceImpexImportCmd
@@ -96,4 +110,10 @@ type ImportCmdStore struct {
 
 	prefix    string
 	prefixKey string
+}
+
+// ImportCmdAlias is a implementer of InterfaceImpexImportCmd
+//  - command allows to make record field alias to object attribute value
+type ImportCmdAlias struct {
+	aliases map[string]string
 }

@@ -9,13 +9,13 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c3cd74ae2a5074349021e9f13", "can't obtain config")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "General",
@@ -30,7 +30,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathAppGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "Application",
@@ -45,7 +45,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStorefrontURL,
 		Value:       nil,
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Storefront host URL",
@@ -60,7 +60,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathDashboardURL,
 		Value:       nil,
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Dashboard host URL",
@@ -75,7 +75,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathFoundationURL,
 		Value:       nil,
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Foundation host URL",
@@ -90,7 +90,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "Store",
@@ -105,7 +105,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreName,
 		Value:       "Ottemo store",
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Name",
@@ -120,7 +120,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreEmail,
 		Value:       "",
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "E-mail",
@@ -135,7 +135,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreRootLogin,
 		Value:       "admin",
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Root login",
@@ -150,7 +150,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreRootPassword,
 		Value:       "admin",
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeSecret,
 		Editor:      "password",
 		Options:     nil,
 		Label:       "Root password",
@@ -165,7 +165,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreCountry,
 		Value:       "US",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
 		Options:     models.ConstCountriesList,
 		Label:       "Country",
@@ -180,7 +180,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreState,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
 		Options:     models.ConstStatesList,
 		Label:       "State",
@@ -195,7 +195,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreCity,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "City",
@@ -210,7 +210,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreAddressline1,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "Address Line 1",
@@ -225,7 +225,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreAddressline2,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "Address Line 2",
@@ -240,7 +240,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathStoreZip,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "zip",
@@ -255,7 +255,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "Mail",
@@ -270,7 +270,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailServer,
 		Value:       nil,
-		Type:        "varchar(255)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "Host",
@@ -285,7 +285,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailPort,
 		Value:       587,
-		Type:        "int",
+		Type:        env.ConstConfigTypeInteger,
 		Editor:      "integer",
 		Options:     nil,
 		Label:       "Port",
@@ -300,7 +300,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailUser,
 		Value:       nil,
-		Type:        "varchar(100)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "User",
@@ -315,7 +315,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailPassword,
 		Value:       nil,
-		Type:        "varchar(100)",
+		Type:        env.ConstConfigTypeSecret,
 		Editor:      "password",
 		Options:     nil,
 		Label:       "Password",
@@ -330,7 +330,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailFrom,
 		Value:       nil,
-		Type:        "varchar(100)",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "text",
 		Options:     nil,
 		Label:       "From",
@@ -345,7 +345,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailSignature,
 		Value:       "Sincerely, Ottemo",
-		Type:        "text",
+		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     nil,
 		Label:       "Signature",

@@ -16,12 +16,12 @@ func init() {
 func setupDB() error {
 
 	if collection, err := db.GetCollection(ConstCollectionNameURLRewrites); err == nil {
-		collection.AddColumn("url", "varchar(255)", true)
-		collection.AddColumn("type", "varchar(255)", true)
-		collection.AddColumn("rewrite", "varchar(255)", false)
-		collection.AddColumn("title", "varchar(255)", false)
-		collection.AddColumn("meta_keywords", "varchar(255)", false)
-		collection.AddColumn("meta_description", "varchar(255)", false)
+		collection.AddColumn("url", db.ConstTypeVarchar, true)
+		collection.AddColumn("type", db.ConstTypeVarchar, true)
+		collection.AddColumn("rewrite", db.ConstTypeVarchar, false)
+		collection.AddColumn("title", db.ConstTypeVarchar, false)
+		collection.AddColumn("meta_keywords", db.ConstTypeVarchar, false)
+		collection.AddColumn("meta_description", db.ConstTypeVarchar, false)
 	} else {
 		return env.ErrorDispatch(err)
 	}

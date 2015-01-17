@@ -68,7 +68,7 @@ func restCMSPageList(params *api.StructAPIHandlerParams) (interface{}, error) {
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4813d3ab67e44abfb1f8906e75cdd907", "unexpected request content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4813d3ab-67e4-4abf-b1f8-906e75cdd907", "unexpected request content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -132,7 +132,7 @@ func restCMSPageGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	reqPageID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4c0a288a03a443759fb31abd7981aecd", "cms page id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4c0a288a-03a4-4375-9fb3-1abd7981aecd", "cms page id should be specified")
 	}
 	pageID := utils.InterfaceToString(reqPageID)
 
@@ -145,10 +145,13 @@ func restCMSPageGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	// not allowing to see disabled if not admin
 	if api.ValidateAdminRights(params) != nil && !cmsPage.GetEnabled() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fa76f5ac0cce46709e62197a600ec0b9", "cms page is not available")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fa76f5ac-0cce-4670-9e62-197a600ec0b9", "cms page is not available")
 	}
 
-	return cmsPage.ToHashMap(), nil
+	result := cmsPage.ToHashMap()
+	result["evaluated"] = cmsPage.EvaluateContent()
+
+	return result, nil
 }
 
 // WEB REST API for adding new CMS page in system
@@ -190,7 +193,7 @@ func restCMSPageUpdate(params *api.StructAPIHandlerParams) (interface{}, error) 
 	//---------------------
 	pageID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f128b02f4ca5494b920d5f320d112636", "cms page id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f128b02f-4ca5-494b-920d-5f320d112636", "cms page id should be specified")
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -227,7 +230,7 @@ func restCMSPageDelete(params *api.StructAPIHandlerParams) (interface{}, error) 
 	//---------------------
 	pageID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20545153b1714638b47e15317e85262c", "cms page id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20545153-b171-4638-b47e-15317e85262c", "cms page id should be specified")
 	}
 
 	// check rights

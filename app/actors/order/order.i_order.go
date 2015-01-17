@@ -101,7 +101,7 @@ func (it *DefaultOrder) RemoveItem(itemIdx int) error {
 
 		dbEngine := db.GetDBEngine()
 		if dbEngine == nil {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "54410b67aff0418fad766453a2d6fed6", "can't get DB engine")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "54410b67-aff0-418f-ad76-6453a2d6fed6", "can't get DB engine")
 		}
 
 		orderItemsCollection, err := dbEngine.GetCollection(ConstCollectionNameOrderItems)
@@ -119,7 +119,7 @@ func (it *DefaultOrder) RemoveItem(itemIdx int) error {
 		return nil
 	}
 
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1bd2f0f9a45743d1a9dbe05b1aa7e1d2", "can't find index "+utils.InterfaceToString(itemIdx))
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1bd2f0f9-a457-43d1-a9db-e05b1aa7e1d2", "can't find index "+utils.InterfaceToString(itemIdx))
 }
 
 // NewIncrementID assigns new unique increment id to order

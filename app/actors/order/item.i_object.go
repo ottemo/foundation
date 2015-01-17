@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"github.com/ottemo/foundation/app/models/order"
 )
 
 // Get returns attribute of OrderItem or nil
@@ -97,7 +97,7 @@ func (it *DefaultOrderItem) Set(attribute string, value interface{}) error {
 		it.Weight = utils.InterfaceToFloat64(value)
 
 	default:
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb97327a389f4a7a91c28ad4e82c6be5", "unknown attribute: "+attribute)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb97327a-389f-4a7a-91c2-8ad4e82c6be5", "unknown attribute: "+attribute)
 	}
 
 	return nil
@@ -145,10 +145,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 
 	info := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "_id",
-			Type:       "id",
+			Type:       db.ConstTypeID,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "ID",
@@ -158,10 +158,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "idx",
-			Type:       "int",
+			Type:       db.ConstTypeInteger,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Increment ID",
@@ -171,10 +171,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "order_id",
-			Type:       "id",
+			Type:       db.ConstTypeID,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Order",
@@ -184,10 +184,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "product_id",
-			Type:       "id",
+			Type:       db.ConstTypeID,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Visitor",
@@ -197,10 +197,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "qty",
-			Type:       "int",
+			Type:       db.ConstTypeInteger,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Qty",
@@ -210,10 +210,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "name",
-			Type:       "varchar(150)",
+			Type:       db.ConstTypeVarchar,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Name",
@@ -223,10 +223,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "sku",
-			Type:       "varchar(100)",
+			Type:       db.ConstTypeVarchar,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Sku",
@@ -236,10 +236,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "short_description",
-			Type:       "varchar(255)",
+			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Short Description",
@@ -249,10 +249,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "options",
-			Type:       "text",
+			Type:       db.ConstTypeJSON,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Options",
@@ -262,10 +262,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "price",
-			Type:       "decimal(10,2)",
+			Type:       db.ConstTypeMoney,
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Price",
@@ -275,10 +275,10 @@ func (it *DefaultOrderItem) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      "OrderItem",
-			Collection: "OrderItem",
+			Model:      "",
+			Collection: ConstCollectionNameOrderItems,
 			Attribute:  "weight",
-			Type:       "decimal(10,2)",
+			Type:       db.ConstTypeDecimal,
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Weight",

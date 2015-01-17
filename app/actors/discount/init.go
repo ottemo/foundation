@@ -25,13 +25,13 @@ func setupDB() error {
 		env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("code", "text", true)
-	collection.AddColumn("name", "text", false)
-	collection.AddColumn("amount", "decimal", false)
-	collection.AddColumn("percent", "decimal", false)
-	collection.AddColumn("times", "int", false)
-	collection.AddColumn("since", "datetime", false)
-	collection.AddColumn("until", "datetime", false)
+	collection.AddColumn("code", db.ConstTypeVarchar, true)
+	collection.AddColumn("name", db.ConstTypeVarchar, false)
+	collection.AddColumn("amount", db.ConstTypeDecimal, false)
+	collection.AddColumn("percent", db.ConstTypeDecimal, false)
+	collection.AddColumn("times", db.ConstTypeInteger, false)
+	collection.AddColumn("since", db.ConstTypeDatetime, false)
+	collection.AddColumn("until", db.ConstTypeDatetime, false)
 
 	return nil
 }

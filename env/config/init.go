@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/impex"
 )
 
 // init makes package self-initialization routine
@@ -19,6 +20,8 @@ func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
 
 	env.RegisterConfig(instance)
+
+	impex.RegisterImpexModel("Config", instance)
 }
 
 // setupDB prepares system database for package usage
@@ -28,18 +31,18 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("path", "varchar(255)", true)
-	collection.AddColumn("value", "text", false)
+	collection.AddColumn("path", db.ConstTypeVarchar, true)
+	collection.AddColumn("value", db.ConstTypeText, false)
 
-	collection.AddColumn("type", "text", false)
+	collection.AddColumn("type", db.ConstTypeVarchar, false)
 
-	collection.AddColumn("editor", "text", false)
-	collection.AddColumn("options", "text", false)
+	collection.AddColumn("editor", db.ConstTypeVarchar, false)
+	collection.AddColumn("options", db.ConstTypeText, false)
 
-	collection.AddColumn("label", "varchar(255)", false)
-	collection.AddColumn("description", "text", false)
+	collection.AddColumn("label", db.ConstTypeVarchar, false)
+	collection.AddColumn("description", db.ConstTypeText, false)
 
-	collection.AddColumn("image", "varchar(255)", false)
+	collection.AddColumn("image", db.ConstTypeVarchar, false)
 
 	return nil
 }

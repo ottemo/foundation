@@ -14,7 +14,7 @@ func GetCMSPageCollectionModel() (InterfaceCMSPageCollection, error) {
 
 	cmsPageCollectionModel, ok := model.(InterfaceCMSPageCollection)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36ee313f94f347a4a44cd487662dcc2a", "model "+model.GetImplementationName()+" is not 'InterfaceCMSPageCollection' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36ee313f-94f3-47a4-a44c-d487662dcc2a", "model "+model.GetImplementationName()+" is not 'InterfaceCMSPageCollection' capable")
 	}
 
 	return cmsPageCollectionModel, nil
@@ -29,7 +29,7 @@ func GetCMSPageModel() (InterfaceCMSPage, error) {
 
 	cmsPageModel, ok := model.(InterfaceCMSPage)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36d47e0ae89e4975bf42a9971f1ea532", "model "+model.GetImplementationName()+" is not 'InterfaceCMSPage' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36d47e0a-e89e-4975-bf42-a9971f1ea532", "model "+model.GetImplementationName()+" is not 'InterfaceCMSPage' capable")
 	}
 
 	return cmsPageModel, nil
@@ -76,7 +76,7 @@ func GetCMSBlockCollectionModel() (InterfaceCMSBlockCollection, error) {
 
 	csmBlockCollectionModel, ok := model.(InterfaceCMSBlockCollection)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "81a29a453d7441eabc89753b0b1e48b7", "model "+model.GetImplementationName()+" is not 'InterfaceCMSBlockCollection' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "81a29a45-3d74-41ea-bc89-753b0b1e48b7", "model "+model.GetImplementationName()+" is not 'InterfaceCMSBlockCollection' capable")
 	}
 
 	return csmBlockCollectionModel, nil
@@ -94,7 +94,7 @@ func GetCMSBlockModel() (InterfaceCMSBlock, error) {
 
 	csmBlockModel, ok := model.(InterfaceCMSBlock)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6c8d19f969624a5bbc2ac25bfd20e3af", "model "+model.GetImplementationName()+" is not 'InterfaceCMSBlock' capable")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6c8d19f9-6962-4a5b-bc2a-c25bfd20e3af", "model "+model.GetImplementationName()+" is not 'InterfaceCMSBlock' capable")
 	}
 
 	return csmBlockModel, nil
@@ -130,4 +130,36 @@ func LoadCMSBlockByID(csmBlockID string) (InterfaceCMSBlock, error) {
 	}
 
 	return csmBlockModel, nil
+}
+
+// LoadCMSBlockByIdentifier loads CMSBlock model by its identifier
+func LoadCMSBlockByIdentifier(identifier string) (InterfaceCMSBlock, error) {
+
+	csmBlockModel, err := GetCMSBlockModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = csmBlockModel.LoadByIdentifier(identifier)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return csmBlockModel, nil
+}
+
+// LoadCMSPageByIdentifier loads CMSPage model by its identifier
+func LoadCMSPageByIdentifier(identifier string) (InterfaceCMSPage, error) {
+
+	csmPageModel, err := GetCMSPageModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = csmPageModel.LoadByIdentifier(identifier)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return csmPageModel, nil
 }

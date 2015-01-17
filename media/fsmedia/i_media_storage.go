@@ -50,11 +50,6 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 		}
 	}
 
-	ioerr := ioutil.WriteFile(mediaFilePath, mediaData, os.ModePerm)
-	if ioerr != nil {
-		return env.ErrorDispatch(ioerr)
-	}
-
 	// we have image associated media, so making special treatment
 	if mediaType == ConstMediaTypeImage {
 
@@ -64,8 +59,30 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 			return env.ErrorDispatch(err)
 		}
 
-		// converting image to known format if needed
+		// making sure file extension is right
+		idx := strings.LastIndex(mediaName, ".")
+		fileExt := ""
+		if idx != -1 {
+			fileExt = mediaName[idx:]
+		}
+
+		if imageFormat == "jpeg" && fileExt != ".jpeg" && fileExt != ".jpg" {
+			mediaName += ".jpg"
+			mediaFilePath += ".jpg"
+		}
+
+		if imageFormat == "png" && fileExt != ".png" {
+			mediaName += ".png"
+			mediaFilePath += ".png"
+		}
+
+		// converting image to known format (jpeg) if needed
 		if imageFormat != "jpeg" && imageFormat != "png" {
+
+			if fileExt != ".jpeg" && fileExt != ".jpg" {
+				mediaName += ".jpg"
+				mediaFilePath += ".jpg"
+			}
 
 			newFile, err := os.Create(mediaFilePath)
 			defer newFile.Close()
@@ -73,16 +90,15 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 				return env.ErrorDispatch(err)
 			}
 
-			idx := strings.LastIndex(mediaName, ".")
-			if idx != -1 {
-				mediaFilePath = mediaName[idx:]
-			}
-			mediaFilePath += ".jpg"
-
 			err = jpeg.Encode(newFile, decodedImage, nil)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
+		}
+
+		ioerr := ioutil.WriteFile(mediaFilePath, mediaData, os.ModePerm)
+		if ioerr != nil {
+			return env.ErrorDispatch(ioerr)
 		}
 
 		// ResizeMediaImage will check necessity of resize by it self
@@ -90,6 +106,13 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 			it.ResizeMediaImage(model, objID, mediaName, imageSize)
 		}
 		it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+
+	} else {
+
+		ioerr := ioutil.WriteFile(mediaFilePath, mediaData, os.ModePerm)
+		if ioerr != nil {
+			return env.ErrorDispatch(ioerr)
+		}
 	}
 
 	// making database record
@@ -97,7 +120,7 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "92bd8bc98d0443a097217b57aaabac7f", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "92bd8bc9-8d04-43a0-9721-7b57aaabac7f", "Can't get database engine")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -131,7 +154,7 @@ func (it *FilesystemMediaStorage) Remove(model string, objID string, mediaType s
 	// preparing DB collection
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3af959a4d1e4dd8a8277652fcb5402a", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3af959a-4d1e-4dd8-a827-7652fcb5402a", "Can't get database engine")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -179,7 +202,7 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4c8dd6e95be4b8fb6065544b633cd7c", "Can't get database engine")
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4c8dd6e-95be-4b8f-b606-5544b633cd7c", "Can't get database engine")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)

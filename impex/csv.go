@@ -1,11 +1,13 @@
 package impex
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -143,7 +145,7 @@ func MapToCSV(input []map[string]interface{}, csvWriter *csv.Writer) error {
 }
 
 // CSVToMap converts csv data to map[string]interface{} and sends to processorFunc
-func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interface{}) bool) error {
+func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interface{}) bool, exchange map[string]interface{}) error {
 
 	// reading header/columns information
 	//------------------------------------
@@ -158,7 +160,7 @@ func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interfac
 	csvColumnMemorizeAs := make([]string, csvColumnsNumber)
 	csvColumnMemorizeTo := make([]string, csvColumnsNumber)
 	csvColumnType := make([]string, csvColumnsNumber)
-	csvColumnConvertors := make([]string, csvColumnsNumber)
+	csvColumnConvertors := make([]*template.Template, csvColumnsNumber)
 
 	allColumnsBlankFlag := true
 	// extracting column header parts
@@ -184,7 +186,15 @@ func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interfac
 		}
 
 		csvColumnType[idx] = strings.TrimSpace(regexpGroups[4])
-		csvColumnConvertors[idx] = strings.TrimSpace(regexpGroups[5])
+
+		csvColumnConvertors[idx] = nil
+		if templateContents := strings.TrimSpace(regexpGroups[5]); templateContents != "" && strings.Contains(templateContents, "{{") {
+			textTemplate := template.New("impex_" + column)
+			textTemplate, err := textTemplate.Funcs(ConversionFuncs).Parse(templateContents)
+			if err == nil {
+				csvColumnConvertors[idx] = textTemplate
+			}
+		}
 	}
 
 	if allColumnsBlankFlag {
@@ -328,6 +338,22 @@ func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interfac
 
 				if idx == lastPathIdx { // we are at end of key path (i.e. on x for key like a.b.c.d.x)
 
+					// looking for text template in value
+					if strings.Contains(value, "{{") {
+						textTemplate := template.New("impex_tmp").Funcs(ConversionFuncs)
+						textTemplate, err := textTemplate.Parse(value)
+						if err == nil {
+							var result bytes.Buffer
+
+							err = textTemplate.Execute(&result, exchange)
+							if err == nil {
+								if newValue := strings.TrimSpace(result.String()); newValue != "" {
+									value = newValue
+								}
+							}
+						}
+					}
+
 					// trying to convert string value to supposed type
 					var typedValue interface{}
 
@@ -337,6 +363,27 @@ func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interfac
 						}
 					} else {
 						typedValue = utils.StringToInterface(value)
+					}
+
+					// converting column value if converter was specified
+					if textTemplate := csvColumnConvertors[columnIdx]; textTemplate != nil {
+						var result bytes.Buffer
+
+						exchange["tvalue"] = typedValue
+						exchange["value"] = value
+
+						err = textTemplate.Execute(&result, exchange)
+						if err == nil {
+							newValue := strings.TrimSpace(result.String())
+
+							if exchange["tvalue"] != typedValue {
+								typedValue = exchange["tvalue"]
+							}
+
+							if newValue != "" && newValue != value {
+								typedValue = utils.StringToInterface(newValue)
+							}
+						}
 					}
 
 					currentKeyValue, present := currentPathMap[key]
@@ -404,10 +451,12 @@ func CSVToMap(csvReader *csv.Reader, processorFunc func(item map[string]interfac
 	return nil
 }
 
-// ImportCSV imports csv data using command->data csv format
-func ImportCSV(csvReader *csv.Reader) error {
+// ImportCSVScript imports csv impex script format
+func ImportCSVScript(csvReader *csv.Reader, output io.Writer, testMode bool) error {
 
-	// impex csv file should contain command preceding data
+	exchangeDict := make(map[string]interface{})
+
+	// impex script csv file should contain command preceding data
 	commandLine := ""
 	appendFlag := false
 	for csvRecord, err := csvReader.Read(); err == nil; csvRecord, err = csvReader.Read() { // csv records loop
@@ -451,75 +500,108 @@ func ImportCSV(csvReader *csv.Reader) error {
 		commandLine = csvLine + " " + commandLine
 		commandLine = strings.TrimSpace(commandLine)
 
-		if ConstImpexLog || ConstDebugLog {
-			env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Command line: %s", commandLine))
-		}
-
-		// looking for required commands and preparing them to process
-		//-------------------------------------------------------------
-		exchangeDict := make(map[string]interface{})
-		var commandsChain []InterfaceImpexImportCmd
-
-		for _, command := range utils.SplitQuotedStringBy(commandLine, '|') {
-			command = strings.TrimSpace(command)
-			args := utils.SplitQuotedStringBy(command, ' ', '\n', '\t')
-
-			if len(args) > 0 {
-				if cmd, present := importCmd[args[0]]; present {
-					if err := cmd.Init(args, exchangeDict); err == nil {
-						commandsChain = append(commandsChain, cmd)
-					} else {
-						return env.ErrorDispatch(err)
-					}
-				} else {
-					return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "004e9f7bbb974356bbc25e084736983b", "unknows cmd '"+args[0]+"'")
-				}
-			}
-		}
-
-		if len(commandsChain) == 0 {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84ac22e2c2154375af15a9eed636b16c", "There are no commands for csv data processing")
-		}
-
-		// making csv data processor based on received commands
-		//------------------------------------------------------
-		dataProcessor := func(itemData map[string]interface{}) bool {
-			if ConstImpexLog || ConstDebugLog {
-				env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Processing: %s", utils.EncodeToJSONString(itemData)))
-			}
-
-			var input interface{}
-			for _, command := range commandsChain {
-				if ConstDebugLog {
-					env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Command: %T", command))
-					env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Input: %#v", input))
-					env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("itemData: %s", utils.EncodeToJSONString(itemData)))
-					env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Exchange: %s", utils.EncodeToJSONString(exchangeDict)))
-				}
-
-				input, err = command.Process(itemData, input, exchangeDict)
-				if err != nil {
-					if ConstImpexLog || ConstDebugLog {
-						env.Log("impex.log", env.ConstLogPrefixDebug, fmt.Sprintf("Error: %s", err.Error()))
-					}
-					env.ErrorDispatch(err)
-					return true
-				}
-				if ConstImpexLog || ConstDebugLog {
-					env.Log("impex.log", env.ConstLogPrefixDebug, "Finished ok")
-				}
-			}
-			return true
-		}
-
-		// passing control to data block reader
-		//--------------------------------------
-		err = CSVToMap(csvReader, dataProcessor)
-		if err != nil && err != io.EOF {
+		// processing one command/data block
+		err := ImportCSVData(commandLine, exchangeDict, csvReader, output, testMode)
+		if err != nil {
 			return env.ErrorDispatch(err)
 		}
 
 		commandLine = ""
+	}
+
+	return nil
+}
+
+// ImportCSVData imports csv data block specified command line
+func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvReader *csv.Reader, output io.Writer, testMode bool) error {
+	var err error
+
+	if ConstImpexLog || ConstDebugLog {
+		env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Command line: %s", commandLine))
+	}
+
+	// looking for required commands and preparing them to process
+	//-------------------------------------------------------------
+	var commandsChain []InterfaceImpexImportCmd
+	var commandsRaw []string
+
+	for _, command := range utils.SplitQuotedStringBy(commandLine, '|') {
+		command = strings.TrimSpace(command)
+		args := utils.SplitQuotedStringBy(command, ' ', '\n', '\t')
+
+		if len(args) > 0 {
+			if cmd, present := importCmd[args[0]]; present {
+				if err := cmd.Init(args, exchangeDict); err == nil {
+					commandsChain = append(commandsChain, cmd)
+					commandsRaw = append(commandsRaw, strings.Join(args, " "))
+				} else {
+					return env.ErrorDispatch(err)
+				}
+			} else {
+				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "004e9f7b-bb97-4356-bbc2-5e084736983b", "unknown cmd '"+args[0]+"'")
+			}
+		}
+	}
+
+	if len(commandsChain) == 0 {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84ac22e2-c215-4375-af15-a9eed636b16c", "There are no commands for csv data processing")
+	}
+
+	var errorsCount int
+
+	// making csv data processor based on received commands
+	//------------------------------------------------------
+	dataProcessor := func(itemData map[string]interface{}) bool {
+		if ConstImpexLog || ConstDebugLog {
+			env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Processing: %s", utils.EncodeToJSONString(itemData)))
+		}
+
+		var input interface{}
+		for chainIdx, command := range commandsChain {
+			if ConstDebugLog {
+				env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Command: %s", commandsRaw[chainIdx]))
+				env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Input: %#v", input))
+				env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("itemData: %s", utils.EncodeToJSONString(itemData)))
+				env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Exchange: %s", utils.EncodeToJSONString(exchangeDict)))
+			}
+
+			if testMode {
+				io.WriteString(output, fmt.Sprintf("Command: %s", commandsRaw[chainIdx]))
+				io.WriteString(output, "\n")
+				io.WriteString(output, fmt.Sprintf("item: %s", utils.EncodeToJSONString(itemData)))
+				io.WriteString(output, "\n\n")
+
+				input, err = command.Test(itemData, input, exchangeDict)
+			} else {
+				input, err = command.Process(itemData, input, exchangeDict)
+			}
+
+			if err != nil {
+				errorsCount++
+
+				if ConstImpexLog || ConstDebugLog {
+					env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Error: %s", err.Error()))
+				}
+				env.ErrorDispatch(err)
+				return true
+			}
+
+			if ConstImpexLog || ConstDebugLog {
+				env.Log(ConstLogFileName, env.ConstLogPrefixDebug, "Finished ok")
+			}
+		}
+		return true
+	}
+
+	// passing control to data block reader
+	//--------------------------------------
+	err = CSVToMap(csvReader, dataProcessor, exchangeDict)
+	if err != nil && err != io.EOF {
+		return env.ErrorDispatch(err)
+	}
+
+	if errorsCount > 0 {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3399b13c-00b9-48d5-95e3-4b851d322387", fmt.Sprintf("%d error(s) untill processing", errorsCount))
 	}
 
 	return nil

@@ -43,11 +43,8 @@ func visitsHandler(event string, data map[string]interface{}) bool {
 	session := data["session"].(api.InterfaceSession)
 	sessionID := session.GetID()
 
-	year := time.Now().Year()
-	month := time.Now().Month()
-	day := time.Now().Day()
-	hour := time.Now().Hour()
-	today := time.Date(year, month, day, hour, 0, 0, 0, time.Local)
+	currentTime := time.Now()
+	today := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, currentTime.Location())
 
 	if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
 		visitorsInfoToday.Details[sessionID] = &VisitorDetail{Time: today}
@@ -151,10 +148,8 @@ func salesHandler(event string, data map[string]interface{}) bool {
 	}
 
 	for productID, count := range productsData {
-		year := time.Now().Year()
-		month := time.Now().Month()
-		day := time.Now().Day()
-		date := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		currentTime := time.Now()
+		date := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, currentTime.Location())
 		salesHistoryRow := make(map[string]interface{})
 		salesData[productID] = utils.InterfaceToInt(count)
 

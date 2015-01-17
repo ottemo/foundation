@@ -8,10 +8,15 @@ package app
 
 import (
 	"github.com/ottemo/foundation/env"
+	"time"
 )
 
 // Package global constants
 const (
+	ConstVersionMajor = 0
+	ConstVersionMinor = 9
+	ConstSprintNumber = 4
+
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"
 	ConstConfigPathStoreGroup = "general.store"
@@ -45,4 +50,15 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelService
 
 	ConstAllowGuest = true
+)
+
+// build related information supposed to be specified through -ldflags "-X key value"
+//   - sample: go build -ldflags "-X github.com/ottemo/foundation/app.buildDate '`date`'"
+var (
+	buildTags   string
+	buildDate   string
+	buildNumber string
+	buildBranch string
+
+	startTime time.Time = time.Now().UTC().Truncate(time.Second)
 )

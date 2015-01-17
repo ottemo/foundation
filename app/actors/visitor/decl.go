@@ -38,7 +38,6 @@ type DefaultVisitor struct {
 
 	Admin bool
 
-	Birthday  time.Time
 	CreatedAt time.Time
 
 	*attributes.CustomAttributes

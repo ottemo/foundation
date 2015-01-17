@@ -17,12 +17,12 @@ func (it *DefaultErrorBus) backtrace(ottemoErr *OttemoError) {
 
 		_, file, line, ok := runtime.Caller(step)
 		for ok {
+			if !cutStopFlag && !strings.Contains(file, "env/helpers.go") && !strings.Contains(file, "env/errorbus/") {
+				cutStopFlag = true
+			}
+
 			if cutStopFlag {
 				ottemoErr.CallStack += file + ":" + strconv.Itoa(line) + "\n"
-			} else {
-				if !strings.Contains(file, "env/helpers.go") && !strings.Contains(file, "env/errorbus/") {
-					cutStopFlag = true
-				}
 			}
 
 			step++
@@ -52,7 +52,7 @@ func (it *DefaultErrorBus) process(ottemoErr *OttemoError) *OttemoError {
 		env.LogError(ottemoErr)
 	}
 
-	if ottemoErr.Level <= hideLevel {
+	if ottemoErr.Level < hideLevel {
 		ottemoErr.Message = hideMessage
 	}
 
@@ -77,6 +77,11 @@ func (it *DefaultErrorBus) parseErrorMessage(message string) *OttemoError {
 		hasher.Write([]byte(resultError.Message))
 
 		resultError.Code = hex.EncodeToString(hasher.Sum(nil))
+	}
+
+	rawCode := strings.Replace(resultError.Code, "-", "", -1)
+	if len(rawCode) == 32 {
+		resultError.Code = rawCode[0:8] + "-" + rawCode[8:12] + "-" + rawCode[12:16] + "-" + rawCode[16:20] + "-" + rawCode[20:]
 	}
 
 	return resultError

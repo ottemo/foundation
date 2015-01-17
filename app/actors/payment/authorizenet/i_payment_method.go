@@ -123,15 +123,15 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 
 // Capture makes payment method capture operation
 func (it *DirectPostMethod) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed753163d7084884aae83aa1dc9bf9f4", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed753163-d708-4884-aae8-3aa1dc9bf9f4", "Not implemented")
 }
 
 // Refund will return funds on the given order :: Not Implemented Yet
 func (it *DirectPostMethod) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc9b5234e534ff59d491dfdadf3fb44", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc9b523-4e53-4ff5-9d49-1dfdadf3fb44", "Not implemented")
 }
 
 // Void will mark the order and capture as void
 func (it *DirectPostMethod) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d682f87e4d51473ba00d191d28e807f5", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d682f87e-4d51-473b-a00d-191d28e807f5", "Not implemented")
 }

@@ -28,7 +28,7 @@ func (it *DefaultCartItem) GetIdx() int {
 func (it *DefaultCartItem) SetIdx(newIdx int) error {
 
 	if newIdx < 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bffc76f009d74098b3828a8920ef98f0", "wrong cart item index")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bffc76f0-09d7-4098-b382-8a8920ef98f0", "wrong cart item index")
 	}
 
 	if value, present := it.Cart.Items[newIdx]; present {
@@ -69,7 +69,7 @@ func (it *DefaultCartItem) SetQty(qty int) error {
 	if qty > 0 {
 		it.Qty = qty
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e5b864d18c214398ba97150d10409290", "qty must be greater then 0")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e5b864d1-8c21-4398-ba97-150d10409290", "qty must be greater then 0")
 	}
 
 	if err := it.ValidateProduct(); err != nil {
@@ -88,7 +88,7 @@ func (it *DefaultCartItem) Remove() error {
 		return it.Cart.RemoveItem(it.idx)
 	}
 
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b2b6d02db8b24a09bba2bc005834ab37", "item is not bound to cart")
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b2b6d02d-b8b2-4a09-bba2-bc005834ab37", "item is not bound to cart")
 }
 
 // GetOptions returns all item options or nil
@@ -116,11 +116,11 @@ func (it *DefaultCartItem) GetCart() cart.InterfaceCart {
 func (it *DefaultCartItem) ValidateProduct() error {
 	cartProduct := it.GetProduct()
 	if cartProduct == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cea993bc4d6d45f8b7e96dc16b76cdb1", "Item with Product ID: "+it.GetProductID()+" does not currently exist")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cea993bc-4d6d-45f8-b7e9-6dc16b76cdb1", "Item with Product ID: "+it.GetProductID()+" does not currently exist")
 	}
 
 	if cartProduct.GetEnabled() == false {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab067cfda3a3405c9a5ab39ad413f3c4", "Item with Product ID: "+it.GetProductID()+" is not currently available")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab067cfd-a3a3-405c-9a5a-b39ad413f3c4", "Item with Product ID: "+it.GetProductID()+" is not currently available")
 	}
 
 	// checking for right options
@@ -138,7 +138,7 @@ func (it *DefaultCartItem) ValidateProduct() error {
 	allowOversell := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathOversell))
 	if !allowOversell && product.GetRegisteredStock() != nil {
 		if qty := cartProduct.GetQty(); qty < it.GetQty() {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b696843b9b9ad42bc385105a6", "Item is out of stock")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b-6968-43b9-b9ad-42bc385105a6", "Item is out of stock")
 		}
 	}
 

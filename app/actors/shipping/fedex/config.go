@@ -11,7 +11,7 @@ func setupConfig() error {
 		err := config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathGroup,
 			Value:       nil,
-			Type:        env.ConstConfigItemGroupType,
+			Type:        env.ConstConfigTypeGroup,
 			Editor:      "",
 			Options:     nil,
 			Label:       "FedEx",
@@ -26,7 +26,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
-			Type:        "bool",
+			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
 			Options:     nil,
 			Label:       "Enabled",
@@ -41,7 +41,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathTitle,
 			Value:       "Federal Express",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Title",
@@ -49,7 +49,7 @@ func setupConfig() error {
 			Image:       "",
 		}, func(value interface{}) (interface{}, error) {
 			if utils.CheckIsBlank(value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e37e8ab2ab8740d0b3684e2f930d79b1", "can't be blank")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e37e8ab2-ab87-40d0-b368-4e2f930d79b1", "can't be blank")
 			}
 			return value, nil
 		})
@@ -57,7 +57,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathGateway,
 			Value:       "https://wsbeta.fedex.com:443/web-services",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Gateway",
@@ -72,7 +72,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathKey,
 			Value:       "",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Account Key",
@@ -87,7 +87,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathPassword,
 			Value:       "",
-			Type:        "string",
+			Type:        env.ConstConfigTypeSecret,
 			Editor:      "password",
 			Options:     nil,
 			Label:       "Account Password",
@@ -102,7 +102,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathNumber,
 			Value:       "",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Account Number",
@@ -117,7 +117,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathMeter,
 			Value:       "",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Account Meter",
@@ -132,7 +132,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDefaultWeight,
 			Value:       0.1,
-			Type:        "decimal",
+			Type:        env.ConstConfigTypeDecimal,
 			Editor:      "decimal",
 			Options:     nil,
 			Label:       "Default weight",
@@ -147,7 +147,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathAllowedMethods,
 			Value:       "",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "multi_select",
 			Options:     ConstShippingMethods,
 			Label:       "Allowed methods",
@@ -162,7 +162,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDropoff,
 			Value:       "REGULAR_PICKUP",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "select",
 			Options:     ConstShippingDropoff,
 			Label:       "Dropoff",
@@ -171,7 +171,7 @@ func setupConfig() error {
 		}, func(value interface{}) (interface{}, error) {
 			stringValue := utils.InterfaceToString(value)
 			if _, present := ConstShippingDropoff[stringValue]; !present {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "c212932804774741a09ffc96863e936d", "wrong value")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "c2129328-0477-4741-a09f-fc96863e936d", "wrong value")
 			}
 			return value, nil
 		})
@@ -183,7 +183,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathPackaging,
 			Value:       "FEDEX_PAK",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "select",
 			Options:     ConstShippingPackaging,
 			Label:       "Packing",
@@ -192,7 +192,7 @@ func setupConfig() error {
 		}, func(value interface{}) (interface{}, error) {
 			stringValue := utils.InterfaceToString(value)
 			if _, present := ConstShippingPackaging[stringValue]; !present {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "890ae42ab890448181ba5165a78acd18", "wrong value")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "890ae42a-b890-4481-81ba-5165a78acd18", "wrong value")
 			}
 			return value, nil
 		})
@@ -204,7 +204,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDebugLog,
 			Value:       false,
-			Type:        "bool",
+			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
 			Options:     nil,
 			Label:       "Debug log",

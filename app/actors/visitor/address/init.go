@@ -29,17 +29,17 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("visitor_id", "id", false)
-	collection.AddColumn("first_name", "varchar(100)", false)
-	collection.AddColumn("last_name", "varchar(100)", false)
-	collection.AddColumn("company", "varchar(100)", false)
-	collection.AddColumn("address_line1", "varchar(255)", false)
-	collection.AddColumn("address_line2", "varchar(255)", false)
-	collection.AddColumn("country", "varchar(50)", false)
-	collection.AddColumn("state", "varchar(2)", false)
-	collection.AddColumn("city", "varchar(100)", false)
-	collection.AddColumn("phone", "varchar(100)", false)
-	collection.AddColumn("zip_code", "varchar(10)", false)
+	collection.AddColumn("visitor_id", db.ConstTypeID, false)
+	collection.AddColumn("first_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("last_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("company", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("address_line1", db.ConstTypeVarchar, false)
+	collection.AddColumn("address_line2", db.ConstTypeVarchar, false)
+	collection.AddColumn("country", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)
+	collection.AddColumn("state", db.TypeWPrecision(db.ConstTypeVarchar, 2), false)
+	collection.AddColumn("city", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("phone", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("zip_code", db.TypeWPrecision(db.ConstTypeVarchar, 10), false)
 
 	return nil
 }

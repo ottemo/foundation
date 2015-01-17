@@ -59,11 +59,6 @@ func (it *DefaultVisitor) GetLastName() string {
 	return it.LastName
 }
 
-// GetBirthday returns the Visitor's birthday
-func (it *DefaultVisitor) GetBirthday() time.Time {
-	return it.Birthday
-}
-
 // GetCreatedAt returns the Visitor creation date
 func (it *DefaultVisitor) GetCreatedAt() time.Time {
 	return it.CreatedAt
@@ -110,7 +105,7 @@ func (it *DefaultVisitor) IsValidated() bool {
 func (it *DefaultVisitor) Invalidate() error {
 
 	if it.GetEmail() == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bef673e979c142bcade0e870b3da0e2f", "email was not specified")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bef673e9-79c1-42bc-ade0-e870b3da0e2f", "email was not specified")
 	}
 
 	data, err := time.Now().MarshalBinary()
@@ -153,7 +148,7 @@ func (it *DefaultVisitor) Validate(key string) error {
 	}
 
 	if len(records) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "597c38a7fae44eab9c8e380ecc626dd2", "wrong validation key")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "597c38a7-fae4-4eab-9c8e-380ecc626dd2", "wrong validation key")
 	}
 
 	for _, record := range records {
@@ -197,7 +192,7 @@ func (it *DefaultVisitor) Validate(key string) error {
 				return env.ErrorDispatch(err)
 			}
 
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1ae869fa0fa24ec0b092a2c18b963f2d", "validation key expired, new validation link was sent to visitor e-mail")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1ae869fa-0fa2-4ec0-b092-a2c18b963f2d", "validation key expired, new validation link was sent to visitor e-mail")
 		}
 	}
 
@@ -213,7 +208,7 @@ func (it *DefaultVisitor) SetPassword(passwd string) error {
 			it.Password = it.passwdEncode(passwd)
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c24bb1660ffb4abca8d5ddacd859da72", "password can't be blank")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c24bb166-0ffb-4abc-a8d5-ddacd859da72", "password can't be blank")
 	}
 
 	return nil
@@ -273,11 +268,11 @@ func (it *DefaultVisitor) LoadByGoogleID(googleID string) error {
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ffde5a66e8444cfacb6fb9714b82bcc", "visitor not found")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ffde5a6-6e84-44cf-acb6-fb9714b82bcc", "visitor not found")
 	}
 
 	if len(rows) > 1 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "693e7c5afdcf47319e3941d6f6c849ae", "duplicated google account id")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "693e7c5a-fdcf-4731-9e39-41d6f6c849ae", "duplicated google account id")
 	}
 
 	err = it.FromHashMap(rows[0])
@@ -303,11 +298,11 @@ func (it *DefaultVisitor) LoadByFacebookID(facebookID string) error {
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c33d114e435a44fe80f1456c57a692b9", "visitor not found")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c33d114e-435a-44fe-80f1-456c57a692b9", "visitor not found")
 	}
 
 	if len(rows) > 1 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3b941c0fa6b47faac6010f27e3bd69c", "duplicated facebook account id")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3b941c0-fa6b-47fa-ac60-10f27e3bd69c", "duplicated facebook account id")
 	}
 
 	err = it.FromHashMap(rows[0])
@@ -333,11 +328,11 @@ func (it *DefaultVisitor) LoadByEmail(email string) error {
 	}
 
 	if len(rows) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a7063fe949549918a80dcfcfc6f5b92", "visitor not found")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a7063fe-9495-4991-8a80-dcfcfc6f5b92", "visitor not found")
 	}
 
 	if len(rows) > 1 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9c7abb4649d440eaa33a9c6790cdb0d8", "duplicated email")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9c7abb46-49d4-40ea-a33a-9c6790cdb0d8", "duplicated email")
 	}
 
 	err = it.FromHashMap(rows[0])

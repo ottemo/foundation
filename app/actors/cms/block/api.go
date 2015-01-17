@@ -2,9 +2,8 @@ package block
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/env"
-
 	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -68,7 +67,7 @@ func restCMSBlockList(params *api.StructAPIHandlerParams) (interface{}, error) {
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b61f75c42be145478764d7040b1edb2f", "unexpected request content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b61f75c4-2be1-4547-8764-d7040b1edb2f", "unexpected request content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -122,7 +121,7 @@ func restCMSBlockGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	reqBlockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a6dd2812507048698ae290c4bd28bf69", "cms block id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a6dd2812-5070-4869-8ae2-90c4bd28bf69", "cms block id should be specified")
 	}
 	blockID := utils.InterfaceToString(reqBlockID)
 
@@ -133,7 +132,10 @@ func restCMSBlockGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return cmsBlock.ToHashMap(), nil
+	result := cmsBlock.ToHashMap()
+	result["evaluated"] = cmsBlock.EvaluateContent()
+
+	return result, nil
 }
 
 // WEB REST API for adding new CMS block in system
@@ -175,7 +177,7 @@ func restCMSBlockUpdate(params *api.StructAPIHandlerParams) (interface{}, error)
 	//---------------------
 	blockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a7f8db95749549ba9307baa7d5f7ecef", "cms block id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a7f8db95-7495-49ba-9307-baa7d5f7ecef", "cms block id should be specified")
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -212,7 +214,7 @@ func restCMSBlockDelete(params *api.StructAPIHandlerParams) (interface{}, error)
 	//---------------------
 	blockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8dd275d4efaf4e67b24d67b28acd74e5", "cms block id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8dd275d4-efaf-4e67-b24d-67b28acd74e5", "cms block id should be specified")
 	}
 
 	// check rights

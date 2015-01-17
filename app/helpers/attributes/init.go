@@ -14,19 +14,19 @@ func init() {
 func SetupDB() error {
 
 	if collection, err := db.GetCollection("custom_attributes"); err == nil {
-		collection.AddColumn("model", "text", true)
-		collection.AddColumn("collection", "text", true)
-		collection.AddColumn("attribute", "text", true)
-		collection.AddColumn("type", "text", false)
-		collection.AddColumn("required", "bool", false)
-		collection.AddColumn("label", "text", true)
-		collection.AddColumn("group", "text", false)
-		collection.AddColumn("editors", "text", false)
-		collection.AddColumn("options", "text", false)
-		collection.AddColumn("default", "text", false)
-		collection.AddColumn("validators", "text", false)
-		collection.AddColumn("layered", "bool", false)
-		collection.AddColumn("public", "bool", false)
+		collection.AddColumn("model", db.ConstTypeVarchar, true)
+		collection.AddColumn("collection", db.ConstTypeVarchar, true)
+		collection.AddColumn("attribute", db.ConstTypeVarchar, true)
+		collection.AddColumn("type", db.ConstTypeVarchar, false)
+		collection.AddColumn("required", db.ConstTypeBoolean, false)
+		collection.AddColumn("label", db.ConstTypeVarchar, true)
+		collection.AddColumn("group", db.ConstTypeVarchar, false)
+		collection.AddColumn("editors", db.ConstTypeVarchar, false)
+		collection.AddColumn("options", db.ConstTypeText, false)
+		collection.AddColumn("default", db.ConstTypeText, false)
+		collection.AddColumn("validators", db.ConstTypeVarchar, false)
+		collection.AddColumn("layered", db.ConstTypeBoolean, false)
+		collection.AddColumn("public", db.ConstTypeBoolean, false)
 
 	} else {
 		return env.ErrorDispatch(err)

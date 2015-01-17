@@ -12,7 +12,7 @@ func setupConfig() error {
 	config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathLastIncrementID,
 		Value:       0,
-		Type:        "int",
+		Type:        env.ConstConfigTypeInteger,
 		Editor:      "integer",
 		Options:     "",
 		Label:       "Last Order Increment ID: ",

@@ -62,7 +62,7 @@ func (it *DefaultCategory) AddProduct(productID string) error {
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "642ed88a6d8b48a19b3cfeac54c4d9a3", "Can't obtain DBEngine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "642ed88a-6d8b-48a1-9b3c-feac54c4d9a3", "Can't obtain DBEngine")
 	}
 
 	collection, err := dbEngine.GetCollection(ConstCollectionNameCategoryProductJunction)
@@ -72,10 +72,10 @@ func (it *DefaultCategory) AddProduct(productID string) error {
 
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "67e7fe192ca841999a7c94f997d88098", "category ID is not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "67e7fe19-2ca8-4199-9a7c-94f997d88098", "category ID is not set")
 	}
 	if productID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2a7b643e1b046c888adde2447407875", "product ID is not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2a7b643-e1b0-46c8-88ad-de2447407875", "product ID is not set")
 	}
 
 	collection.AddFilter("category_id", "=", categoryID)
@@ -91,7 +91,7 @@ func (it *DefaultCategory) AddProduct(productID string) error {
 			return env.ErrorDispatch(err)
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "623ff72f62214acdbdf4e5b765fcd3db", "junction already exists")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "623ff72f-6221-4acd-bdf4-e5b765fcd3db", "junction already exists")
 	}
 
 	return nil
@@ -102,7 +102,7 @@ func (it *DefaultCategory) RemoveProduct(productID string) error {
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "928590113646478b9265e2fb919e42b3", "Can't obtain DBEngine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "92859011-3646-478b-9265-e2fb919e42b3", "Can't obtain DBEngine")
 	}
 
 	collection, err := dbEngine.GetCollection(ConstCollectionNameCategoryProductJunction)
@@ -112,10 +112,10 @@ func (it *DefaultCategory) RemoveProduct(productID string) error {
 
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5180a7340a5e46ec9fa2840a2b1aa6ce", "category ID is not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5180a734-0a5e-46ec-9fa2-840a2b1aa6ce", "category ID is not set")
 	}
 	if productID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "70b5aa6bdadd4be8b8b9d6f41a7cf237", "product ID is not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "70b5aa6b-dadd-4be8-b8b9-d6f41a7cf237", "product ID is not set")
 	}
 
 	collection.AddFilter("category_id", "=", categoryID)

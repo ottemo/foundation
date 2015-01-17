@@ -23,7 +23,7 @@ const (
 // Package global variables
 var (
 	// ConstMsgRegexp is a regular expression used to parse error message
-	ConstMsgRegexp = regexp.MustCompile(`^[\[{(]?\s*(?:(?:([^:]+)?[: ])?([0-9]+)?[-: ]([0-9a-fA-F]+)?)?\s*[\]})]?\s*[:\->]*\s*(.+)`)
+	ConstMsgRegexp = regexp.MustCompile(`^[\[{(]?\s*(?:(?:([a-zA-Z_\/-]+)?[:])?([0-9]+)?[-: ]([0-9a-fA-F-]+)?)?\s*[\]})]?\s*[:\->]*\s*(.+)`)
 
 	logLevel    = 5
 	hideLevel   = 5

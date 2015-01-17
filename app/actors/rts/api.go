@@ -164,11 +164,9 @@ func restGetVisitsDetails(params *api.StructAPIHandlerParams) (interface{}, erro
 			for date := fromDate; int32(date.Unix()) < int32(toDate.Unix()); date = date.AddDate(0, 0, 1) {
 
 				timestamp := int32(date.Unix())
-				year := time.Unix(int64(timestamp), 0).Year()
-				month := time.Unix(int64(timestamp), 0).Month()
-				day := time.Unix(int64(timestamp), 0).Day()
+				currentTime := time.Unix(int64(timestamp), 0)
 				for hour := 0; hour < 24; hour++ {
-					timeGroup := time.Date(year, month, day, hour, 0, 0, 0, time.Local)
+					timeGroup := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), hour, 0, 0, 0, currentTime.Location())
 					if timeGroup.Unix() > time.Now().Unix() {
 						break
 					}
@@ -225,19 +223,19 @@ func restGetSales(params *api.StructAPIHandlerParams) (interface{}, error) {
 // WEB REST API used to get information on site sales for a specified period
 func restGetSalesDetails(params *api.StructAPIHandlerParams) (interface{}, error) {
 	result := make(map[string]int)
-
+	currentTime := time.Now()
 	// check request params
 	//---------------------
 	fromDatetmp, present := params.RequestURLParams["from"]
 	if !present {
-		fromDatetmp = time.Now().Format("2006-01-02")
+		fromDatetmp = currentTime.Format("2006-01-02")
 	}
 	fromDate, _ := time.Parse("2006-01-02", fromDatetmp)
 	// check request params
 	//---------------------
 	toDatetmp, present := params.RequestURLParams["to"]
 	if !present {
-		toDatetmp = time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+		toDatetmp = currentTime.AddDate(0, 0, -1).Format("2006-01-02")
 	}
 	toDate, _ := time.Parse("2006-01-02", toDatetmp)
 

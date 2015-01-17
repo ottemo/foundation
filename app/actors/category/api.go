@@ -97,7 +97,7 @@ func restListCategories(params *api.StructAPIHandlerParams) (interface{}, error)
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "760bdd87468c4e6f913103e9df4fc6ce", "unexpected request content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "760bdd87-468c-4e6f-9131-03e9df4fc6ce", "unexpected request content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -166,7 +166,7 @@ func restCreateCategory(params *api.StructAPIHandlerParams) (interface{}, error)
 	}
 
 	if _, present := reqData["name"]; !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "521b50d60d98491a8e3a37678fbbccfe", "category name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "521b50d6-0d98-491a-8e3a-37678fbbccfe", "category name was not specified")
 	}
 
 	// check rights
@@ -203,7 +203,7 @@ func restDeleteCategory(params *api.StructAPIHandlerParams) (interface{}, error)
 	//--------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f1507b00337e490382445cf959dde3a4", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f1507b00-337e-4903-8244-5cf959dde3a4", "category id was not specified")
 	}
 
 	// check rights
@@ -235,7 +235,7 @@ func restUpdateCategory(params *api.StructAPIHandlerParams) (interface{}, error)
 	//---------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "389975e7611c4d6c8b4dbca450f5f7e7", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "389975e7-611c-4d6c-8b4d-bca450f5f7e7", "category id was not specified")
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -293,7 +293,7 @@ func restListCategoryLayers(params *api.StructAPIHandlerParams) (interface{}, er
 	}
 
 	if api.ValidateAdminRights(params) != nil && !categoryModel.GetEnabled() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8373a4247a81efbbe39a7fe74", "category is not available")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8-373a-4247-a81e-fbbe39a7fe74", "category is not available")
 	}
 
 	productsCollection := categoryModel.GetProductsCollection()
@@ -332,7 +332,7 @@ func restListCategoryProducts(params *api.StructAPIHandlerParams) (interface{}, 
 	//---------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["categoryID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12400cff34fe4cf5ac6e41625f9e3d5a", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12400cff-34fe-4cf5-ac6e-41625f9e3d5a", "category id was not specified")
 	}
 
 	// product list operation
@@ -343,7 +343,7 @@ func restListCategoryProducts(params *api.StructAPIHandlerParams) (interface{}, 
 	}
 
 	if api.ValidateAdminRights(params) != nil && !categoryModel.GetEnabled() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a6f080ddfa44f8c8a0cec31cbe1cd87", "category is not available")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a6f080d-dfa4-4f8c-8a0c-ec31cbe1cd87", "category is not available")
 	}
 
 	productsCollection := categoryModel.GetProductsCollection()
@@ -380,11 +380,11 @@ func restAddCategoryProduct(params *api.StructAPIHandlerParams) (interface{}, er
 	//---------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["categoryID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2fc40bdc3c8e4a9c910bcca62cda1b77", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2fc40bdc-3c8e-4a9c-910b-cca62cda1b77", "category id was not specified")
 	}
 	productID, isSpecifiedID := params.RequestURLParams["productID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "190a3d6077694908b38380bc143128da", "product id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "190a3d60-7769-4908-b383-80bc143128da", "product id was not specified")
 	}
 
 	// check rights
@@ -415,11 +415,11 @@ func restRemoveCategoryProduct(params *api.StructAPIHandlerParams) (interface{},
 	//---------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["categoryID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc083799bccb48c8bd565dcd0a0f6031", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc083799-bccb-48c8-bd56-5dcd0a0f6031", "category id was not specified")
 	}
 	productID, isSpecifiedID := params.RequestURLParams["productID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9ffd262641924726849ec7a2416fab3a", "product id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9ffd2626-4192-4726-849e-c7a2416fab3a", "product id was not specified")
 	}
 
 	// check rights
@@ -450,7 +450,7 @@ func restGetCategory(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	categoryID, isSpecifiedID := params.RequestURLParams["id"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3c336fd71a184aea9eb0460d746f8dfa", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3c336fd7-1a18-4aea-9eb0-460d746f8dfa", "category id was not specified")
 	}
 
 	// load product operation
@@ -461,7 +461,7 @@ func restGetCategory(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	if api.ValidateAdminRights(params) != nil && !categoryModel.GetEnabled() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04f43d42a4948239a5e7f8ccb7", "category is not available")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04-f43d-42a4-9482-39a5e7f8ccb7", "category is not available")
 	}
 
 	return categoryModel.ToHashMap(), nil
@@ -473,7 +473,7 @@ func restCategoryProductsCount(params *api.StructAPIHandlerParams) (interface{},
 
 	categoryID, isSpecifiedID := params.RequestURLParams["categoryID"]
 	if !isSpecifiedID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e1003839d91c444596c830e481b8347e", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e1003839-d91c-4445-96c8-30e481b8347e", "category id was not specified")
 	}
 
 	// product list operation
@@ -484,7 +484,7 @@ func restCategoryProductsCount(params *api.StructAPIHandlerParams) (interface{},
 	}
 
 	if api.ValidateAdminRights(params) != nil && !categoryModel.GetEnabled() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9c2efb6acd284dd2ba7f5c1fe7c0df30", "category is not available")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9c2efb6a-cd28-4dd2-ba7f-5c1fe7c0df30", "category is not available")
 	}
 
 	productsDBCollection := categoryModel.GetProductsCollection().GetDBCollection()
@@ -548,7 +548,7 @@ func restGetCategoriesTree(params *api.StructAPIHandlerParams) (interface{}, err
 
 				parentChild, ok := parent["child"].([]map[string]interface{})
 				if !ok {
-					return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c94e54a453dc4ed2bac47e9d93958765", "category tree builder internal error")
+					return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c94e54a4-53dc-4ed2-bac4-7e9d93958765", "category tree builder internal error")
 				}
 
 				parent["child"] = append(parentChild, currentItem)

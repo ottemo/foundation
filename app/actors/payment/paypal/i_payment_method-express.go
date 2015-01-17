@@ -102,12 +102,12 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	responseValues, err := url.ParseQuery(string(responseData))
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b6a22eba7b140b5a47a5528753135b2", "payment unexpected response")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b6a22eb-a7b1-40b5-a47a-5528753135b2", "payment unexpected response")
 	}
 
 	if responseValues.Get("ACK") != "Success" || responseValues.Get("TOKEN") == "" {
 		if responseValues.Get("L_ERRORCODE0") != "" {
-			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5ec8dc9bf72c4f359b1ef4353753dd9e", "payment error "+responseValues.Get("L_ERRORCODE0")+": "+"L_LONGMESSAGE0")
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5ec8dc9b-f72c-4f35-9b1e-f4353753dd9e", "payment error "+responseValues.Get("L_ERRORCODE0")+": "+"L_LONGMESSAGE0")
 		}
 	}
 	waitingTokensMutex.Lock()
@@ -130,15 +130,15 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 // Capture payment method capture operation
 func (it *Express) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8569a80fffc04c99ab7989d0cbb90ca7", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8569a80f-ffc0-4c99-ab79-89d0cbb90ca7", "Not implemented")
 }
 
 // Refund makes payment method refund operation
 func (it *Express) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bcd6d1c312ad4e62a2c6e90bc61badd3", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bcd6d1c3-12ad-4e62-a2c6-e90bc61badd3", "Not implemented")
 }
 
 // Void makes payment method void operation
 func (it *Express) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "780832470f7b4cf184a209f6162ca350", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "78083247-0f7b-4cf1-84a2-09f6162ca350", "Not implemented")
 }

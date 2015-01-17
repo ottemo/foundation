@@ -66,6 +66,10 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
+	if it.GetName() == "" || it.GetSku() == "" {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ac7cd02e-0722-4ac8-bbe0-ffa74d091a94", "sku and name should be specified")
+	}
+
 	valuesToStore := it.ToHashMap()
 	if _, present := valuesToStore["qty"]; present {
 		delete(valuesToStore, "qty")

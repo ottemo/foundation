@@ -20,7 +20,7 @@ func connectionExecWLastInsertID(SQL string, args ...interface{}) (int64, error)
 		return dbEngine.connection.LastInsertId(), err
 	}
 
-	return 0, err
+	return dbEngine.connection.LastInsertId(), err
 }
 
 // exec routines
@@ -28,12 +28,16 @@ func connectionExecWAffected(SQL string, args ...interface{}) (int, error) {
 	dbEngine.connectionMutex.Lock()
 	defer dbEngine.connectionMutex.Unlock()
 
-	err := dbEngine.connection.Exec(SQL, args...)
-	if err != nil {
-		return dbEngine.connection.RowsAffected(), err
+	if ConstDebugSQL {
+		env.Log("sqlite.log", env.ConstLogPrefixInfo, SQL)
 	}
 
-	return 0, err
+	err := dbEngine.connection.Exec(SQL, args...)
+	if err != nil {
+		return 0, err
+	}
+
+	return dbEngine.connection.RowsAffected(), err
 }
 
 // exec routines
@@ -41,12 +45,21 @@ func connectionExec(SQL string, args ...interface{}) error {
 	dbEngine.connectionMutex.Lock()
 	defer dbEngine.connectionMutex.Unlock()
 
+	if ConstDebugSQL {
+		env.Log("sqlite.log", env.ConstLogPrefixInfo, SQL)
+	}
+
 	return dbEngine.connection.Exec(SQL, args...)
 }
 
 // query routines
 func connectionQuery(SQL string) (*sqlite3.Stmt, error) {
 	dbEngine.connectionMutex.Lock()
+
+	if ConstDebugSQL {
+		env.Log("sqlite.log", env.ConstLogPrefixInfo, SQL)
+	}
+
 	return dbEngine.connection.Query(SQL)
 }
 
@@ -60,7 +73,7 @@ func closeStatement(statement *sqlite3.Stmt) {
 
 // formats SQL query error for output to log
 func sqlError(SQL string, err error) error {
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "261ce31db907443ab7dce51c7dba6b52", "SQL \""+SQL+"\" error: "+err.Error())
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "261ce31d-b907-443a-b7dc-e51c7dba6b52", "SQL \""+SQL+"\" error: "+err.Error())
 }
 
 // returns string that represents value for SQL query
@@ -116,7 +129,7 @@ func GetDBType(ColumnType string) (string, error) {
 	switch {
 	case strings.HasPrefix(ColumnType, "[]"):
 		return "TEXT", nil
-	case ColumnType == db.ConstDBBasetypeID:
+	case ColumnType == db.ConstTypeID:
 		if ConstUseUUIDids {
 			return "TEXT", nil
 		}
@@ -137,5 +150,5 @@ func GetDBType(ColumnType string) (string, error) {
 		return "NUMERIC", nil
 	}
 
-	return "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bc554afad7d442688c430f91c1cb151", "Unknown type '"+ColumnType+"'")
+	return "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bc554af-ad7d-4426-88c4-30f91c1cb151", "Unknown type '"+ColumnType+"'")
 }

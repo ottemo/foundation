@@ -3,20 +3,21 @@ package db
 
 import (
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // Package global constants
 const (
-	ConstDBBasetypeID       = "id"
-	ConstDBBasetypeBoolean  = "bool"
-	ConstDBBasetypeVarchar  = "varchar"
-	ConstDBBasetypeText     = "text"
-	ConstDBBasetypeInteger  = "int"
-	ConstDBBasetypeDecimal  = "decimal"
-	ConstDBBasetypeMoney    = "money"
-	ConstDBBasetypeFloat    = "float"
-	ConstDBBasetypeDatetime = "datetime"
-	ConstDBBasetypeJSON     = "json"
+	ConstTypeID       = utils.ConstDataTypeID
+	ConstTypeBoolean  = utils.ConstDataTypeBoolean
+	ConstTypeVarchar  = utils.ConstDataTypeVarchar
+	ConstTypeText     = utils.ConstDataTypeText
+	ConstTypeInteger  = utils.ConstDataTypeInteger
+	ConstTypeDecimal  = utils.ConstDataTypeDecimal
+	ConstTypeMoney    = utils.ConstDataTypeMoney
+	ConstTypeFloat    = utils.ConstDataTypeFloat
+	ConstTypeDatetime = utils.ConstDataTypeDatetime
+	ConstTypeJSON     = utils.ConstDataTypeJSON
 
 	ConstErrorModule = "db"
 	ConstErrorLevel  = env.ConstErrorLevelService

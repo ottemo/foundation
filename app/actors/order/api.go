@@ -68,7 +68,7 @@ func restOrderList(params *api.StructAPIHandlerParams) (interface{}, error) {
 	reqData, ok := params.RequestContent.(map[string]interface{})
 	if !ok {
 		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d4a758dd3f0344c5b95ec28a10aadf3c", "unexpected request content")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d4a758dd-3f03-44c5-b95e-c28a10aadf3c", "unexpected request content")
 		}
 		reqData = make(map[string]interface{})
 	}
@@ -132,7 +132,7 @@ func restOrderGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	reqBlockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443f97444559be0a8af13916554", "order id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443-f974-4455-9be0-a8af13916554", "order id should be specified")
 	}
 	blockID := utils.InterfaceToString(reqBlockID)
 
@@ -160,7 +160,7 @@ func restOrderUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	blockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638e9e6428bb70ca418d7821e4b", "order id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638-e9e6-428b-b70c-a418d7821e4b", "order id should be specified")
 	}
 
 	reqData, err := api.GetRequestContentAsMap(params)
@@ -197,7 +197,7 @@ func restOrderDelete(params *api.StructAPIHandlerParams) (interface{}, error) {
 	//---------------------
 	blockID, present := params.RequestURLParams["id"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7e58c4433b9b0881a7ba005cf", "order id should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
 	}
 
 	// check rights

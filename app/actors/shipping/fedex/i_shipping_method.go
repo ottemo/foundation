@@ -191,7 +191,7 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 
 	xmlErrorFlag, _ := xmlpath.Compile("//Severity")
 	if value, ok := xmlErrorFlag.String(xmlRoot); ok && value == "ERROR" {
-		env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bf4bb500ba84aaf90a9695fed9d497a", string(responseData))
+		env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bf4bb50-0ba8-4aaf-90a9-695fed9d497a", string(responseData))
 	}
 
 	xmlPostage, _ := xmlpath.Compile("//RateReplyDetails")

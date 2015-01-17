@@ -37,17 +37,17 @@ func (it *RestAPI) Authorize(checkoutInstance checkout.InterfaceCheckout) error 
 
 	ccInfo := utils.InterfaceToMap(checkoutInstance.GetInfo("cc"))
 	if !utils.StrKeysInMap(ccInfo, "type", "number", "expire_month", "expire_year", "cvv") {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ce41da6b60514b3a883a4dd37c1c7a1a", "credit card info was not specified")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ce41da6b-6051-4b3a-883a-4dd37c1c7a1a", "credit card info was not specified")
 	}
 
 	billingAddress := checkoutInstance.GetBillingAddress()
 	if billingAddress == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9c57fbf9cb294472901ef77a9399dda6", "no billing address information")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9c57fbf9-cb29-4472-901e-f77a9399dda6", "no billing address information")
 	}
 
 	order := checkoutInstance.GetOrder()
 	if order == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6219944fd62b40d78495f844be0e562d", "no created order")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6219944f-d62b-40d7-8495-f844be0e562d", "no created order")
 	}
 
 	templateValues := map[string]interface{}{
@@ -150,9 +150,9 @@ func (it *RestAPI) Authorize(checkoutInstance checkout.InterfaceCheckout) error 
 
 	if response.StatusCode != 201 {
 		if response.StatusCode == 400 {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b022da8361ac4198a72d70f58f65acf0", utils.InterfaceToString(result["details"]))
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b022da83-61ac-4198-a72d-70f58f65acf0", utils.InterfaceToString(result["details"]))
 		}
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "741e875d0ab54e8f81f98abbff10cf78", "payment was not processed")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "741e875d-0ab5-4e8f-81f9-8abbff10cf78", "payment was not processed")
 	}
 
 	//TODO: should store information to order
@@ -208,5 +208,5 @@ func (it *RestAPI) GetAccessToken(checkoutInstance checkout.InterfaceCheckout) (
 		return utils.InterfaceToString(token), nil
 	}
 
-	return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96d9554615954fe19156ef8d6e43f172", "unexpected response - without access_token")
+	return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96d95546-1595-4fe1-9156-ef8d6e43f172", "unexpected response - without access_token")
 }*/

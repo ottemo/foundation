@@ -92,7 +92,7 @@ func (it *DBCollection) getMongoOperator(columnName string, operator string, val
 		}
 	}
 
-	return "?", "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab9d771aeb9e4318904ead13171dbe84", "Unknown operator '"+operator+"'")
+	return "?", "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab9d771a-eb9e-4318-904e-ad13171dbe84", "Unknown operator '"+operator+"'")
 }
 
 // returns filter group, creates new one if not exists
@@ -109,7 +109,7 @@ func (it *DBCollection) getFilterGroup(groupName string) *StructDBFilterGroup {
 func (it *DBCollection) updateFilterGroup(groupName string, columnName string, operator string, value interface{}) error {
 
 	/*if !it.HasColumn(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c7f88f11a136459db7fdc2773a095f71", "not existing column " + columnName)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c7f88f11-a136-459d-b7fd-c2773a095f71", "not existing column " + columnName)
 	}*/
 
 	// converting operator and value for mongoDB usage

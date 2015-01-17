@@ -17,7 +17,7 @@ var (
 func RegisterShippingMethod(shippingMethod InterfaceShippingMethod) error {
 	for _, registeredMethod := range registeredShippingMethods {
 		if registeredMethod == shippingMethod {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b532e87b8ca4b9b90ec4a09b37bf7e2", "shipping method already registered")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b532e87-b8ca-4b9b-90ec-4a09b37bf7e2", "shipping method already registered")
 		}
 	}
 
@@ -30,7 +30,7 @@ func RegisterShippingMethod(shippingMethod InterfaceShippingMethod) error {
 func RegisterPaymentMethod(paymentMethod InterfacePaymentMethod) error {
 	for _, registeredMethod := range registeredPaymentMethods {
 		if registeredMethod == paymentMethod {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "177091a820294dd7a2a2e09fa6efa0c8", "payment method already registered")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "177091a8-2029-4dd7-a2a2-e09fa6efa0c8", "payment method already registered")
 		}
 	}
 
@@ -43,7 +43,7 @@ func RegisterPaymentMethod(paymentMethod InterfacePaymentMethod) error {
 func RegisterTax(tax InterfaceTax) error {
 	for _, registeredTax := range registeredTaxes {
 		if registeredTax == tax {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "355841ed700e4c8fbc8da2d95844d393", "tax already registered")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "355841ed-700e-4c8f-bc8d-a2d95844d393", "tax already registered")
 		}
 	}
 
@@ -56,7 +56,7 @@ func RegisterTax(tax InterfaceTax) error {
 func RegisterDiscount(discount InterfaceDiscount) error {
 	for _, registeredDiscount := range registeredDiscounts {
 		if registeredDiscount == discount {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "56234554d230403cb21b8393e7e138d4", "discount already registered")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "56234554-d230-403c-b21b-8393e7e138d4", "discount already registered")
 		}
 	}
 

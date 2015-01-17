@@ -9,13 +9,13 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "a1d81bf17d624107a83ebe4d10439c5d", "can't obtain config")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "a1d81bf1-7d62-4107-a83e-be4d10439c5d", "can't obtain config")
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "Check / Money Order",
@@ -30,7 +30,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathEnabled,
 		Value:       false,
-		Type:        "bool",
+		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
 		Label:       "Enabled",
@@ -45,7 +45,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathTitle,
 		Value:       "Check/Money Order",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "Title",
@@ -53,7 +53,7 @@ func setupConfig() error {
 		Image:       "",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cfc4cb85b769414c90fb9be3fbe7fe98", "can't be blank")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cfc4cb85-b769-414c-90fb-9be3fbe7fe98", "can't be blank")
 		}
 		return value, nil
 	})

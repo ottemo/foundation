@@ -114,7 +114,7 @@ func (it *DBCollection) DeleteByID(id string) error {
 // SetupFilterGroup setups filter group params for collection
 func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, parentGroup string) error {
 	if _, present := it.FilterGroups[parentGroup]; !present && parentGroup != "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d576838ddda04986bae6be2e8520e3a0", "invalid parent group")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d576838d-dda0-4986-bae6-be2e8520e3a0", "invalid parent group")
 	}
 
 	filterGroup := it.getFilterGroup(groupName)
@@ -127,7 +127,7 @@ func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, pare
 // RemoveFilterGroup removes filter group for collection
 func (it *DBCollection) RemoveFilterGroup(GroupName string) error {
 	if _, present := it.FilterGroups[GroupName]; !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6324cd11621742a195e6b53aa5f33ce3", "invalid group name")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6324cd11-6217-42a1-95e6-b53aa5f33ce3", "invalid group name")
 	}
 	delete(it.FilterGroups, GroupName)
 	return nil
@@ -200,7 +200,7 @@ func (it *DBCollection) SetResultColumns(columns ...string) error {
 		it.ResultAttributes = []string{}
 
 		if !it.HasColumn(columnName) {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f26abaeb7c9a48e89d3a332b4299f9c7", "there is no column "+columnName+" found")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f26abaeb-7c9a-48e8-9d3a-332b4299f9c7", "there is no column "+columnName+" found")
 		}
 
 		it.ResultAttributes = append(it.ResultAttributes, columnName)
@@ -307,10 +307,11 @@ func (it *DBCollection) RemoveColumn(ColumnName string) error {
 	data := map[string]interface{}{"$unset": map[string]interface{}{ColumnName: ""}}
 
 	_, err = it.collection.UpdateAll(updateSelector, data)
-
 	if err != nil {
 		return err
 	}
+
+	it.ListColumns()
 
 	return nil
 }

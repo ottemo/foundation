@@ -17,14 +17,14 @@ import (
 //   - internal usage function for AddFilter and AddStaticFilter routines
 func (it *DBCollection) makeSQLFilterString(ColumnName string, Operator string, Value interface{}) (string, error) {
 	if !it.HasColumn(ColumnName) {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51a0ae66a5fe4db39c5f6b55f196f714", "can't find column '"+ColumnName+"'")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51a0ae66-a5fe-4db3-9c5f-6b55f196f714", "can't find column '"+ColumnName+"'")
 	}
 
 	Operator = strings.ToUpper(Operator)
 	allowedOperators := []string{"=", "!=", "<>", ">", ">=", "<", "<=", "LIKE", "IN"}
 
 	if !utils.IsInListStr(Operator, allowedOperators) {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "793c0ec0aa8446cf93056245d9198d45", "unknown operator '"+Operator+"' for column '"+ColumnName+"', allowed: '"+strings.Join(allowedOperators, "', ")+"'")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "793c0ec0-aa84-46cf-9305-6245d9198d45", "unknown operator '"+Operator+"' for column '"+ColumnName+"', allowed: '"+strings.Join(allowedOperators, "', ")+"'")
 	}
 
 	columnType := it.GetColumnType(ColumnName)
@@ -49,12 +49,16 @@ func (it *DBCollection) makeSQLFilterString(ColumnName string, Operator string, 
 	// regular columns - default case
 	switch Operator {
 	case "LIKE":
-		if typedValue, ok := Value.(string); ok && !strings.Contains(typedValue, "%") {
-			Value = "'%" + typedValue + "%'"
+		if typedValue, ok := Value.(string); ok {
+			if !strings.Contains(typedValue, "%") {
+				Value = "'%" + typedValue + "%'"
+			} else {
+				newValue := strings.Trim(Value.(string), "'")
+				newValue = strings.Trim(newValue, "\"")
+				Value = "'" + newValue + "'"
+			}
 		} else {
-			newValue := strings.Trim(Value.(string), "'")
-			newValue = strings.Trim(newValue, "\"")
-			Value = "'" + newValue + "'"
+			Value = "''"
 		}
 
 	case "IN":
@@ -167,7 +171,7 @@ func (it *DBCollection) getFilterGroup(groupName string) *StructDBFilterGroup {
 func (it *DBCollection) updateFilterGroup(groupName string, columnName string, operator string, value interface{}) error {
 
 	/*if !it.HasColumn(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9e9c8c239bd48b59fd65929b9bf30f5", "not existing column " + columnName)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9e9c8c2-39bd-48b5-9fd6-5929b9bf30f5", "not existing column " + columnName)
 	}*/
 
 	newValue, err := it.makeSQLFilterString(columnName, operator, value)

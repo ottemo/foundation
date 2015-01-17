@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/api/session"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
@@ -36,7 +35,7 @@ func restReceipt(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	status := postData["x_response_code"]
 
-	session, err := session.GetSessionByID(utils.InterfaceToString(postData["x_session"]))
+	session, err := api.GetSessionByID(utils.InterfaceToString(postData["x_session"]))
 	if err != nil {
 		return nil, errors.New("Wrong session ID")
 	}
@@ -130,7 +129,7 @@ func restRelay(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	status := postData["x_response_code"]
 
-	session, err := session.GetSessionByID(utils.InterfaceToString(postData["x_session"]))
+	session, err := api.GetSessionByID(utils.InterfaceToString(postData["x_session"]))
 	if err != nil {
 		return nil, errors.New("Wrong session ID")
 	}

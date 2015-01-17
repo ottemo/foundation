@@ -1,9 +1,10 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
-
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -48,15 +49,20 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API to get value information about config items with type [ConstConfigItemGroupType]
+// WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
 func restConfigGroups(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	config := env.GetConfig()
 	return config.GetGroupItems(), nil
 }
 
-// WEB REST API to get value information about config items with type [ConstConfigItemGroupType]
+// WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
 func restConfigList(params *api.StructAPIHandlerParams) (interface{}, error) {
+
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	config := env.GetConfig()
 	return config.ListPathes(), nil
@@ -65,6 +71,11 @@ func restConfigList(params *api.StructAPIHandlerParams) (interface{}, error) {
 // WEB REST API to get value information about item(s) matching path
 func restConfigInfo(params *api.StructAPIHandlerParams) (interface{}, error) {
 
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	config := env.GetConfig()
 	return config.GetItemsInfo(params.RequestURLParams["path"]), nil
 }
@@ -72,8 +83,28 @@ func restConfigInfo(params *api.StructAPIHandlerParams) (interface{}, error) {
 // WEB REST API used to get value of particular item in config
 //   - path should be without any wildcard
 func restConfigGet(params *api.StructAPIHandlerParams) (interface{}, error) {
-
 	config := env.GetConfig()
+
+	configItemPath := params.RequestURLParams["path"]
+
+	info := config.GetItemsInfo(configItemPath)
+	if len(info) == 1 {
+		itemInfo := info[0]
+
+		if itemInfo.Type == env.ConstConfigTypeSecret ||
+			strings.Contains(itemInfo.Editor, "password") ||
+			strings.Contains(itemInfo.Type, "password") ||
+			strings.Contains(itemInfo.Path, "password") ||
+			strings.Contains(itemInfo.Path, "login") ||
+			strings.Contains(itemInfo.Path, "admin") {
+
+			// check rights
+			if err := api.ValidateAdminRights(params); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+		}
+	}
+
 	return config.GetValue(params.RequestURLParams["path"]), nil
 }
 
@@ -94,6 +125,11 @@ func restConfigSet(params *api.StructAPIHandlerParams) (interface{}, error) {
 		}
 	}
 
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	err = config.SetValue(configPath, setValue)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -106,6 +142,11 @@ func restConfigSet(params *api.StructAPIHandlerParams) (interface{}, error) {
 func restConfigRegister(params *api.StructAPIHandlerParams) (interface{}, error) {
 	inputData, err := api.GetRequestContentAsMap(params)
 	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -133,6 +174,12 @@ func restConfigRegister(params *api.StructAPIHandlerParams) (interface{}, error)
 
 // WEB REST API used to remove config item from system
 func restConfigUnRegister(params *api.StructAPIHandlerParams) (interface{}, error) {
+
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	config := env.GetConfig()
 
 	err := config.UnregisterItem(params.RequestURLParams["path"])
@@ -145,6 +192,12 @@ func restConfigUnRegister(params *api.StructAPIHandlerParams) (interface{}, erro
 
 // WEB REST API used to re-load config from DB
 func restConfigReload(params *api.StructAPIHandlerParams) (interface{}, error) {
+
+	// check rights
+	if err := api.ValidateAdminRights(params); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	config := env.GetConfig()
 
 	err := config.Reload()

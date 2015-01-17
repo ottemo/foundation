@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"fmt"
 	"net/smtp"
 	"strings"
 	"text/template"
@@ -9,6 +10,29 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
+
+// GetVersion returns current version number
+func GetVersion() string {
+	return fmt.Sprintf("v%d.%d.%d", ConstVersionMajor, ConstVersionMinor, ConstSprintNumber)
+}
+
+// GetVerboseVersion returns verbose information about application build
+func GetVerboseVersion() string {
+	result := GetVersion()
+	if buildBranch != "" {
+		result += "-" + buildBranch
+	}
+	if buildNumber != "" {
+		result += "-b" + buildNumber
+	}
+	if buildTags != "" {
+		result += " (" + buildTags + ")"
+	}
+	if buildDate != "" {
+		result += " [" + buildDate + "]"
+	}
+	return result
+}
 
 // GetDashboardURL returns url related to dashboard server
 func GetDashboardURL(path string) string {

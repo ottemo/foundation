@@ -10,7 +10,7 @@ func setupConfig() error {
 		err := config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathGroup,
 			Value:       nil,
-			Type:        env.ConstConfigItemGroupType,
+			Type:        env.ConstConfigTypeGroup,
 			Editor:      "",
 			Options:     nil,
 			Label:       "Flat Rate",
@@ -25,7 +25,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
-			Type:        "bool",
+			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
 			Options:     nil,
 			Label:       "Enabled",
@@ -40,7 +40,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathAmount,
 			Value:       10,
-			Type:        "int",
+			Type:        env.ConstConfigTypeInteger,
 			Editor:      "money",
 			Options:     nil,
 			Label:       "Amount",
@@ -55,7 +55,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathName,
 			Value:       "Flat Rate",
-			Type:        "string",
+			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Name",
@@ -70,7 +70,7 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDays,
 			Value:       0,
-			Type:        "int",
+			Type:        env.ConstConfigTypeInteger,
 			Editor:      "integer",
 			Options:     nil,
 			Label:       "Ship days",

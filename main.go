@@ -43,7 +43,10 @@ func main() {
 	// application start event
 	if err := app.Start(); err != nil {
 		fmt.Println(err.Error())
+		os.Exit(0)
 	}
+
+	fmt.Println("Ottemo " + app.GetVerboseVersion())
 
 	// starting HTTP server
 	app.Serve()

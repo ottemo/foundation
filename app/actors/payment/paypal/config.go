@@ -9,13 +9,13 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "681bd727d51e4bb6a2ba59855db7bee9", "can't obtain config")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "681bd727-d51e-4bb6-a2ba-59855db7bee9", "can't obtain config")
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGroup,
 		Value:       nil,
-		Type:        env.ConstConfigItemGroupType,
+		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
 		Label:       "PayPal (Express)",
@@ -30,7 +30,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathEnabled,
 		Value:       false,
-		Type:        "bool",
+		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
 		Label:       "Enabled",
@@ -45,7 +45,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathTitle,
 		Value:       "PayPal",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "Title",
@@ -53,7 +53,7 @@ func setupConfig() error {
 		Image:       "",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "90107e36025949ffb74f3bb498fbed05", "can't be blank")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "90107e36-0259-49ff-b74f-3bb498fbed05", "can't be blank")
 		}
 		return value, nil
 	})
@@ -65,7 +65,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathNVP,
 		Value:       "https://api-3t.sandbox.paypal.com/nvp",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "NVP Gateway",
@@ -80,7 +80,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGateway,
 		Value:       "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "Gateway",
@@ -95,7 +95,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathUser,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "User",
@@ -110,7 +110,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathPass,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeSecret,
 		Editor:      "password",
 		Options:     nil,
 		Label:       "Password",
@@ -125,7 +125,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathSignature,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
 		Label:       "Signature",
@@ -140,7 +140,7 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathAction,
 		Value:       "",
-		Type:        "string",
+		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
 		Options:     map[string]string{ConstPaymentActionSale: "Sale", ConstPaymentActionAuthorization: "Authorization"},
 		Label:       "Signature",

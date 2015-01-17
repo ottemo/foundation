@@ -9,6 +9,7 @@ import (
 	_ "github.com/ottemo/foundation/env/logger"   // file-based logger service
 
 	_ "github.com/ottemo/foundation/api/rest"      // RESTful API service
+	_ "github.com/ottemo/foundation/api/session"   // API session management service
 	_ "github.com/ottemo/foundation/impex"         // import/export service
 	_ "github.com/ottemo/foundation/media/fsmedia" // storage manager service
 

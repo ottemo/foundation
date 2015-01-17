@@ -1,9 +1,24 @@
 // Package env is a set of interfaces to access system environment services
 package env
 
+import (
+	"github.com/ottemo/foundation/utils"
+)
+
 // Package global constants
 const (
-	ConstConfigItemGroupType = "group"
+	ConstConfigTypeID       = utils.ConstDataTypeID
+	ConstConfigTypeBoolean  = utils.ConstDataTypeBoolean
+	ConstConfigTypeVarchar  = utils.ConstDataTypeVarchar
+	ConstConfigTypeText     = utils.ConstDataTypeText
+	ConstConfigTypeInteger  = utils.ConstDataTypeInteger
+	ConstConfigTypeDecimal  = utils.ConstDataTypeDecimal
+	ConstConfigTypeMoney    = utils.ConstDataTypeMoney
+	ConstConfigTypeFloat    = utils.ConstDataTypeFloat
+	ConstConfigTypeDatetime = utils.ConstDataTypeDatetime
+	ConstConfigTypeJSON     = utils.ConstDataTypeJSON
+	ConstConfigTypeGroup    = "group"
+	ConstConfigTypeSecret   = "secret"
 
 	ConstLogPrefixError   = "ERROR"
 	ConstLogPrefixWarning = "WARNING"

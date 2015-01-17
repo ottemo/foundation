@@ -1,6 +1,8 @@
 package attributes
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -27,14 +29,14 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 		//-------------------------------
 		customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 		if err != nil {
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a53c394db2ae41bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
+			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
 		}
 
 		customAttributesCollection.AddFilter("model", "=", it.model)
 		records, err := customAttributesCollection.Load()
 		if err != nil {
 			env.ErrorDispatch(err)
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e572344a33b94bbec7437200a5", "Can't load custom attributes information for '"+it.model+"'")
+			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+it.model+"'")
 		}
 
 		// filling attribute info structure
@@ -89,12 +91,12 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
 	customAttribute, present := it.attributes[attributeName]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021eb4d4f03aafd6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
 
 	customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3b8b1e23c2ad45c59252215084a8cd81", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3b8b1e23-c2ad-45c5-9252-215084a8cd81", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
 	}
 
 	customAttributesCollection.AddFilter("model", "=", customAttribute.Model)
@@ -151,22 +153,22 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 
 	customAttribute, present := it.attributes[attributeName]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021eb4d4f03aafd6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
 
 	customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3b8b1e23c2ad45c59252215084a8cd81", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3b8b1e23-c2ad-45c5-9252-215084a8cd81", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
 	}
 
 	modelCollection, err := db.GetCollection(customAttribute.Collection)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "861e9bf144ac418b824985613451fc9c", "Can't get attribute '"+customAttribute.Attribute+"' collection '"+customAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "861e9bf1-44ac-418b-8249-85613451fc9c", "Can't get attribute '"+customAttribute.Attribute+"' collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
 	err = modelCollection.RemoveColumn(attributeName)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "901ce41c68024ecdb65493d96d34b361", "Can't remove attribute '"+attributeName+"' from collection '"+customAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "901ce41c-6802-4ecd-b654-93d96d34b361", "Can't remove attribute '"+attributeName+"' from collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
 	globalCustomAttributesMutex.Lock()
@@ -177,7 +179,7 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 	customAttributesCollection.AddFilter("attribute", "=", attributeName)
 	_, err = customAttributesCollection.Delete()
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da771c6b402f4816a07d9602f584b45d", "Can't remove attribute '"+attributeName+"' information from 'custom_attributes' collection '"+customAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da771c6b-402f-4816-a07d-9602f584b45d", "Can't remove attribute '"+attributeName+"' information from 'custom_attributes' collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
 	return nil
@@ -187,19 +189,40 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
 
 	if _, present := it.attributes[newAttribute.Attribute]; present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "24aa5125d8b34e55b32179eef3eeccb8", "There is already atribute '"+newAttribute.Attribute+"' for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "24aa5125-d8b3-4e55-b321-79eef3eeccb8", "There is already atribute '"+newAttribute.Attribute+"' for model '"+it.model+"'")
 	}
 
 	// getting collection where custom attribute information stores
 	customAttribuesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5fcc7f5ed4694315acf21ec04391a7f5", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5fcc7f5e-d469-4315-acf2-1ec04391a7f5", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
 	}
 
 	// getting collection where attribute supposed to be
 	modelCollection, err := db.GetCollection(newAttribute.Collection)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da1337bed7104c1c9e3e04cca84cb82b", "Can't get attribute '"+newAttribute.Attribute+"' collection '"+newAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da1337be-d710-4c1c-9e3e-04cca84cb82b", "Can't get attribute '"+newAttribute.Attribute+"' collection '"+newAttribute.Collection+"': "+err.Error())
+	}
+
+	// checking collection already existent columns
+	if modelCollection.HasColumn(newAttribute.Attribute) {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0402b818-03e9-4c56-bee8-0c1471b8d2ba", "There is already atribute '"+newAttribute.Attribute+"' in collection '"+it.collection+"'")
+	}
+
+	// type validation
+	if !utils.IsAmongStr(strings.Trim(newAttribute.Type, "[]"),
+		db.ConstTypeID,
+		db.ConstTypeBoolean,
+		db.ConstTypeVarchar,
+		db.ConstTypeText,
+		db.ConstTypeInteger,
+		db.ConstTypeDecimal,
+		db.ConstTypeMoney,
+		db.ConstTypeFloat,
+		db.ConstTypeDatetime,
+		db.ConstTypeJSON) {
+
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26f15efc-8490-41f0-82f7-b677ea427af7", "unknown attribute type '"+newAttribute.Type+"'")
 	}
 
 	// inserting attribute information in custom_attributes collection
@@ -222,7 +245,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	newCustomAttributeID, err := customAttribuesCollection.Save(record)
 
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ad98e5b076724d029744e1beecb88922", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ad98e5b0-7672-4d02-9744-e1beecb88922", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
 	}
 
 	// inserting new attribute to supposed location
@@ -230,7 +253,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	if err != nil {
 		customAttribuesCollection.DeleteByID(newCustomAttributeID)
 
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c11b43bec294e08b6147a8ec8345c9b", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c11b43b-ec29-4e08-b614-7a8ec8345c9b", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
 	}
 
 	it.attributes[newAttribute.Attribute] = newAttribute

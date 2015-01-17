@@ -53,10 +53,10 @@ func (it *DefaultCMSBlockCollection) ListAddExtraAttribute(attribute string) err
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
 		} else {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "48018ded44c24501a0bcbd55a9eaa570", "attribute already in list")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "48018ded-44c2-4501-a0bc-bd55a9eaa570", "attribute already in list")
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "018884c4b2cd452aa45ee88c11e69988", "not allowed attribute")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "018884c4-b2cd-452a-a45e-e88c11e69988", "not allowed attribute")
 	}
 
 	return nil
