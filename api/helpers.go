@@ -216,6 +216,7 @@ func ApplyFilters(params *StructAPIHandlerParams, collection db.InterfaceDBColle
 
 			// looking for possible attributes to filter
 			for attributeName, attributeType := range collection.ListColumns() {
+				attributeType = strings.TrimPrefix(attributeType, "[]")
 				switch {
 				case attributeType == db.ConstTypeText || strings.Contains(attributeType, db.ConstTypeVarchar):
 					if strings.Contains(lookingFor, "text") {

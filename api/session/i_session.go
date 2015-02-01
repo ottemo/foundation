@@ -133,7 +133,7 @@ func (it *DefaultSession) Save() error {
 	}
 
 	// saving session data
-	sessionFile, err := os.OpenFile(ConstStorageFolder+sessionID, os.O_WRONLY|os.O_CREATE, 0660)
+	sessionFile, err := os.OpenFile(ConstStorageFolder+sessionID, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
 	defer func() {
 		sessionFile.Close()
 		os.Chtimes(sessionFile.Name(), it.UpdatedAt, it.UpdatedAt)

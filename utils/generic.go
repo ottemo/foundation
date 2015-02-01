@@ -238,3 +238,14 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 
 	return false
 }
+
+// EscapeRegexSpecials returns regular expression special characters escaped value
+func EscapeRegexSpecials(value string) string {
+	specials := []string{"\\", "-", "[", "]", "/", "{", "}", "(", ")", "*", "+", "?", ".", "^", "$", "|"}
+
+	for _, special := range specials {
+		value = strings.Replace(value, special, "\\"+special, -1)
+	}
+
+	return value
+}

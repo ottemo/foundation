@@ -2,6 +2,7 @@
 *.o
 *.a
 *.so
+*.gz
 
 # Folders
 _obj
@@ -9,6 +10,8 @@ _test
 tags
 .idea
 tmp
+release
+var
 .vagrant
 
 # Architecture specific extensions/prefixes
@@ -35,3 +38,5 @@ foundation
 
 # test dbs
 db/sqlite/test/ottemo.db
+ottemo.db
+ottemo.ini

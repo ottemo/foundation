@@ -21,7 +21,7 @@ func init() {
 
 	// starting ticker for a case of timer based mode
 	if ConstSessionUpdateTime > 0 {
-		timerInterval := time.Second * (ConstSessionUpdateTime + 1)
+		timerInterval := time.Second * ConstSessionUpdateTime
 		ticker := time.NewTicker(timerInterval)
 		go func() {
 			for _ = range ticker.C {

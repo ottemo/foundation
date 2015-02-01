@@ -11,6 +11,8 @@ const (
 	ConstMediaDBCollection  = "media"    // database collection name to store media assignment information into
 	ConstMediaDefaultFolder = "./media/" // filesystem folder path to store media files in there
 
+	ConstResizeOnBackground = true
+
 	ConstDefaultImageSize  = "1000x1000"      // "800x400"
 	ConstDefaultImageSizes = "thumb: 280x350" // "small: 75x75, thumb: 260x300, big: 560x650"
 
