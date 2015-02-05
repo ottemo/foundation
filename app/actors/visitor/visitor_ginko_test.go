@@ -1,3 +1,4 @@
+// Package visitor_test represents a ginko/gomega test for visitor's api
 package visitor_test
 
 import (
@@ -17,6 +18,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+// Init settings for running the application in testing mode
 var _ = BeforeSuite(func() {
 	err := tests.StartAppInTestingMode()
 	Expect(err).NotTo(HaveOccurred())
@@ -25,8 +27,10 @@ var _ = BeforeSuite(func() {
 	time.Sleep(1 * time.Second)
 })
 
+// General starting function for Ginko
 var _ = Describe("Visitor", func() {
 
+	// Defining constants for testing
 	const (
 		ConstURLAppLogin         = "app/login"
 		ConstURLVisitorInfo      = "visitor/info"
@@ -35,11 +39,15 @@ var _ = Describe("Visitor", func() {
 		ConstURLVisitorLogout    = "visitor/logout"
 		ConstURLVisitorOrderList = "visitor/order/list"
 		ConstURLVisitorUpdate    = "visitor/update"
-		ConstURLVisitorDelete    = "visitor/delete"
+		ConstURLVisitorUpdateID  = "visitor/update/"
+		ConstURLVisitorList      = "visitor/list"
+		ConstURLVisitorCount     = "visitor/count"
+		ConstURLVisitorDelete    = "visitor/delete/"
 
 		ConstVisitorPassword = "123"
 	)
 
+	// Defining variables for testing
 	var (
 		request            *http.Request
 		client             = &http.Client{}
@@ -58,12 +66,13 @@ var _ = Describe("Visitor", func() {
 				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLAppLogin), buffer)
 				Expect(err).NotTo(HaveOccurred())
-
 				request.Header.Set("Content-Type", "application/json")
+
+				// making app login request to become admin
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 
-				// getting sessionID and setting it to all following requests
+				// getting sessionID and setting it to a loginAdminCookie
 				loginAdminCookie = response.Cookies()
 			})
 		})
@@ -91,12 +100,12 @@ var _ = Describe("Visitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
 
-				// making app login request to become admin
-
+				//adding admins cookie to request
 				for i := range loginAdminCookie {
 					request.AddCookie(loginAdminCookie[i])
 				}
 
+				//taking response and checking of it
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -118,7 +127,7 @@ var _ = Describe("Visitor", func() {
 		})
 
 		Context("POST /visitor/login", func() {
-			It("check the response to "+ConstURLVisitorLogin+" url", func() {
+			It("Loggining as a visitor and taking it's cookie. Testing "+ConstURLVisitorLogin+" url", func() {
 				visitorInfo := map[string]interface{}{
 					"email":    mailbox,
 					"password": ConstVisitorPassword}
@@ -133,7 +142,6 @@ var _ = Describe("Visitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
 
-				loginVisitorCookie = response.Cookies()
 				responseBody, err := ioutil.ReadAll(response.Body)
 				Expect(err).NotTo(HaveOccurred())
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
@@ -144,17 +152,22 @@ var _ = Describe("Visitor", func() {
 				Expect(jsonResponse["error"]).Should(BeNil())
 				Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
+				// getting visitor sessionID and setting it to a loginVisitorCookie
+				loginVisitorCookie = response.Cookies()
 			})
 		})
 
 		Context("GET /visitor/info as a visitor", func() {
-			It("check the response to "+ConstURLVisitorInfo+" url", func() {
+			It("Getting the visitor info, on "+ConstURLVisitorInfo+" url", func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorInfo), nil)
-				request.Header.Set("Content-Type", "application/json")
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding visitor cookie to request
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -175,10 +188,12 @@ var _ = Describe("Visitor", func() {
 		})
 
 		Context("GET /visitor/order/list as a visitor", func() {
-			It("check the response to "+ConstURLVisitorOrderList+" url", func() {
+			It("Get visitor order list, buy "+ConstURLVisitorOrderList+" url", func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorOrderList), nil)
-				request.Header.Set("Content-Type", "application/json")
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding visitor cookie to request
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
@@ -198,7 +213,7 @@ var _ = Describe("Visitor", func() {
 		})
 
 		Context("PUT /visitor/update as a visitor", func() {
-			It("check the response to "+ConstURLVisitorUpdate+" url", func() {
+			It("Update the visitor. On "+ConstURLVisitorUpdate+" url", func() {
 				updateName := randomdata.SillyName()
 				visitorInfo := map[string]interface{}{
 					"last_name":  updateName,
@@ -208,6 +223,8 @@ var _ = Describe("Visitor", func() {
 				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdate), buffer)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
+
+				//adding visitor cookie to request
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
@@ -231,11 +248,13 @@ var _ = Describe("Visitor", func() {
 			})
 		})
 
-		Context("POST /visitor/logout as a visitor", func() {
-			It("check the response to "+ConstURLVisitorLogout+" url", func() {
+		Context("GET /visitor/logout as a visitor", func() {
+			It("Logout from visitor"+ConstURLVisitorLogout+" url", func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorLogout), nil)
-				request.Header.Set("Content-Type", "application/json")
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding visitor cookie to request
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
@@ -258,12 +277,13 @@ var _ = Describe("Visitor", func() {
 			})
 		})
 
-		Context("DELETE /visitor/delete as a admin", func() {
-			It("check the response to "+ConstURLVisitorDelete+" url", func() {
-				By("- delete a visitor with _ID: " + visitorID + " as admin")
-				request, err = http.NewRequest("DELETE", app.GetFoundationURL(ConstURLVisitorDelete+"/"+visitorID), nil)
+		Context("GET /visitor/list as a admin", func() {
+			It("Getting the visitors list. Test "+ConstURLVisitorList+" url", func() {
+				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorList), nil)
 				request.Header.Set("Content-Type", "application/json")
 				Expect(err).NotTo(HaveOccurred())
+
+				//adding admins cookie to request
 				for i := range loginAdminCookie {
 					request.AddCookie(loginAdminCookie[i])
 				}
@@ -279,6 +299,94 @@ var _ = Describe("Visitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
+			})
+		})
+
+		Context("GET /visitor/count as a admin", func() {
+			It("Count of the visitors. Test "+ConstURLVisitorCount+" url", func() {
+				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorCount), nil)
+				request.Header.Set("Content-Type", "application/json")
+				Expect(err).NotTo(HaveOccurred())
+
+				//adding admins cookie to request
+				for i := range loginAdminCookie {
+					request.AddCookie(loginAdminCookie[i])
+				}
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+			})
+		})
+
+		Context("PUT /visitor/update/:id as a admin", func() {
+			It("Update the visitor from admin. Test "+ConstURLVisitorUpdateID+" url", func() {
+				updateName := randomdata.SillyName()
+				visitorInfo := map[string]interface{}{
+					"last_name":  updateName,
+					"first_name": updateName}
+				jsonString = utils.EncodeToJSONString(visitorInfo)
+				buffer := bytes.NewBuffer([]byte(jsonString))
+				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdateID+visitorID), buffer)
+				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding admins cookie to request
+				for i := range loginAdminCookie {
+					request.AddCookie(loginAdminCookie[i])
+				}
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("Checking for not eror statment")
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+				result, ok := jsonResponse["result"].(map[string]interface{})
+				Expect(ok).Should(BeTrue())
+				fmt.Println("Update visitor and get response result:" + utils.InterfaceToString(result))
+
+			})
+		})
+
+		Context("DELETE /visitor/delete as a admin", func() {
+			It("Deleting a visitor as an admin. Testing "+ConstURLVisitorDelete+" url", func() {
+				By("Start deleting of a visitor with _ID: " + visitorID + " as admin")
+				request, err = http.NewRequest("DELETE", app.GetFoundationURL(ConstURLVisitorDelete+visitorID), nil)
+				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding admins cookie to request
+				for i := range loginAdminCookie {
+					request.AddCookie(loginAdminCookie[i])
+				}
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				By("Finished deleting of a visitor with _ID: " + visitorID)
 			})
 		})
 
