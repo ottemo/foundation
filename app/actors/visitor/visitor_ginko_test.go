@@ -3,7 +3,6 @@ package visitor_test
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -92,8 +91,7 @@ var _ = Describe("Visitor", func() {
 					"is_admin":   true}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 
-				//By("- create request:" + jsonString)
-				//fmt.Println("- create request:", jsonString)
+				By("Start to create visitor:" + jsonString)
 
 				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLVisitorCreate), buffer)
@@ -111,6 +109,8 @@ var _ = Describe("Visitor", func() {
 				defer response.Body.Close()
 
 				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
@@ -120,9 +120,11 @@ var _ = Describe("Visitor", func() {
 				result, ok := jsonResponse["result"].(map[string]interface{})
 				Expect(ok).Should(BeTrue())
 				Expect(result).To(HaveKey("_id"))
+
 				visitorID = utils.InterfaceToString(result["_id"])
 				Expect(visitorID).ShouldNot(BeEmpty())
-				fmt.Println("- created visitor id:", visitorID)
+				By("Finished creating visitor:" + utils.InterfaceToString(result))
+				By("- created visitor id:" + visitorID)
 			})
 		})
 
@@ -132,8 +134,9 @@ var _ = Describe("Visitor", func() {
 					"email":    mailbox,
 					"password": ConstVisitorPassword}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
-				buffer := bytes.NewBuffer([]byte(jsonString))
 
+				By("Start to login as a " + jsonString)
+				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLVisitorLogin), buffer)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
@@ -144,16 +147,16 @@ var _ = Describe("Visitor", func() {
 
 				responseBody, err := ioutil.ReadAll(response.Body)
 				Expect(err).NotTo(HaveOccurred())
+
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				Expect(err).NotTo(HaveOccurred())
-
-				By("Checking for not eror statment")
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
 				Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
 				// getting visitor sessionID and setting it to a loginVisitorCookie
 				loginVisitorCookie = response.Cookies()
+				By("We have logined and added Visitor Cookies")
 			})
 		})
 
@@ -183,7 +186,8 @@ var _ = Describe("Visitor", func() {
 
 				result, ok := jsonResponse["result"].(map[string]interface{})
 				Expect(ok).Should(BeTrue())
-				fmt.Println("Take the info and get response result:" + utils.InterfaceToString(result))
+				Expect(result).ShouldNot(BeNil())
+				By("Take the info and get response result:" + utils.InterfaceToString(result))
 			})
 		})
 
@@ -197,6 +201,7 @@ var _ = Describe("Visitor", func() {
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -220,6 +225,7 @@ var _ = Describe("Visitor", func() {
 					"first_name": updateName}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 				buffer := bytes.NewBuffer([]byte(jsonString))
+
 				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdate), buffer)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
@@ -228,6 +234,7 @@ var _ = Describe("Visitor", func() {
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -241,9 +248,10 @@ var _ = Describe("Visitor", func() {
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
 				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
 				result, ok := jsonResponse["result"].(map[string]interface{})
 				Expect(ok).Should(BeTrue())
-				fmt.Println("Update visitor and get response result:" + utils.InterfaceToString(result))
+				By("Update visitor and get response result:" + utils.InterfaceToString(result))
 
 			})
 		})
@@ -258,6 +266,7 @@ var _ = Describe("Visitor", func() {
 				for i := range loginVisitorCookie {
 					request.AddCookie(loginVisitorCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -273,7 +282,7 @@ var _ = Describe("Visitor", func() {
 
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
-				fmt.Println("Result from logout response:" + utils.InterfaceToString(result))
+				By("Result from logout response:" + utils.InterfaceToString(result))
 			})
 		})
 
@@ -287,6 +296,7 @@ var _ = Describe("Visitor", func() {
 				for i := range loginAdminCookie {
 					request.AddCookie(loginAdminCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -299,19 +309,24 @@ var _ = Describe("Visitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+				By("Result of getting visitors list:" + utils.InterfaceToString(result))
 			})
 		})
 
 		Context("GET /visitor/count as a admin", func() {
 			It("Count of the visitors. Test "+ConstURLVisitorCount+" url", func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorCount), nil)
-				request.Header.Set("Content-Type", "application/json")
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
 
 				//adding admins cookie to request
 				for i := range loginAdminCookie {
 					request.AddCookie(loginAdminCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
@@ -335,6 +350,7 @@ var _ = Describe("Visitor", func() {
 					"first_name": updateName}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 				buffer := bytes.NewBuffer([]byte(jsonString))
+
 				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdateID+visitorID), buffer)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
@@ -343,22 +359,23 @@ var _ = Describe("Visitor", func() {
 				for i := range loginAdminCookie {
 					request.AddCookie(loginAdminCookie[i])
 				}
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				defer response.Body.Close()
 
 				responseBody, err := ioutil.ReadAll(response.Body)
 				Expect(err).NotTo(HaveOccurred())
+
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				Expect(err).NotTo(HaveOccurred())
-
-				By("Checking for not eror statment")
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
 				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
 				result, ok := jsonResponse["result"].(map[string]interface{})
 				Expect(ok).Should(BeTrue())
-				fmt.Println("Update visitor and get response result:" + utils.InterfaceToString(result))
+				By("Update visitor and get response result:" + utils.InterfaceToString(result))
 
 			})
 		})

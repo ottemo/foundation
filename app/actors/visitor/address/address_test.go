@@ -311,21 +311,13 @@ var _ = Describe("Visitor", func() {
 
 		Context("POST /visitor/address/list as a admin", func() {
 			It("Post an address list from admin. Testing "+ConstURLVisitorAddressListVID, func() {
-				//randomNumber := randomdata.StringNumber(5, "")
-				//firstName := randomdata.SillyName()
 
 				visitorAddressInfo := map[string]interface{}{
-				/*"visitor_id":    visitorID,
-				"address_line1": "My Street 0/1",
-				"first_name":    firstName,
-				"last_name":     firstName,
-				"company":       "Speroteck",
-				"country":       `"US":"United States"`,
-				"city":          "Chikago",
-				"phone":         randomNumber,
-				"state":         `"IL":"Illinois"`,
-				"zip_code":      "07400"
-				*/}
+					"visitor_id":    visitorID,
+					"address_line1": "My Street 0/1",
+					"country":       "United States",
+					"city":          "Chikago",
+					"state":         "Illinois"}
 				jsonString = utils.EncodeToJSONString(visitorAddressInfo)
 				buffer := bytes.NewBuffer([]byte(jsonString))
 
@@ -390,19 +382,12 @@ var _ = Describe("Visitor", func() {
 
 		Context("POST /visitor/address/list as a visitor", func() {
 			It("Post an address list from visitor. Testing "+ConstURLVisitorAddressList, func() {
-				//randomNumber := randomdata.StringNumber(5, "")
-				//firstName := randomdata.SillyName()
 
 				visitorAddressInfo := map[string]interface{}{
-				/*					"visitor_id":    visitorID,
-									"address_line1": "My Street 10/20",
-									"first_name":    firstName,
-									"last_name":     firstName,
-									"company":       "Speroteck",
-									"city":          "Chikago",
-									"phone":         randomNumber,
-									"zip_code":      "07400"
-				*/}
+					"visitor_id":    visitorID,
+					"address_line1": "Not My Street 11",
+					"country":       "Ukraine",
+					"city":          "Chikago"}
 				jsonString = utils.EncodeToJSONString(visitorAddressInfo)
 				buffer := bytes.NewBuffer([]byte(jsonString))
 
@@ -470,6 +455,7 @@ var _ = Describe("Visitor", func() {
 				By("Start updating of an address with _ID: " + addressID + " as admin")
 				updateName := randomdata.SillyName()
 				visitorInfo := map[string]interface{}{
+					"country":    "Ukraine",
 					"last_name":  updateName,
 					"first_name": updateName}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
