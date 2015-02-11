@@ -32,16 +32,14 @@ var _ = Describe("Visitor", func() {
 	// Defining constants for testing
 	const (
 		ConstURLAppLogin         = "app/login"
-		ConstURLVisitorInfo      = "visitor/info"
-		ConstURLVisitorCreate    = "visitor/create"
-		ConstURLVisitorLogin     = "visitor/login"
-		ConstURLVisitorLogout    = "visitor/logout"
-		ConstURLVisitorOrderList = "visitor/order/list"
-		ConstURLVisitorUpdate    = "visitor/update"
-		ConstURLVisitorUpdateID  = "visitor/update/"
-		ConstURLVisitorList      = "visitor/list"
-		ConstURLVisitorCount     = "visitor/count"
-		ConstURLVisitorDelete    = "visitor/delete/"
+		ConstURLVisitorInfo      = "visit"
+		ConstURLVisitorCreate    = "visitor"
+		ConstURLVisitorLogin     = "visit/login"
+		ConstURLVisitorLogout    = "visit/logout"
+		ConstURLVisitorOrderList = "visit/orders"
+		ConstURLVisitorUpdateID  = "visitor/"
+		ConstURLVisitorList      = "visitors"
+		ConstURLVisitorDelete    = "visitor/"
 
 		ConstVisitorPassword = "123"
 	)
@@ -61,6 +59,7 @@ var _ = Describe("Visitor", func() {
 	Describe("Visitor api testing", func() {
 		Context("to create new visitor request", func() {
 			It("nead to make a admin session", func() {
+				By("Start to login as admin")
 				jsonString = `{"login": "admin", "password": "admin"}`
 				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLAppLogin), buffer)
@@ -73,6 +72,7 @@ var _ = Describe("Visitor", func() {
 
 				// getting sessionID and setting it to a loginAdminCookie
 				loginAdminCookie = response.Cookies()
+				By("Admin's cookie saved")
 			})
 		})
 
@@ -88,7 +88,7 @@ var _ = Describe("Visitor", func() {
 					"first_name": firstName,
 					"last_name":  firstName,
 					"password":   ConstVisitorPassword,
-					"is_admin":   true}
+					"is_admin":   false}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 
 				By("Start to create visitor:" + jsonString)
@@ -214,11 +214,16 @@ var _ = Describe("Visitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+				//Expect(result).ShouldNot(BeNil())
+				By("Orders response result:" + utils.InterfaceToString(result))
 			})
 		})
 
 		Context("PUT /visitor/update as a visitor", func() {
-			It("Update the visitor. On "+ConstURLVisitorUpdate+" url", func() {
+			It("Update the visitor. On "+ConstURLVisitorUpdateID+" url", func() {
 				updateName := randomdata.SillyName()
 				visitorInfo := map[string]interface{}{
 					"last_name":  updateName,
@@ -226,7 +231,7 @@ var _ = Describe("Visitor", func() {
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 				buffer := bytes.NewBuffer([]byte(jsonString))
 
-				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdate), buffer)
+				request, err = http.NewRequest("PUT", app.GetFoundationURL(ConstURLVisitorUpdateID+visitorID), buffer)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
 
@@ -244,7 +249,6 @@ var _ = Describe("Visitor", func() {
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				Expect(err).NotTo(HaveOccurred())
 
-				By("Checking for not eror statment")
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
 				Expect(jsonResponse["result"]).ShouldNot(BeNil())
@@ -316,32 +320,6 @@ var _ = Describe("Visitor", func() {
 			})
 		})
 
-		Context("GET /visitor/count as a admin", func() {
-			It("Count of the visitors. Test "+ConstURLVisitorCount+" url", func() {
-				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorCount), nil)
-				Expect(err).NotTo(HaveOccurred())
-				request.Header.Set("Content-Type", "application/json")
-
-				//adding admins cookie to request
-				for i := range loginAdminCookie {
-					request.AddCookie(loginAdminCookie[i])
-				}
-
-				response, err := client.Do(request)
-				Expect(err).NotTo(HaveOccurred())
-				defer response.Body.Close()
-
-				responseBody, err := ioutil.ReadAll(response.Body)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(response.StatusCode).To(Equal(200))
-
-				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(jsonResponse).To(HaveKey("error"))
-				Expect(jsonResponse["error"]).Should(BeNil())
-			})
-		})
-
 		Context("PUT /visitor/update/:id as a admin", func() {
 			It("Update the visitor from admin. Test "+ConstURLVisitorUpdateID+" url", func() {
 				updateName := randomdata.SillyName()
@@ -404,6 +382,46 @@ var _ = Describe("Visitor", func() {
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
 				By("Finished deleting of a visitor with _ID: " + visitorID)
+			})
+		})
+
+		Context("POST /visitor/create as a admin", func() {
+			It("Make not valid visitor", func() {
+
+				visitorInfo := map[string]interface{}{
+					"password": ConstVisitorPassword,
+					"is_admin": false}
+				jsonString = utils.EncodeToJSONString(visitorInfo)
+
+				By("Start to create visitor:" + jsonString)
+
+				buffer := bytes.NewBuffer([]byte(jsonString))
+				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLVisitorCreate), buffer)
+				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "application/json")
+
+				//adding admins cookie to request
+				for i := range loginAdminCookie {
+					request.AddCookie(loginAdminCookie[i])
+				}
+
+				//taking response and checking of it
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).ShouldNot(BeNil())
+				Expect(jsonResponse["result"]).Should(BeNil())
+
+				result, ok := jsonResponse["error"].(map[string]interface{})
+				Expect(ok).Should(BeTrue())
+				By("Fake creating of visitor:" + utils.InterfaceToString(result))
 			})
 		})
 
