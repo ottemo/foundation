@@ -68,9 +68,9 @@ var _ = Describe("Visitor address ginkgo test", func() {
 		err                error
 	)
 
-	Describe("Preparing for workin with addresses", func() {
+	Describe("Prepare to work with addresses", func() {
 		Context("to create requests", func() {
-			It("making an admin session", func() {
+			It("create an admin session", func() {
 				jsonString = `{"login": "admin", "password": "admin"}`
 				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLAppLogin), buffer)
@@ -103,7 +103,7 @@ var _ = Describe("Visitor address ginkgo test", func() {
 					"is_admin":   false}
 				jsonString = utils.EncodeToJSONString(visitorInfo)
 
-				By("Start to create visitor:" + jsonString)
+				By("Begin Visitor creation: " + jsonString)
 
 				buffer := bytes.NewBuffer([]byte(jsonString))
 				request, err = http.NewRequest("POST", app.GetFoundationURL(ConstURLVisitorCreate), buffer)
@@ -170,7 +170,7 @@ var _ = Describe("Visitor address ginkgo test", func() {
 
 				// getting visitor sessionID and setting it to a loginVisitorCookie
 				loginVisitorCookie = response.Cookies()
-				By("We have logined and added Visitor Cookies")
+				By("logged in and created a Visitor Cookie")
 			})
 		})
 	})
@@ -300,7 +300,7 @@ var _ = Describe("Visitor address ginkgo test", func() {
 		})
 
 		Context("GET /visit/address/ load as a visitor", func() {
-			It("Make an address load from visitor. Testing "+ConstURLVisitAddressLoadID, func() {
+			It("Address load from visitor. Testing "+ConstURLVisitAddressLoadID, func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitAddressLoadID+addressID), nil)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")
@@ -569,7 +569,7 @@ var _ = Describe("Visitor address ginkgo test", func() {
 		})
 
 		Context("GET /visitors/address/  as a visitor", func() {
-			It("Getting Make an address load from visitor. Testing "+ConstURLVisitorsAddressLoadID, func() {
+			It("Address load from visitor via addressID. Testing "+ConstURLVisitorsAddressLoadID, func() {
 				request, err = http.NewRequest("GET", app.GetFoundationURL(ConstURLVisitorsAddressLoadID+addressID), nil)
 				Expect(err).NotTo(HaveOccurred())
 				request.Header.Set("Content-Type", "application/json")

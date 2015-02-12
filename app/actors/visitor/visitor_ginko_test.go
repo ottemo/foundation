@@ -26,7 +26,7 @@ var _ = BeforeSuite(func() {
 	time.Sleep(1 * time.Second)
 })
 
-// General starting function for Ginko
+// General starting function for Ginkgo
 var _ = Describe("Visitor", func() {
 
 	// Defining constants for testing
@@ -58,7 +58,7 @@ var _ = Describe("Visitor", func() {
 
 	Describe("Visitor api testing", func() {
 		Context("to create new visitor request", func() {
-			It("nead to make a admin session", func() {
+			It("nead to cteate an admin session", func() {
 				By("Start to login as admin")
 				jsonString = `{"login": "admin", "password": "admin"}`
 				buffer := bytes.NewBuffer([]byte(jsonString))
