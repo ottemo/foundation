@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/tests"
 	"github.com/ottemo/foundation/utils"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
@@ -42,22 +43,23 @@ var _ = Describe("Products test", func() {
 		ConstURLProductsShopLayers         = "products/shop/layers"          // {GET}
 		ConstURLProduct                    = "product"                       // {POST}
 
-		ConstURLProductID                 = "product/:productID"                    // {PUT} {GET} {DELETE}
-		ConstURLProductIDRating           = "product/:productID/rating"             // {GET}
-		ConstURLProductIDRelated          = "product/:productID/related"            // {GET}
-		ConstURLProductIDReviews          = "product/:productID/reviews"            // {GET}
-		ConstURLProductIDReview           = "product/:productID/review"             // {POST}
-		ConstURLProductIDReviewRID        = "product/:productID/review/:reviewID"   // {DELETE}
-		ConstURLProductIDRatedreviewStars = "product/:productID/ratedreview/:stars" // {POST}
-		//ConstURLProductIDMediaMtype       = "product/:productID/media/:mediaType"            // {GET}
-		//ConstURLProductIDMediaMtypeMname  = "product/:productID/media/:mediaType/:mediaName" // {GET} {POST} {DELETE}
-		ConstURLProductIDMediapathMtype = "product/:productID/mediapath/:mediaType" // {GET}
+		ConstURLProductID                 = "product/:productID"                             // {PUT} {GET} {DELETE}
+		ConstURLProductIDRating           = "product/:productID/rating"                      // {GET}
+		ConstURLProductIDRelated          = "product/:productID/related"                     // {GET}
+		ConstURLProductIDReviews          = "product/:productID/reviews"                     // {GET}
+		ConstURLProductIDReview           = "product/:productID/review"                      // {POST}
+		ConstURLProductIDReviewRID        = "product/:productID/review/:reviewID"            // {DELETE}
+		ConstURLProductIDRatedreviewStars = "product/:productID/ratedreview/:stars"          // {POST}
+		ConstURLProductIDMediaMtype       = "product/:productID/media/:mediaType"            // {GET}
+		ConstURLProductIDMediaMtypeMname  = "product/:productID/media/:mediaType/:mediaName" // {GET} {POST} {DELETE}
+		ConstURLProductIDMediapathMtype   = "product/:productID/mediapath/:mediaType"        // {GET}
 		//ConstURLProductIDStock            = "product/:productID/stock"              // {POST}
 
 		ConstAdminLogin      = "admin"
 		ConstAdminPassword   = "admin"
-		ConstVisitorEmail    = "a@i.ua"
+		ConstVisitorEmail    = "alex@ottemo.io"
 		ConstVisitorPassword = "123"
+		ConstURLTestImage    = "https://www.google.com.ua/images/srpr/logo11w.png"
 	)
 
 	// Defining variables for testing
@@ -71,8 +73,8 @@ var _ = Describe("Products test", func() {
 		urlString          string
 		reviewID           string
 		mediaType          = "image"
-		//mediaName          string
-		err error
+		mediaName          = "testImage.png"
+		err                error
 	)
 
 	Describe("Prepare to work with products", func() {
@@ -339,39 +341,6 @@ var _ = Describe("Products test", func() {
 			})
 		})
 
-		Context("Updating product info", func() {
-			It("Testing: product/:productID {PUT}", func() {
-				productInfo := map[string]interface{}{
-					"price":             "17",
-					"weight":            "4",
-					"short_description": "another short description",
-					"description":       "fuuuuuly second description"}
-
-				urlString = strings.Replace(ConstURLProductID, ":productID", productID, 1)
-				request, err = CreateRequest("PUT", urlString, productInfo, loginAdminCookie)
-				Expect(err).NotTo(HaveOccurred())
-
-				response, err := client.Do(request)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(response.StatusCode).To(Equal(200))
-
-				defer response.Body.Close()
-
-				responseBody, err := ioutil.ReadAll(response.Body)
-				Expect(err).NotTo(HaveOccurred())
-
-				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(jsonResponse).To(HaveKey("error"))
-				Expect(jsonResponse["error"]).Should(BeNil())
-				Expect(jsonResponse["result"]).ShouldNot(BeNil())
-
-				result, ok := jsonResponse["result"]
-				Expect(ok).Should(BeTrue())
-				By("Updated result: " + utils.InterfaceToString(result))
-			})
-		})
-
 		Context("Getting product related products", func() {
 			It("Testing: product/:productID/related {GET}", func() {
 				urlString = strings.Replace(ConstURLProductIDRelated, ":productID", productID, 1)
@@ -391,7 +360,6 @@ var _ = Describe("Products test", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
-				//Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
@@ -401,12 +369,12 @@ var _ = Describe("Products test", func() {
 
 		Context("Seting product review", func() {
 			It("Testing: product/:productID/review {POST}", func() {
-				productInfo := map[string]interface{}{
-					"it's fine": "wasssup"}
+				productInfo := "It's the best product I'd ever seen"
 
 				urlString = strings.Replace(ConstURLProductIDReview, ":productID", productID, 1)
 				request, err = CreateRequest("POST", urlString, productInfo, loginVisitorCookie)
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "text/html")
 
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
@@ -421,11 +389,12 @@ var _ = Describe("Products test", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
-				//Expect(jsonResponse["result"]).ShouldNot(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
 				result, ok := jsonResponse["result"].(map[string]interface{})
 				Expect(ok).Should(BeTrue())
 				Expect(result).To(HaveKey("_id"))
+
 				reviewID = utils.InterfaceToString(result["_id"])
 				Expect(reviewID).ShouldNot(BeEmpty())
 				By("- created review with ID:" + reviewID)
@@ -462,13 +431,13 @@ var _ = Describe("Products test", func() {
 
 		Context("Seting 'stars' on review", func() {
 			It("Testing: product/:productID/ratedreview/:stars {POST}", func() {
-				productInfo := map[string]interface{}{
-					"stars": "5"}
+				productInfo := "Take my four"
 
 				urlString = strings.Replace(ConstURLProductIDRatedreviewStars, ":productID", productID, 1)
 				urlString = strings.Replace(urlString, ":stars", "4", 1)
 				request, err = CreateRequest("POST", urlString, productInfo, loginVisitorCookie)
 				Expect(err).NotTo(HaveOccurred())
+				request.Header.Set("Content-Type", "text/html")
 
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
@@ -482,10 +451,8 @@ var _ = Describe("Products test", func() {
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
-				//Expect(jsonResponse["error"]).Should(BeNil())
-				//Expect(jsonResponse["result"]).ShouldNot(BeNil())
-				eror, ok := jsonResponse["result"].(map[string]interface{})
-				By("erors text: " + utils.InterfaceToString(eror))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
@@ -513,7 +480,7 @@ var _ = Describe("Products test", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(jsonResponse).To(HaveKey("error"))
 				Expect(jsonResponse["error"]).Should(BeNil())
-				//Expect(jsonResponse["result"]).ShouldNot(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
 
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
@@ -548,7 +515,6 @@ var _ = Describe("Products test", func() {
 				By("review delete result: " + utils.InterfaceToString(result))
 			})
 		})
-		//media
 
 		Context("Getting product media path", func() {
 			It("Testing: product/:productID/mediapath/:mediaType {GET}", func() {
@@ -575,6 +541,151 @@ var _ = Describe("Products test", func() {
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
 				By("product media path: " + utils.InterfaceToString(result))
+			})
+		})
+
+		Context("Addin image to product", func() {
+			if It("Testing: product/:productID/mediapath/:mediaType/:mediaName {POST}", func() {
+				By("Get image from test url")
+				request, err = http.NewRequest("GET", ConstURLTestImage, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("Add image  to request")
+				file, err := ioutil.ReadAll(response.Body)
+				var b bytes.Buffer
+				writer := multipart.NewWriter(&b)
+
+				fileWriter, err := writer.CreateFormFile("image", mediaName)
+				Expect(err).NotTo(HaveOccurred())
+
+				numBytes, err := fileWriter.Write(file)
+				Expect(err).NotTo(HaveOccurred())
+				By("Wryted bytes: " + utils.InterfaceToString(numBytes))
+
+				writer.Close()
+				response.Body.Close()
+
+				urlString = strings.Replace(ConstURLProductIDMediaMtypeMname, ":mediaType", mediaType, 1)
+				urlString = strings.Replace(urlString, ":mediaName", mediaName, 1)
+				urlString = strings.Replace(urlString, ":productID", productID, 1)
+
+				By("Do post request")
+				request, err = http.NewRequest("POST", app.GetFoundationURL(urlString), &b)
+				Expect(err).NotTo(HaveOccurred())
+
+				request.Header.Set("Content-Type", writer.FormDataContentType())
+
+				for i := range loginAdminCookie {
+					request.AddCookie(loginAdminCookie[i])
+				}
+
+				response, err = client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+
+				By("product add image result: " + utils.InterfaceToString(result))
+			}) {
+			}
+		})
+
+		Context("Getting product media", func() {
+			It("Testing: product/:productID/media/:mediaType {GET}", func() {
+				urlString = strings.Replace(ConstURLProductIDMediaMtype, ":mediaType", mediaType, 1)
+				urlString = strings.Replace(urlString, ":productID", productID, 1)
+				request, err = CreateRequest("GET", urlString, nil, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+				By("product media : " + utils.InterfaceToString(result))
+			})
+		})
+
+		Context("Getting product image", func() {
+			It("Testing: product/:productID/media/:mediaType/:mediaName {GET}", func() {
+				urlString = strings.Replace(ConstURLProductIDMediaMtypeMname, ":mediaType", mediaType, 1)
+				urlString = strings.Replace(urlString, ":productID", productID, 1)
+				urlString = strings.Replace(urlString, ":mediaName", mediaName, 1)
+
+				request, err = CreateRequest("GET", urlString, nil, loginAdminCookie)
+				Expect(err).NotTo(HaveOccurred())
+
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				defer response.Body.Close()
+
+				_, err = ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("product image is present, I hope :D")
+			})
+		})
+
+		Context("Updating product info", func() {
+			It("Testing: product/:productID {PUT}", func() {
+				productInfo := map[string]interface{}{
+					"default_image":     mediaName,
+					"price":             "17",
+					"weight":            "4",
+					"short_description": "another short description",
+					"description":       "fuuuuuly second description"}
+
+				urlString = strings.Replace(ConstURLProductID, ":productID", productID, 1)
+				request, err = CreateRequest("PUT", urlString, productInfo, loginAdminCookie)
+				Expect(err).NotTo(HaveOccurred())
+
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+				By("Updated result: " + utils.InterfaceToString(result))
 			})
 		})
 
@@ -605,11 +716,44 @@ var _ = Describe("Products test", func() {
 			})
 		})
 
+		Context("Deleting product media", func() {
+			It("Testing: product/:productID/mediapath/:mediaType/:mediaName {DELETE}", func() {
+				urlString = strings.Replace(ConstURLProductIDMediaMtypeMname, ":mediaType", mediaType, 1)
+				urlString = strings.Replace(urlString, ":productID", productID, 1)
+				urlString = strings.Replace(urlString, ":mediaName", mediaName, 1)
+
+				request, err = CreateRequest("DELETE", urlString, nil, loginAdminCookie)
+				Expect(err).NotTo(HaveOccurred())
+
+				response, err := client.Do(request)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(response.StatusCode).To(Equal(200))
+
+				defer response.Body.Close()
+
+				responseBody, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(jsonResponse).To(HaveKey("error"))
+				Expect(jsonResponse["error"]).Should(BeNil())
+				Expect(jsonResponse["result"]).ShouldNot(BeNil())
+
+				result, ok := jsonResponse["result"]
+				Expect(ok).Should(BeTrue())
+				By("product media : " + utils.InterfaceToString(result))
+			})
+		})
+
 		Context("Deleting product", func() {
 			It("Testing: product/:productID {DELETE}", func() {
 				urlString = strings.Replace(ConstURLProductID, ":productID", productID, 1)
 				request, err = CreateRequest("DELETE", urlString, nil, loginAdminCookie)
 				Expect(err).NotTo(HaveOccurred())
+				// for real time show, make gulp serve of DB and go to product page
+				//time.Sleep(91 * time.Second)
+
 				response, err := client.Do(request)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.StatusCode).To(Equal(200))
@@ -734,7 +878,7 @@ var _ = Describe("Products test", func() {
 
 })
 
-func CreateRequest(typeAPI, requestURL string, contentMap map[string]interface{}, requestCookies []*http.Cookie) (request *http.Request, err error) {
+func CreateRequest(typeAPI, requestURL string, contentMap interface{}, requestCookies []*http.Cookie) (request *http.Request, err error) {
 
 	buffer := bytes.NewBuffer([]byte(""))
 
