@@ -141,7 +141,7 @@ var _ = Describe("Products test", func() {
 
 				result, ok := jsonResponse["result"]
 				Expect(ok).Should(BeTrue())
-				By(":" + utils.InterfaceToString(result))
+				By("List of products: " + utils.InterfaceToString(result))
 			})
 		})
 
