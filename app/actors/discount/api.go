@@ -15,22 +15,22 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("discount", "GET", "apply/:code", restDiscountApply)
+	err = api.GetRestService().RegisterAPI("discount/:coupon/apply", api.ConstRESTOperationGet, APIApplyDiscount)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("discount", "GET", "neglect/:code", restDiscountNeglect)
+	err = api.GetRestService().RegisterAPI("discount/:coupon/neglect", api.ConstRESTOperationGet, APINeglectDiscount)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("discount", "GET", "download/csv", restDiscountCSVDownload)
+	err = api.GetRestService().RegisterAPI("discounts/csv", api.ConstRESTOperationGet, APIDownloadDiscountCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("discount", "POST", "upload/csv", restDiscountCSVUpload)
+	err = api.GetRestService().RegisterAPI("discounts/csv", api.ConstRESTOperationCreate, APIUploadDiscountCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -38,14 +38,15 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API function to apply discount code to current checkout
-func restDiscountApply(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIApplyDiscount applies discount code promotion to current checkout
+//   - coupon code should be specified in "coupon" argument
+func APIApplyDiscount(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	couponCode := params.RequestURLParams["code"]
+	couponCode := context.GetRequestArgument("coupon")
 
 	// getting applied coupons array for current session
 	var appliedCoupons []string
-	if sessionValue, ok := params.Session.Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
+	if sessionValue, ok := context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
 		appliedCoupons = sessionValue
 	}
 
@@ -97,7 +98,7 @@ func restDiscountApply(params *api.StructAPIHandlerParams) (interface{}, error) 
 
 			// coupon is working - applying it
 			appliedCoupons = append(appliedCoupons, couponCode)
-			params.Session.Set(ConstSessionKeyAppliedDiscountCodes, appliedCoupons)
+			context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, appliedCoupons)
 
 		} else {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "coupon is not applicable")
@@ -109,25 +110,26 @@ func restDiscountApply(params *api.StructAPIHandlerParams) (interface{}, error) 
 	return "ok", nil
 }
 
-// WEB REST API function to neglect(un-apply) discount code to current checkout
-//   - use "*" as code to neglect all discounts
-func restDiscountNeglect(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APINeglectDiscount neglects (un-apply) discount code promotion to current checkout
+//   - coupon code should be specified in "coupon" argument
+//   - use "*" as coupon code to neglect all discounts
+func APINeglectDiscount(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	couponCode := params.RequestURLParams["code"]
+	couponCode := context.GetRequestArgument("coupon")
 
 	if couponCode == "*" {
-		params.Session.Set(ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
 		return "ok", nil
 	}
 
-	if appliedCoupons, ok := params.Session.Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
+	if appliedCoupons, ok := context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
 		var newAppliedCoupons []string
 		for _, value := range appliedCoupons {
 			if value != couponCode {
 				newAppliedCoupons = append(newAppliedCoupons, value)
 			}
 		}
-		params.Session.Set(ConstSessionKeyAppliedDiscountCodes, newAppliedCoupons)
+		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, newAppliedCoupons)
 
 		// times used increase
 		collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
@@ -158,19 +160,20 @@ func restDiscountNeglect(params *api.StructAPIHandlerParams) (interface{}, error
 	return "ok", nil
 }
 
-// WEB REST API function to download current tax rates in CSV format
-func restDiscountCSVDownload(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIDownloadDiscountCSV returns csv file with currently used discount coupons
+//   - returns not a JSON, but csv file
+func APIDownloadDiscountCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// preparing csv writer
-	csvWriter := csv.NewWriter(params.ResponseWriter)
+	csvWriter := csv.NewWriter(context.GetResponseWriter())
 
-	params.ResponseWriter.Header().Set("Content-type", "text/csv")
-	params.ResponseWriter.Header().Set("Content-disposition", "attachment;filename=discount_coupons.csv")
+	context.SetResponseContentType("text/csv")
+	context.SetResponseSetting("Content-disposition", "attachment;filename=discount_coupons.csv")
 
 	csvWriter.Write([]string{"Code", "Name", "Amount", "Percent", "Times", "Since", "Until"})
 	csvWriter.Flush()
@@ -199,17 +202,18 @@ func restDiscountCSVDownload(params *api.StructAPIHandlerParams) (interface{}, e
 	return nil, nil
 }
 
-// WEB REST API function to upload tax rates into CSV
-func restDiscountCSVUpload(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIUploadDiscountCSV replaces currently used discount coupons with data from provided in csv file
+//   - csv file should be provided in "file" field
+func APIUploadDiscountCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	csvFile, _, err := params.Request.FormFile("file")
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+	csvFile := context.GetRequestFile("file")
+	if csvFile == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "file unspecified")
 	}
 
 	csvReader := csv.NewReader(csvFile)

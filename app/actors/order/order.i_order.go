@@ -219,29 +219,51 @@ func (it *DefaultOrder) GetStatus() string {
 }
 
 // SetStatus changes status for current order
-func (it *DefaultOrder) SetStatus(status string) error {
+//   - if status change no supposing stock operations, order instance will not be saved automatically
+func (it *DefaultOrder) SetStatus(newStatus string) error {
 	var err error
 
-	if it.Status == status {
+	// cases with no actions
+	if it.Status == newStatus || newStatus == "" {
 		return nil
 	}
 
-	switch status {
-	case order.ConstOrderStatusNew:
-		err = it.Proceed()
-	case order.ConstOrderStatusCancelled:
-		err = it.Cancel()
-	default:
-		it.Status = status
+	// changing status
+	oldStatus := it.Status
+	it.Status = newStatus
+
+	// if order new status is "new" or "canceled" - returning items to stock, otherwise taking them from
+	if newStatus == order.ConstOrderStatusCancelled || newStatus == order.ConstOrderStatusNew {
+
+		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusCancelled && oldStatus != "" {
+			err = it.Rollback()
+		}
+
+	} else {
+		// checking order's incrementID, if not set - assigning new one
+		if newStatus != order.ConstOrderStatusNew && it.GetIncrementID() == "" {
+			err = it.NewIncrementID()
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+			it.Save()
+		}
+
+		// taking items from stock
+		if oldStatus == order.ConstOrderStatusCancelled || oldStatus == "" {
+			err = it.Proceed()
+		}
 	}
 
-	return err
+	return env.ErrorDispatch(err)
 }
 
-// Proceed subtracts order items from stock, changes status to new, saves order
+// Proceed subtracts order items from stock, changes status to new if status was not set yet, saves order
 func (it *DefaultOrder) Proceed() error {
 
-	it.Status = order.ConstOrderStatusNew
+	if it.Status == "" {
+		it.Status = order.ConstOrderStatusNew
+	}
 
 	var err error
 	stockManager := product.GetRegisteredStock()
@@ -274,9 +296,12 @@ func (it *DefaultOrder) Proceed() error {
 	return nil
 }
 
-// Cancel returns order items to stock and changing order status to canceled, saves order
-func (it *DefaultOrder) Cancel() error {
-	it.Status = order.ConstOrderStatusCancelled
+// Rollback returns order items to stock, changing order status to canceled if status was not set yet, saves order
+func (it *DefaultOrder) Rollback() error {
+
+	if it.Status == "" {
+		it.Status = order.ConstOrderStatusCancelled
+	}
 
 	var err error
 	stockManager := product.GetRegisteredStock()

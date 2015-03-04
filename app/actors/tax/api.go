@@ -14,12 +14,12 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("tax", "GET", "download/csv", restTaxCSVDownload)
+	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationGet, APIDownloadTaxCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("tax", "POST", "upload/csv", restTaxCSVUpload)
+	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationCreate, APIUploadTaxCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -27,15 +27,16 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API function to download current tax rates in CSV format
-func restTaxCSVDownload(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIDownloadTaxCSV returns csv file with currently used tax rates
+//   - returns not a JSON, but csv file
+func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	csvWriter := csv.NewWriter(params.ResponseWriter)
+	csvWriter := csv.NewWriter(context.GetResponseWriter())
 
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Taxes"); err == nil {
@@ -49,8 +50,8 @@ func restTaxCSVDownload(params *api.StructAPIHandlerParams) (interface{}, error)
 				return nil, env.ErrorDispatch(err)
 			}
 
-			params.ResponseWriter.Header().Set("Content-type", "text/csv")
-			params.ResponseWriter.Header().Set("Content-disposition", "attachment;filename=tax_rates.csv")
+			context.SetResponseContentType("text/csv")
+			context.SetResponseSetting("Content-disposition", "attachment;filename=tax_rates.csv")
 
 			for _, record := range records {
 				csvWriter.Write([]string{
@@ -72,17 +73,18 @@ func restTaxCSVDownload(params *api.StructAPIHandlerParams) (interface{}, error)
 	return nil, nil
 }
 
-// WEB REST API function to upload tax rates into CSV
-func restTaxCSVUpload(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIUploadTaxCSV replaces currently used discount coupons with data from provided in csv file
+//   - csv file should be provided in "file" field
+func APIUploadTaxCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	csvFile, _, err := params.Request.FormFile("file")
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+	csvFile := context.GetRequestFile("file")
+	if csvFile == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "033b69a0-d33d-4bfe-b670-b469d3e86f90", "file unspecified")
 	}
 
 	csvReader := csv.NewReader(csvFile)

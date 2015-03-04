@@ -17,29 +17,29 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("impex", "GET", "models", restImpexListModels)
+	err = api.GetRestService().RegisterAPI("impex/models", api.ConstRESTOperationGet, restImpexListModels)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("impex", "GET", "export/:model", restImpexExportModel)
+	err = api.GetRestService().RegisterAPI("impex/export/:model", api.ConstRESTOperationGet, restImpexExportModel)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("impex", "POST", "import/:model", restImpexImportModel)
+	err = api.GetRestService().RegisterAPI("impex/import/:model", api.ConstRESTOperationCreate, restImpexImportModel)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("impex", "POST", "import", restImpexImport)
+	err = api.GetRestService().RegisterAPI("impex/import", api.ConstRESTOperationCreate, restImpexImport)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("impex", "POST", "test/import", restImpexTestImport)
+	err = api.GetRestService().RegisterAPI("impex/test/import", api.ConstRESTOperationCreate, restImpexTestImport)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("impex", "POST", "test/mapping", restImpexTestCsvToMap)
+	err = api.GetRestService().RegisterAPI("impex/test/mapping", api.ConstRESTOperationCreate, restImpexTestCsvToMap)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -48,7 +48,7 @@ func setupAPI() error {
 }
 
 // WEB REST API used to list available models for Impex system
-func restImpexListModels(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restImpexListModels(context api.InterfaceApplicationContext) (interface{}, error) {
 	var result []string
 
 	for modelName, modelInstance := range models.GetDeclaredModels() {
@@ -73,9 +73,9 @@ func restImpexListModels(params *api.StructAPIHandlerParams) (interface{}, error
 }
 
 // WEB REST API used export specific model data from system
-func restImpexExportModel(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restImpexExportModel(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	modelName := params.RequestURLParams["model"]
+	modelName := context.GetRequestArgument("model")
 
 	var records []map[string]interface{}
 
@@ -122,13 +122,13 @@ func restImpexExportModel(params *api.StructAPIHandlerParams) (interface{}, erro
 	}
 
 	// preparing csv writer
-	csvWriter := csv.NewWriter(params.ResponseWriter)
+	csvWriter := csv.NewWriter(context.GetResponseWriter())
 	csvWriter.Comma = ','
 
 	exportFilename := strings.ToLower(modelName) + "_export_" + time.Now().Format(time.RFC3339) + ".csv"
 
-	params.ResponseWriter.Header().Set("Content-type", "text/csv")
-	params.ResponseWriter.Header().Set("Content-disposition", "attachment;filename="+exportFilename)
+	context.SetResponseContentType("text/csv")
+	context.SetResponseSetting("Content-disposition", "attachment;filename="+exportFilename)
 
 	err := MapToCSV(records, csvWriter)
 	if err != nil {
@@ -139,14 +139,14 @@ func restImpexExportModel(params *api.StructAPIHandlerParams) (interface{}, erro
 }
 
 // WEB REST API used import data to system
-func restImpexImportModel(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restImpexImportModel(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	params.ResponseWriter.Header().Set("Content-Type", "text/plain")
+	context.SetResponseContentType("text/plain")
 
 	var commandLine string
 	exchangeDict := make(map[string]interface{})
 
-	modelName := params.RequestURLParams["model"]
+	modelName := context.GetRequestArgument("model")
 
 	if _, present := impexModels[modelName]; present {
 		commandLine = "IMPORT " + modelName
@@ -156,126 +156,75 @@ func restImpexImportModel(params *api.StructAPIHandlerParams) (interface{}, erro
 
 	filesProcessed := 0
 	additionalMessage := ""
-	if params.Request != nil && params.Request.MultipartForm != nil && params.Request.MultipartForm.File != nil {
-		for _, fileInfoArray := range params.Request.MultipartForm.File {
-			for _, fileInfo := range fileInfoArray {
 
-				attachedFile, err := fileInfo.Open()
-				defer attachedFile.Close()
-				if err != nil {
-					return nil, env.ErrorDispatch(err)
-				}
+	for _, attachedFile := range context.GetRequestFiles() {
+		csvReader := csv.NewReader(attachedFile)
+		csvReader.Comma = ','
 
-				csvReader := csv.NewReader(attachedFile)
-				csvReader.Comma = ','
-
-				err = ImportCSVData(commandLine, exchangeDict, csvReader, params.ResponseWriter, false)
-				if err != nil && additionalMessage == "" {
-					env.ErrorDispatch(err)
-					additionalMessage += "with errors"
-				}
-
-				filesProcessed++
-			}
+		err := ImportCSVData(commandLine, exchangeDict, csvReader, context.GetResponseWriter(), false)
+		if err != nil && additionalMessage == "" {
+			env.ErrorDispatch(err)
+			additionalMessage += "with errors"
 		}
+
+		filesProcessed++
 	}
 
 	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
 }
 
 // WEB REST API used to test csv file before import
-func restImpexTestImport(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	params.ResponseWriter.Header().Set("Content-Type", "text/plain")
+	context.SetResponseContentType("text/plain")
 
 	filesProcessed := 0
 	additionalMessage := ""
-	if params.Request != nil && params.Request.MultipartForm != nil && params.Request.MultipartForm.File != nil {
-		for _, fileInfoArray := range params.Request.MultipartForm.File {
-			for _, fileInfo := range fileInfoArray {
+	for _, attachedFile := range context.GetRequestFiles() {
+		csvReader := csv.NewReader(attachedFile)
+		csvReader.Comma = ','
 
-				attachedFile, err := fileInfo.Open()
-				defer attachedFile.Close()
-				if err != nil {
-					return nil, env.ErrorDispatch(err)
-				}
-
-				// preparing csv reader
-				csvReader := csv.NewReader(attachedFile)
-				csvReader.Comma = ','
-
-				err = ImportCSVScript(csvReader, params.ResponseWriter, true)
-				if err != nil && additionalMessage == "" {
-					env.ErrorDispatch(err)
-					additionalMessage += "with errors"
-				}
-				filesProcessed++
-			}
+		err := ImportCSVScript(csvReader, context.GetResponseWriter(), true)
+		if err != nil && additionalMessage == "" {
+			env.ErrorDispatch(err)
+			additionalMessage += "with errors"
 		}
+		filesProcessed++
 	}
 
 	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
 }
 
 // WEB REST API used to process csv file script in impex format
-func restImpexImport(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restImpexImport(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	filesProcessed := 0
 	additionalMessage := ""
-	if params.Request != nil && params.Request.MultipartForm != nil && params.Request.MultipartForm.File != nil {
-		for _, fileInfoArray := range params.Request.MultipartForm.File {
-			for _, fileInfo := range fileInfoArray {
-				// if utils.IsAmongStr(fileInfo.Header.Get("Content-Type"), "application/csv", "text/csv") {
-				attachedFile, err := fileInfo.Open()
-				defer attachedFile.Close()
-				if err != nil {
-					return nil, env.ErrorDispatch(err)
-				}
+	for _, attachedFile := range context.GetRequestFiles() {
+		csvReader := csv.NewReader(attachedFile)
+		csvReader.Comma = ','
 
-				// preparing csv reader
-				csvReader := csv.NewReader(attachedFile)
-				csvReader.Comma = ','
-
-				err = ImportCSVScript(csvReader, params.ResponseWriter, false)
-				if err != nil && additionalMessage == "" {
-					env.ErrorDispatch(err)
-					additionalMessage += "with errors"
-				}
-
-				filesProcessed++
-			}
+		err := ImportCSVScript(csvReader, context.GetResponseWriter(), false)
+		if err != nil && additionalMessage == "" {
+			env.ErrorDispatch(err)
+			additionalMessage += "with errors"
 		}
+
+		filesProcessed++
 	}
 
 	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
 }
 
 // WEB REST API to test conversion from csv to json / map[string]interface{}
-func restImpexTestCsvToMap(params *api.StructAPIHandlerParams) (interface{}, error) {
-	var attachedFile interface {
-		io.Reader
-		io.Closer
-	}
-	var err error
+func restImpexTestCsvToMap(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// looking for first one attached .csv file
-	if params.Request != nil && params.Request.MultipartForm != nil && params.Request.MultipartForm.File != nil {
+	var attachedFile io.Reader
 
-		for _, fileInfoArray := range params.Request.MultipartForm.File {
-			for _, fileInfo := range fileInfoArray {
-				if strings.Contains(fileInfo.Filename, ".csv") {
-
-					attachedFile, err = fileInfo.Open()
-					defer attachedFile.Close()
-					if err != nil {
-						return nil, env.ErrorDispatch(err)
-					}
-
-					break
-				}
-			}
+	for fileName, requestFile := range context.GetRequestFiles() {
+		if strings.HasSuffix(fileName, ".csv") {
+			attachedFile = requestFile
 		}
-
 	}
 
 	// file was not found
@@ -295,7 +244,7 @@ func restImpexTestCsvToMap(params *api.StructAPIHandlerParams) (interface{}, err
 
 	// making csv processing
 	exchangeDict := make(map[string]interface{})
-	err = CSVToMap(reader, processor, exchangeDict)
+	err := CSVToMap(reader, processor, exchangeDict)
 
 	return result, err
 }

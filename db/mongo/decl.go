@@ -3,11 +3,11 @@
 package mongo
 
 import (
-	"sync"
-
 	"github.com/ottemo/foundation/env"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"sync"
+	"time"
 )
 
 // Package global variables
@@ -18,6 +18,8 @@ var (
 
 // Package global constants
 const (
+	ConstConnectionValidateInterval = time.Second * 10 // timer interval to ping connection and refresh it by perforce
+
 	ConstMongoDebug = false // flag which indicates to perform log on each operation
 
 	ConstFilterGroupStatic  = "static"  // name for static filter, ref. to AddStaticFilter(...)

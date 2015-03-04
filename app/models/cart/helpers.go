@@ -72,9 +72,9 @@ func GetCartForVisitor(visitorID string) (InterfaceCart, error) {
 }
 
 // GetCurrentCart returns cart for current session or creates new one
-func GetCurrentCart(params *api.StructAPIHandlerParams) (InterfaceCart, error) {
-	sessionCartID := params.Session.Get(ConstSessionKeyCurrentCart)
-	visitorID := params.Session.Get(visitor.ConstSessionKeyVisitorID)
+func GetCurrentCart(context api.InterfaceApplicationContext) (InterfaceCart, error) {
+	sessionCartID := context.GetSession().Get(ConstSessionKeyCurrentCart)
+	visitorID := context.GetSession().Get(visitor.ConstSessionKeyVisitorID)
 
 	// checking session for cart id
 	if sessionCartID != nil && sessionCartID != "" {
@@ -93,7 +93,7 @@ func GetCurrentCart(params *api.StructAPIHandlerParams) (InterfaceCart, error) {
 				visitorCart.AddItem(item.GetProductID(), item.GetQty(), item.GetOptions())
 			}
 
-			visitorCart.SetSessionID(params.Session.GetID())
+			visitorCart.SetSessionID(context.GetSession().GetID())
 
 			err = visitorCart.Save()
 			if err != nil {
@@ -105,7 +105,7 @@ func GetCurrentCart(params *api.StructAPIHandlerParams) (InterfaceCart, error) {
 				env.ErrorDispatch(err)
 			}
 
-			params.Session.Set(ConstSessionKeyCurrentCart, visitorCart.GetID())
+			context.GetSession().Set(ConstSessionKeyCurrentCart, visitorCart.GetID())
 
 			return visitorCart, nil
 		}
@@ -120,7 +120,7 @@ func GetCurrentCart(params *api.StructAPIHandlerParams) (InterfaceCart, error) {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		params.Session.Set(ConstSessionKeyCurrentCart, currentCart.GetID())
+		context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
 
 		return currentCart, nil
 	}
@@ -131,11 +131,11 @@ func GetCurrentCart(params *api.StructAPIHandlerParams) (InterfaceCart, error) {
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		currentCart.SetSessionID(params.Session.GetID())
+		currentCart.SetSessionID(context.GetSession().GetID())
 		currentCart.Activate()
 		currentCart.Save()
 
-		params.Session.Set(ConstSessionKeyCurrentCart, currentCart.GetID())
+		context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
 
 		return currentCart, nil
 	}

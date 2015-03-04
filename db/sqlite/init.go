@@ -4,6 +4,7 @@ import (
 	"github.com/mxk/go-sqlite/sqlite3"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"time"
 )
 
 // init makes package self-initialization routine
@@ -36,6 +37,25 @@ func (it *DBEngine) Startup() error {
 	} else {
 		return env.ErrorDispatch(err)
 	}
+
+	// timer routine to check connection state and reconnect by perforce
+	ticker := time.NewTicker(ConstConnectionValidateInterval)
+	go func() {
+		for _ = range ticker.C {
+			err := connectionExec("select count(*) from sqlite_master")
+			if err != nil {
+				dbEngine.connectionMutex.Lock()
+				newConnection, err := sqlite3.Open(uri)
+				dbEngine.connectionMutex.Unlock()
+
+				if err != nil {
+					env.ErrorDispatch(err)
+				} else {
+					it.connection = newConnection
+				}
+			}
+		}
+	}()
 
 	// making column info table
 	SQL := "CREATE TABLE IF NOT EXISTS " + ConstCollectionNameColumnInfo + ` (

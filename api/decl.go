@@ -5,11 +5,17 @@ package api
 
 import (
 	"github.com/ottemo/foundation/env"
-	"net/http"
 )
 
 // Package global constants
 const (
+	ConstRESTOperationGet    = "GET"
+	ConstRESTOperationUpdate = "PUT"
+	ConstRESTOperationCreate = "POST"
+	ConstRESTOperationDelete = "DELETE"
+
+	ConstRESTActionParameter = "action"
+
 	ConstSessionKeyAdminRights = "adminRights"   // session key used to flag that user have admin rights
 	ConstSessionCookieName     = "OTTEMOSESSION" // cookie name which should contain sessionID
 
@@ -21,14 +27,18 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelHelper
 )
 
-// StructAPIHandlerParams is a structure to hold API request related information
-type StructAPIHandlerParams struct {
-	ResponseWriter   http.ResponseWriter
-	Request          *http.Request
-	RequestGETParams map[string]string
-	RequestURLParams map[string]string
-	RequestContent   interface{}
-	Session          InterfaceSession
+// ApplicationContext is a type you can embed in your model for application context support
+type ApplicationContext struct{ InterfaceApplicationContext }
+
+// GetApplicationContext returns current application context or nil
+func (it *ApplicationContext) GetApplicationContext() InterfaceApplicationContext {
+	return it.InterfaceApplicationContext
+}
+
+// SetApplicationContext assigns given application context to type
+func (it *ApplicationContext) SetApplicationContext(context InterfaceApplicationContext) error {
+	it.InterfaceApplicationContext = context
+	return nil
 }
 
 // StructRestRedirect is a structure you should return in API handler function if redirect needed
@@ -40,4 +50,4 @@ type StructRestRedirect struct {
 }
 
 // FuncAPIHandler is an API handler callback function
-type FuncAPIHandler func(params *StructAPIHandlerParams) (interface{}, error)
+type FuncAPIHandler func(context InterfaceApplicationContext) (interface{}, error)

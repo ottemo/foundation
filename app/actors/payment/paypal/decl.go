@@ -12,6 +12,8 @@ const (
 	ConstPaymentCode = "paypal_express"
 	ConstPaymentName = "PayPal Express"
 
+	ConstLogStorage = "paypal.log"
+
 	ConstPaymentActionSale          = "Sale"
 	ConstPaymentActionAuthorization = "Authorization"
 

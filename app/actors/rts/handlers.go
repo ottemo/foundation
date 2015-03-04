@@ -11,236 +11,255 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-func referrerHandler(event string, data map[string]interface{}) bool {
+func referrerHandler(event string, eventData map[string]interface{}) bool {
 
-	params := data["apiParams"].(*api.StructAPIHandlerParams)
-	xReferrer := utils.InterfaceToString(params.Request.Header.Get("X-Referer"))
-	if "" == xReferrer {
-		return true
+	if _, present := eventData["context"]; present {
+		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok {
+			xReferrer := utils.InterfaceToString(context.GetRequestSetting("X-Referer"))
+			if "" == xReferrer {
+				return true
+			}
+
+			referrer, err := GetReferrer(xReferrer)
+			if err != nil {
+				return true
+			}
+
+			// excluding itself (i.e. "storefront" requests)
+			if strings.Contains(app.GetStorefrontURL(""), referrer) {
+				return true
+			}
+
+			referrers[referrer]++
+		}
 	}
-
-	referrer, err := GetReferrer(xReferrer)
-	if err != nil {
-		return true
-	}
-
-	// exclude himself("storefront")
-	if strings.Contains(app.GetStorefrontURL(""), referrer) {
-		return true
-	}
-
-	referrers[referrer]++
 
 	return true
 }
 
-func visitsHandler(event string, data map[string]interface{}) bool {
+func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 	err := GetTodayVisitorsData()
 	if err != nil {
 		return true
 	}
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
 
-	currentTime := time.Now()
-	today := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, currentTime.Location())
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
 
-	if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
-		visitorsInfoToday.Details[sessionID] = &VisitorDetail{Time: today}
-		visitorsInfoToday.Visitors++
-	} else {
-		visitorsInfoToday.Details[sessionID].Time = today
-	}
+		today := time.Now().Truncate(time.Hour * 24)
 
-	_ = SaveVisitorData()
-
-	return true
-}
-
-func addToCartHandler(event string, data map[string]interface{}) bool {
-
-	err := GetTodayVisitorsData()
-	if err != nil {
-		return true
-	}
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
-
-	if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
-		visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
-	}
-
-	if 0 == visitorsInfoToday.Details[sessionID].Checkout {
-		visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorAddToCart
-		visitorsInfoToday.Cart++
-	}
-
-	_ = SaveVisitorData()
-
-	return true
-}
-
-func reachedCheckoutHandler(event string, data map[string]interface{}) bool {
-
-	err := GetTodayVisitorsData()
-	if err != nil {
-		return true
-	}
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
-
-	if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
-		visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
-	}
-
-	if ConstVisitorCheckout > visitorsInfoToday.Details[sessionID].Checkout {
-		visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorCheckout
-		visitorsInfoToday.Checkout++
-	}
-
-	_ = SaveVisitorData()
-
-	return true
-}
-
-func purchasedHandler(event string, data map[string]interface{}) bool {
-
-	err := GetTodayVisitorsData()
-	if err != nil {
-		return true
-	}
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
-
-	if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
-		visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
-	}
-
-	if ConstVisitorSales > visitorsInfoToday.Details[sessionID].Checkout {
-		visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorSales
-		visitorsInfoToday.Sales++
-	}
-
-	_ = SaveVisitorData()
-
-	return true
-}
-
-func salesHandler(event string, data map[string]interface{}) bool {
-
-	cart := data["cart"].(cart.InterfaceCart)
-	products := cart.GetItems()
-	productsData := make(map[string]interface{})
-	for i := range products {
-		productsData[products[i].GetProductID()] = products[i].GetQty()
-	}
-
-	if len(productsData) == 0 {
-		return true
-	}
-
-	salesData := make(map[string]int)
-
-	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
-	if err != nil {
-		return true
-	}
-
-	for productID, count := range productsData {
-		currentTime := time.Now()
-		date := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, currentTime.Location())
-		salesHistoryRow := make(map[string]interface{})
-		salesData[productID] = utils.InterfaceToInt(count)
-
-		salesHistoryCollection.ClearFilters()
-		salesHistoryCollection.AddFilter("created_at", "=", date)
-		salesHistoryCollection.AddFilter("product_id", "=", productID)
-		dbSaleRow, _ := salesHistoryCollection.Load()
-
-		newCount := utils.InterfaceToInt(count)
-		if len(dbSaleRow) > 0 {
-			salesHistoryRow["_id"] = utils.InterfaceToString(dbSaleRow[0]["_id"])
-			oldCount := utils.InterfaceToInt(dbSaleRow[0]["count"])
-			newCount += oldCount
+		if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
+			visitorsInfoToday.Details[sessionID] = &VisitorDetail{Time: today}
+			visitorsInfoToday.Visitors++
+		} else {
+			visitorsInfoToday.Details[sessionID].Time = today
 		}
 
-		// Add history row
-		salesHistoryRow["product_id"] = productID
-		salesHistoryRow["created_at"] = date
-		salesHistoryRow["count"] = newCount
-		_, err = salesHistoryCollection.Save(salesHistoryRow)
-		if err != nil {
+		SaveVisitorData()
+	}
+
+	return true
+}
+
+func addToCartHandler(event string, eventData map[string]interface{}) bool {
+
+	err := GetTodayVisitorsData()
+	if err != nil {
+		return true
+	}
+
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
+
+		if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
+			visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
+		}
+
+		if 0 == visitorsInfoToday.Details[sessionID].Checkout {
+			visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorAddToCart
+			visitorsInfoToday.Cart++
+		}
+
+		SaveVisitorData()
+	}
+
+	return true
+}
+
+func reachedCheckoutHandler(event string, eventData map[string]interface{}) bool {
+
+	err := GetTodayVisitorsData()
+	if err != nil {
+		return true
+	}
+
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
+
+		if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
+			visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
+		}
+
+		if ConstVisitorCheckout > visitorsInfoToday.Details[sessionID].Checkout {
+			visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorCheckout
+			visitorsInfoToday.Checkout++
+		}
+
+		SaveVisitorData()
+	}
+
+	return true
+}
+
+func purchasedHandler(event string, eventData map[string]interface{}) bool {
+
+	err := GetTodayVisitorsData()
+	if err != nil {
+		return true
+	}
+
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
+
+		if _, ok := visitorsInfoToday.Details[sessionID]; !ok {
+			visitorsInfoToday.Details[sessionID] = &VisitorDetail{}
+		}
+
+		if ConstVisitorSales > visitorsInfoToday.Details[sessionID].Checkout {
+			visitorsInfoToday.Details[sessionID].Checkout = ConstVisitorSales
+			visitorsInfoToday.Sales++
+		}
+
+		SaveVisitorData()
+	}
+
+	return true
+}
+
+func salesHandler(event string, eventData map[string]interface{}) bool {
+
+	if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
+		cartProducts := cartInstance.GetItems()
+
+		if len(cartProducts) == 0 {
 			return true
 		}
-	}
 
-	SaveSalesData(salesData)
+		productQtys := make(map[string]interface{})
+		for i := range cartProducts {
+			productQtys[cartProducts[i].GetProductID()] = cartProducts[i].GetQty()
+		}
 
-	return true
-}
+		salesData := make(map[string]int)
 
-func registerVisitorAsOnlineHandler(event string, data map[string]interface{}) bool {
-
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
-
-	referrerType := ConstReferrerTypeDirect
-	referrer := ""
-	if "api.rts.visit" == event {
-		params := data["apiParams"].(*api.StructAPIHandlerParams)
-		xRreferrer := params.Request.Header.Get("X-Referer") // api.rts.visit
-		referrer = utils.InterfaceToString(xRreferrer)
-	}
-	if "api.request" == event {
-		referrer = utils.InterfaceToString(data["referrer"]) //api.request
-	}
-
-	if "" != referrer {
-		referrer, err := GetReferrer(referrer)
+		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 		if err != nil {
 			return true
 		}
 
-		isSearchEngine := false
-		for index := 0; index < len(knownSearchEngines); index++ {
-			if strings.Contains(referrer, knownSearchEngines[index]) {
-				isSearchEngine = true
+		for productID, count := range productQtys {
+			currentDate := time.Now().Truncate(time.Hour * 24)
+
+			salesHistoryRecord := make(map[string]interface{})
+			salesData[productID] = utils.InterfaceToInt(count)
+
+			salesHistoryCollection.ClearFilters()
+			salesHistoryCollection.AddFilter("created_at", "=", currentDate)
+			salesHistoryCollection.AddFilter("product_id", "=", productID)
+			dbSaleRow, _ := salesHistoryCollection.Load()
+
+			newCount := utils.InterfaceToInt(count)
+			if len(dbSaleRow) > 0 {
+				salesHistoryRecord["_id"] = utils.InterfaceToString(dbSaleRow[0]["_id"])
+				oldCount := utils.InterfaceToInt(dbSaleRow[0]["count"])
+				newCount += oldCount
+			}
+
+			// saving new history record
+			salesHistoryRecord["product_id"] = productID
+			salesHistoryRecord["created_at"] = currentDate
+			salesHistoryRecord["count"] = newCount
+			_, err = salesHistoryCollection.Save(salesHistoryRecord)
+			if err != nil {
+				return true
 			}
 		}
 
-		if isSearchEngine {
-			referrerType = ConstReferrerTypeSearch
-		} else {
-			referrerType = ConstReferrerTypeSite
-		}
+		SaveSalesData(salesData)
 	}
-
-	if _, ok := OnlineSessions[sessionID]; !ok {
-		OnlineSessions[sessionID] = &OnlineReferrer{}
-		IncreaseOnline(referrerType)
-		if len(OnlineSessions) > OnlineSessionsMax {
-			OnlineSessionsMax = len(OnlineSessions)
-		}
-	} else {
-		if OnlineSessions[sessionID].referrerType != referrerType {
-			DecreaseOnline(OnlineSessions[sessionID].referrerType)
-			IncreaseOnline(referrerType)
-		}
-	}
-
-	OnlineSessions[sessionID].time = time.Now()
-	OnlineSessions[sessionID].referrerType = referrerType
 
 	return true
 }
 
-func visitorOnlineActionHandler(event string, data map[string]interface{}) bool {
+func registerVisitorAsOnlineHandler(event string, eventData map[string]interface{}) bool {
 
-	session := data["session"].(api.InterfaceSession)
-	sessionID := session.GetID()
-	if _, ok := OnlineSessions[sessionID]; ok {
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
+
+		referrerType := ConstReferrerTypeDirect
+		referrer := ""
+
+		if event == "api.rts.visit" {
+			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
+				xRreferrer := context.GetResponseSetting("X-Referer")
+				referrer = utils.InterfaceToString(xRreferrer)
+			}
+		}
+
+		if event == "api.request" {
+			if referrerValue, present := eventData["referrer"]; present {
+				referrer = utils.InterfaceToString(referrerValue)
+			}
+		}
+
+		if referrer != "" {
+			referrer, err := GetReferrer(referrer)
+			if err != nil {
+				return true
+			}
+
+			isSearchEngine := false
+			for index := 0; index < len(knownSearchEngines); index++ {
+				if strings.Contains(referrer, knownSearchEngines[index]) {
+					isSearchEngine = true
+				}
+			}
+
+			if isSearchEngine {
+				referrerType = ConstReferrerTypeSearch
+			} else {
+				referrerType = ConstReferrerTypeSite
+			}
+		}
+
+		if _, ok := OnlineSessions[sessionID]; !ok {
+			OnlineSessions[sessionID] = &OnlineReferrer{}
+			IncreaseOnline(referrerType)
+			if len(OnlineSessions) > OnlineSessionsMax {
+				OnlineSessionsMax = len(OnlineSessions)
+			}
+		} else {
+			if OnlineSessions[sessionID].referrerType != referrerType {
+				DecreaseOnline(OnlineSessions[sessionID].referrerType)
+				IncreaseOnline(referrerType)
+			}
+		}
+
 		OnlineSessions[sessionID].time = time.Now()
+		OnlineSessions[sessionID].referrerType = referrerType
+	}
+
+	return true
+}
+
+func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
+
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
+		sessionID := sessionInstance.GetID()
+		if _, ok := OnlineSessions[sessionID]; ok {
+			OnlineSessions[sessionID].time = time.Now()
+		}
 	}
 
 	return true

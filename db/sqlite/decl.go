@@ -5,6 +5,7 @@ package sqlite
 import (
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/mxk/go-sqlite/sqlite3"
 	"github.com/ottemo/foundation/env"
@@ -12,6 +13,8 @@ import (
 
 // Package global constants
 const (
+	ConstConnectionValidateInterval = time.Second * 10 // timer interval to ping connection and refresh it by perforce
+
 	ConstUseUUIDids = true  // flag which indicates to use UUID "_id" column type instead of default integer
 	ConstDebugSQL   = false // flag which indicates to perform log on each SQL operation
 

@@ -3,7 +3,11 @@
 package rest
 
 import (
+	"io"
+	"net/http"
+
 	"github.com/julienschmidt/httprouter"
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -16,10 +20,24 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelService
 )
 
-// DefaultRestService is a default implementer of InterfaceRestService declared in
-// "github.com/ottemo/foundation/api" package
+// DefaultRestService is a default implementer of InterfaceRestService
+// declared in "github.com/ottemo/foundation/api" package
 type DefaultRestService struct {
 	ListenOn string
 	Router   *httprouter.Router
 	Handlers map[string]httprouter.Handle
+}
+
+// DefaultRestApplicationContext is a structure to hold API request related information
+type DefaultRestApplicationContext struct {
+	ResponseWriter    http.ResponseWriter
+	Request           *http.Request
+	RequestParameters map[string]string
+	RequestArguments  map[string]string
+	RequestContent    interface{}
+	RequestFiles      map[string]io.Reader
+
+	Session       api.InterfaceSession
+	ContextValues map[string]interface{}
+	Result        interface{}
 }

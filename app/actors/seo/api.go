@@ -5,14 +5,12 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
-
-	"github.com/ottemo/foundation/utils"
-
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -20,32 +18,33 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("url_rewrite", "GET", "list", restURLRewritesList)
+	err = api.GetRestService().RegisterAPI("seo/items", api.ConstRESTOperationGet, APIListSEOItems)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("url_rewrite", "GET", "get/:url", restURLRewritesGet)
+	err = api.GetRestService().RegisterAPI("seo/item", api.ConstRESTOperationCreate, APICreateSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("url_rewrite", "POST", "add", restURLRewritesAdd)
+	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationUpdate, APIUpdateSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("url_rewrite", "PUT", "update/:id", restURLRewritesUpdate)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("url_rewrite", "DELETE", "delete/:id", restURLRewritesDelete)
+	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("sitemap", "GET", "", restSitemapGenerate)
+	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("sitemap", "GET", "sitemap.xml", restSitemap)
+
+	err = api.GetRestService().RegisterAPI("seo/sitemap", api.ConstRESTOperationGet, APIGenerateSitemap)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("seo/sitemap/sitemap.xml", api.ConstRESTOperationGet, APIGetSitemap)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -53,8 +52,8 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API function used to obtain url rewrites list
-func restURLRewritesList(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIListSEOItems returns a list registered SEO records
+func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
@@ -67,31 +66,33 @@ func restURLRewritesList(params *api.StructAPIHandlerParams) (interface{}, error
 	return records, env.ErrorDispatch(err)
 }
 
-// WEB REST API function used to obtain rewrite for specified url
-func restURLRewritesGet(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIGetSEOItem returns SEO item for a specified url
+//   - SEO url should be specified in "url" argument
+func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("url", "=", params.RequestURLParams["url"])
+	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
 	records, err := collection.Load()
 
 	return records, env.ErrorDispatch(err)
 }
 
-// WEB REST API function used to update existing url rewrite
-func restURLRewritesUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIUpdateSEOItem updates existing SEO item
+//   - SEO item id should be specified in "itemID" argument
+func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request params
+	// check request context
 	//---------------------
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	postValues, err := api.GetRequestContentAsMap(params)
+	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -101,7 +102,7 @@ func restURLRewritesUpdate(params *api.StructAPIHandlerParams) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	urlRewriteID := params.RequestURLParams["id"]
+	urlRewriteID := context.GetRequestArgument("itemID")
 	record, err := collection.LoadByID(urlRewriteID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -143,24 +144,25 @@ func restURLRewritesUpdate(params *api.StructAPIHandlerParams) (interface{}, err
 	return record, nil
 }
 
-// WEB REST API function used to add url rewrite
-func restURLRewritesAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APICreateSEOItem creates a new SEO item
+//   - "url" and "rewrite" attributes are required
+func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// checking request params
+	// checking request context
 	//------------------------
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	postValues, err := api.GetRequestContentAsMap(params)
+	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	if !utils.KeysInMapAndNotBlank(postValues, "url", "rewrite") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a3901a1-48d5-4055-bacb-2b02681bbb71", "'url' and 'rewrite' params should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a3901a1-48d5-4055-bacb-2b02681bbb71", "'url' and 'rewrite' context should be specified")
 	}
 
 	valueURL := utils.InterfaceToString(postValues["url"])
@@ -210,10 +212,11 @@ func restURLRewritesAdd(params *api.StructAPIHandlerParams) (interface{}, error)
 	return newRecord, nil
 }
 
-// WEB REST API function used to delete url rewrite
-func restURLRewritesDelete(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIDeleteSEOItem deletes specified SEO item
+//   - SEO item id should be specified in "itemID" argument
+func APIDeleteSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -222,7 +225,7 @@ func restURLRewritesDelete(params *api.StructAPIHandlerParams) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = collection.DeleteByID(params.RequestURLParams["id"])
+	err = collection.DeleteByID(context.GetRequestArgument("itemID"))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -230,13 +233,14 @@ func restURLRewritesDelete(params *api.StructAPIHandlerParams) (interface{}, err
 	return "ok", nil
 }
 
-// WEB REST API function used to get sitemap
-func restSitemap(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIGetSitemap returns SEO records based sitemap (auto re-generating it if needed)
+//   - result is not a JSON but "text/xml"
+func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// if sitemap expied - generating new one
 	info, err := os.Stat(ConstSitemapFilePath)
 	if err != nil || (time.Now().Unix()-info.ModTime().Unix() >= ConstSitemapExpireSec) {
-		return restSitemapGenerate(params)
+		return APIGenerateSitemap(context)
 	}
 
 	// using generated otherwise
@@ -246,28 +250,33 @@ func restSitemap(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 	defer sitemapFile.Close()
 
-	params.ResponseWriter.Header().Set("Content-Type", "text/xml")
+	if responseWriter := context.GetResponseWriter(); responseWriter != nil {
+		context.SetResponseContentType("text/xml")
 
-	buffer := make([]byte, 1024)
-	for {
-		n, err := sitemapFile.Read(buffer)
-		if err != nil || n == 0 {
-			break
-		}
+		buffer := make([]byte, 1024)
+		for {
+			n, err := sitemapFile.Read(buffer)
+			if err != nil || n == 0 {
+				break
+			}
 
-		n, err = params.ResponseWriter.Write(buffer[0:n])
-		if err != nil || n == 0 {
-			break
+			n, err = responseWriter.Write(buffer[0:n])
+			if err != nil || n == 0 {
+				break
+			}
 		}
 	}
 
 	return nil, env.ErrorDispatch(err)
 }
 
-// WEB REST API function used to generate new sitemap
-func restSitemapGenerate(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIGenerateSitemap generates a new sitemap based on SEO records
+//   - generates sitemap any time called (no cache used)
+//   - result is not a JSON but "text/xml"
+func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	params.ResponseWriter.Header().Set("Content-Type", "text/xml")
+	context.SetResponseContentType("text/xml")
+	responseWriter := context.GetResponseWriter()
 
 	// creating sitemap file
 	sitemapFile, err := os.Create(ConstSitemapFilePath)
@@ -279,8 +288,10 @@ func restSitemapGenerate(params *api.StructAPIHandlerParams) (interface{}, error
 	// writer to write into HTTP and file simultaneously
 	newline := []byte("\n")
 	writeLine := func(line []byte) {
-		params.ResponseWriter.Write(line)
-		params.ResponseWriter.Write(newline)
+		if responseWriter != nil {
+			responseWriter.Write(line)
+			responseWriter.Write(newline)
+		}
 
 		sitemapFile.Write(line)
 		sitemapFile.Write(newline)

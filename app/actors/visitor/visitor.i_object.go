@@ -22,9 +22,15 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "lname", "last_name":
 		return it.LastName
 	case "billing_address_id":
-		return it.BillingAddress.GetID()
+		if it.BillingAddress != nil {
+			return it.BillingAddress.GetID()
+		}
+		return nil
 	case "shipping_address_id":
-		return it.ShippingAddress.GetID()
+		if it.ShippingAddress != nil {
+			return it.ShippingAddress.GetID()
+		}
+		return nil
 	case "billing_address":
 		return it.BillingAddress
 	case "shipping_address":

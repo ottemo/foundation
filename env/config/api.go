@@ -13,35 +13,35 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("config", "GET", "groups", restConfigGroups)
+	err = api.GetRestService().RegisterAPI("config/groups", api.ConstRESTOperationGet, restConfigGroups)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "GET", "info/:path", restConfigInfo)
+	err = api.GetRestService().RegisterAPI("config/item/:path", api.ConstRESTOperationGet, restConfigInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "GET", "list", restConfigList)
+	err = api.GetRestService().RegisterAPI("config/values", api.ConstRESTOperationGet, restConfigList)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "GET", "get/:path", restConfigGet)
+	err = api.GetRestService().RegisterAPI("config/values/refresh", api.ConstRESTOperationGet, restConfigReload)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "POST", "set/:path", restConfigSet)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationGet, restConfigGet)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "POST", "register", restConfigRegister)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationCreate, restConfigRegister)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "DELETE", "unregister/:path", restConfigUnRegister)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationUpdate, restConfigSet)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config", "GET", "reload", restConfigReload)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationDelete, restConfigUnRegister)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -50,17 +50,17 @@ func setupAPI() error {
 }
 
 // WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
-func restConfigGroups(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigGroups(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	config := env.GetConfig()
 	return config.GetGroupItems(), nil
 }
 
 // WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
-func restConfigList(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigList(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -69,23 +69,23 @@ func restConfigList(params *api.StructAPIHandlerParams) (interface{}, error) {
 }
 
 // WEB REST API to get value information about item(s) matching path
-func restConfigInfo(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	config := env.GetConfig()
-	return config.GetItemsInfo(params.RequestURLParams["path"]), nil
+	return config.GetItemsInfo(context.GetRequestArgument("path")), nil
 }
 
 // WEB REST API used to get value of particular item in config
 //   - path should be without any wildcard
-func restConfigGet(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigGet(context api.InterfaceApplicationContext) (interface{}, error) {
 	config := env.GetConfig()
 
-	configItemPath := params.RequestURLParams["path"]
+	configItemPath := context.GetRequestArgument("path")
 
 	info := config.GetItemsInfo(configItemPath)
 	if len(info) == 1 {
@@ -99,26 +99,26 @@ func restConfigGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 			strings.Contains(itemInfo.Path, "admin") {
 
 			// check rights
-			if err := api.ValidateAdminRights(params); err != nil {
+			if err := api.ValidateAdminRights(context); err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
 		}
 	}
 
-	return config.GetValue(params.RequestURLParams["path"]), nil
+	return config.GetValue(context.GetRequestArgument("path")), nil
 }
 
 // WEB REST API used to set value of particular item in config
 //   - path should be without any wildcard
-func restConfigSet(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigSet(context api.InterfaceApplicationContext) (interface{}, error) {
 	config := env.GetConfig()
 
 	var setValue interface{}
 
-	setValue = params.RequestContent
-	configPath := params.RequestURLParams["path"]
+	setValue = context.GetRequestContent()
+	configPath := context.GetRequestArgument("path")
 
-	content, err := api.GetRequestContentAsMap(params)
+	content, err := api.GetRequestContentAsMap(context)
 	if err == nil {
 		if contentValue, present := content["value"]; present {
 			setValue = contentValue
@@ -126,7 +126,7 @@ func restConfigSet(params *api.StructAPIHandlerParams) (interface{}, error) {
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -139,14 +139,14 @@ func restConfigSet(params *api.StructAPIHandlerParams) (interface{}, error) {
 }
 
 // WEB REST API used to add new config Item to a config system
-func restConfigRegister(params *api.StructAPIHandlerParams) (interface{}, error) {
-	inputData, err := api.GetRequestContentAsMap(params)
+func restConfigRegister(context api.InterfaceApplicationContext) (interface{}, error) {
+	inputData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -173,16 +173,16 @@ func restConfigRegister(params *api.StructAPIHandlerParams) (interface{}, error)
 }
 
 // WEB REST API used to remove config item from system
-func restConfigUnRegister(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigUnRegister(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	config := env.GetConfig()
 
-	err := config.UnregisterItem(params.RequestURLParams["path"])
+	err := config.UnregisterItem(context.GetRequestArgument("path"))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -191,10 +191,10 @@ func restConfigUnRegister(params *api.StructAPIHandlerParams) (interface{}, erro
 }
 
 // WEB REST API used to re-load config from DB
-func restConfigReload(params *api.StructAPIHandlerParams) (interface{}, error) {
+func restConfigReload(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 

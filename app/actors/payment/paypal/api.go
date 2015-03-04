@@ -1,7 +1,6 @@
 package paypal
 
 import (
-	"errors"
 	"fmt"
 
 	"io/ioutil"
@@ -21,12 +20,12 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("paypal", "GET", "success", restSuccess)
+	err = api.GetRestService().RegisterAPI("paypal/success", api.ConstRESTOperationGet, APIReceipt)
 	if err != nil {
 		return err
 	}
 
-	err = api.GetRestService().RegisterAPI("paypal", "GET", "cancel", restCancel)
+	err = api.GetRestService().RegisterAPI("paypal/cancel", api.ConstRESTOperationGet, APIDecline)
 	if err != nil {
 		return err
 	}
@@ -34,8 +33,9 @@ func setupAPI() error {
 	return nil
 }
 
-// Completes will finalizie the PayPal transaction when provided an Order, Token and Payer ID.
-func Completes(orderInstance order.InterfaceOrder, token string, payerID string) (map[string]string, error) {
+// CompleteTransaction makes NVP request to PayPal for a given purchase order using PayPal token and payer id
+//   - refer to https://developer.paypal.com/docs/classic/api/NVPAPIOverview/ for details
+func CompleteTransaction(orderInstance order.InterfaceOrder, token string, payerID string) (map[string]string, error) {
 
 	// getting order information
 	//--------------------------
@@ -110,22 +110,30 @@ func Completes(orderInstance order.InterfaceOrder, token string, payerID string)
 	return urlGETParams, nil
 }
 
-// WEB REST API function to process PayPal receipt result
-func restSuccess(params *api.StructAPIHandlerParams) (interface{}, error) {
-	reqData := params.RequestGETParams
-	sessionID := waitingTokens[reqData["token"]]
+// APIReceipt processes PayPal receipt response
+//   - "token" field should contain valid session ID
+//   - refer to https://developer.paypal.com/docs/classic/api/NVPAPIOverview/ for details
+func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
+	requestData := context.GetRequestArguments()
+	if !utils.KeysInMapAndNotBlank(requestData, "token", "PayerID") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "tocken or payerID are not set")
+	}
+	sessionID := waitingTokens[requestData["token"]]
 
 	waitingTokensMutex.Lock()
-	delete(waitingTokens, reqData["token"])
+	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
-	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
+	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
 	if err != nil {
-		return nil, errors.New("Wrong session ID")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
-	params.Session = session
+	err = context.SetSession(sessionInstance)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(params)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, err
 	}
@@ -133,38 +141,32 @@ func restSuccess(params *api.StructAPIHandlerParams) (interface{}, error) {
 	checkoutOrder := currentCheckout.GetOrder()
 	currentCart := currentCheckout.GetCart()
 	if currentCart == nil {
-		return nil, errors.New("Cart is not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "15f11fb8-a15e-4788-a4d3-98c41eac4caf", "Cart is not specified")
 	}
 
 	if checkoutOrder != nil {
 
-		completeData, err := Completes(checkoutOrder, reqData["token"], reqData["PayerID"])
+		completeData, err := CompleteTransaction(checkoutOrder, requestData["token"], requestData["PayerID"])
 		if err != nil {
-			env.Log("paypal.log", env.ConstLogPrefixInfo, "TRANSACTION NOT COMPLETED: "+
+			env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION NOT COMPLETED: "+
 				"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 				"OrderID - "+checkoutOrder.GetID()+", "+
 				"TOKEN - : "+completeData["TOKEN"])
 
-			return nil, errors.New("Transaction not confirmed")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "af2103b1-8501-4e4b-bc1b-9086ef7c63be", "Transaction not confirmed")
 		}
 
 		checkoutOrder.NewIncrementID()
 
-		checkoutOrder.Set("status", "pending_shipping")
+		checkoutOrder.SetStatus(order.ConstOrderStatusPending)
 		checkoutOrder.Set("payment_info", completeData)
 
-		err = currentCheckout.CheckoutSuccess(checkoutOrder, params.Session)
+		err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
 		if err != nil {
 			return nil, err
 		}
 
-		// Send confirmation email
-		err = currentCheckout.SendOrderConfirmationMail()
-		if err != nil {
-			return nil, err
-		}
-
-		env.Log("paypal.log", env.ConstLogPrefixInfo, "TRANSACTION COMPLETED: "+
+		env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION COMPLETED: "+
 			"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 			"OrderID - "+checkoutOrder.GetID()+", "+
 			"TOKEN - : "+completeData["TOKEN"])
@@ -172,35 +174,42 @@ func restSuccess(params *api.StructAPIHandlerParams) (interface{}, error) {
 		return api.StructRestRedirect{Location: app.GetStorefrontURL("account/order/" + checkoutOrder.GetID()), DoRedirect: true}, nil
 	}
 
-	return nil, errors.New("Checkout not exist")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8d449c1c-ca34-4260-a93b-8af999c1ff04", "Checkout not exist")
 }
 
-// WEB REST API function to process PayPal decline result
-func restCancel(params *api.StructAPIHandlerParams) (interface{}, error) {
-	reqData := params.RequestGETParams
-	sessionID := waitingTokens[reqData["token"]]
+// APIDecline processes PayPal decline response
+//   - refer to https://developer.paypal.com/docs/classic/api/NVPAPIOverview/ for details
+func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
+	requestData := context.GetRequestArguments()
+	if !utils.KeysInMapAndNotBlank(requestData, "token", "PayerID") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "tocken or payerID are not set")
+	}
+	sessionID := waitingTokens[requestData["token"]]
 
 	waitingTokensMutex.Lock()
-	delete(waitingTokens, reqData["token"])
+	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
 	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
 	if err != nil {
-		return nil, errors.New("Wrong session ID")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
-	params.Session = session
+	err = context.SetSession(session)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(params)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, err
 	}
 
 	checkoutOrder := currentCheckout.GetOrder()
 
-	env.Log("paypal.log", env.ConstLogPrefixInfo, "CANCELED: "+
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "CANCELED: "+
 		"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 		"OrderID - "+checkoutOrder.GetID()+", "+
-		"TOKEN - : "+reqData["token"])
+		"TOKEN - : "+requestData["token"])
 
 	return api.StructRestRedirect{Location: app.GetStorefrontURL("checkout"), DoRedirect: true}, nil
 }

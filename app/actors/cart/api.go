@@ -12,19 +12,19 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("cart", "GET", "info", restCartInfo)
+	err = api.GetRestService().RegisterAPI("cart", api.ConstRESTOperationGet, APICartInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart", "POST", "add/:productID/:qty", restCartAdd)
+	err = api.GetRestService().RegisterAPI("cart/item", api.ConstRESTOperationCreate, APICartItemAdd)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart", "PUT", "update/:itemIdx/:qty", restCartUpdate)
+	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.ConstRESTOperationUpdate, APICartItemUpdate)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart", "DELETE", "delete/:itemIdx", restCartDelete)
+	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.ConstRESTOperationDelete, APICartItemDelete)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -32,11 +32,10 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API function to get cart information
-//   - parent categories and categorys will not be present in list
-func restCartInfo(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APICartInfo returns get cart related information
+func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCart, err := cart.GetCurrentCart(params)
+	currentCart, err := cart.GetCurrentCart(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -84,42 +83,41 @@ func restCartInfo(params *api.StructAPIHandlerParams) (interface{}, error) {
 	return result, nil
 }
 
-// WEB REST API for adding new item into cart
-//   - "pid" (product id) should be specified
-//   - "qty" and "options" are optional params
-func restCartAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APICartItemAdd adds specified product to cart
+//   - "productID" and "qty" should be specified as arguments
+func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request params
+	// check request context
 	//---------------------
-	reqData, err := api.GetRequestContentAsMap(params)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	var pid string
-	reqPid, present := params.RequestURLParams["productID"]
-	pid = utils.InterfaceToString(reqPid)
-	if !present || pid == "" {
+	pid := utils.InterfaceToString(api.GetArgumentOrContentValue(context, "pid"))
+	if pid == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c21dac87-4f93-48dc-b997-bbbe558cfd29", "pid should be specified")
 	}
 
 	qty := 1
-	reqQty, present := params.RequestURLParams["qty"]
-	if present {
-		qty = utils.InterfaceToInt(reqQty)
+	requestedQty := api.GetArgumentOrContentValue(context, "qty")
+	if requestedQty != "" {
+		qty = utils.InterfaceToInt(requestedQty)
 	}
 
-	options := reqData
-	reqOptions, present := reqData["options"]
-	if present {
-		if tmpOptions, ok := reqOptions.(map[string]interface{}); ok {
-			options = tmpOptions
+	// we are considering json content as product options unless it have specified options key
+	options, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	requestedOptions := api.GetArgumentOrContentValue(context, "options")
+	if requestedOptions != nil {
+		if reqestedOptionsAsMap, ok := requestedOptions.(map[string]interface{}); ok {
+			options = reqestedOptionsAsMap
+		} else {
+			options = utils.InterfaceToMap(requestedOptions)
 		}
 	}
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(params)
+	currentCart, err := cart.GetCurrentCart(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -131,28 +129,28 @@ func restCartAdd(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	currentCart.Save()
 
-	eventData := map[string]interface{}{"session": params.Session, "cart": currentCart, "pid": pid, "qty": qty, "options": options}
+	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "pid": pid, "qty": qty, "options": options}
 	env.Event("api.cart.addToCart", eventData)
 
 	return "ok", nil
 }
 
-// WEB REST API used to update cart item qty
-//   - "itemIdx" and "qty" should be specified in request URI
-func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APICartItemUpdate changes qty and/or option for cart item
+//   - "itemIdx" and "qty" should be specified as arguments
+func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request params
+	// check request context
 	//---------------------
-	if !utils.KeysInMapAndNotBlank(params.RequestURLParams, "itemIdx", "qty") {
+	if !utils.KeysInMapAndNotBlank(context.GetRequestArguments(), "itemIdx", "qty") {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "16311f44-3f38-436d-82ca-8a9c08c47928", "itemIdx and qty should be specified")
 	}
 
-	itemIdx, err := utils.StringToInteger(params.RequestURLParams["itemIdx"])
+	itemIdx, err := utils.StringToInteger(context.GetRequestArgument("itemIdx"))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	qty, err := utils.StringToInteger(params.RequestURLParams["qty"])
+	qty, err := utils.StringToInteger(context.GetRequestArgument("qty"))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -162,7 +160,7 @@ func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(params)
+	currentCart, err := cart.GetCurrentCart(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -187,23 +185,23 @@ func restCartUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 	return "ok", nil
 }
 
-// WEB REST API used to delete cart item from cart
-//   - "itemIdx" should be specified in request URI
-func restCartDelete(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APICartItemDelete removes specified item from cart item from cart
+//   - "itemIdx" should be specified as argument (item index can be obtained from APICartInfo)
+func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	_, present := params.RequestURLParams["itemIdx"]
-	if !present {
+	reqItemIdx := context.GetRequestArgument("itemIdx")
+	if reqItemIdx == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6afc9a4e-9fb4-4c31-b8c5-f46b514ef86e", "itemIdx should be specified")
 	}
 
-	itemIdx, err := utils.StringToInteger(params.RequestURLParams["itemIdx"])
+	itemIdx, err := utils.StringToInteger(reqItemIdx)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(params)
+	currentCart, err := cart.GetCurrentCart(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

@@ -132,8 +132,8 @@ func LoadVisitorByID(visitorID string) (InterfaceVisitor, error) {
 }
 
 // GetCurrentVisitorID returns visitor id for current session if registered or ""
-func GetCurrentVisitorID(params *api.StructAPIHandlerParams) string {
-	sessionVisitorID, ok := params.Session.Get(ConstSessionKeyVisitorID).(string)
+func GetCurrentVisitorID(context api.InterfaceApplicationContext) string {
+	sessionVisitorID, ok := context.GetSession().Get(ConstSessionKeyVisitorID).(string)
 	if !ok {
 		return ""
 	}
@@ -142,8 +142,8 @@ func GetCurrentVisitorID(params *api.StructAPIHandlerParams) string {
 }
 
 // GetCurrentVisitor returns visitor for current session if registered or nil - for guest visitor
-func GetCurrentVisitor(params *api.StructAPIHandlerParams) (InterfaceVisitor, error) {
-	sessionVisitorID, ok := params.Session.Get(ConstSessionKeyVisitorID).(string)
+func GetCurrentVisitor(context api.InterfaceApplicationContext) (InterfaceVisitor, error) {
+	sessionVisitorID, ok := context.GetSession().Get(ConstSessionKeyVisitorID).(string)
 	if !ok {
 		if app.ConstAllowGuest {
 			visitorInstance, err := GetVisitorModel()

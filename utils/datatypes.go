@@ -305,6 +305,8 @@ func InterfaceToString(value interface{}) string {
 	}
 
 	switch value := value.(type) {
+	case string:
+		return value
 	case bool:
 		return strconv.FormatBool(value)
 	case int:
@@ -313,8 +315,6 @@ func InterfaceToString(value interface{}) string {
 		return strconv.FormatInt(value, 10)
 	case float64:
 		return strconv.FormatFloat(value, 'f', 6, 64)
-	case string:
-		return value
 	default:
 		return EncodeToJSONString(value)
 	}
@@ -407,7 +407,7 @@ func InterfaceToTime(value interface{}) time.Time {
 		}
 	}
 
-	return time.Unix(0, 0)
+	return time.Time{} //Unix(0, 0)
 }
 
 // IsZeroTime checks time for zero value

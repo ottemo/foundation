@@ -3,6 +3,7 @@
 package session
 
 import (
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"sync"
 	"time"
@@ -10,11 +11,9 @@ import (
 
 // Package global constants
 const (
-	ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890" // sessionID allowed symbols
-
 	ConstSessionLifeTime          = 3600 // session idle period before expire (in sec)
-	ConstSessionUpdateTime        = 10   // '-1' - keep in memory mode, '0' - immediate mode, '>0' - update timer mode (in sec)
-	ConstSessionKeepInMemoryItems = 1000 // limits sessions array for "keep in memory" mode, '0' - unlimited
+	ConstSessionUpdateTime        = 10   // '0' - immediate mode, '>0' - update timer mode (in sec)
+	ConstSessionKeepInMemoryItems = 1000 // limits application sessions array for "immediate mode", '0' - unlimited
 
 	ConstErrorModule = "api/session"
 	ConstErrorLevel  = env.ConstErrorLevelService
@@ -25,20 +24,34 @@ const (
 
 // Package global variables
 var (
-	sessionService *DefaultSessionService
+	SessionService api.InterfaceSessionService
 )
+
+// DefaultSessionService is a basic implementer of InterfaceSessionService declared in
+// "github.com/ottemo/foundation/api" package
+type DefaultSessionService struct {
+	Sessions      map[string]*DefaultSessionContainer // active sessions set
+	sessionsMutex sync.RWMutex                        // syncronization on Sessions variable modification
+
+	// package supports "memcache", "redis", "memsession" build tags to change default (filesystem) storage location
+	Storage InterfaceServiceStorage
+}
 
 // DefaultSession is a default implementer of InterfaceSession declared in
 // "github.com/ottemo/foundation/api" package
-type DefaultSession struct {
-	id        string
+type DefaultSession string
+
+// DefaultSessionContainer is a structure to hold session related information
+type DefaultSessionContainer struct {
+	id        DefaultSession
 	Data      map[string]interface{}
 	UpdatedAt time.Time
 }
 
-// DefaultSessionService is a default implementer of InterfaceSessionService declared in
-// "github.com/ottemo/foundation/api" package
-type DefaultSessionService struct {
-	Sessions      map[string]*DefaultSession // active sessions set
-	sessionsMutex sync.RWMutex               // syncronization on Sessions variable modification
+// InterfaceServiceStorage session storage layer for a session service
+type InterfaceServiceStorage interface {
+	GetStorageName() string
+
+	LoadSession(sessionID string) (*DefaultSessionContainer, error)
+	FlushSession(sessionID string) error
 }

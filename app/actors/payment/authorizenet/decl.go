@@ -14,6 +14,8 @@ const (
 	ConstTransactionError         = "3"
 	ConstTransactionWaitingReview = "4"
 
+	ConstLogStorage = "authorizenet.log"
+
 	ConstPaymentCodeDPM = "authorizeNetDPM"
 	ConstPaymentNameDPM = "Authorize.Net (Direct Post)"
 

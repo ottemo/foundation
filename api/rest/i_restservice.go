@@ -1,19 +1,17 @@
 package rest
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
-	"strings"
-	"time"
-
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"encoding/json"
-	"encoding/xml"
+	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
-
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 )
@@ -24,7 +22,7 @@ func (it *DefaultRestService) GetName() string {
 }
 
 // RegisterAPI is available for modules to call in order to provide their own REST API functionality
-func (it *DefaultRestService) RegisterAPI(service string, method string, uri string, handler api.FuncAPIHandler) error {
+func (it *DefaultRestService) RegisterAPI(resource string, operation string, handler api.FuncAPIHandler) error {
 
 	// httprouter supposes other format of handler than we use, so we need wrapper
 	wrappedHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -48,24 +46,26 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		// Request URL parameters detection
 		//----------------------------------
 
-		// getting URL params of request
-		mappedParams := make(map[string]string)
+		// getting URL arguments of request
+		//   example: http://localhost:3000/category/:categoryID/product/:productID
+		//   so, ":categoryID" and ":productID" are these arguments
+		reqArguments := make(map[string]string)
 		for _, param := range params {
-			mappedParams[param.Key] = param.Value
+			reqArguments[param.Key] = param.Value
 		}
 
-		// getting params from URL, those after "?"
-		urlGETParams := make(map[string]string)
+		// getting params from URL (after "?")
+		//   example: http://localhost:3000/category/:categoryID/products?limit=10&extra=55
+		//   so, "limit" and "extra" are these params
 		urlParsedParams, err := url.ParseQuery(req.URL.RawQuery)
 		if err == nil {
 			for key, value := range urlParsedParams {
-				urlGETParams[key] = value[0]
+				reqArguments[key] = value[0]
 			}
 		}
 
 		// Request content detection
 		//----------------------------
-
 		var content interface{}
 		contentType := req.Header.Get("Content-Type")
 
@@ -127,26 +127,39 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		//------------------
 
 		// preparing struct for API handler
-		apiParams := new(api.StructAPIHandlerParams)
-		apiParams.Request = req
-		apiParams.RequestURLParams = mappedParams
-		apiParams.RequestGETParams = urlGETParams
-		apiParams.RequestContent = content
-		apiParams.ResponseWriter = resp
+		applicationContext := new(DefaultRestApplicationContext)
+		applicationContext.Request = req
+		applicationContext.RequestArguments = reqArguments
+		applicationContext.RequestContent = content
+		applicationContext.RequestFiles = make(map[string]io.Reader)
+		applicationContext.ResponseWriter = resp
+		applicationContext.ContextValues = make(map[string]interface{})
+
+		// collecting request files
+		if req.MultipartForm != nil && req.MultipartForm.File != nil {
+			for _, fileInfoArray := range req.MultipartForm.File {
+				for _, fileInfo := range fileInfoArray {
+					attachedFile, err := fileInfo.Open()
+					if err == nil {
+						applicationContext.RequestFiles[fileInfo.Filename] = attachedFile
+					}
+				}
+			}
+		}
 
 		// starting session for request
-		currentSession, err := api.StartSession(apiParams)
+		currentSession, err := api.StartSession(applicationContext)
 		if err != nil {
 			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
 		}
-		apiParams.Session = currentSession
+		applicationContext.Session = currentSession
 
 		if ConstUseDebugLog {
 			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
 		}
 
 		// event for request
-		eventData := map[string]interface{}{"session": currentSession, "apiParams": apiParams}
+		eventData := map[string]interface{}{"session": currentSession, "context": applicationContext}
 		cookieReferrer, err := req.Cookie("X_Referrer")
 		if err != nil {
 			eventData["referrer"] = ""
@@ -156,7 +169,11 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		env.Event("api.request", eventData)
 
 		// API handler processing
-		result, err := handler(apiParams)
+		result, err := handler(applicationContext)
+
+		if err == nil {
+			applicationContext.Result = result
+		}
 
 		// event for response
 		eventData["response"] = result
@@ -220,11 +237,10 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 		resp.Write(result.([]byte))
 	}
 
+	path := "/" + resource
 	// registration of handler within httprouter
 	//-------------------------------------------
-	path := "/" + service + "/" + uri
-
-	switch method {
+	switch operation {
 	case "GET":
 		it.Router.GET(path, wrappedHandler)
 	case "PUT":
@@ -234,10 +250,10 @@ func (it *DefaultRestService) RegisterAPI(service string, method string, uri str
 	case "DELETE":
 		it.Router.DELETE(path, wrappedHandler)
 	default:
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dcc-f5e4-4aae-b6df-9dd55041a21e", "unsupported method '"+method+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dcc-f5e4-4aae-b6df-9dd55041a21e", "unsupported method '"+operation+"'")
 	}
 
-	key := path + " {" + method + "}"
+	key := path + " {" + operation + "}"
 	it.Handlers[key] = wrappedHandler
 
 	return nil
@@ -252,6 +268,10 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 	responseWriter.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
 	responseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
 	responseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type, Cookie, X-Referer, Content-Length, Accept-Encoding, X-CSRF-Token")
+
+	responseWriter.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
+	responseWriter.Header().Set("Pragma", "no-cache") // HTTP 1.0.
+	responseWriter.Header().Set("Expires", "0") // Proxies
 
 	if request.Method == "GET" || request.Method == "POST" || request.Method == "PUT" || request.Method == "DELETE" {
 

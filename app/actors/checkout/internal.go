@@ -54,30 +54,24 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 // CheckoutSuccess will save the order and clear the shopping in the session.
 func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, session api.InterfaceSession) error {
 
+	// making sure order and session were specified
 	if checkoutOrder == nil || session == nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "17d45365-7808-4a1b-ad36-1741a83e820f", "Order or session is null")
 	}
 
-	err := checkoutOrder.NewIncrementID()
-	if err != nil {
-		return env.ErrorDispatch(err)
+	// if payment method did not set status by itself - making this
+	if orderStatus := checkoutOrder.GetStatus(); orderStatus == "" || orderStatus == order.ConstOrderStatusNew {
+		err := checkoutOrder.SetStatus(order.ConstOrderStatusPending)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
 	}
 
-	err = checkoutOrder.SetStatus(order.ConstOrderStatusPending)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = checkoutOrder.Save()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	// cleanup checkout information
+	// checkout information cleanup
 	//-----------------------------
 	currentCart := it.GetCart()
 
-	err = currentCart.Deactivate()
+	err := currentCart.Deactivate()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -91,7 +85,7 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 	session.Set(checkout.ConstSessionKeyCurrentCheckout, nil)
 
 	// sending notifications
-	//-----------------------------
+	//----------------------
 	eventData := map[string]interface{}{"checkout": it, "order": checkoutOrder, "session": session, "cart": currentCart}
 	env.Event("checkout.success", eventData)
 

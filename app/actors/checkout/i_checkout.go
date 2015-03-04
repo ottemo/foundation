@@ -354,7 +354,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	//---------------------------
 	checkoutOrder.Set("updated_at", currentTime)
 
-	checkoutOrder.Set("status", order.ConstOrderStatusNew)
+	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
 
 	if currentVisitor != nil {
 		checkoutOrder.Set("visitor_id", currentVisitor.GetID())
@@ -435,15 +435,12 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// TODO: should be different way to do that, result should be some interface or just error but not this
+	// if payment.Authorize returns non nil result, that supposing additional operations to complete payment
 	if result != nil {
 		return result, nil
 	}
 
 	err = it.CheckoutSuccess(checkoutOrder, it.GetSession())
-	if err != nil {
-		return nil, err
-	}
 
-	return checkoutOrder.ToHashMap(), nil
+	return checkoutOrder.ToHashMap(), err
 }

@@ -14,10 +14,10 @@ const (
 
 	ConstModelNameOrderItemCollection = "OrderItemCollection"
 
-	ConstOrderStatusCancelled = "cancelled"
-	ConstOrderStatusNew       = "new"
-	ConstOrderStatusPending   = "pending"
-	ConstOrderStatusCompleted = "completed"
+	ConstOrderStatusCancelled = "cancelled" // means that order was created and then declined
+	ConstOrderStatusNew       = "new"       // means that order created but not payed
+	ConstOrderStatusPending   = "pending"   // means that order was payed but not fulfilled
+	ConstOrderStatusCompleted = "completed" // means that order was completed
 
 	ConstErrorModule = "order"
 	ConstErrorLevel  = env.ConstErrorLevelModel
@@ -75,7 +75,7 @@ type InterfaceOrder interface {
 	SetStatus(status string) error
 
 	Proceed() error
-	Cancel() error
+	Rollback() error
 
 	models.InterfaceModel
 	models.InterfaceObject

@@ -1,10 +1,11 @@
 package mongo
 
 import (
-	"fmt"
-	"sort"
-
 	"gopkg.in/mgo.v2/bson"
+	"sort"
+	"time"
+
+	"github.com/ottemo/foundation/utils"
 )
 
 // ConvertMapToDoc is a recursive function that converts map[string]interface{} to bson.D
@@ -59,8 +60,13 @@ func BsonDToString(input bson.D) string {
 			result += "]"
 		case bson.D:
 			result += BsonDToString(typedValue)
+		case time.Time:
+			result += "ISODate(\"" + typedValue.Format(time.RFC3339) + "\")"
 		default:
-			result += fmt.Sprint(typedValue)
+			if bsonItem.Value == nil {
+				result += "null"
+			}
+			result += utils.InterfaceToString(typedValue)
 		}
 	}
 	result += "}"

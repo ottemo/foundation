@@ -15,7 +15,7 @@ import (
 const (
 	ConstVersionMajor = 0
 	ConstVersionMinor = 9
-	ConstSprintNumber = 4
+	ConstSprintNumber = 6
 
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"
@@ -60,5 +60,5 @@ var (
 	buildNumber string
 	buildBranch string
 
-	startTime time.Time = time.Now().UTC().Truncate(time.Second)
+	startTime = time.Now().UTC().Truncate(time.Second)
 )

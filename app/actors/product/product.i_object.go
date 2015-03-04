@@ -233,7 +233,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 		models.StructAttributeInfo{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
-			Attribute:  db.ConstTypeText,
+			Attribute:  "short_description",
 			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,

@@ -2,10 +2,9 @@ package order
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/env"
-
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/order"
-	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/env"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -13,35 +12,28 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("order", "GET", "attributes", restOrderAttributes)
+	err = api.GetRestService().RegisterAPI("orders/attributes", api.ConstRESTOperationGet, APIListOrderAttributes)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("order", "GET", "list", restOrderList)
+	err = api.GetRestService().RegisterAPI("orders", api.ConstRESTOperationGet, APIListOrders)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("order", "POST", "list", restOrderList)
+
+	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationGet, APIGetOrder)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("order", "GET", "count", restOrderCount)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("order", "GET", "get/:id", restOrderGet)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// err = api.GetRestService().RegisterAPI("order", "POST", "add", restOrderAdd)
+	// err = api.GetRestService().RegisterAPI("order", api.ConstRESTOperationCreate, APICreateOrder)
 	// if err != nil {
 	// 	return env.ErrorDispatch(err)
 	// }
-	err = api.GetRestService().RegisterAPI("order", "PUT", "update/:id", restOrderUpdate)
+	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationUpdate, APIUpdateOrder)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("order", "DELETE", "delete/:id", restOrderDelete)
+	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationDelete, APIDeleteOrder)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -49,8 +41,8 @@ func setupAPI() error {
 	return nil
 }
 
-// WEB REST API function to get order available attributes information
-func restOrderAttributes(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIListOrderAttributes returns a list of purchase order attributes
+func APIListOrderAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	orderModel, err := order.GetOrderModel()
 	if err != nil {
@@ -60,84 +52,51 @@ func restOrderAttributes(params *api.StructAPIHandlerParams) (interface{}, error
 	return orderModel.GetAttributesInfo(), nil
 }
 
-// WEB REST API function used to obtain orders list
-func restOrderList(params *api.StructAPIHandlerParams) (interface{}, error) {
-
-	// check request params
-	//---------------------
-	reqData, ok := params.RequestContent.(map[string]interface{})
-	if !ok {
-		if params.Request.Method == "POST" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d4a758dd-3f03-44c5-b95e-c28a10aadf3c", "unexpected request content")
-		}
-		reqData = make(map[string]interface{})
-	}
+// APIListOrders returns a list of existing purchase orders
+//   - if "action" parameter is set to "count" result value will be just a number of list items
+func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// operation start
-	//----------------
+	// taking orders collection model
 	orderCollectionModel, err := order.GetOrderCollectionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// limit parameter handle
-	orderCollectionModel.ListLimit(api.GetListLimit(params))
-
 	// filters handle
-	api.ApplyFilters(params, orderCollectionModel.GetDBCollection())
+	models.ApplyFilters(context, orderCollectionModel.GetDBCollection())
+
+	// checking for a "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return orderCollectionModel.GetDBCollection().Count()
+	}
+
+	// limit parameter handle
+	orderCollectionModel.ListLimit(models.GetListLimit(context))
 
 	// extra parameter handle
-	if extra, isExtra := reqData["extra"]; isExtra {
-		extra := utils.Explode(utils.InterfaceToString(extra), ",")
-		for _, value := range extra {
-			err := orderCollectionModel.ListAddExtraAttribute(value)
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-		}
-	}
+	models.ApplyExtraAttributes(context, orderCollectionModel)
 
 	return orderCollectionModel.List()
 }
 
-// WEB REST API function used to obtain orders count in model collection
-func restOrderCount(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIGetOrder return specified purchase order information
+//   - order id should be specified in "orderID" argument
+func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	orderCollectionModel, err := order.GetOrderCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	dbCollection := orderCollectionModel.GetDBCollection()
-
-	// filters handle
-	api.ApplyFilters(params, dbCollection)
-
-	return dbCollection.Count()
-}
-
-// WEB REST API function to get order information
-func restOrderGet(params *api.StructAPIHandlerParams) (interface{}, error) {
-
-	// check request params
+	// check request context
 	//---------------------
-	reqBlockID, present := params.RequestURLParams["id"]
-	if !present {
+	blockID := context.GetRequestArgument("orderID")
+	if blockID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443-f974-4455-9be0-a8af13916554", "order id should be specified")
 	}
-	blockID := utils.InterfaceToString(reqBlockID)
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -153,23 +112,24 @@ func restOrderGet(params *api.StructAPIHandlerParams) (interface{}, error) {
 	return result, nil
 }
 
-// WEB REST API for update existing order in system
-func restOrderUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIUpdateOrder update existing purchase order
+//   - order id should be specified in "orderID" argument
+func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request params
+	// check request context
 	//---------------------
-	blockID, present := params.RequestURLParams["id"]
-	if !present {
+	blockID := context.GetRequestArgument("orderID")
+	if blockID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638-e9e6-428b-b70c-a418d7821e4b", "order id should be specified")
 	}
 
-	reqData, err := api.GetRequestContentAsMap(params)
+	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -180,7 +140,7 @@ func restOrderUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	for attribute, value := range reqData {
+	for attribute, value := range requestData {
 		orderModel.Set(attribute, value)
 	}
 
@@ -190,18 +150,19 @@ func restOrderUpdate(params *api.StructAPIHandlerParams) (interface{}, error) {
 	return orderModel.ToHashMap(), nil
 }
 
-// WEB REST API used to delete order from system
-func restOrderDelete(params *api.StructAPIHandlerParams) (interface{}, error) {
+// APIDeleteOrder deletes existing purchase order
+//   - order id should be specified in "orderID" argument
+func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request params
+	// check request context
 	//---------------------
-	blockID, present := params.RequestURLParams["id"]
-	if !present {
+	blockID := context.GetRequestArgument("orderID")
+	if blockID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(params); err != nil {
+	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 

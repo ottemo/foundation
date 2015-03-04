@@ -70,7 +70,7 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 
 	case "PaymentMethodCode":
 		paymentMethodCode := utils.InterfaceToString(value)
-		for _, method := range checkout.GetRegisteredShippingMethods() {
+		for _, method := range checkout.GetRegisteredPaymentMethods() {
 			if method.GetCode() == paymentMethodCode {
 				it.PaymentMethodCode = paymentMethodCode
 				break

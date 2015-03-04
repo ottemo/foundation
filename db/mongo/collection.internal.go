@@ -1,14 +1,13 @@
 package mongo
 
 import (
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"sort"
 	"strings"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // converts value from GO representation to DB before usage in queries
@@ -40,7 +39,7 @@ func (it *DBCollection) convertValueToType(columnType string, value interface{})
 }
 
 // converts known SQL filter operator to mongoDB one, also modifies value if needed
-func (it *DBCollection) getMongoOperator(columnName string, operator string, value interface{}) (string, interface{}, error) {
+func (it *DBCollection) getSelectorValue(columnName string, operator string, value interface{}) (interface{}, error) {
 	operator = strings.ToLower(operator)
 
 	columnType := it.GetColumnType(columnName)
@@ -48,21 +47,22 @@ func (it *DBCollection) getMongoOperator(columnName string, operator string, val
 
 	switch operator {
 	case "=":
-		return "", value, nil
+		return value, nil
 	case "!=", "<>":
-		return "$ne", value, nil
+		return bson.D{bson.DocElem{Name: "$ne", Value: value}}, nil
 	case ">":
-		return "$gt", value, nil
+		return bson.D{bson.DocElem{Name: "$gt", Value: value}}, nil
 	case ">=":
-		return "$gte", value, nil
+		return bson.D{bson.DocElem{Name: "$gte", Value: value}}, nil
 	case "<":
-		return "$lt", value, nil
+		return bson.D{bson.DocElem{Name: "$lt", Value: value}}, nil
 	case "<=":
-		return "$lte", value, nil
+		return bson.D{bson.DocElem{Name: "$lte", Value: value}}, nil
 	case "like":
 		stringValue := utils.InterfaceToString(value)
 		stringValue = strings.Replace(stringValue, "%", ".*", -1)
-		return "$regex", stringValue, nil
+		stringValue = utils.EscapeRegexSpecials(stringValue)
+		return bson.D{bson.DocElem{Name: "$regex", Value: stringValue}, bson.DocElem{Name: "$options", Value: "i"}}, nil
 
 	case "in", "nin":
 		newOperator := "$" + operator
@@ -86,13 +86,13 @@ func (it *DBCollection) getMongoOperator(columnName string, operator string, val
 			it.subcollections = append(it.subcollections, typedValue)
 			it.subresults = append(it.subresults, refValue)
 
-			return newOperator, refValue, nil
+			return bson.D{bson.DocElem{Name: newOperator, Value: refValue}}, nil
 		default:
-			return newOperator, value, nil
+			return bson.D{bson.DocElem{Name: newOperator, Value: value}}, nil
 		}
 	}
 
-	return "?", "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab9d771a-eb9e-4318-904e-ad13171dbe84", "Unknown operator '"+operator+"'")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ab9d771a-eb9e-4318-904e-ad13171dbe84", "Unknown operator '"+operator+"'")
 }
 
 // returns filter group, creates new one if not exists
@@ -114,13 +114,9 @@ func (it *DBCollection) updateFilterGroup(groupName string, columnName string, o
 
 	// converting operator and value for mongoDB usage
 	//-------------------------------------------------
-	newOperator, newValue, err := it.getMongoOperator(columnName, operator, value)
+	newValue, err := it.getSelectorValue(columnName, operator, value)
 	if err != nil {
 		return err
-	}
-
-	if newOperator != "" {
-		newValue = bson.D{bson.DocElem{Name: newOperator, Value: newValue}}
 	}
 
 	// adding filter with converted operator/value to filter group
@@ -211,7 +207,11 @@ func (it *DBCollection) makeSelector() bson.D {
 
 // returns bson.Query struct with applied Sort, Offset, Limit parameters, and executed subqueries
 func (it *DBCollection) prepareQuery() *mgo.Query {
-	query := it.collection.Find(it.makeSelector())
+	selector := it.makeSelector()
+	if ConstMongoDebug {
+		env.Log("mongo.log", env.ConstLogPrefixDebug, it.Name+": "+BsonDToString(selector))
+	}
+	query := it.collection.Find(selector)
 
 	if len(it.Sort) > 0 {
 		query.Sort(it.Sort...)
