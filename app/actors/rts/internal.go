@@ -1,8 +1,6 @@
 package rts
 
 import (
-	"encoding/json"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -210,13 +208,15 @@ func initSalesHistory() error {
 			}
 
 			// Add history row
-			salesHistoryRow := make(map[string]interface{})
-			salesHistoryRow["product_id"] = productID
-			salesHistoryRow["created_at"] = date
-			salesHistoryRow["count"] = count
-			_, err = salesHistoryCollection.Save(salesHistoryRow)
-			if err != nil {
-				return env.ErrorDispatch(err)
+			if count > 0 {
+				salesHistoryRow := make(map[string]interface{})
+				salesHistoryRow["product_id"] = productID
+				salesHistoryRow["created_at"] = date
+				salesHistoryRow["count"] = count
+				_, err = salesHistoryCollection.Save(salesHistoryRow)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
 			}
 			sales[productID] += count
 		}
@@ -267,252 +267,187 @@ func SaveSalesData(data map[string]int) error {
 
 // GetSalesRange will return the date range for the sales data
 func GetSalesRange() string {
-	_range := "2014-01-01:"
+	_range := "2015-01-01:"
 
 	return _range
 }
 
-// GetTotalSales will create the totals for current sales data
-func GetTotalSales(fromDate time.Time, toDate time.Time) error {
+// GetRangeSales returns Get Sales for range
+func GetRangeSales(dateFrom, dateTo time.Time) (int, error) {
 
-	orderCollectionModelT, err := order.GetOrderCollectionModel()
-	if err != nil {
-		return env.ErrorDispatch(err)
+	sales := 0
+
+	// Go thrue period and summarise a visits
+	for dateFrom.Before(dateTo) {
+
+		if _, present := statistic[dateFrom.Unix()]; present {
+			sales = sales + statistic[dateFrom.Unix()].Sales
+		}
+
+		dateFrom = dateFrom.Add(time.Hour)
 	}
 
-	dbCollection := orderCollectionModelT.GetDBCollection()
-
-	todayFrom := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
-	todayTo := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 23, 59, 59, 0, fromDate.Location())
-
-	dbCollection.AddFilter("created_at", ">=", todayFrom)
-	dbCollection.AddFilter("created_at", "<=", todayTo)
-
-	// filters handle for today
-	today, err := dbCollection.Count()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	dbCollection.ClearFilters()
-	yesterdayFrom := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
-	yesterdayTo := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 23, 59, 59, 0, toDate.Location())
-
-	dbCollection.AddFilter("created_at", ">=", yesterdayFrom)
-	dbCollection.AddFilter("created_at", "<=", yesterdayTo)
-
-	// filters handle for yesterday
-	yesterday, err := dbCollection.Count()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	ratio := float64(1)
-	if 0 != yesterday {
-		ratio = float64(today)/float64(yesterday) - float64(1)
-	}
-
-	sales.ratio = ratio
-	sales.today = today
-	sales.lastUpdate = time.Now().Unix()
-	sales.yesterday = yesterday
-
-	return nil
+	return sales, nil
 }
 
-// GetSalesDetail will return the sale data for the given time period
-func GetSalesDetail(fromDate time.Time, toDate time.Time, hash string) error {
+// GetRangeVisits get visits for determinated range
+func GetRangeVisits(dateFrom, dateTo time.Time) (int, error) {
 
-	orderCollectionModelT, err := order.GetOrderCollectionModel()
-	if err != nil {
-		return env.ErrorDispatch(err)
+	visits := 0
+
+	// Go thrue period and summarise a visits
+	for dateFrom.Before(dateTo) {
+
+		if _, present := statistic[dateFrom.Unix()]; present {
+			visits = visits + statistic[dateFrom.Unix()].Visit
+		}
+
+		dateFrom = dateFrom.Add(time.Hour)
 	}
 
-	dbCollection := orderCollectionModelT.GetDBCollection()
-	dbCollection.SetResultColumns("_id", "created_at")
-	dbCollection.AddSort("created_at", false)
-
-	dateFrom := time.Date(fromDate.Year(), fromDate.Month(), fromDate.Day(), 0, 0, 0, 0, fromDate.Location())
-	dbCollection.AddFilter("created_at", ">=", dateFrom)
-
-	dateTo := time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 0, 0, 0, 0, toDate.Location())
-	dbCollection.AddFilter("created_at", "<=", dateTo)
-
-	// filters handle for yesterday
-	list, err := dbCollection.Load()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	delta := toDate.Sub(fromDate)
-	salesDetail[hash] = &SalesDetailData{Data: make(map[string]int)}
-	if delta.Hours() > 48 { // group by days
-		// fills the data a zero
-		for date := fromDate; int32(date.Unix()) < int32(toDate.Unix()); date = date.AddDate(0, 0, 1) {
-			timestamp := int64(date.Unix())
-			mapIndex := GetDayForTimestamp(timestamp, false)
-
-			salesDetail[hash].Data[mapIndex] = 0
-		}
-		// counts items
-		for _, order := range list {
-			timestamp := int64(utils.InterfaceToTime(order["created_at"]).Unix())
-			mapIndex := GetDayForTimestamp(timestamp, false)
-
-			salesDetail[hash].Data[mapIndex]++
-		}
-	} else { // group by hours
-
-		for date := fromDate; int32(date.Unix()) < int32(toDate.Unix()); date = date.AddDate(0, 0, 1) {
-			timestamp := int64(date.Unix())
-			currentTime := time.Unix(int64(timestamp), 0)
-			for hour := 0; hour < 24; hour++ {
-				timeGroup := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), hour, 0, 0, 0, currentTime.Location())
-				if timeGroup.Unix() > time.Now().Unix() {
-					break
-				}
-				mapIndex := fmt.Sprintf("%v", int32(timeGroup.Unix()))
-				salesDetail[hash].Data[mapIndex] = 0
-			}
-		}
-		for _, order := range list {
-			timestamp := int64(utils.InterfaceToTime(order["created_at"]).Unix())
-			mapIndex := GetDayForTimestamp(timestamp, true)
-
-			salesDetail[hash].Data[mapIndex]++
-		}
-	}
-
-	salesDetail[hash].lastUpdate = time.Now().Unix()
-
-	return nil
+	return visits, nil
 }
 
-// GetDayForTimestamp returns the day or hour for the given time
-func GetDayForTimestamp(timestamp int64, byHour bool) string {
-	currentTime := time.Unix(timestamp, 0)
-	hour := 0
-	if byHour {
-		hour = currentTime.Hour()
-	}
-
-	timeGroup := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), hour, 0, 0, 0, currentTime.Location())
-	mapIndex := fmt.Sprintf("%v", int32(timeGroup.Unix()))
-
-	return mapIndex
-}
-
-// GetTodayVisitorsData will return Visitor data for Today
-func GetTodayVisitorsData() error {
-	currentTime := time.Now()
-	today := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), currentTime.Hour(), 0, 0, 0, currentTime.Location())
-
-	if visitorsInfoToday.Day == today.In(time.UTC) {
-		return nil
-	}
-
-	yesterday := time.Date(currentTime.AddDate(0, 0, -1).Year(), currentTime.AddDate(0, 0, -1).Month(), currentTime.AddDate(0, 0, -1).Day(), currentTime.AddDate(0, 0, -1).Hour(), 0, 0, 0, currentTime.Location())
-	if visitorsInfoToday.Day == yesterday {
-		SaveVisitorData()
-		visitorsInfoYesterday = visitorsInfoToday
-	}
-	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
-	if err == nil {
-		visitorInfoCollection.AddFilter("day", "=", today)
-		dbRecord, _ := visitorInfoCollection.Load()
-
-		if len(dbRecord) > 0 {
-			visitorsInfoToday.ID = utils.InterfaceToString(dbRecord[0]["_id"])
-			visitorsInfoToday.Day = utils.InterfaceToTime(dbRecord[0]["day"])
-			visitorsInfoToday.Visitors = utils.InterfaceToInt(dbRecord[0]["visitors"])
-			visitorsInfoToday.Cart = utils.InterfaceToInt(dbRecord[0]["cart"])
-			visitorsInfoToday.Checkout = utils.InterfaceToInt(dbRecord[0]["checkout"])
-			visitorsInfoToday.Sales = utils.InterfaceToInt(dbRecord[0]["sales"])
-			visitorsInfoToday.Details = DecodeDetails(utils.InterfaceToString(dbRecord[0]["details"]))
-
-			return nil
-		}
-	}
-
-	visitorsInfoToday = new(dbVisitorsRow)
-	visitorsInfoToday.ID = ""
-	visitorsInfoToday.Day = today
-	visitorsInfoToday.Details = make(map[string]*VisitorDetail)
-
-	return nil
-}
-
-// GetYesterdayVisitorsData will build a collection of data representing yesterdays Visitor statistics
-func GetYesterdayVisitorsData() error {
-	currentTime := time.Now().AddDate(0, 0, -1)
-	yesterday := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, currentTime.Location())
-
-	if visitorsInfoYesterday.Day == yesterday {
-		return nil
-	}
+// initStatistic get info from visitor database for 60 hours
+func initStatistic() error {
+	// convert to utc time and work with variables
+	time.Local = time.UTC
+	timeScope := time.Hour
+	dateTo := time.Now().Add(time.Hour).Truncate(timeScope)
+	dateFrom := dateTo.Add(-60 * time.Hour)
 
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
-	if err == nil {
-		visitorInfoCollection.AddFilter("day", "=", yesterday)
-		dbRecord, _ := visitorInfoCollection.Load()
-
-		if len(dbRecord) > 0 {
-			visitorsInfoYesterday.ID = utils.InterfaceToString(dbRecord[0]["_id"])
-			visitorsInfoYesterday.Day = utils.InterfaceToTime(dbRecord[0]["day"])
-			visitorsInfoYesterday.Visitors = utils.InterfaceToInt(dbRecord[0]["visitors"])
-			visitorsInfoYesterday.Cart = utils.InterfaceToInt(dbRecord[0]["cart"])
-			visitorsInfoYesterday.Checkout = utils.InterfaceToInt(dbRecord[0]["checkout"])
-			visitorsInfoYesterday.Sales = utils.InterfaceToInt(dbRecord[0]["sales"])
-			visitorsInfoYesterday.Details = DecodeDetails(utils.InterfaceToString(dbRecord[0]["details"]))
-
-			return nil
-		}
+	if err != nil {
+		return env.ErrorDispatch(err)
 	}
+	visitorInfoCollection.SetResultColumns("day", "visitors", "cart", "sales")
+	visitorInfoCollection.AddSort("day", false)
 
-	visitorsInfoYesterday = new(dbVisitorsRow)
-	visitorsInfoYesterday.ID = ""
-	visitorsInfoYesterday.Day = yesterday
-	visitorsInfoYesterday.Details = make(map[string]*VisitorDetail)
+	for dateFrom.Before(dateTo) {
 
-	return nil
-}
-
-// SaveVisitorData will persist the Visitor data to the database
-func SaveVisitorData() error {
-	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
-	if err == nil {
-		visitorInfoRow := make(map[string]interface{})
-		if "" != visitorsInfoToday.ID {
-			visitorInfoRow["_id"] = visitorsInfoToday.ID
-		}
-
-		visitorInfoRow["day"] = visitorsInfoToday.Day
-		visitorInfoRow["visitors"] = visitorsInfoToday.Visitors
-		visitorInfoRow["cart"] = visitorsInfoToday.Cart
-		visitorInfoRow["checkout"] = visitorsInfoToday.Checkout
-		visitorInfoRow["sales"] = visitorsInfoToday.Sales
-		visitorInfoRow["details"] = EncodeDetails(visitorsInfoToday.Details)
-
-		_, err = visitorInfoCollection.Save(visitorInfoRow)
+		timeIterator := dateFrom.Unix()
+		// get database records for every hour
+		visitorInfoCollection.ClearFilters()
+		visitorInfoCollection.AddFilter("day", "=", timeIterator)
+		dbRecords, err := visitorInfoCollection.Load()
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+
+		// add info from db record if not null to variable
+		for _, item := range dbRecords {
+
+			// create record for non existing hour
+			if _, present := statistic[timeIterator]; !present {
+				statistic[timeIterator] = new(ActionsMade)
+			}
+
+			// add info to hour
+			statistic[timeIterator].Visit = statistic[timeIterator].Visit + utils.InterfaceToInt(item["visitors"])
+			statistic[timeIterator].Sales = statistic[timeIterator].Sales + utils.InterfaceToInt(item["sales"])
+			statistic[timeIterator].Cart = statistic[timeIterator].Cart + utils.InterfaceToInt(item["cart"])
+
+		}
+
+		dateFrom = dateFrom.Add(timeScope)
 	}
 
 	return nil
 }
 
-// EncodeDetails returns the Visitor data in a string when provided a VisitorDetail map[string]*
-func EncodeDetails(details map[string]*VisitorDetail) string {
-	jsonString, _ := json.Marshal(details)
+// SaveStatisticsData make save a statistic data row to databese from last updated record in database to current hour
+func SaveStatisticsData() error {
+	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	return string(jsonString)
+	// find last saved record time to start saving from it
+	visitorInfoCollection.SetResultColumns("day")
+	visitorInfoCollection.AddSort("day", true)
+	visitorInfoCollection.SetLimit(0, 1)
+	dbRecord, err := visitorInfoCollection.Load()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	lastRecordTime := utils.InterfaceToTime(dbRecord[0]["day"])
+
+		// delete last record from database to prevent dublicates
+	if _, present := statistic[lastRecordTime.Unix()]; present {
+		visitorInfoCollection.ClearFilters()
+		visitorInfoCollection.ClearSort()
+		visitorInfoCollection.SetLimit(0, 100)
+		visitorInfoCollection.SetResultColumns("day", "_id")
+		visitorInfoCollection.AddFilter("day", "=", lastRecordTime.Unix())
+		dbLastRecord, err := visitorInfoCollection.Load()
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		// deleting all records with the same hour
+		for _, item := range dbLastRecord {
+			err = visitorInfoCollection.DeleteByID(utils.InterfaceToString(item["_id"]))
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
+
+	}
+
+	// begin process of writing to database
+	visitorInfoCollection.ClearFilters()
+	visitorInfoRow := make(map[string]interface{})
+
+	// to be sure that all time is in hour format
+	dateTo := time.Now().Add(time.Hour).Truncate(time.Hour)
+	dateFrom := lastRecordTime.Truncate(time.Hour)
+
+	// save data to databese for every hour that data for present in statistic
+	// begining from last database record to current time
+	for dateFrom.Before(dateTo) {
+		if value, present := statistic[dateFrom.Unix()]; present {
+			visitorInfoRow["day"] = dateFrom.Unix()
+			visitorInfoRow["visitors"] = value.Visit
+			visitorInfoRow["cart"] = value.Cart
+			visitorInfoRow["sales"] = value.Sales
+
+			// save data to databese
+			_, err = visitorInfoCollection.Save(visitorInfoRow)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
+
+		dateFrom = dateFrom.Add(time.Hour)
+	}
+
+	return nil
 }
 
-// DecodeDetails returns the Visitor data in a VisitorDetail map[string]* when provieded an encoded string
-func DecodeDetails(detailsString string) map[string]*VisitorDetail {
-	var details map[string]*VisitorDetail
-	_ = json.Unmarshal([]byte(detailsString), &details)
+// CheckHourUpdateForStatistic if it's a new hour action we need renew all session as a new in this hour
+// and remove old record from statistic
+func CheckHourUpdateForStatistic () {
+	currentHour := time.Now().Truncate(time.Hour).Unix()
+	lastHour := time.Now().Add(-time.Hour*60).Truncate(time.Hour).Unix()
 
-	return details
+	if _, present := statistic[currentHour]; !present {
+
+		cartCreatedPersons := make(map[string]bool)
+		for sessionID, addToCartPresent := range visitState {
+			if addToCartPresent {
+				cartCreatedPersons[sessionID] = addToCartPresent
+			}
+		}
+
+		visitState = cartCreatedPersons
+		statistic[currentHour] = new(ActionsMade)
+	}
+
+	for timeIn, _ := range statistic {
+		if timeIn <= lastHour {
+			delete(statistic, timeIn)
+		}
+	}
+
 }

@@ -20,6 +20,7 @@ const (
 	ConstVisitorAddToCart     = 1
 	ConstVisitorCheckout      = 2
 	ConstVisitorSales         = 3
+
 	ConstVisitorOnlineSeconds = 10
 
 	ConstErrorModule = "rts"
@@ -29,12 +30,9 @@ const (
 // Package global variables
 var (
 	referrers             = make(map[string]int) // collects and counts refers from external sites
-	visitorsInfoToday     = new(dbVisitorsRow)   // information on current day site visits
-	visitorsInfoYesterday = new(dbVisitorsRow)   // information on previous day site visits
+	statistic      = make(map[int64]*ActionsMade) 	// information about per hour site activity
 
-	sales       = new(Sales)                        // amount of sales for today (created orders)
-	salesDetail = make(map[string]*SalesDetailData) // sales details on day/hour basis (used for dashboard graphs)
-	topSellers  = new(TopSellers)                   // top sellers information
+	visitState      = make(map[string]bool)			//checks a buying status of visitor by it sessionID
 
 	// OnlineSessions holds session based information about referer type on first visit
 	OnlineSessions = make(map[string]*OnlineReferrer)
@@ -57,42 +55,11 @@ var (
 		"www.mynet.com", "www.ekolay.net", "www.rambler.ru"}
 )
 
-// Visits - unknown purpose structure
-type Visits struct {
-	Data      map[string]map[string]int32
-	Yesterday string
-	Today     string
-}
-
-// VisitorDetail - unknown purpose structure
-type VisitorDetail struct {
-	Time     time.Time
-	Checkout int
-}
-
-// dbVisitorsRow represents database record on site visit activity for a day
-type dbVisitorsRow struct {
-	ID       string    // database record _id
-	Day      time.Time // day when event happened
-	Visitors int       // count site visits
-	Cart     int       // count times product was added to cart
-	Checkout int       // count times checkout acheeved
-	Sales    int       // count of orders visitor made
-	Details  map[string]*VisitorDetail
-}
-
-// Sales represents statistics on created orders for a day
-type Sales struct {
-	lastUpdate int64   // timestamp used to track current day
-	today      int     // today orders made
-	yesterday  int     // yesterday orders made
-	ratio      float64 // % sales for today in compare to yesterday: (today / yesterday)-1
-}
-
-// SalesDetailData holds hour/day detailed information about sales
-type SalesDetailData struct {
-	Data       map[string]int // count of sales for specified in key time
-	lastUpdate int64          // timestamp used to update struct once in a hour
+// ActionsMade contains info of visits, cart create and sales made for a hour
+type ActionsMade struct {
+	Visit 	int       	// count site visits
+	Cart     int       // count times products was added to cart
+	Sales    int       // count of orders visitors made
 }
 
 // TopSellers holds information about best sellers
