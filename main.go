@@ -1,13 +1,3 @@
-// Package "foundation" represents default Ottemo e-commerce product build.
-//
-// This package contains main() function which is the start point of assembled
-// application, as well as this file declares an application components to use
-// by void usage import of them. So, these void import packages are self-init
-// packages are replaceable modules/extension/plugins.
-//
-// Example:
-//   go build github.com/ottemo/foundation
-//   go build -tags mongo github.com/ottemo/foundation
 package main
 
 import (

@@ -1,9 +1,3 @@
-// Package app represents application object.
-//
-// That package contains routines to register callbacks on application start/end,
-// API functions for administrator login, system configuration values, etc.
-//
-// In general this package contains the stuff addressed to system application.
 package app
 
 import (

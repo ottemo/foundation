@@ -1,4 +1,3 @@
-// Package tests represents a set of tests intended to benchmark application
 package tests
 
 import (

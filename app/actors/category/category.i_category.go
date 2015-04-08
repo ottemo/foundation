@@ -57,6 +57,16 @@ func (it *DefaultCategory) GetParent() category.InterfaceCategory {
 	return it.Parent
 }
 
+// GetDescription returns the description of the requested category
+func (it *DefaultCategory) GetDescription() string {
+	return it.Description
+}
+
+// GetImage returns the image of the requested category
+func (it *DefaultCategory) GetImage() string {
+	return it.Image
+}
+
 // AddProduct associates given product with category
 func (it *DefaultCategory) AddProduct(productID string) error {
 

@@ -30,12 +30,12 @@ func (it *DefaultCMSPage) SetIdentifier(newValue string) error {
 
 // GetTitle returns page title
 func (it *DefaultCMSPage) GetTitle() string {
-	return it.Title
+	return it.PageTitle
 }
 
 // SetTitle sets page title value
 func (it *DefaultCMSPage) SetTitle(newValue string) error {
-	it.Title = newValue
+	it.PageTitle = newValue
 	return nil
 }
 
@@ -77,7 +77,7 @@ func (it *DefaultCMSPage) LoadByIdentifier(identifier string) error {
 	it.Identifier = utils.InterfaceToString(record["identifier"])
 	it.Enabled = utils.InterfaceToBool(record["enabled"])
 
-	it.Title = utils.InterfaceToString(record["title"])
+	it.PageTitle = utils.InterfaceToString(record["title"])
 	it.Content = utils.InterfaceToString(record["content"])
 
 	it.CreatedAt = utils.InterfaceToTime(record["created_at"])

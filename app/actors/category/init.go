@@ -33,6 +33,8 @@ func (it *DefaultCategory) setupDB() error {
 	collection.AddColumn("parent_id", db.ConstTypeID, true)
 	collection.AddColumn("path", db.ConstTypeVarchar, true)
 	collection.AddColumn("name", db.ConstTypeVarchar, true)
+	collection.AddColumn("description", db.ConstTypeVarchar, true)
+	collection.AddColumn("image", db.ConstTypeVarchar, true)
 
 	collection, err = db.GetCollection(ConstCollectionNameCategoryProductJunction)
 	if err != nil {

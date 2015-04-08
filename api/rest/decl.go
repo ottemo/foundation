@@ -1,5 +1,3 @@
-// Package rest is a default implementation of InterfaceRestService
-// declared in "github.com/ottemo/foundation/api" package
 package rest
 
 import (

@@ -24,6 +24,10 @@ type InterfaceCategory interface {
 
 	GetParent() InterfaceCategory
 
+	GetDescription() string
+
+	GetImage() string
+
 	GetProductIds() []string
 	GetProductsCollection() product.InterfaceProductCollection
 	GetProducts() []product.InterfaceProduct
@@ -34,6 +38,7 @@ type InterfaceCategory interface {
 	models.InterfaceModel
 	models.InterfaceObject
 	models.InterfaceStorable
+	models.InterfaceMedia
 	models.InterfaceListable
 }
 

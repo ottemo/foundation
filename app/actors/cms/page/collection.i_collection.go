@@ -49,7 +49,7 @@ func (it *DefaultCMSPageCollection) List() ([]models.StructListItem, error) {
 // ListAddExtraAttribute allows to obtain additional attributes from  List() function
 func (it *DefaultCMSPageCollection) ListAddExtraAttribute(attribute string) error {
 
-	if utils.IsAmongStr(attribute, "_id", "id", "enabled", "identifier", "title", "content", "created_at", "updated_at") {
+	if utils.IsAmongStr(attribute, "_id", "id", "enabled", "identifier", "title", "pagetitle", "content", "created_at", "updated_at") {
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
 		} else {

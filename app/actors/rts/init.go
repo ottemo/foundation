@@ -15,6 +15,7 @@ func init() {
 	db.RegisterOnDatabaseStart(setupDB)
 	app.OnAppStart(initListners)
 	app.OnAppStart(initSalesHistory)
+	app.OnAppStart(initStatistic)
 
 	seconds := time.Millisecond * ConstVisitorOnlineSeconds * 1000
 	ticker := time.NewTicker(seconds)
@@ -37,7 +38,7 @@ func initListners() error {
 	env.EventRegisterListener("api.rts.visit", referrerHandler)
 	env.EventRegisterListener("api.rts.visit", visitsHandler)
 	env.EventRegisterListener("api.cart.addToCart", addToCartHandler)
-	env.EventRegisterListener("api.checkout.setPayment", reachedCheckoutHandler)
+	//env.EventRegisterListener("api.checkout.setPayment", reachedCheckoutHandler)
 	env.EventRegisterListener("checkout.success", purchasedHandler)
 	env.EventRegisterListener("checkout.success", salesHandler)
 	env.EventRegisterListener("api.rts.visit", registerVisitorAsOnlineHandler)

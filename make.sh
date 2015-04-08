@@ -55,5 +55,5 @@ fi
 CMD="go get $TAGS $OTTEMOPKG"
 eval $CMD
 
-CMD="go build $TAGS $LDFLAGS $OTTEMOPKG"
+CMD="go build -a $TAGS $LDFLAGS $OTTEMOPKG"
 eval $CMD

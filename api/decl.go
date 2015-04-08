@@ -1,6 +1,3 @@
-// Package api is a set of interfaces representing API endpoint services.
-//
-// (currently only "InterfaceRestService" endpoint interface supported)
 package api
 
 import (

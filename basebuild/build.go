@@ -1,4 +1,3 @@
-// Package basebuild is a standard set of self-initialization packages for Ottemo system
 package basebuild
 
 import (

@@ -21,7 +21,10 @@ func setupAPI() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-
+	err = api.GetRestService().RegisterAPI("impex/import/status", api.ConstRESTOperationGet, restImpexImportStatus)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 	err = api.GetRestService().RegisterAPI("impex/export/:model", api.ConstRESTOperationGet, restImpexExportModel)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -138,10 +141,34 @@ func restImpexExportModel(context api.InterfaceApplicationContext) (interface{},
 	return nil, nil
 }
 
+// WEB REST API for getting status of current import
+func restImpexImportStatus(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	result := make(map[string]interface{})
+
+	result["status"] = "idle"
+
+	if importingFile != nil {
+		result["status"] = "processing"
+		result["name"] = importingFile.name
+		result["size"] = importingFile.size
+
+		if seeker, ok := importingFile.reader.(io.Seeker); ok {
+			if position, err := seeker.Seek(0, 1); err == nil {
+				result["position"] = position
+			}
+		}
+	}
+
+	return result, nil
+}
+
 // WEB REST API used import data to system
 func restImpexImportModel(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	context.SetResponseContentType("text/plain")
+	if importingFile != nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12f978f5-3a90-438b-a3f4-475b34a97457", "Another import is in progres. Currently processing "+importingFile.name)
+	}
 
 	var commandLine string
 	exchangeDict := make(map[string]interface{})
@@ -157,11 +184,21 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 	filesProcessed := 0
 	additionalMessage := ""
 
-	for _, attachedFile := range context.GetRequestFiles() {
+	for fileName, attachedFile := range context.GetRequestFiles() {
+
+		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+
+		if seeker, ok := attachedFile.(io.Seeker); ok {
+			if fileSize, err := seeker.Seek(0, 2); err == nil {
+				importingFile.size = fileSize
+				seeker.Seek(0, 0)
+			}
+		}
+
 		csvReader := csv.NewReader(attachedFile)
 		csvReader.Comma = ','
 
-		err := ImportCSVData(commandLine, exchangeDict, csvReader, context.GetResponseWriter(), false)
+		err := ImportCSVData(commandLine, exchangeDict, csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
 			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
@@ -170,7 +207,9 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 		filesProcessed++
 	}
 
-	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
+	importingFile = nil
+
+	return fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage), nil
 }
 
 // WEB REST API used to test csv file before import
@@ -180,7 +219,17 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 
 	filesProcessed := 0
 	additionalMessage := ""
-	for _, attachedFile := range context.GetRequestFiles() {
+	for fileName, attachedFile := range context.GetRequestFiles() {
+
+		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+
+		if seeker, ok := attachedFile.(io.Seeker); ok {
+			if fileSize, err := seeker.Seek(0, 2); err == nil {
+				importingFile.size = fileSize
+				seeker.Seek(0, 0)
+			}
+		}
+
 		csvReader := csv.NewReader(attachedFile)
 		csvReader.Comma = ','
 
@@ -192,19 +241,35 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 		filesProcessed++
 	}
 
+	importingFile = nil
+
 	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
 }
 
 // WEB REST API used to process csv file script in impex format
 func restImpexImport(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	if importingFile != nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12f978f5-3a90-438b-a3f4-475b34a97888", "Another import is in progres. Currently processing "+importingFile.name)
+	}
+
 	filesProcessed := 0
 	additionalMessage := ""
-	for _, attachedFile := range context.GetRequestFiles() {
+	for fileName, attachedFile := range context.GetRequestFiles() {
+
+		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+
+		if seeker, ok := attachedFile.(io.Seeker); ok {
+			if fileSize, err := seeker.Seek(0, 2); err == nil {
+				importingFile.size = fileSize
+				seeker.Seek(0, 0)
+			}
+		}
+
 		csvReader := csv.NewReader(attachedFile)
 		csvReader.Comma = ','
 
-		err := ImportCSVScript(csvReader, context.GetResponseWriter(), false)
+		err := ImportCSVScript(csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
 			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
@@ -213,7 +278,9 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 		filesProcessed++
 	}
 
-	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
+	importingFile = nil
+
+	return fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage), nil
 }
 
 // WEB REST API to test conversion from csv to json / map[string]interface{}

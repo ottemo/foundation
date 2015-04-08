@@ -242,7 +242,7 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Label:      "Status",
 			Group:      "General",
 			Editors:    "selector",
-			Options:    "pending,canceled,complete",
+			Options:    "new,pending,canceled,complete",
 			Default:    "new",
 		},
 		models.StructAttributeInfo{

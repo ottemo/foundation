@@ -1,5 +1,3 @@
-// Package fsmedia is a default implementation of InterfaceMediaStorage declared in
-// "github.com/ottemo/foundation/media" package
 package fsmedia
 
 import (

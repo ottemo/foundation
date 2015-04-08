@@ -1,5 +1,3 @@
-// Package mongo is a DBEngine implementation of interfaces declared in
-// "github.com/ottemo/foundation/db" package
 package mongo
 
 import (

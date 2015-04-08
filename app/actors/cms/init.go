@@ -7,4 +7,7 @@ import (
 
 	// self-initiabilizable sub-package
 	_ "github.com/ottemo/foundation/app/actors/cms/page"
+
+	// self-initiabilizable sub-package
+	_ "github.com/ottemo/foundation/app/actors/cms/gallery"
 )

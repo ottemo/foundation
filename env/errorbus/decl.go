@@ -1,5 +1,3 @@
-// Package errorbus is a default implementation of InterfaceErrorBus declared in
-// "github.com/ottemo/foundation/env" package
 package errorbus
 
 import (

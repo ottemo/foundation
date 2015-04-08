@@ -1,11 +1,696 @@
 FORMAT: 1A
-HOST: http://foundation.demo.ottemo.io
+HOST: http://dev.ottemo.io:3000
 
 # Ottemo Foundation Server API
 #### Format 1A revision 1
 **Ottemo Foundation Server** is the API Server for the Ottemo eCommerce solution.
 
 NOTE: Some services are RESTful and others are not, expect change with each new release of Ottemo Foundation Server.
+
+
+
+
+
+
+# Group Single Product
+
+## Get Product by ID [/product/{id}]
+### Get Product by ID. Product must be enabled. [GET]
++ Parameters
+
+    + id (string, `5488485b49c43d4283000067`) ... ID of the Product
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": {
+                "_id": "5488485b49c43d4283000067",
+                "brand": "FitBit",
+                "color": ["Slate"],
+                "default_image": "charge_slate_front.png",
+                "description": "Tracks steps, distance, calories burned, floors climbed, active minutes and sleep. Includes Caller ID.",
+                "enabled": true,
+                "name": "Charge",
+                "options": {
+                    "Size": {
+                        "label": "Size",
+                        "options": {
+                            "L": {"label": "L", "order": 3},
+                            "S": {"label": "S", "order": 2},
+                            "XL": {"label": "XL", "order": 4}
+                        },
+                        "order": 1,
+                        "required": true,
+                        "type": "select"
+                    }
+                },
+                "price": 129.95,
+                "related_pids": [],
+                "short_description": "Activity + Sleep Wristband",
+                "size": ["S", "L", "XL"],
+                "sku": "404004",
+                "weight": 0
+            }
+        }
+
+
+## Get List of Product Images [/product/{productID}/media/{mediaType}]
+### Get all product image names [GET]
++ Parameters
+
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+    + mediaType (string, `image`) ... type of media, always use 'image' to get pictures
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                "chargehr_black_front.png",
+                ....
+                "another_image.png",
+                "more_one_image.png"
+            ]
+        }
+
+
+
+
+
+## Get Product Image [/product/{productID}/media/{mediaType}/{mediaName}]
+### Used for image src to display a picture on site [GET]
+
++ Parameters
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+    + mediaType (string, `image`) ... just use 'image'
+    + mediaName (string, `chargehr_black_front.png`) ... name of the file taken from product default image or by /product/{productID}/media/{mediaType}
+
+
++ Response 200 (image/png)
+
+    + Body
+    
+                ‰PNGXXXXXXXXXXXXFZFZGEDHDSRGFEThERGEDFG
+        
+
+
+
+
+## Get Product Image path [/product/{productID}/mediapath/{mediaType}]
+### Used to get path on server where product images are stored.  [GET]
+
++ Parameters
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+    + mediaType (string, `image`) ... just use 'image'
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": "image/Product/5488485c49c43d4283000069/"
+        }
+
+
+
+
+
+
+## Get Product Rating [/product/{productID}/rating]
+### Get product star rating  [GET]
+
++ Parameters
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "_id": "54b6723c49c43d49b3000190",
+                    "product_id": "5488485c49c43d4283000069",
+                    "stars_1": 0,
+                    "stars_2": 0,
+                    "stars_3": 0,
+                    "stars_4": 1,
+                    "stars_5": 0
+                }
+            ]
+        }
+
+
+
+## Get Related Products [/product/:productID/related]
+### Return list of related products  [GET]
+
+
++ Parameters
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "54ddfd1e49ed82e46830f423",
+                    "Name": "[product_3] Product 3",
+                    "Image": "image/Product/54ddfd1e49ed82e46830f423/3.png",
+                    "Desc": "24323dsfds",
+                    "Extra": null
+                },
+                ...
+                {"another product"},
+                {"more one product"}
+            ]
+        }
+
+
+
+
+
+## Get Reviews List [/product/:productID/reviews]
+### Return list of reviews for this product  [GET]
+
+
++ Parameters
+    + productID (string, `5488485c49c43d4283000069`) ... ID of the Product
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "_id": "54b6723c49c43d49b3000191",
+                    "created_at": "2015-01-14T08:42:20.564-05:00",
+                    "product_id": "5488485c49c43d4283000069",
+                    "rating": 4,
+                    "review": "cool",
+                    "username": "vic sil",
+                    "visitor_id": "54b6720649c43d49b300018a"
+                },
+                ....
+                {"another review"},
+                {"more one review"}
+            ]
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Group Product List
+
+
+## Get all products [/products]
+### Return all available products. [GET]
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "5488485b49c43d4283000067",
+                    "Name": "[404004] Charge",
+                    "Image": "image/Product/5488485b49c43d4283000067/charge_slate_front.png",
+                    "Desc": "Activity + Sleep Wristband",
+                    "Extra": null
+                },
+                ...
+                {"and many products here"}
+            ]
+        }
+        
+        
+        
+## Get all products [/products/shop]
+### Return all available products. [GET]
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "_id": "5488485b49c43d4283000067",
+                    "brand": "FitBit",
+                    "color": [ "Slate" ],
+                    "default_image": "image/Product/5488485b49c43d4283000067/charge_slate_front.png",
+                    "description": "Tracks steps, distance, calories burned, floors climbed, active minutes and sleep. Includes Caller ID.",
+                    "enabled": true,
+                    "name": "Charge",
+                    "options": {
+                        "Size": {
+                            "label": "Size",
+                            "options": {
+                                "L": {"label": "L", "order": 3},
+                                "S": {"label": "S","order": 2},
+                                "XL": {"label": "XL","order": 4}
+                            },
+                            "order": 1,
+                            "required": true,
+                            "type": "select"
+                        }
+                    },
+                    "price": 129.95,
+                    "related_pids": [],
+                    "short_description": "Activity + Sleep Wristband",
+                    "size": [ "S", "L", "XL" ],
+                    "sku": "404004",
+                    "weight": 0
+                },
+                ...
+                {"other products here"}
+            ]
+        }  
+        
+
+## Get count of products [/products{?action}]
+### Return count of all available products [GET]
+
++ Parameters
+    + action (optional, string, `count`) ... use for count
+
+
++ Response 201
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": 21
+        }
+        
+
+## Filter Products [/products{?color}]
+### Return count of all available products[GET]
+
+
++ Parameters
+    + color (optional, string, `Red`) ...
+        + Can use here any product attribute, like price, name, weight, etc.
+        + Note that text values are case sensetive, for example "red" is not same as "Red".
+        + Available operators:
+            + nothing means equals, example: url?price=149.95
+            + ">" more than, example url?price=>200
+            + "<" less than
+            + ">=" more or equals
+            + "<=" less or equals
+            + "!=" not equals
+            + "~" like, example: url?brand=~ni
+            + ".." range, example: url?price=1..10
+            + "," enumeration, example: url?color=Red,Black
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "5488486249c43d4283000079",
+                    "Name": "[404153] Flex",
+                    "Image": "image/Product/5488486249c43d4283000079/flex_red_front.png",
+                    "Desc": "Activity + Sleep Wristband",
+                    "Extra": null
+                }
+                ....
+                {"another products"}
+        }
+
+
+
+## Apply limit and offset [/products{?limit}]
+### Apply limit and offset to returned collection[GET]
+
++ Parameters
+    + limit (optional, string, `5,10`)
+        + to have have offset, use first offset then limit separated by comma, ex: url?limit=5,10
+        + to have limit only use  one number, ex: url?limit=10
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "5488485f49c43d4283000071",
+                    "Name": "[404157] Flex",
+                    "Image": "image/Product/5488485f49c43d4283000071/flex_slate_front.png",
+                    "Desc": "Activity + Sleep Wristband",
+                    "Extra": null
+                },
+                ....
+                {"other products"}
+            ]
+        }
+
+
+## Apply sort [/products{?sort}]
+### Sorting returned collection [GET]
+
++ Parameters
+    + sort (optional, string, `^weight`)  sorting parameters
+        + sorting parameters separated by comma, ex: url?sort=price,weight,name
+        + default order is ASC, to use DESC add before attribute "^", ex: url?sort=^price
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "5489e31c49c43d0ec9000029",
+                    "Name": "[321321] TestName",
+                    "Image": "image/Product/5489e31c49c43d0ec9000029/L2.784.4.52.3.jpg",
+                    "Desc": "TestName Short Description",
+                    "Extra": null
+                },
+                ....
+                {"other products"}
+            ]
+        }
+
+
+## Search products [/products{?search}]
+### Search products by all fields [GET]
+
++ Parameters
+    + search (optional, string, `~heart`)  search parameters
+        + text search is not case sensetive, example: url?search=~sometext
+        + for search number use prefixes "<", ">", "..", example: url?search=1..10
+        + for text and number use prefix "><=~"
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "5488485c49c43d4283000069",
+                    "Name": "[404998] Charge HR",
+                    "Image": "image/Product/5488485c49c43d4283000069/chargehr_black_front.png",
+                    "Desc": "Heart Rate + Activity Wristband",
+                    "Extra": null
+                },
+                ....
+                {"other products"}
+            ]
+        }
+
+
+
+## Get available layers [/products/shop/layers{?search}]
+### Show available layers for layered navigation [GET]
+    
+
++ Parameters
+    + search (optional, string, `Nike`)  
+        + This method support all filtering parameters described for /product method.
+        
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": {
+                "brand": [ "Nike" ],
+                "color": [ "Purple", "Gold", "Volt", "Total Crimson", "Pink Foil", "Black", "Slate" ],
+                "size": [ "L", "M", "S", "XL" ]
+            }
+        }
+
+
+
+
+## Get list of product atributes [/products/attributes]
+### Return all attributes applicable to product [GET]
+        
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "Model": "Product",
+                    "Collection": "product",
+                    "Attribute": "name",
+                    "Type": "varchar",
+                    "Label": "Name",
+                    "IsRequired": true,
+                    "IsStatic": true,
+                    "Group": "General",
+                    "Editors": "line_text",
+                    "Options": "",
+                    "Default": "",
+                    "Validators": "",
+                    "IsLayered": false,
+                    "IsPublic": false
+               },
+               {
+                    "Model": "Product",
+                    "Collection": "product",
+                    "Attribute": "brand",
+                    "Type": "text",
+                    "Label": "Brand",
+                    "IsRequired": true,
+                    "IsStatic": false,
+                    "Group": "General",
+                    "Editors": "select",
+                    "Options": "{\"FitBit\":\"FitBit\",\"Nike\":\"Nike\",\"Garmin\":\"Garmin\"}",
+                    "Default": "",
+                    "Validators": "",
+                    "IsLayered": true,
+                    "IsPublic": false
+                },
+                ...
+                {"other attributes"}
+            ]
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Group Categories
+
+
+## Categories list [/categories{?action}]
+### Return all enabled categories [GET]
+
++ Parameters
+    + action (optional, string, ``)  
+        + do not use this parameter to get list of categories
+        + use action=count to get count of categories
+    
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "ID": "548848a049c43d428300008f",
+                    "Name": "Shop",
+                    "Image": "",
+                    "Desc": "",
+                    "Extra": null
+                }
+            ]
+        }
+
+
+## Category attributes [/categories/attributes]
+### Return category attributes [GET]
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "Model": "Category",
+                    "Collection": "category",
+                    "Attribute": "name",
+                    "Type": "text",
+                    "Label": "Name",
+                    "IsRequired": true,
+                    "IsStatic": true,
+                    "Group": "General",
+                    "Editors": "line_text",
+                    "Options": "",
+                    "Default": "",
+                    "Validators": "",
+                    "IsLayered": false,
+                    "IsPublic": false
+                },
+                ....
+                {"other category attributes"}
+            ]
+        }
+
+
+## Category Tree [/categories/tree]
+### Return Category Tree [GET]
+
+
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "id": "548848a049c43d428300008f",
+                    "name": "Shop",
+                     "child": [
+                        {
+                            "id": "548848a049c43d428300008f",
+                            "name": "Shop",
+                             "child": [
+                                {"Level 3 categories... and so on..."}
+                             ]
+                        },
+                        ....
+                        {"Level 2 categories"}
+                     ]
+                },
+                ....
+                {"Level 1 other categories"}
+            ]
+        }
+
+
+
+
+## Category Layers [/category/{categoryID}/layers]
+### Return Category Layers [GET]
+
++ Parameters
+    + categoryID (optional, string, `548848a049c43d428300008f`)  ... ID of category
+    
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": {
+                "brand": [ "FitBit","Nike", "Garmin" ],
+                "color": [ "Slate",  "Black", "Plum", "Violet" ],
+                "size": [ "L", "S", "XL", "M" ]
+            }
+        }
+
+
+## Category Products [/category/{categoryID}/products]
+### Return products from this category [GET]
+
++ Parameters
+    + categoryID (optional, string, `548848a049c43d428300008f`)  ... ID of category
+    
++ Response 200
+
+        {
+            "error": null,
+            "redirect": "",
+            "result": [
+                {
+                    "_id": "5488485b49c43d4283000067",
+                    "brand": "FitBit",
+                    "color": [ "Slate" ],
+                    "default_image": "image/Product/5488485b49c43d4283000067/charge_slate_front.png",
+                    "description": "Tracks steps, distance, calories burned, floors climbed, active minutes and sleep. Includes Caller ID.",
+                    "enabled": true,
+                    "name": "Charge",
+                    "options": {
+                        "Size": {
+                            "label": "Size",
+                            "options": {
+                                "L": { "label": "L", "order": 3 },
+                                "S": { "label": "S", "order": 2 },
+                                "XL": { "label": "XL", "order": 4 }
+                            },
+                            "order": 1,
+                            "required": true,
+                            "type": "select"
+                        }
+                    },
+                    "price": 129.95,
+                    "related_pids": [],
+                    "short_description": "Activity + Sleep Wristband",
+                    "size": [ "S", "L", "XL" ],
+                    "sku": "404004",
+                    "weight": 0
+                },
+                ....
+                {"other products from this category"}
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Group Product API
 All APIs for working with Products and their Attributes
@@ -20,15 +705,6 @@ All APIs for working with Products and their Attributes
 
         { "Update":"with sample of JSON returned" }
 
-## Retrieve Product [/product/get/{id}]
-### Retrieve Product with specified ID [GET]
-+ Request (application/json)
-
-        { "Update":"with sample JSON" }
-
-+ Response 201
-
-        { "Update":"with sample of JSON returned" }
 
 ## Update Product [/product/update/{id}]
 ### Update Product with specified ID [PUT]
@@ -134,24 +810,6 @@ All APIs for working with Products and their Attributes
 
         { "Update":"with sample of JSON returned" }
 
-## Product List [/product/list]
-### Retrieve a List of Products [GET]
-+ Request (application/json)
-
-        { "Update":"with sample JSON" }
-
-+ Response 201
-
-        { "Update":"with sample of JSON returned" }
-
-### Create a List of Products [POST]
-+ Request (application/json)
-
-        { "Update":"with sample JSON" }
-
-+ Response 201
-
-        { "Update":"with sample of JSON returned" }
 
 ## Product Count [/product/count]
 ### Retrieve a List of Products [GET]

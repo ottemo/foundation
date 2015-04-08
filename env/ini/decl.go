@@ -1,5 +1,3 @@
-// Package ini is a default implementation of InterfaceIniConfig declared in
-// "github.com/ottemo/foundation/env" package
 package ini
 
 import (

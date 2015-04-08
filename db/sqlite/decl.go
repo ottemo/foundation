@@ -1,5 +1,3 @@
-// Package sqlite is a SQLite implementation of interfaces declared in
-// "github.com/ottemo/foundation/db" package
 package sqlite
 
 import (

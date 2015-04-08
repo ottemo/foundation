@@ -1,5 +1,3 @@
-// Package logger is a default implementation of InterfaceLogger declared in
-// "github.com/ottemo/foundation/env" package
 package logger
 
 // Package global variables

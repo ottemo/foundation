@@ -1,4 +1,3 @@
-// Package env is a set of interfaces to access system environment services
 package env
 
 import (

@@ -181,6 +181,11 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
+	visitorModel, err := visitor.LoadVisitorByID(visitorID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	if err := api.ValidateAdminRights(context); err != nil {
 		if visitor.GetCurrentVisitorID(context) != visitorID {
 			return nil, env.ErrorDispatch(err)
@@ -188,24 +193,35 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 		if _, present := requestData["is_admin"]; present {
 			return nil, env.ErrorDispatch(err)
 		}
+		// check when not admin try to change password, validate old password
+		if _, present := requestData["password"]; present {
+			if oldPass, present := requestData["old_password"]; present {
+				if ok := visitorModel.CheckPassword(utils.InterfaceToString(oldPass)); !ok {
+					return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "wrong password")
+				}
+				delete(requestData, "old_password")
+			} else {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "please specify old password")
+			}
+		}
+		// When admin user change password from storefront we will validate it
+	} else if oldPass, present := requestData["old_password"]; present {
+		if ok := visitorModel.CheckPassword(utils.InterfaceToString(oldPass)); !ok {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "wrong password")
+		}
+		delete(requestData, "old_password")
 	}
 
 	// update operation
 	//-----------------
-	visitorModel, err := visitor.LoadVisitorByID(visitorID)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	for attribute, value := range requestData {
-		err := visitorModel.Set(attribute, value)
-		if err != nil {
+		if err := visitorModel.Set(attribute, value); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 	}
 
-	err = visitorModel.Save()
-	if err != nil {
+	if err = visitorModel.Save(); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -557,7 +573,7 @@ func APIInvalidateVisitor(context api.InterfaceApplicationContext) (interface{},
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorEmail := context.GetRequestArgument("email")
+	visitorEmail := strings.ToLower(context.GetRequestArgument("email"))
 
 	err = visitorModel.LoadByEmail(visitorEmail)
 	if err != nil {
@@ -587,7 +603,7 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorEmail := context.GetRequestArgument("email")
+	visitorEmail := strings.ToLower(context.GetRequestArgument("email"))
 
 	err = visitorModel.LoadByEmail(visitorEmail)
 	if err != nil {
@@ -662,7 +678,7 @@ func APILogin(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "02b0583b-28c3-4072-afe2-f392a163ed87", "email and/or password were not specified")
 	}
 
-	requestLogin := utils.InterfaceToString(requestData["email"])
+	requestLogin := strings.ToLower(utils.InterfaceToString(requestData["email"]))
 	requestPassword := utils.InterfaceToString(requestData["password"])
 
 	if !strings.Contains(requestLogin, "@") {

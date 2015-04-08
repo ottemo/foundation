@@ -1,5 +1,3 @@
-// Package eventbus is a default implementation of InterfaceEventBus declared in
-// "github.com/ottemo/foundation/env" package
 package eventbus
 
 import (

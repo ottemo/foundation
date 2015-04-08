@@ -4,6 +4,7 @@ package impex
 import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"io"
 	"regexp"
 )
 
@@ -54,7 +55,11 @@ var (
 	// set of service import commands
 	importCmd = make(map[string]InterfaceImpexImportCmd)
 
+	// set of models implementing InterfaceImpexModel
 	impexModels = make(map[string]InterfaceImpexModel)
+
+	// currently importing file information
+	importingFile *StructImportingFile
 )
 
 // ImportCmdAttributeAdd is a implementer of InterfaceImpexImportCmd
@@ -116,4 +121,11 @@ type ImportCmdStore struct {
 //  - command allows to make record field alias to object attribute value
 type ImportCmdAlias struct {
 	aliases map[string]string
+}
+
+// StructImportingFile holds currently importing file information
+type StructImportingFile struct {
+	reader io.Reader
+	size   int64
+	name   string
 }

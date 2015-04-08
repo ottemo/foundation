@@ -8,43 +8,6 @@ import (
 	"io"
 )
 
-// crypt.go providing an centralized way for bi-directional crypt of secure data,
-//   - note that SetKey() makes change for entire application,
-// 	   so, if you want local effect you should restore it after usage
-//   - normally application should take care about SetKey() on init and you should not touch it
-//   - if SetKey() was not called during application init then default hard-coded key will be used
-//
-//   Example 1:
-//     source := "just test"
-//     encoded := utils.EncryptStringBase64(source)
-//     decoded := utils.DecryptStringBase64(encoded)
-//     println( "'" + source + "' --encode--> '" + encoded + "' --decode--> '" +  decoded + "'")
-//
-//   Output:
-//     'just test' --encode--> 'Ddryse1yNL5z' --decode--> 'just test'
-//
-//
-//   Example 2:
-//     sampleData := []byte("It is just a sample.")
-//
-//     outFile, _ := os.OpenFile("sample.txt", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-//     defer outFile.Close()
-//     writer, _ := utils.EncryptWriter(outFile)
-//     writer.Write(sampleData)
-//
-//     inFile, _ := os.OpenFile("sample.txt", os.O_RDONLY, 0600)
-//     defer inFile.Close()
-//     reader, _ := utils.EncryptReader(inFile)
-//     readBuffer := make([]byte, 10)
-//
-//     reader.Read(readBuffer)
-//     println(string(readBuffer))
-//     reader.Read(readBuffer)
-//     println(string(readBuffer))
-//
-//   Output:
-//     It is just
-//      a sample.
 var (
 	cryptKey []byte // a key used in crypto/cipher algorithm
 )

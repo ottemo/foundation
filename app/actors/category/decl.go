@@ -21,11 +21,13 @@ const (
 type DefaultCategory struct {
 	id string
 
-	Enabled    bool
-	Name       string
-	Parent     category.InterfaceCategory
-	Path       string
-	ProductIds []string
+	Enabled     bool
+	Name        string
+	Description string
+	Image       string
+	Parent      category.InterfaceCategory
+	Path        string
+	ProductIds  []string
 }
 
 // DefaultCategoryCollection is a default implementer of InterfaceCategoryCollection

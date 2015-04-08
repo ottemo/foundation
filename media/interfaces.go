@@ -1,4 +1,3 @@
-// Package media represents interfaces to access media storage services
 package media
 
 import (

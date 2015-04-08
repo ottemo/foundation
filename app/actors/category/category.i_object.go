@@ -52,6 +52,12 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "parent":
 		return it.GetParent()
 
+	case "image":
+		return it.GetImage()
+
+	case "decription":
+		return it.GetDescription()
+
 	case "products":
 		var result []map[string]interface{}
 
@@ -128,6 +134,12 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 		// path should be changed as well
 		it.updatePath()
 
+	case "image":
+		it.Image = utils.InterfaceToString(value)
+
+	case "decription":
+		it.Description = utils.InterfaceToString(value)
+
 	case "products":
 		switch typedValue := value.(type) {
 
@@ -177,6 +189,9 @@ func (it *DefaultCategory) ToHashMap() map[string]interface{} {
 	result["_id"] = it.GetID()
 
 	result["enabled"] = it.Get("enabled")
+	result["description"] = it.Get("description")
+
+	result["image"] = it.Get("image")
 
 	result["parent_id"] = it.Get("parent_id")
 	result["name"] = it.Get("name")
@@ -239,6 +254,32 @@ func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
 			Label:      "Parent",
 			Group:      "General",
 			Editors:    "category_selector",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "description",
+			Type:       db.ConstTypeText,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Description",
+			Group:      "General",
+			Editors:    "multiline_text",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "image",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Image",
+			Group:      "General",
+			Editors:    "image_selector",
 			Options:    "",
 			Default:    "",
 		},

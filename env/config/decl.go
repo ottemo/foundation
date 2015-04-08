@@ -1,5 +1,3 @@
-// Package config is a default implementation of InterfaceConfig declared in
-// "github.com/ottemo/foundation/env" package
 package config
 
 import (

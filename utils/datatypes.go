@@ -392,7 +392,7 @@ func InterfaceToTime(value interface{}) time.Time {
 
 		dateFormats := []string{"02/01/2006", "02/01/06", "2006-01-02", "2006-Jan-_2", "_2 Jan 2006", "01.02.2006"}
 		timeFormats := []string{"", " 3:04PM", " 15:04", " 15:04:05", "T15:04:05"}
-		zoneFormats := []string{"", " MST", " -0700", "Z07:00"}
+		zoneFormats := []string{"",  " MST-07", " MST", " MST-0700", " -0700", "Z07:00"}
 
 		for _, zoneFormat := range zoneFormats {
 			for _, timeFormat := range timeFormats {
@@ -407,12 +407,12 @@ func InterfaceToTime(value interface{}) time.Time {
 		}
 	}
 
-	return time.Time{} //Unix(0, 0)
+	return (time.Time{})
 }
 
 // IsZeroTime checks time for zero value
 func IsZeroTime(value time.Time) bool {
-	zeroTime := time.Unix(0, 0)
+	zeroTime := (time.Time{})
 	return value == zeroTime
 }
 
@@ -498,7 +498,8 @@ func StringToInterface(value string) interface{} {
 			return result
 		}
 	}
-	if result := InterfaceToTime(trimmedValue); result != time.Unix(0, 0) {
+	if result := InterfaceToTime(trimmedValue); result != (time.Time{}) {
+		println(trimmedValue)
 		return result
 	}
 

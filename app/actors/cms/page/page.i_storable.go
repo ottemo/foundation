@@ -19,7 +19,7 @@ func (it *DefaultCMSPage) SetID(newID string) error {
 	return nil
 }
 
-// Load loads cms block information from DB
+// Load loads cms page information from DB
 func (it *DefaultCMSPage) Load(id string) error {
 	collection, err := db.GetCollection(ConstCmsPageCollectionName)
 	if err != nil {
@@ -36,7 +36,7 @@ func (it *DefaultCMSPage) Load(id string) error {
 	it.Identifier = utils.InterfaceToString(dbValues["identifier"])
 	it.Enabled = utils.InterfaceToBool(dbValues["enabled"])
 
-	it.Title = utils.InterfaceToString(dbValues["title"])
+	it.PageTitle = utils.InterfaceToString(dbValues["title"])
 	it.Content = utils.InterfaceToString(dbValues["content"])
 
 	it.CreatedAt = utils.InterfaceToTime(dbValues["created_at"])
@@ -82,8 +82,10 @@ func (it *DefaultCMSPage) Save() error {
 	storingValues["content"] = it.GetContent()
 
 	if it.CreatedAt.IsZero() {
-		storingValues["created_at"] = currentTime
+		it.CreatedAt = currentTime
 	}
+
+	storingValues["created_at"] = it.CreatedAt
 	storingValues["updated_at"] = currentTime
 
 	newID, err := collection.Save(storingValues)
