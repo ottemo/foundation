@@ -65,6 +65,11 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 				checkoutOrder.SetStatus(order.ConstOrderStatusPending)
 				checkoutOrder.Set("payment_info", requestData)
 
+				err = checkoutOrder.Save()
+				if err != nil {
+					return nil, err
+				}
+
 				err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
 				if err != nil {
 					return nil, err
@@ -161,6 +166,11 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 			if checkoutOrder != nil {
 				checkoutOrder.SetStatus(order.ConstOrderStatusPending)
 				checkoutOrder.Set("payment_info", requestData)
+
+				err = checkoutOrder.Save()
+				if err != nil {
+					return nil, err
+				}
 
 				err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
 				if err != nil {

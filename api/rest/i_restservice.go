@@ -75,9 +75,11 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		case strings.Contains(contentType, "json"):
 			newContent := map[string]interface{}{}
 
-			buf := make([]byte, req.ContentLength)
-			req.Body.Read(buf)
-			json.Unmarshal(buf, &newContent)
+			body, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+			json.Unmarshal(body, &newContent)
 
 			content = newContent
 
@@ -111,16 +113,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 			content = newContent
 
 		default:
-			var body []byte
-
-			if req.ContentLength > 0 {
-				body = make([]byte, req.ContentLength)
-				req.Body.Read(body)
-			} else {
-				body, _ = ioutil.ReadAll(req.Body)
-			}
-
-			content = string(body)
+			content = req.Body
 		}
 
 		// Handling request
@@ -270,8 +263,8 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 	responseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type, Cookie, X-Referer, Content-Length, Accept-Encoding, X-CSRF-Token")
 
 	responseWriter.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
-	responseWriter.Header().Set("Pragma", "no-cache") // HTTP 1.0.
-	responseWriter.Header().Set("Expires", "0") // Proxies
+	responseWriter.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
+	responseWriter.Header().Set("Expires", "0")                                         // Proxies
 
 	if request.Method == "GET" || request.Method == "POST" || request.Method == "PUT" || request.Method == "DELETE" {
 

@@ -161,6 +161,11 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 		checkoutOrder.SetStatus(order.ConstOrderStatusPending)
 		checkoutOrder.Set("payment_info", completeData)
 
+		err = checkoutOrder.Save()
+		if err != nil {
+			return nil, err
+		}
+
 		err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
 		if err != nil {
 			return nil, err

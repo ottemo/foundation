@@ -355,7 +355,7 @@ func initStatistic() error {
 	return nil
 }
 
-// SaveStatisticsData make save a statistic data row to databese from last updated record in database to current hour
+// SaveStatisticsData make save a statistic data row to database from last updated record in database to current hour
 func SaveStatisticsData() error {
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
@@ -370,10 +370,13 @@ func SaveStatisticsData() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+	if len(dbRecord) == 0 {
+		return nil
+	}
 
 	lastRecordTime := utils.InterfaceToTime(dbRecord[0]["day"])
 
-		// delete last record from database to prevent dublicates
+	// delete last record from database to prevent duplicates
 	if _, present := statistic[lastRecordTime.Unix()]; present {
 		visitorInfoCollection.ClearFilters()
 		visitorInfoCollection.ClearSort()
@@ -403,8 +406,8 @@ func SaveStatisticsData() error {
 	dateTo := time.Now().Add(time.Hour).Truncate(time.Hour)
 	dateFrom := lastRecordTime.Truncate(time.Hour)
 
-	// save data to databese for every hour that data for present in statistic
-	// begining from last database record to current time
+	// save data to database for every hour that data for present in statistic
+	// beginning from last database record to current time
 	for dateFrom.Before(dateTo) {
 		if value, present := statistic[dateFrom.Unix()]; present {
 			visitorInfoRow["day"] = dateFrom.Unix()
@@ -412,7 +415,7 @@ func SaveStatisticsData() error {
 			visitorInfoRow["cart"] = value.Cart
 			visitorInfoRow["sales"] = value.Sales
 
-			// save data to databese
+			// save data to database
 			_, err = visitorInfoCollection.Save(visitorInfoRow)
 			if err != nil {
 				return env.ErrorDispatch(err)
@@ -427,9 +430,9 @@ func SaveStatisticsData() error {
 
 // CheckHourUpdateForStatistic if it's a new hour action we need renew all session as a new in this hour
 // and remove old record from statistic
-func CheckHourUpdateForStatistic () {
+func CheckHourUpdateForStatistic() {
 	currentHour := time.Now().Truncate(time.Hour).Unix()
-	lastHour := time.Now().Add(-time.Hour*60).Truncate(time.Hour).Unix()
+	lastHour := time.Now().Add(-time.Hour * 60).Truncate(time.Hour).Unix()
 
 	if _, present := statistic[currentHour]; !present {
 
@@ -444,7 +447,7 @@ func CheckHourUpdateForStatistic () {
 		statistic[currentHour] = new(ActionsMade)
 	}
 
-	for timeIn, _ := range statistic {
+	for timeIn := range statistic {
 		if timeIn <= lastHour {
 			delete(statistic, timeIn)
 		}
