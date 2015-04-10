@@ -1,15 +1,16 @@
 package app
 
 import (
-	"github.com/ottemo/foundation/env"
 	"time"
+
+	"github.com/ottemo/foundation/env"
 )
 
 // Package global constants
 const (
 	ConstVersionMajor = 0
 	ConstVersionMinor = 9
-	ConstSprintNumber = 6
+	ConstSprintNumber = 7
 
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"

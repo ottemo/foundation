@@ -1,11 +1,11 @@
 #!/bin/bash
 
 WORKDIR=`pwd`
-OTTTEMODIR="$(cd "$(dirname "$0")" && pwd)"
+OTTEMODIR="$(cd "$(dirname "$0")" && pwd)"
 OTTEMOPKG="github.com/ottemo/foundation"
 
-BRANCH=`git -C $OTTTEMODIR rev-parse --abbrev-ref HEAD`
-BUILD=`git -C $OTTTEMODIR rev-list origin/develop --count`
+BRANCH=`git -C $OTTEMODIR rev-parse --abbrev-ref HEAD`
+BUILD=`git -C $OTTEMODIR rev-list origin/develop --count`
 DATE=`date`
 TAGS=""
 
@@ -44,7 +44,7 @@ LDFLAGS+="\""
 
 if [ -z "$GOPATH" ]; then 
 REPLACE="/src/$OTTEMOPKG"
-export GOPATH="${OTTTEMODIR/$REPLACE/}"
+export GOPATH="${OTTEMODIR/$REPLACE/}"
 fi
 
 
