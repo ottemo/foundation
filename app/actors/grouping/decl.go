@@ -11,5 +11,5 @@ const (
 	ConstErrorModule = "grouping"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
-	ConstGroupingConfigPath = "general.grouping.rules"
+	ConstGroupingConfigPath = "general.stock.grouprules"
 )
