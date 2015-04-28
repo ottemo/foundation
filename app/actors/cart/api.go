@@ -218,8 +218,5 @@ func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, er
 	}
 	currentCart.Save()
 
-	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart}
-	env.Event("api.cart.updatedCart", eventData)
-
 	return "ok", nil
 }
