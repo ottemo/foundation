@@ -11,20 +11,19 @@ func updateCartHandler(event string, eventData map[string]interface{}) bool {
 	configVAl := env.GetConfig()
 	rulesValue := configVAl.GetValue(ConstGroupingConfigPath)
 
-	rules, err := utils.DecodeJSONToArray(rulesValue)
+	rules, err := utils.DecodeJSONToStringKeyMap(rulesValue)
 	if err != nil {
 		env.LogError(err)
-	}
-	if rules == nil {
-		return true
+		return false
 	}
 
-	rulesGroup := utils.InterfaceToArray(rules[0])
-	rulesInto := utils.InterfaceToArray(rules[1])
+	rulesGroup := utils.InterfaceToArray(rules["group"])
+	rulesInto := utils.InterfaceToArray(rules["into"])
 
 	currentCart := eventData["cart"].(cart.InterfaceCart)
 	cartChanged := false
 
+	// check all rules and apply them before final version of cart will be created
 	for {
 		// Go thru all group products and apply possible combination
 		for index, group := range rulesGroup {
