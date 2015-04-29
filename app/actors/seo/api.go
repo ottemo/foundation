@@ -11,6 +11,7 @@ import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"net/http"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -31,6 +32,11 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = api.GetRestService().RegisterAPI("seo/page/:url", api.ConstRESTOperationGet, APIGetSEOPage)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -64,6 +70,36 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	records, err := collection.Load()
 
 	return records, env.ErrorDispatch(err)
+}
+
+// APIGetSEOPage returns SEO related page
+//   - SEO url should be specified in "url" argument
+func APIGetSEOPage(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	request := context.GetRequest()
+	response := context.GetResponse()
+	httpRequest, ok1 := request.(*http.Request)
+	httpResponse, ok2 := response.(http.ResponseWriter)
+	if !ok1 || !ok2 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cca9af2f-c321-4f41-b4ff-a95f9a994051", "works only for HTTP request")
+	}
+
+	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
+	records, err := collection.Load()
+
+	if len(records) == 0 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "294605fa-0de3-48bf-a354-d453bb65bbd0", "URL not found")
+	}
+
+	httpRequest.URL.Parse(utils.InterfaceToString(records[0]["rewrite"]))
+	api.GetRestService().ServeHTTP(httpResponse, httpRequest)
+
+	return []byte{}, env.ErrorDispatch(err)
 }
 
 // APIGetSEOItem returns SEO item for a specified url
