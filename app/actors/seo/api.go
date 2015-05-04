@@ -76,10 +76,8 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 //   - SEO url should be specified in "url" argument
 func APIGetSEOPage(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	request := context.GetRequest()
-	response := context.GetResponse()
-	httpRequest, ok1 := request.(*http.Request)
-	httpResponse, ok2 := response.(http.ResponseWriter)
+	httpRequest, ok1 := context.GetRequest().(*http.Request)
+	httpResponse, ok2 := context.GetResponse().(http.ResponseWriter)
 	if !ok1 || !ok2 {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cca9af2f-c321-4f41-b4ff-a95f9a994051", "works only for HTTP request")
 	}
@@ -96,7 +94,25 @@ func APIGetSEOPage(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "294605fa-0de3-48bf-a354-d453bb65bbd0", "URL not found")
 	}
 
-	httpRequest.URL.Parse(utils.InterfaceToString(records[0]["rewrite"]))
+
+	newURL := httpRequest.URL.Host
+	seoType := utils.InterfaceToString(records[0]["type"])
+	switch seoType {
+	case "product":
+		newURL += "/product/" + utils.InterfaceToString(records[0]["rewrite"])
+	case "page", "block":
+		newURL += "/cms/" + seoType + "/" + utils.InterfaceToString(records[0]["rewrite"])
+	case "external":
+		newURL = utils.InterfaceToString(records[0]["rewrite"])
+	default:
+		newURL += "/" + seoType + "/" + utils.InterfaceToString(records[0]["rewrite"])
+	}
+
+	httpRequest.URL, err = httpRequest.URL.Parse(newURL)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	api.GetRestService().ServeHTTP(httpResponse, httpRequest)
 
 	return []byte{}, env.ErrorDispatch(err)
