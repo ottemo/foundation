@@ -10,6 +10,7 @@ import (
 
 // Package global constants
 const (
+	ConstSEOTypeCategory                       = "category"
 	ConstCollectionNameCategory                = "category"
 	ConstCollectionNameCategoryProductJunction = "category_product"
 

@@ -10,6 +10,7 @@ import (
 
 // Package global constants
 const (
+	ConstSEOTypeCMSPage        = "page"
 	ConstCmsPageCollectionName = "cms_page"
 
 	ConstErrorModule = "cms/page"

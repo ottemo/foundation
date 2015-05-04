@@ -74,6 +74,11 @@ func (it *DefaultProduct) Save() error {
 	if _, present := valuesToStore["qty"]; present {
 		delete(valuesToStore, "qty")
 	}
+
+	if _, present := valuesToStore["seo"]; present {
+		delete(valuesToStore, "seo")
+	}
+
 	newID, err := collection.Save(valuesToStore)
 	if err != nil {
 		return env.ErrorDispatch(err)

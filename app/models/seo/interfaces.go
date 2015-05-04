@@ -13,21 +13,13 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelModel
 )
 
-// InterfaceOrderItem represents interface to access business layer implementation of SEO item object
+// InterfaceSEOEngine represents interface to access business layer implementation of SEO engine
 type InterfaceSEOEngine interface {
-	GetObjectSEO(seoType string, objectID string)
-	SetObjectSEO(seoType string, objectID string, seoItem InterfaceSEOItem) error
-
-	GetUrlSEO(urlPattern string) []InterfaceSEOItem
-
-
+	GetSEO(seoType string, objectID string, urlPattern string) []InterfaceSEOItem
 }
 
-// InterfaceOrderItem represents interface to access business layer implementation of SEO item object
+// InterfaceSEOItem represents interface to access business layer implementation of SEO item object
 type InterfaceSEOItem interface {
-	GetID() string
-	SetID(newID string) error
-
 	GetObjectID() string
 	SetObjectID(objectID string) error
 

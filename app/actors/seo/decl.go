@@ -15,3 +15,19 @@ const (
 	ConstErrorModule = "seo"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 )
+
+// DefaultSEOEngine is a default implementer of InterfaceSEOEngine
+type DefaultSEOEngine struct{}
+
+// DefaultSEOItem is a default implementer of InterfaceSEOItem
+type DefaultSEOItem struct {
+	id string
+
+	URL     string
+	Type    string
+	Rewrite string
+
+	Title           string
+	MetaKeywords    string
+	MetaDescription string
+}

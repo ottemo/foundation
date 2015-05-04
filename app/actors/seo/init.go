@@ -2,12 +2,22 @@ package seo
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 )
 
 // init makes package self-initialization routine
 func init() {
+	seoItemInstance := new(DefaultSEOItem)
+	var _ seo.InterfaceSEOItem = seoItemInstance
+	models.RegisterModel(seo.ConstModelNameSEOItem, seoItemInstance)
+
+	seoEngineInstance := new(DefaultSEOEngine)
+	var _ seo.InterfaceSEOEngine = seoEngineInstance
+	seo.RegisterSEOEngine(seoEngineInstance)
+
 	api.RegisterOnRestServiceStart(setupAPI)
 	db.RegisterOnDatabaseStart(setupDB)
 }

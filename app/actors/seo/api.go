@@ -8,10 +8,12 @@ import (
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"net/http"
+	"strings"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -36,7 +38,7 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("seo/page/:url", api.ConstRESTOperationGet, APIGetSEOPage)
+	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOPath)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -72,9 +74,22 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	return records, env.ErrorDispatch(err)
 }
 
-// APIGetSEOPage returns SEO related page
+// APIGetSEOPath returns SEO related page
 //   - SEO url should be specified in "url" argument
-func APIGetSEOPage(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIGetSEOPath(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	specifiedURL := ""
+	for _, argName := range []string{"p", "path", "Path", "u", "url", "URL", "Url"} {
+		specifiedURL = context.GetRequestArgument(argName)
+		if specifiedURL != "" {
+			break
+		}
+	}
+
+	specifiedURL = strings.Trim(specifiedURL, "/")
+	if specifiedURL == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "64c4b98c-a6b6-400b-b0a3-41c2b9e239d8", "URL was not specified")
+	}
 
 	httpRequest, ok1 := context.GetRequest().(*http.Request)
 	httpResponse, ok2 := context.GetResponse().(http.ResponseWriter)
@@ -87,25 +102,25 @@ func APIGetSEOPage(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
+	collection.AddFilter("url", "=", specifiedURL)
 	records, err := collection.Load()
 
 	if len(records) == 0 {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "294605fa-0de3-48bf-a354-d453bb65bbd0", "URL not found")
 	}
 
-
-	newURL := httpRequest.URL.Host
+	rewrite := utils.InterfaceToString(records[0]["rewrite"])
 	seoType := utils.InterfaceToString(records[0]["type"])
-	switch seoType {
-	case "product":
-		newURL += "/product/" + utils.InterfaceToString(records[0]["rewrite"])
-	case "page", "block":
-		newURL += "/cms/" + seoType + "/" + utils.InterfaceToString(records[0]["rewrite"])
-	case "external":
-		newURL = utils.InterfaceToString(records[0]["rewrite"])
-	default:
-		newURL += "/" + seoType + "/" + utils.InterfaceToString(records[0]["rewrite"])
+
+	newURL := ""
+	if strings.HasPrefix(rewrite, "http") {
+		newURL = rewrite
+	} else {
+		newURL = strings.Trim(seo.GetSEOTypeAPIPath(seoType), "/")
+		if !strings.HasPrefix(newURL, "http") {
+			newURL = httpRequest.URL.Host + "/" + newURL
+		}
+		newURL += "/" + rewrite
 	}
 
 	httpRequest.URL, err = httpRequest.URL.Parse(newURL)

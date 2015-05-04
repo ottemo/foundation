@@ -5,6 +5,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -37,6 +38,8 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 		return it.Options
 	case "related_pids":
 		return it.GetRelatedProductIds()
+	case "seo":
+		return seo.GetSEO(ConstSEOTypeProduct, it.GetID(), "")
 	}
 
 	return it.CustomAttributes.Get(attribute)
@@ -123,6 +126,8 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3c402ecc-7c7d-49ab-879e-16af5f4661ed", "unsupported 'related_pids' attribute value")
 			}
 		}
+	case "seo":
+		// no actions on this (just to prevent error)
 
 	default:
 		err := it.CustomAttributes.Set(attribute, value)
@@ -170,6 +175,8 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	if product.GetRegisteredStock() != nil {
 		result["qty"] = it.Get("qty")
 	}
+
+	result["seo"] = it.Get("seo")
 
 	return result
 }

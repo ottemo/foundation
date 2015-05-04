@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -23,6 +24,8 @@ func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
 
 	utils.RegisterTemplateFunction("page", pageTemplateDirective)
+
+	seo.RegisterSEOType(ConstSEOTypeCMSPage, "cms/page/", cms.ConstModelNameCMSPage)
 }
 
 // setupDB prepares system database for package usage

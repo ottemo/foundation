@@ -10,6 +10,7 @@ import (
 
 // Package global constants
 const (
+	ConstSEOTypeProduct        = "product"
 	ConstCollectionNameProduct = "product"
 
 	ConstErrorModule = "product"

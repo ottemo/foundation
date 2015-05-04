@@ -5,6 +5,14 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
+// GetSEO shortcut to registered engine method
+func GetSEO(seoType string, objectID string, urlPattern string) []InterfaceSEOItem {
+	if seoEngine := GetRegisteredSEOEngine(); seoEngine != nil {
+		return seoEngine.GetSEO(seoType, objectID, urlPattern)
+	}
+	return []InterfaceSEOItem{}
+}
+
 // GetSEOItemModel retrieves current InterfaceSEOItem model implementation
 func GetSEOItemModel() (InterfaceSEOItem, error) {
 	model, err := models.GetModel(ConstModelNameSEOItem)
