@@ -132,6 +132,9 @@ func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error
 	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "pid": pid, "qty": qty, "options": options}
 	env.Event("api.cart.addToCart", eventData)
 
+	eventData = map[string]interface{}{"session": context.GetSession(), "cart": currentCart}
+	env.Event("api.cart.updatedCart", eventData)
+
 	return "ok", nil
 }
 
@@ -181,6 +184,9 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	currentCart.Save()
+
+	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart}
+	env.Event("api.cart.updatedCart", eventData)
 
 	return "ok", nil
 }
