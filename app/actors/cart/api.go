@@ -130,10 +130,10 @@ func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error
 	currentCart.Save()
 
 	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "pid": pid, "qty": qty, "options": options}
-	env.Event("api.cart.addToCart", eventData)
+	env.Event(ConstEventAPIAdd, eventData)
 
-	eventData = map[string]interface{}{"session": context.GetSession(), "cart": currentCart}
-	env.Event("api.cart.updatedCart", eventData)
+	eventData = map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "idx": nil, "pid": pid, "qty": qty, "options": options}
+	env.Event(ConstEventAPIUpdate, eventData)
 
 	return "ok", nil
 }
@@ -171,10 +171,16 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 	found := false
 	cartItems := currentCart.GetItems()
 
+	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "idx": itemIdx, "qty": qty}
+
 	for _, cartItem := range cartItems {
 		if cartItem.GetIdx() == itemIdx {
 			cartItem.SetQty(qty)
 			found = true
+
+			eventData["pid"] = cartItem.GetProductID()
+			eventData["options"] = cartItem.GetOptions()
+
 			break
 		}
 	}
@@ -185,8 +191,7 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 
 	currentCart.Save()
 
-	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart}
-	env.Event("api.cart.updatedCart", eventData)
+	env.Event(ConstEventAPIUpdate, eventData)
 
 	return "ok", nil
 }
@@ -217,6 +222,9 @@ func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 	currentCart.Save()
+
+	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "idx": itemIdx, "qty": 0}
+	env.Event(ConstEventAPIUpdate, eventData)
 
 	return "ok", nil
 }

@@ -8,36 +8,16 @@ import (
 
 // updateCartHandler listening for cart update, on update thru over cart items grouping them by rules defined in config
 func updateCartHandler(event string, eventData map[string]interface{}) bool {
-	configVAl := env.GetConfig()
-	rulesValue := configVAl.GetValue(ConstGroupingConfigPath)
-
-	rules, err := utils.DecodeJSONToStringKeyMap(rulesValue)
-	if err != nil {
-		env.LogError(err)
-		return false
-	}
-
-	rulesGroup := utils.InterfaceToArray(rules["group"])
-	rulesInto := utils.InterfaceToArray(rules["into"])
 
 	currentCart := eventData["cart"].(cart.InterfaceCart)
-	cartChanged := false
 
-	// check all rules and apply them before final version of cart will be created
-	for {
-		// Go thru all group products and apply possible combination
-		for index, group := range rulesGroup {
-			ruleInto := utils.InterfaceToArray(rulesInto[index])
+	for _, ruleValue := range currentRules {
+		ruleElement := utils.InterfaceToMap(ruleValue)
 
-			if ruleSetUsage := getGroupQty(currentCart.GetItems(), utils.InterfaceToArray(group)); ruleSetUsage > 0 {
-				currentCart = applyGroupRule(currentCart, utils.InterfaceToArray(group), ruleInto, ruleSetUsage)
-				cartChanged = true
-			}
-		}
-		if !cartChanged {
-			break
-		}
-		cartChanged = false
+		ruleGroup := utils.InterfaceToArray(ruleElement["group"])
+		ruleInto := utils.InterfaceToArray(ruleElement["into"])
+
+		applyGroupRule(currentCart, ruleGroup, ruleInto)
 	}
 
 	if err := currentCart.Save(); err != nil {
@@ -47,71 +27,96 @@ func updateCartHandler(event string, eventData map[string]interface{}) bool {
 	return true
 }
 
-// getGroupQty check cartItems for presence of product from one rule of grouping
-// and calculate possible multiplier for it
-func getGroupQty(currentCartItems []cart.InterfaceCartItem, groupProducts []interface{}) int {
-	productsInCart := make(map[string]map[string]interface{})
-	ruleMultiplier := 999
+// getApplyTimesCount returns count of times grouping rule could be applied to cart
+func getApplyTimesCount(currentCart cart.InterfaceCart, groupProductsArray []interface{}) int {
+	ruleMultiplier := 0 // minimal possible amount
 
-	for _, cartItem := range currentCartItems {
-		productsInCart[cartItem.GetProductID()] = map[string]interface{}{"qty": cartItem.GetQty(), "options": cartItem.GetOptions()}
-	}
+	// loop over grouping rule items
+	for _, groupProduct := range groupProductsArray {
+		groupProductElement := utils.InterfaceToMap(groupProduct)
 
-	for _, groupProduct := range groupProducts {
-		groupProduct := utils.InterfaceToMap(groupProduct)
+		// decoding rule product specification
+		groupProductID := utils.InterfaceToString(groupProductElement["pid"])
+		groupProductQty := utils.InterfaceToInt(groupProductElement["qty"])
+		groupProductOptions := make(map[string]interface{})
+		if optionsValue, present := groupProductElement["options"]; present {
+			groupProductOptions = utils.InterfaceToMap(optionsValue)
+		}
 
-		if value, present := productsInCart[utils.InterfaceToString(groupProduct["pid"])]; present {
-			productMultiplier := int(utils.InterfaceToInt(value["qty"]) / utils.InterfaceToInt(groupProduct["qty"]))
-			optionsApplly := true
+		// looking for match among cart items
+		cartItemFoundFlag := false
+		for _, cartItem := range currentCart.GetItems() {
+			if groupProductID == cartItem.GetProductID() && utils.MatchMapAValuesToMapB(groupProductOptions, cartItem.GetOptions()) {
+				possibleAppliesCount := cartItem.GetQty() / groupProductQty
 
-			if groupProduct["options"] != nil && len(utils.InterfaceToMap(groupProduct["options"])) != 0 {
-				optionsApplly = utils.MatchMapAValuesToMapB(utils.InterfaceToMap(groupProduct["options"]), utils.InterfaceToMap(value["options"]))
-			}
-
-			if productMultiplier >= 1 && optionsApplly {
-				if productMultiplier < ruleMultiplier {
-					ruleMultiplier = productMultiplier
+				// determination of minimal possible amount
+				if possibleAppliesCount > 0 {
+					if ruleMultiplier == 0 || possibleAppliesCount < ruleMultiplier {
+						ruleMultiplier = possibleAppliesCount
+					}
+					cartItemFoundFlag = true
+				} else {
+					return 0
 				}
-			} else {
-				return 0
 			}
-		} else {
+		}
+		if !cartItemFoundFlag {
 			return 0
 		}
 	}
 	return ruleMultiplier
 }
 
-// applyGroupRule removes products in gruop rule with multiplier and add products from into rule
-func applyGroupRule(currentCart cart.InterfaceCart, groupProducts, intoProducts []interface{}, multiplier int) cart.InterfaceCart {
+// applyGroupRule applies grouping rule to current cart (changing cart items)
+func applyGroupRule(currentCart cart.InterfaceCart, groupProductsArray []interface{}, intoProductsArray []interface{}) {
 
-	for _, cartItem := range currentCart.GetItems() {
-		productCartID := cartItem.GetProductID()
+	// checking how many times rule could be applied
+	ruleMultiplier := getApplyTimesCount(currentCart, groupProductsArray)
+	if ruleMultiplier > 0 {
 
-		for _, product := range groupProducts {
-			product := utils.InterfaceToMap(product)
-			productID := utils.InterfaceToString(product["pid"])
+		// modifying current cart with removing items from rule group key element
+		for _, groupProductValue := range groupProductsArray {
+			groupProductElement := utils.InterfaceToMap(groupProductValue)
 
-			if productID == productCartID {
-				if productNewQty := cartItem.GetQty() - utils.InterfaceToInt(product["qty"])*multiplier; productNewQty == 0 {
-					currentCart.RemoveItem(cartItem.GetIdx())
-				} else {
-					cartItem.SetQty(productNewQty)
+			groupProductID := utils.InterfaceToString(groupProductElement["pid"])
+			groupProductQty := utils.InterfaceToInt(groupProductElement["qty"])
+			groupProductOptions := make(map[string]interface{})
+			if optionsValue, present := groupProductElement["options"]; present {
+				groupProductOptions = utils.InterfaceToMap(optionsValue)
+			}
+
+			for _, cartItem := range currentCart.GetItems() {
+				qtyToReduce := ruleMultiplier * groupProductQty
+				if groupProductID == cartItem.GetProductID() && utils.MatchMapAValuesToMapB(groupProductOptions, cartItem.GetOptions()) {
+
+					if cartProductNewQty := cartItem.GetQty() - qtyToReduce; cartProductNewQty > 0 {
+						cartItem.SetQty(cartProductNewQty)
+						break
+					} else {
+						if cartProductNewQty == 0 {
+							currentCart.RemoveItem(cartItem.GetIdx())
+							break
+						}
+					}
 				}
-				break
+			}
+		}
+
+		// modifying current cart with increasing items from rule into key element
+		for _, intoProductValue := range intoProductsArray {
+			intoProductElement := utils.InterfaceToMap(intoProductValue)
+
+			intoProductPID := utils.InterfaceToString(intoProductElement["pid"])
+			intoProductQty := utils.InterfaceToInt(intoProductElement["qty"])
+			intoProductOptions := make(map[string]interface{})
+			if optionsValue, present := intoProductElement["options"]; present {
+				intoProductOptions = utils.InterfaceToMap(optionsValue)
+			}
+
+			_, err := currentCart.AddItem(intoProductPID, intoProductQty*ruleMultiplier, intoProductOptions)
+			if err != nil {
+				env.LogError(err)
 			}
 		}
 	}
-
-	for _, product := range intoProducts {
-		product := utils.InterfaceToMap(product)
-		options := utils.InterfaceToMap(product["options"])
-
-		if _, err := currentCart.AddItem(utils.InterfaceToString(product["pid"]), (utils.InterfaceToInt(product["qty"]) * multiplier), options); err != nil {
-			env.LogError(err)
-		}
-
-	}
-
-	return currentCart
 }
