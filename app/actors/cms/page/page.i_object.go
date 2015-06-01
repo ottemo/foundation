@@ -20,7 +20,7 @@ func (it *DefaultCMSPage) Get(attribute string) interface{} {
 		return it.GetEnabled()
 	case "identifier":
 		return it.GetIdentifier()
-	case "pagetitle":
+	case "title":
 		return it.GetTitle()
 	case "content":
 		return it.GetContent()
@@ -44,7 +44,7 @@ func (it *DefaultCMSPage) Set(attribute string, value interface{}) error {
 		return it.SetEnabled(utils.InterfaceToBool(value))
 	case "identifier":
 		return it.SetIdentifier(utils.InterfaceToString(value))
-	case "pagetitle":
+	case "title":
 		return it.SetTitle(utils.InterfaceToString(value))
 	case "content":
 		return it.SetContent(utils.InterfaceToString(value))
@@ -66,9 +66,6 @@ func (it *DefaultCMSPage) FromHashMap(input map[string]interface{}) error {
 		if err := it.Set(attribute, value); err != nil {
 			env.ErrorDispatch(err)
 		}
-		if attribute == "title" {
-			it.Set("pagetitle", value)
-		}
 	}
 
 	return nil
@@ -82,7 +79,7 @@ func (it *DefaultCMSPage) ToHashMap() map[string]interface{} {
 	result["_id"] = it.GetID()
 	result["enabled"] = it.Get("enabled")
 	result["identifier"] = it.Get("identifier")
-	result["pagetitle"] = it.Get("pagetitle")
+	result["title"] = it.Get("title")
 	result["content"] = it.Get("content")
 	result["created_at"] = it.Get("created_at")
 	result["updated_at"] = it.Get("updated_at")
@@ -137,7 +134,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 		models.StructAttributeInfo{
 			Model:      cms.ConstModelNameCMSPage,
 			Collection: ConstCmsPageCollectionName,
-			Attribute:  "pagetitle",
+			Attribute:  "title",
 			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,

@@ -230,14 +230,19 @@ func (it *DefaultCheckout) GetDiscounts() (float64, []checkout.StructDiscount) {
 	return amount, it.Discounts
 }
 
-// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
-func (it *DefaultCheckout) GetGrandTotal() float64 {
-	var amount float64
-
+// GetSubtotal returns subtotal total for current checkout
+func (it *DefaultCheckout) GetSubtotal() float64 {
 	currentCart := it.GetCart()
 	if currentCart != nil {
-		amount += currentCart.GetSubtotal()
+		return currentCart.GetSubtotal()
 	}
+
+	return 0
+}
+
+// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
+func (it *DefaultCheckout) GetGrandTotal() float64 {
+	amount := it.GetSubtotal()
 
 	if shippingRate := it.GetShippingRate(); shippingRate != nil {
 		amount += shippingRate.Price
@@ -382,11 +387,14 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	checkoutOrder.Set("payment_method", it.GetPaymentMethod().GetCode())
 	checkoutOrder.Set("shipping_method", it.GetShippingMethod().GetCode()+"/"+it.GetShippingRate().Code)
 
-	discountAmount, _ := it.GetDiscounts()
-	taxAmount, _ := it.GetTaxes()
-
+	discountAmount, discounts := it.GetDiscounts()
 	checkoutOrder.Set("discount", discountAmount)
+	checkoutOrder.Set("discounts", discounts)
+
+	taxAmount, taxes := it.GetTaxes()
 	checkoutOrder.Set("tax_amount", taxAmount)
+	checkoutOrder.Set("taxes", taxes)
+
 	checkoutOrder.Set("shipping_amount", it.GetShippingRate().Price)
 
 	generateDescriptionFlag := false

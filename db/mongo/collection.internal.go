@@ -14,7 +14,13 @@ import (
 func (it *DBCollection) convertValueToType(columnType string, value interface{}) interface{} {
 
 	switch typedValue := value.(type) {
-	case string:
+	case []string:
+		result := make([]interface{}, len(typedValue))
+		for idx, listValue := range typedValue {
+			result[idx] = it.convertValueToType(columnType, listValue)
+		}
+		value = result
+	default:
 		switch {
 		case columnType == "string" || columnType == "text" || strings.Contains(columnType, "char"):
 			return utils.InterfaceToString(value)
@@ -27,12 +33,6 @@ func (it *DBCollection) convertValueToType(columnType string, value interface{})
 		case strings.Contains(columnType, "time") || strings.Contains(columnType, "date"):
 			return utils.InterfaceToTime(value)
 		}
-	case []string:
-		result := make([]interface{}, len(typedValue))
-		for idx, listValue := range typedValue {
-			result[idx] = it.convertValueToType(columnType, listValue)
-		}
-		value = result
 	}
 
 	return value

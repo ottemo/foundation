@@ -55,7 +55,7 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "image":
 		return it.GetImage()
 
-	case "decription":
+	case "description":
 		return it.GetDescription()
 
 	case "products":
@@ -137,7 +137,7 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 	case "image":
 		it.Image = utils.InterfaceToString(value)
 
-	case "decription":
+	case "description":
 		it.Description = utils.InterfaceToString(value)
 
 	case "products":

@@ -1,0 +1,30 @@
+language: go
+go:
+    - 1.4
+env:
+    global:
+        - PROJECT=Foundation HIPCHAT_ROOM=Foundation
+        - secure: JePvX8e49vPPWRLagd9lvuwV8wRBUD1EDkHnANJ8bTzfnDiAPBgqrgocliz7KR6F5ZPHBAvRkrIa6ZP1PVLdC/LeOzoojFyPzU7iiKxkatT2+Ry+QKnH603UGJzIfui1bLQ/eZT2D8wOjMggs4z8DXH62HCmzl+ovhboU1XBYRBuYVMZBKKN/2kcz8LVTZ0BP9jLLMJ5xHb9PDOX7fwBREnjn0dN2yy6uNpz9t7rKJCxNf4uk7+M6AHrryU4mEHpEfu9wbUhMGve5Del78YcZfc5PMDtmKqvamUDICOMCzHRFdl3kpkNsr72ynoZ3s0Vus/3cH9hShCfHNacVk4xQA==
+before_install:
+    - shippable_retry sudo apt-get update
+    - shippable_retry sudo apt-get install -y bzr 
+    - export GOPATH=$HOME/workspace
+    - export PATH=$PATH:$GOPATH/bin
+
+install:
+    - cd $GOPATH/src/github.com/ottemo/foundation
+    - go get -t
+    - go get -t gopkg.in/mgo.v2 && go get -t github.com/Pallinder/go-randomdata && go get -t github.com/drhodes/golorem
+    - go get -t github.com/mxk/go-sqlite/sqlite3
+    - go build 
+
+script:
+    - go version
+    - go test -v ./...
+
+after_failure:
+    - python hipchat_notifier.py --project $PROJECT --room $HIPCHAT_ROOM --token $HIPCHAT_TOKEN
+
+after_success:
+    - python hipchat_notifier.py --project $PROJECT --room $HIPCHAT_ROOM --token $HIPCHAT_TOKEN -s
+

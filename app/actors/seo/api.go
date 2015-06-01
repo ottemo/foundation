@@ -39,6 +39,10 @@ func setupAPI() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+	err = api.GetRestService().RegisterAPI("seo/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	err = api.GetRestService().RegisterAPI("seo/sitemap", api.ConstRESTOperationGet, APIGenerateSitemap)
 	if err != nil {
@@ -66,6 +70,32 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	return records, env.ErrorDispatch(err)
 }
 
+// APIListSEOItemsAlt returns a list registered SEO records
+func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// If you give us a url to match we are only going to return one item
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for key := range requestData {
+		switch key {
+		case "url":
+			collection.AddFilter("url", "=", context.GetRequestArgument("url"))
+		}
+	}
+
+	records, err := collection.Load()
+
+	return records, env.ErrorDispatch(err)
+}
+
 // APIGetSEOItem returns SEO item for a specified url
 //   - SEO url should be specified in "url" argument
 func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -77,6 +107,20 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 
 	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
 	records, err := collection.Load()
+
+	return records, env.ErrorDispatch(err)
+}
+
+// APIGetSEOItemByID returns SEO item for a specified id
+func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	id := context.GetRequestArgument("id")
+	records, err := collection.LoadByID(id)
 
 	return records, env.ErrorDispatch(err)
 }

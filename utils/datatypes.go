@@ -235,7 +235,55 @@ func InterfaceToBool(value interface{}) bool {
 	}
 }
 
-// InterfaceToArray converts interface{} to map[string]interface{}
+// InterfaceToStringArray converts interface{} to []string
+func InterfaceToStringArray(value interface{}) []string {
+	var result []string
+
+	switch typedValue := value.(type) {
+	case []string:
+		return typedValue
+
+	case []interface{}:
+		result = make([]string, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = InterfaceToString(value)
+		}
+	case []int:
+		result = make([]string, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = InterfaceToString(value)
+		}
+	case []int64:
+		result = make([]string, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = InterfaceToString(value)
+		}
+	case []float64:
+		result = make([]string, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = InterfaceToString(value)
+		}
+
+	case string:
+		jsonArray, err := DecodeJSONToArray(typedValue)
+		if err == nil {
+			return InterfaceToStringArray(jsonArray)
+		}
+
+		splitValues := strings.Split(typedValue, ",")
+		result = make([]string, len(typedValue))
+		for idx, value := range splitValues {
+			result[idx] = strings.Trim(value, " \t\n")
+		}
+
+	default:
+		result = append(result, InterfaceToString(value))
+	}
+
+	return result
+}
+
+// InterfaceToArray converts interface{} to []interface{}
 func InterfaceToArray(value interface{}) []interface{} {
 	var result []interface{}
 
@@ -392,7 +440,7 @@ func InterfaceToTime(value interface{}) time.Time {
 
 		dateFormats := []string{"02/01/2006", "02/01/06", "2006-01-02", "2006-Jan-_2", "_2 Jan 2006", "01.02.2006"}
 		timeFormats := []string{"", " 3:04PM", " 15:04", " 15:04:05", "T15:04:05"}
-		zoneFormats := []string{"",  " MST-07", " MST", " MST-0700", " -0700", "Z07:00"}
+		zoneFormats := []string{"", " MST-07", " MST", " MST-0700", " -0700", "Z07:00"}
 
 		for _, zoneFormat := range zoneFormats {
 			for _, timeFormat := range timeFormats {

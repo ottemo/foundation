@@ -8,6 +8,7 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
 )
 
 // SendOrderConfirmationMail sends an order confirmation email

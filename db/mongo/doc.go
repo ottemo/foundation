@@ -10,4 +10,3 @@ MongoDB is the only database that harnesses the innovations of NoSQL (flexibilit
 on the foundation of relational databases (expressive query language, secondary indexes, strong consistency).
 */
 package mongo
-

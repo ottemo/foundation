@@ -47,7 +47,7 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	loginID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMLogin))
 	sequence := fmt.Sprintf("%d", rand.Intn(999)+1)
 	timeStamp := fmt.Sprintf("%d", time.Now().Unix())
-	amount := fmt.Sprintf("%0.0f", orderInstance.GetGrandTotal())
+	amount := fmt.Sprintf("%.2f", orderInstance.GetGrandTotal())
 	transactionKey := []byte(utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMKey)))
 
 	hmacEncoder := hmac.New(md5.New, transactionKey)
@@ -113,6 +113,8 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	}
 	htmlText += "<input type='submit' value='Submit' />"
 	htmlText += "</form>"
+
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "FORM: "+htmlText)
 
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
 		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+

@@ -43,7 +43,7 @@ func GetDashboardURL(path string) string {
 // GetStorefrontURL returns url related to storefront server
 func GetStorefrontURL(path string) string {
 	baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathStorefrontURL))
-	return strings.TrimRight(baseURL, "#/") + "/#/" + path
+	return strings.TrimRight(baseURL, "/") + "/" + path
 }
 
 // GetFoundationURL returns url related to foundation server

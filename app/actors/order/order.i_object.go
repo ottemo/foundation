@@ -61,6 +61,12 @@ func (it *DefaultOrder) Get(attribute string) interface{} {
 	case "grand_total":
 		return it.GrandTotal
 
+	case "taxes":
+		return it.Taxes
+
+	case "discounts":
+		return it.Discounts
+
 	case "created_at":
 		return it.CreatedAt
 
@@ -134,6 +140,38 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 	case "grand_total":
 		it.GrandTotal = utils.InterfaceToFloat64(value)
 
+	case "taxes":
+		arrayValue := utils.InterfaceToArray(value)
+		for _, arrayItem := range arrayValue {
+			mapValue := utils.InterfaceToMap(arrayItem)
+			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+				taxRate := order.StructTaxRate{
+					Name:   utils.InterfaceToString(mapValue["Name"]),
+					Code:   utils.InterfaceToString(mapValue["Code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
+
+				if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
+					it.Taxes = append(it.Taxes, taxRate)
+				}
+			}
+		}
+
+	case "discounts":
+		arrayValue := utils.InterfaceToArray(value)
+		for _, arrayItem := range arrayValue {
+			mapValue := utils.InterfaceToMap(arrayItem)
+			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+				discount := order.StructDiscount{
+					Name:   utils.InterfaceToString(mapValue["Name"]),
+					Code:   utils.InterfaceToString(mapValue["Code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
+
+				if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
+					it.Discounts = append(it.Discounts, discount)
+				}
+			}
+		}
+
 	case "created_at":
 		it.CreatedAt = utils.InterfaceToTime(value)
 
@@ -192,6 +230,9 @@ func (it *DefaultOrder) ToHashMap() map[string]interface{} {
 	result["tax_amount"] = it.Get("tax_amount")
 	result["shipping_amount"] = it.Get("shipping_amount")
 	result["grand_total"] = it.Get("grand_total")
+
+	result["taxes"] = it.Get("taxes")
+	result["discounts"] = it.Get("discounts")
 
 	result["created_at"] = it.Get("created_at")
 	result["updated_at"] = it.Get("updated_at")
@@ -406,6 +447,32 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 			Validators: "numeric positive",
+		},
+		models.StructAttributeInfo{
+			Model:      order.ConstModelNameOrder,
+			Collection: ConstCollectionNameOrder,
+			Attribute:  "Taxes",
+			Type:       db.ConstTypeJSON,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Taxes",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      order.ConstModelNameOrder,
+			Collection: ConstCollectionNameOrder,
+			Attribute:  "Discounts",
+			Type:       db.ConstTypeJSON,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Discounts",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
 		},
 		models.StructAttributeInfo{
 			Model:      order.ConstModelNameOrder,

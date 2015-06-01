@@ -177,9 +177,19 @@ func (it *DefaultOrder) GetDiscountAmount() float64 {
 	return it.Discount
 }
 
+// GetDiscountAmount returns discount amount applied to order
+func (it *DefaultOrder) GetDiscounts() []order.StructDiscount {
+	return it.Discounts
+}
+
 // GetTaxAmount returns tax amount applied to order
 func (it *DefaultOrder) GetTaxAmount() float64 {
 	return it.TaxAmount
+}
+
+// GetTaxAmount returns tax amount applied to order
+func (it *DefaultOrder) GetTaxes() []order.StructTaxRate {
+	return it.Taxes
 }
 
 // GetShippingAmount returns order shipping cost
@@ -240,14 +250,6 @@ func (it *DefaultOrder) SetStatus(newStatus string) error {
 		}
 
 	} else {
-		// checking order's incrementID, if not set - assigning new one
-		if newStatus != order.ConstOrderStatusNew && it.GetIncrementID() == "" {
-			err = it.NewIncrementID()
-			if err != nil {
-				return env.ErrorDispatch(err)
-			}
-			it.Save()
-		}
 
 		// taking items from stock
 		if oldStatus == order.ConstOrderStatusCancelled || oldStatus == "" {
@@ -288,10 +290,21 @@ func (it *DefaultOrder) Proceed() error {
 		}
 	}
 
+	// checking order's incrementID, if not set - assigning new one
+	if it.GetIncrementID() == "" {
+		err = it.NewIncrementID()
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
+
 	err = it.Save()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+
+	eventData := map[string]interface{}{"order": it}
+	env.Event("order.proceed", eventData)
 
 	return nil
 }
@@ -330,6 +343,9 @@ func (it *DefaultOrder) Rollback() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+
+	eventData := map[string]interface{}{"order": it}
+	env.Event("order.rollback", eventData)
 
 	return nil
 }

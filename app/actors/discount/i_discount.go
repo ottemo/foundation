@@ -25,11 +25,12 @@ func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.Interface
 
 	// checking session for applied coupon codes
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
-		if appliedCodes, ok := currentSession.Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok && len(appliedCodes) > 0 {
 
+		appliedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
+		if len(appliedCodes) > 0 {
 			// getting order information will use in calculations
-			discountableAmount := checkoutInstance.GetGrandTotal()
-			grandTotalAmount := checkoutInstance.GetGrandTotal()
+			discountableAmount := checkoutInstance.GetSubtotal()
+			subtotalAmount := checkoutInstance.GetSubtotal()
 
 			// loading information about applied discounts
 			collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
@@ -74,7 +75,7 @@ func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.Interface
 						discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
 						discountPercent := utils.InterfaceToFloat64(discountCoupon["percent"])
 
-						discountAmount = utils.RoundPrice(discountAmount) + utils.RoundPrice(grandTotalAmount/100*discountPercent)
+						discountAmount = utils.RoundPrice(discountAmount) + utils.RoundPrice(subtotalAmount/100*discountPercent)
 
 						if discountableAmount > discountAmount {
 							discountableAmount -= discountAmount

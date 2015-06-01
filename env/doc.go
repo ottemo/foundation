@@ -12,4 +12,3 @@ For a meantime package consists of:
   - logger
 */
 package env
-

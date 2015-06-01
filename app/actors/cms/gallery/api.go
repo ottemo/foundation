@@ -1,10 +1,11 @@
 package gallery
 
 import (
+	"io/ioutil"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
-	"io/ioutil"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -43,7 +44,7 @@ func setupAPI() error {
 // APIGetGalleryPath returns relative path to gallery library
 //   - product id, media type must be specified in "productID" and "mediaType" arguments
 func APIGetGalleryPath(context api.InterfaceApplicationContext) (interface{}, error) {
-	
+
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {
 		return "", env.ErrorDispatch(err)

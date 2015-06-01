@@ -85,7 +85,8 @@ func (it *DBCollection) Save(Item map[string]interface{}) (string, error) {
 	sort.Strings(keysList)
 
 	for _, key := range keysList {
-		bsonDocument = append(bsonDocument, bson.DocElem{Name: key, Value: Item[key]})
+		convertedValue := it.convertValueToType(it.GetColumnType(key), Item[key])
+		bsonDocument = append(bsonDocument, bson.DocElem{Name: key, Value: convertedValue})
 	}
 
 	// saving document to DB
@@ -153,6 +154,7 @@ func (it *DBCollection) AddStaticFilter(ColumnName string, Operator string, Valu
 
 // AddFilter adds selection filter to current collection object
 func (it *DBCollection) AddFilter(ColumnName string, Operator string, Value interface{}) error {
+	Value = it.convertValueToType(it.GetColumnType(ColumnName), Value)
 	err := it.updateFilterGroup(ConstFilterGroupDefault, ColumnName, Operator, Value)
 	if err != nil {
 		return err

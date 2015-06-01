@@ -33,6 +33,7 @@ type InterfaceCheckout interface {
 	GetTaxes() (float64, []StructTaxRate)
 	GetDiscounts() (float64, []StructDiscount)
 
+	GetSubtotal() float64
 	GetGrandTotal() float64
 
 	SetCart(checkoutCart cart.InterfaceCart) error

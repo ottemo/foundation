@@ -36,7 +36,7 @@ func (it *DefaultCMSPage) Load(id string) error {
 	it.Identifier = utils.InterfaceToString(dbValues["identifier"])
 	it.Enabled = utils.InterfaceToBool(dbValues["enabled"])
 
-	it.PageTitle = utils.InterfaceToString(dbValues["title"])
+	it.Title = utils.InterfaceToString(dbValues["title"])
 	it.Content = utils.InterfaceToString(dbValues["content"])
 
 	it.CreatedAt = utils.InterfaceToTime(dbValues["created_at"])

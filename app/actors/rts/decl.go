@@ -12,16 +12,15 @@ const (
 	ConstCollectionNameRTSSalesHistory = "rts_sales_history"
 	ConstCollectionNameRTSSales        = "rts_sales"
 	ConstCollectionNameRTSVisitors     = "rts_visitors"
+	ConstCollectionNameRTSReferrals    = "rts_referrals"
 
 	ConstReferrerTypeDirect = 0
 	ConstReferrerTypeSite   = 1
 	ConstReferrerTypeSearch = 2
 
-	ConstVisitorAddToCart     = 1
-	ConstVisitorCheckout      = 2
-	ConstVisitorSales         = 3
-
 	ConstVisitorOnlineSeconds = 10
+
+	ConstTimeDay = time.Hour * 24
 
 	ConstErrorModule = "rts"
 	ConstErrorLevel  = env.ConstErrorLevelActor
@@ -29,10 +28,11 @@ const (
 
 // Package global variables
 var (
-	referrers             = make(map[string]int) // collects and counts refers from external sites
-	statistic      = make(map[int64]*ActionsMade) 	// information about per hour site activity
+	referrers = make(map[string]int)         // collects and counts refers from external sites
+	statistic = make(map[int64]*ActionsMade) // information about per hour site activity
 
-	visitState      = make(map[string]bool)			//checks a buying status of visitor by it sessionID
+	lastUpdate = time.Now()            // last update timer for day reset
+	visitState = make(map[string]bool) // reflects session state: 1) not present - new visit, 2) false - addToCart not happened, 3) true - addToCart happened
 
 	// OnlineSessions holds session based information about referer type on first visit
 	OnlineSessions = make(map[string]*OnlineReferrer)
@@ -57,15 +57,11 @@ var (
 
 // ActionsMade contains info of visits, cart create and sales made for a hour
 type ActionsMade struct {
-	Visit 	int       	// count site visits
-	Cart     int       // count times products was added to cart
-	Sales    int       // count of orders visitors made
-}
-
-// TopSellers holds information about best sellers
-type TopSellers struct {
-	Data       map[string]*SellerInfo // product id based map holds best sellers
-	lastUpdate int64                  // timestamp used to update struct once in a hour
+	Visit       int     // count site visits
+	Cart        int     // count times products was added to cart
+	Sales       int     // count of orders visitors made
+	TotalVisits int     // total visits count
+	SalesAmount float64 // count sales
 }
 
 // SellerInfo represents particular product in TopSellers struct

@@ -45,13 +45,11 @@ func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, er
 				return nil, env.ErrorDispatch(err)
 			}
 
-			err = csvWriter.Write([]string{"Code", "Country", "State", "Zip", "Rate"})
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
 			context.SetResponseContentType("text/csv")
 			context.SetResponseSetting("Content-disposition", "attachment;filename=tax_rates.csv")
+
+			csvWriter.Write([]string{"Code", "Country", "State", "Zip", "Rate"})
+			csvWriter.Flush()
 
 			for _, record := range records {
 				csvWriter.Write([]string{

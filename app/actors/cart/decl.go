@@ -15,6 +15,9 @@ const (
 
 	ConstErrorModule = "cart"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstEventAPIAdd    = "api.cart.addToCart"
+	ConstEventAPIUpdate = "api.cart.update"
 )
 
 // DefaultCart is a default implementer of InterfaceCart

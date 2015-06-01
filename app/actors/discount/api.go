@@ -45,10 +45,7 @@ func APIApplyDiscount(context api.InterfaceApplicationContext) (interface{}, err
 	couponCode := context.GetRequestArgument("coupon")
 
 	// getting applied coupons array for current session
-	var appliedCoupons []string
-	if sessionValue, ok := context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
-		appliedCoupons = sessionValue
-	}
+	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes))
 
 	// checking if coupon was already applied
 	if utils.IsInArray(couponCode, appliedCoupons) {
@@ -122,7 +119,8 @@ func APINeglectDiscount(context api.InterfaceApplicationContext) (interface{}, e
 		return "ok", nil
 	}
 
-	if appliedCoupons, ok := context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes).([]string); ok {
+	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes))
+	if len(appliedCoupons) > 0 {
 		var newAppliedCoupons []string
 		for _, value := range appliedCoupons {
 			if value != couponCode {

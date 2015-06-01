@@ -23,7 +23,7 @@ type DefaultCMSPage struct {
 	Enabled    bool
 	Identifier string
 
-	PageTitle   string
+	Title   string
 	Content string
 
 	CreatedAt time.Time
