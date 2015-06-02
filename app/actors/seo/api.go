@@ -39,7 +39,7 @@ func setupAPI() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
+	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
