@@ -33,10 +33,36 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 			visitorMap["email"] = checkoutOrder.Get("customer_email")
 		}
 
+		orderMap := checkoutOrder.ToHashMap()
+		var orderItems []map[string]interface{}
+
+		for _, item := range checkoutOrder.GetItems() {
+			options := make(map[string]interface{})
+
+			for _, optionKeys := range item.GetOptions() {
+				optionMap := utils.InterfaceToMap(optionKeys)
+				options[utils.InterfaceToString(optionMap["label"])] = optionMap["value"]
+			}
+			orderItems = append(orderItems, map[string]interface{}{
+				"name":    item.GetName(),
+				"options": options,
+				"sku":     item.GetSku(),
+				"qty":     item.GetQty(),
+				"price":   item.GetPrice()})
+		}
+
+		orderMap["items"] = orderItems
+		orderMap["payment_method_title"] = it.GetPaymentMethod().GetName()
+		orderMap["shipping_method_title"] = it.GetShippingMethod().GetName()
+
+		customInfo := make(map[string]interface{})
+		customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
+
 		confirmationEmail, err := utils.TextTemplate(confirmationEmail,
 			map[string]interface{}{
-				"Order":   checkoutOrder.ToHashMap(),
+				"Order":   orderMap,
 				"Visitor": visitorMap,
+				"Info":    customInfo,
 			})
 		if err != nil {
 			return env.ErrorDispatch(err)

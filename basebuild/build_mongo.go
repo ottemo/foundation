@@ -1,4 +1,4 @@
-// +build mongo
+// +build !sqlite
 
 package basebuild
 

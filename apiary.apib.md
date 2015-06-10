@@ -147,13 +147,110 @@ app/actors/category/api.go
 ## app/actors/rts/api.go
 
 - [POST]     rts/visit
-- [GET]      rts/referrers
 - [GET]      rts/visits
+
+    ```
+    {
+      "error": null,
+      "redirect": "",
+      "result": {
+        "total": {
+          "today": 100,
+          "yesterday": 200,
+          "week": 900
+        },
+        "unique": {
+          "today": 10,
+          "yesterday": 20,
+          "week": 90
+        }
+      }
+    }
+    ```
+
 - [GET]      rts/visits/detail/:from/:to
-- [GET]      rts/conversion
+
+    ```
+    {
+      "error": null,
+      "redirect": "",
+      "result": [
+        [1431734400, 0],
+        [1431820800, 0],
+        [1431907200, 0],
+        [1431993600, 0],
+        [1432080000, 29],
+        [1432166400, 60],
+        [1432252800, 38]
+      ]
+    }
+    ```
+
 - [GET]      rts/sales
+
+    ```
+    {
+      "error": null,
+      "redirect": "",
+      "result": {
+        "sales": {
+          "today": 5050.50,
+          "yesterday": 20100.00,
+          "week": 800300.00
+        },
+        "orders": {
+          "today": 100,
+          "yesterday": 200,
+          "week": 900
+        }
+      }
+    }
+    ```
+
 - [GET]      rts/sales/detail/:from/:to
+
+    ```
+    {
+      "error": null,
+      "redirect": "",
+      "result": [
+        [1431734400, 1],
+        [1431820800, 12],
+        [1431907200, 23],
+        [1431993600, 34],
+        [1432080000, 29],
+        [1432166400, 60],
+        [1432252800, 38]
+      ]
+    }
+    ```
+
 - [GET]      rts/bestsellers
+
+    ```
+    {
+      "error": null,
+      "redirect": "",
+      "result": [
+        {
+          "count": 67,
+          "image": "image/Product/5488485b49c43d4283000067/charge_slate_front.png",
+          "name": "Charge",
+          "pid": "5488485b49c43d4283000067"
+        },
+        {
+          "count": 56,
+          "image": "image/Product/5488485d49c43d428300006b/chargehr_plum_front.png",
+          "name": "Charge HR",
+          "pid": "5488485d49c43d428300006b"
+        }
+        // ... returns 10 products
+      ]
+    }
+    ```
+
+- [GET]      rts/referrers
+- [GET]      rts/conversion
 - [GET]      rts/visits/realtime
 
 ## app/actors/cart/api.go

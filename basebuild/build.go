@@ -23,6 +23,9 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/checkout" // checkout model implementation
 	_ "github.com/ottemo/foundation/app/actors/order"    // purchase order model implementation
 	_ "github.com/ottemo/foundation/app/actors/stock"    // stock management model implementation
+	_ "github.com/ottemo/foundation/app/actors/grouping"    // grouping cart items model implementation
+
+	_ "github.com/ottemo/foundation/app/actors/trustpilot"    // trust pilot module implementation
 
 	_ "github.com/ottemo/foundation/app/actors/payment/authorizenet" // Authorize.Net payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/checkmo"      // "Check Money Order" payment method
@@ -32,6 +35,7 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate" // "Flat Rate" shipping method
 	_ "github.com/ottemo/foundation/app/actors/shipping/usps"     // USPS shipping method
 
+	_ "github.com/ottemo/foundation/app/actors/giftcard" // gift card for discounts
 	_ "github.com/ottemo/foundation/app/actors/discount" // coupon based discounts
 	_ "github.com/ottemo/foundation/app/actors/tax"      // shipping tax rates
 

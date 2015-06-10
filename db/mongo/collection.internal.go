@@ -1,20 +1,28 @@
 package mongo
 
 import (
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"sort"
 	"strings"
-
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
 )
 
 // converts value from GO representation to DB before usage in queries
 func (it *DBCollection) convertValueToType(columnType string, value interface{}) interface{} {
 
+	if utils.DataTypeIsArray(columnType) {
+		value = utils.InterfaceToArray(value)
+	}
+
 	switch typedValue := value.(type) {
-	case string:
+	case []interface{}:
+		columnType = utils.DataTypeArrayBaseType(columnType)
+		for idx, listValue := range typedValue {
+			typedValue[idx] = it.convertValueToType(columnType, listValue)
+		}
+	default:
 		switch {
 		case columnType == "string" || columnType == "text" || strings.Contains(columnType, "char"):
 			return utils.InterfaceToString(value)
@@ -27,12 +35,6 @@ func (it *DBCollection) convertValueToType(columnType string, value interface{})
 		case strings.Contains(columnType, "time") || strings.Contains(columnType, "date"):
 			return utils.InterfaceToTime(value)
 		}
-	case []string:
-		result := make([]interface{}, len(typedValue))
-		for idx, listValue := range typedValue {
-			result[idx] = it.convertValueToType(columnType, listValue)
-		}
-		value = result
 	}
 
 	return value
@@ -43,21 +45,20 @@ func (it *DBCollection) getSelectorValue(columnName string, operator string, val
 	operator = strings.ToLower(operator)
 
 	columnType := it.GetColumnType(columnName)
-	value = it.convertValueToType(columnType, value)
 
 	switch operator {
 	case "=":
 		return value, nil
 	case "!=", "<>":
-		return bson.D{bson.DocElem{Name: "$ne", Value: value}}, nil
+		return bson.D{bson.DocElem{Name: "$ne", Value: it.convertValueToType(columnType, value)}}, nil
 	case ">":
-		return bson.D{bson.DocElem{Name: "$gt", Value: value}}, nil
+		return bson.D{bson.DocElem{Name: "$gt", Value: it.convertValueToType(columnType, value)}}, nil
 	case ">=":
-		return bson.D{bson.DocElem{Name: "$gte", Value: value}}, nil
+		return bson.D{bson.DocElem{Name: "$gte", Value: it.convertValueToType(columnType, value)}}, nil
 	case "<":
-		return bson.D{bson.DocElem{Name: "$lt", Value: value}}, nil
+		return bson.D{bson.DocElem{Name: "$lt", Value: it.convertValueToType(columnType, value)}}, nil
 	case "<=":
-		return bson.D{bson.DocElem{Name: "$lte", Value: value}}, nil
+		return bson.D{bson.DocElem{Name: "$lte", Value: it.convertValueToType(columnType, value)}}, nil
 	case "like":
 		stringValue := utils.InterfaceToString(value)
 		stringValue = strings.Replace(stringValue, "%", ".*", -1)
@@ -88,6 +89,9 @@ func (it *DBCollection) getSelectorValue(columnName string, operator string, val
 
 			return bson.D{bson.DocElem{Name: newOperator, Value: refValue}}, nil
 		default:
+			if !utils.DataTypeIsArray(columnType) {
+				value = it.convertValueToType(utils.DataTypeArrayOf(columnType), value)
+			}
 			return bson.D{bson.DocElem{Name: newOperator, Value: value}}, nil
 		}
 	}

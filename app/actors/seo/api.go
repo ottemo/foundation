@@ -4,6 +4,9 @@ import (
 	"os"
 	"time"
 
+	"net/http"
+	"strings"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
@@ -12,8 +15,6 @@ import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"net/http"
-	"strings"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -44,6 +45,10 @@ func setupAPI() error {
 	}
 
 	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -144,6 +149,20 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 
 	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
 	records, err := collection.Load()
+
+	return records, env.ErrorDispatch(err)
+}
+
+// APIGetSEOItemByID returns SEO item for a specified id
+func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	id := context.GetRequestArgument("id")
+	records, err := collection.LoadByID(id)
 
 	return records, env.ErrorDispatch(err)
 }

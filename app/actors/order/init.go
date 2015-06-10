@@ -61,11 +61,19 @@ func setupDB() error {
 		collection.AddColumn("shipping_amount", db.ConstTypeMoney, false)
 		collection.AddColumn("grand_total", db.ConstTypeMoney, false)
 
+		collection.AddColumn("discounts", db.ConstTypeJSON, false)
+		collection.AddColumn("taxes", db.ConstTypeJSON, false)
+
 		collection.AddColumn("created_at", db.ConstTypeDatetime, false)
 		collection.AddColumn("updated_at", db.ConstTypeDatetime, false)
 
 		collection.AddColumn("description", db.ConstTypeText, false)
 		collection.AddColumn("payment_info", db.ConstTypeJSON, false)
+
+		collection.AddColumn("custom_info", db.ConstTypeJSON, false)
+		collection.AddColumn("shipping_info", db.ConstTypeJSON, false)
+
+		collection.AddColumn("notes", db.TypeArrayOf(db.ConstTypeVarchar), false)
 
 		collection, err = dbEngine.GetCollection(ConstCollectionNameOrderItems)
 		if err != nil {

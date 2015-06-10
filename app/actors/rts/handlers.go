@@ -32,6 +32,10 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 			}
 
 			referrers[referrer]++
+
+			if err := saveNewReferrer(referrer); err != nil {
+				env.LogError(err)
+			}
 		}
 	}
 
@@ -45,6 +49,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 		currentHour := time.Now().Truncate(time.Hour).Unix()
 		CheckHourUpdateForStatistic()
+		statistic[currentHour].TotalVisits++
 
 		if _, present := visitState[sessionID]; !present {
 			visitState[sessionID] = false
@@ -84,6 +89,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 		} else {
 			visitState[sessionID] = true
 			statistic[currentHour].Visit++
+			statistic[currentHour].TotalVisits++
 			statistic[currentHour].Cart++
 
 			err := SaveStatisticsData()
@@ -96,37 +102,65 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 	return true
 }
 
+func visitCheckoutHandler(event string, eventData map[string]interface{}) bool {
+
+	currentHour := time.Now().Truncate(time.Hour).Unix()
+	CheckHourUpdateForStatistic()
+
+	statistic[currentHour].VisitCheckout++
+
+	err := SaveStatisticsData()
+	if err != nil {
+		env.LogError(err)
+	}
+
+	return true
+}
+
+func setPaymentHandler(event string, eventData map[string]interface{}) bool {
+
+	currentHour := time.Now().Truncate(time.Hour).Unix()
+	CheckHourUpdateForStatistic()
+
+	statistic[currentHour].SetPayment++
+
+	err := SaveStatisticsData()
+	if err != nil {
+		env.LogError(err)
+	}
+
+	return true
+}
+
 func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
 		sessionID := sessionInstance.GetID()
 
+		saleAmount := float64(0)
+		if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
+			saleAmount = cartInstance.GetSubtotal()
+		}
+
 		currentHour := time.Now().Truncate(time.Hour).Unix()
 		CheckHourUpdateForStatistic()
 
-		// Add sales counter if it's a visitor that work in this hour
-		if _, present := visitState[sessionID]; present {
-			if visitState[sessionID] {
-				visitState[sessionID] = false
-				statistic[currentHour].Sales++
-
-				err := SaveStatisticsData()
-				if err != nil {
-					env.LogError(err)
-				}
-			}
-
-			// Add sales, cart and visit counter if it's a visitor that work for a past hour
-		} else {
-			visitState[sessionID] = false
+		if _, present := visitState[sessionID]; !present {
+			// Increasing sales, cart and visit counters for visitor of a purchase
 			statistic[currentHour].Visit++
+			statistic[currentHour].TotalVisits++
 			statistic[currentHour].Cart++
-			statistic[currentHour].Sales++
+			statistic[currentHour].VisitCheckout++
+			statistic[currentHour].SetPayment++
+		}
 
-			err := SaveStatisticsData()
-			if err != nil {
-				env.LogError(err)
-			}
+		visitState[sessionID] = false
+		statistic[currentHour].Sales++
+		statistic[currentHour].SalesAmount = statistic[currentHour].SalesAmount + saleAmount
+
+		err := SaveStatisticsData()
+		if err != nil {
+			env.LogError(err)
 		}
 	}
 
@@ -142,34 +176,35 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 			return true
 		}
 
-		productQtys := make(map[string]interface{})
-		for i := range cartProducts {
-			productQtys[cartProducts[i].GetProductID()] = cartProducts[i].GetQty()
+		productQtys := make(map[string]int)
+		for _, cartItem := range cartProducts {
+			productQtys[cartItem.GetProductID()] = cartItem.GetQty()
 		}
-
-		salesData := make(map[string]int)
 
 		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 		if err != nil {
+			env.LogError(err)
 			return true
 		}
 
 		for productID, count := range productQtys {
-			currentDate := time.Now().Truncate(time.Hour * 24)
+			currentDate := time.Now().Truncate(time.Hour * 24).Unix()
 
 			salesHistoryRecord := make(map[string]interface{})
-			salesData[productID] = utils.InterfaceToInt(count)
 
 			salesHistoryCollection.ClearFilters()
 			salesHistoryCollection.AddFilter("created_at", "=", currentDate)
 			salesHistoryCollection.AddFilter("product_id", "=", productID)
-			dbSaleRow, _ := salesHistoryCollection.Load()
+			dbSaleRow, err := salesHistoryCollection.Load()
+			if err != nil {
+				env.LogError(err)
+				return true
+			}
 
 			newCount := utils.InterfaceToInt(count)
 			if len(dbSaleRow) > 0 {
-				salesHistoryRecord["_id"] = utils.InterfaceToString(dbSaleRow[0]["_id"])
-				oldCount := utils.InterfaceToInt(dbSaleRow[0]["count"])
-				newCount += oldCount
+				salesHistoryRecord["_id"] = dbSaleRow[0]["_id"]
+				newCount = newCount + utils.InterfaceToInt(dbSaleRow[0]["count"])
 			}
 
 			// saving new history record
@@ -179,12 +214,13 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				salesHistoryRecord["count"] = newCount
 				_, err = salesHistoryCollection.Save(salesHistoryRecord)
 				if err != nil {
+					env.LogError(err)
 					return true
 				}
 			}
 		}
 
-		SaveSalesData(salesData)
+		SaveSalesData(productQtys)
 	}
 
 	return true

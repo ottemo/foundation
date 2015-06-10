@@ -262,7 +262,12 @@ func ApplyTimeZone(inTime time.Time, timeZone string) (time.Time, time.Duration)
 
 	if zoneUTCOffset, present := timeZones[zoneName]; present {
 		result = result.Add(-time.Duration(zoneUTCOffset))
-		timeDifference = time.Duration(zoneUTCOffset)
+		timeDifference = timeDifference + time.Duration(zoneUTCOffset)
+	}
+
+	if zoneOffset == 0*time.Hour && timeDifference == 0*time.Hour && len(timeZone) > 0 {
+		zoneOffset = time.Hour * time.Duration(InterfaceToInt(timeZone))
+		timeDifference = zoneOffset
 	}
 
 	result = result.Add(-zoneOffset)

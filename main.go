@@ -5,12 +5,18 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ottemo/foundation/app"
 
 	// using standard set of packages
 	_ "github.com/ottemo/foundation/basebuild"
 )
+
+func init() {
+	// time.Unix() should be in UTC (as it could be not by default)
+	time.Local = time.UTC
+}
 
 // executable file start point
 func main() {
