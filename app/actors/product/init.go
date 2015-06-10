@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 )
@@ -20,6 +21,8 @@ func init() {
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)
+
+	seo.RegisterSEOType(ConstSEOTypeProduct, "product/", product.ConstModelNameProduct)
 }
 
 // setupDB prepares system database for package usage

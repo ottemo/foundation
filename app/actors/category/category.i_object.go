@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -66,6 +67,9 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 		}
 
 		return result
+
+	case "seo":
+		return seo.GetSEO(ConstSEOTypeCategory, it.GetID(), "")
 	}
 
 	return nil
@@ -165,6 +169,9 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 		default:
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84284b03-0a29-4036-aa2d-b35768884b63", "unsupported 'products' value")
 		}
+
+	case "seo":
+		// no actions on this (just to prevent error)
 	}
 	return nil
 }
@@ -197,6 +204,8 @@ func (it *DefaultCategory) ToHashMap() map[string]interface{} {
 	result["name"] = it.Get("name")
 	result["products"] = it.Get("products")
 	result["path"] = it.Get("path")
+
+	result["seo"] = it.Get("seo")
 
 	return result
 }

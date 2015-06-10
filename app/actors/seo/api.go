@@ -4,10 +4,14 @@ import (
 	"os"
 	"time"
 
+	"net/http"
+	"strings"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -31,6 +35,11 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOPath)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -70,30 +79,63 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	return records, env.ErrorDispatch(err)
 }
 
-// APIListSEOItemsAlt returns a list registered SEO records
-func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, error) {
+// APIGetSEOPath returns SEO related page
+//   - SEO url should be specified in "url" argument
+func APIGetSEOPath(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	specifiedURL := ""
+	for _, argName := range []string{"p", "path", "Path", "u", "url", "URL", "Url"} {
+		specifiedURL = context.GetRequestArgument(argName)
+		if specifiedURL != "" {
+			break
+		}
+	}
+
+	specifiedURL = strings.Trim(specifiedURL, "/")
+	if specifiedURL == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "64c4b98c-a6b6-400b-b0a3-41c2b9e239d8", "URL was not specified")
+	}
+
+	httpRequest, ok1 := context.GetRequest().(*http.Request)
+	httpResponse, ok2 := context.GetResponse().(http.ResponseWriter)
+	if !ok1 || !ok2 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cca9af2f-c321-4f41-b4ff-a95f9a994051", "works only for HTTP request")
+	}
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// If you give us a url to match we are only going to return one item
-	requestData, err := api.GetRequestContentAsMap(context)
+	collection.AddFilter("url", "=", specifiedURL)
+	records, err := collection.Load()
+
+	if len(records) == 0 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "294605fa-0de3-48bf-a354-d453bb65bbd0", "URL not found")
+	}
+
+	rewrite := utils.InterfaceToString(records[0]["rewrite"])
+	seoType := utils.InterfaceToString(records[0]["type"])
+
+	newURL := ""
+	if strings.HasPrefix(rewrite, "http") {
+		newURL = rewrite
+	} else {
+		newURL = strings.Trim(seo.GetSEOTypeAPIPath(seoType), "/")
+		if !strings.HasPrefix(newURL, "http") {
+			newURL = httpRequest.URL.Host + "/" + newURL
+		}
+		newURL += "/" + rewrite
+	}
+
+	httpRequest.URL, err = httpRequest.URL.Parse(newURL)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	for key := range requestData {
-		switch key {
-		case "url":
-			collection.AddFilter("url", "=", context.GetRequestArgument("url"))
-		}
-	}
+	api.GetRestService().ServeHTTP(httpResponse, httpRequest)
 
-	records, err := collection.Load()
-
-	return records, env.ErrorDispatch(err)
+	return []byte{}, env.ErrorDispatch(err)
 }
 
 // APIGetSEOItem returns SEO item for a specified url

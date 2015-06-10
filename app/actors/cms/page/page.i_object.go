@@ -5,9 +5,9 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -28,6 +28,8 @@ func (it *DefaultCMSPage) Get(attribute string) interface{} {
 		return it.CreatedAt
 	case "updated_at":
 		return it.UpdatedAt
+	case "seo":
+		return seo.GetSEO(ConstSEOTypeCMSPage, it.GetID(), "")
 	}
 
 	return nil
@@ -54,6 +56,8 @@ func (it *DefaultCMSPage) Set(attribute string, value interface{}) error {
 	case "updated_at":
 		it.UpdatedAt = utils.InterfaceToTime(value)
 		return nil
+	case "seo":
+		// no actions on this (just to prevent error)
 	}
 
 	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6af9084-fddc-45bf-a90c-9c3d6ff88a57", "unknown attribute '"+attribute+"'")
@@ -83,6 +87,8 @@ func (it *DefaultCMSPage) ToHashMap() map[string]interface{} {
 	result["content"] = it.Get("content")
 	result["created_at"] = it.Get("created_at")
 	result["updated_at"] = it.Get("updated_at")
+
+	result["seo"] = it.Get("seo")
 
 	return result
 }
