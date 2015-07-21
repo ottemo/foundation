@@ -1,6 +1,9 @@
 package visitor
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -769,6 +772,14 @@ func APILogin(context api.InterfaceApplicationContext) (interface{}, error) {
 	return "ok", nil
 }
 
+func ComputeHmac256(message string, secret string) string {
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(message))
+
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
 // APIFacebookLogin makes login and/or registration via Facebook
 //   - "access_token" and "user_id" arguments required needed
 //   - visitor attributes will be taken from Facebook
@@ -790,9 +801,14 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 
 	// facebook login operation
 	//-------------------------
+	fbSecretKey := env.ConfigGetValue("inp_general.app.login.facebook.secretKey").(string)
+	fbAppsecretProof := ComputeHmac256(requestData["access_token"].(string), fbSecretKey)
 
 	// using access token to get user information
-	url := "https://graph.facebook.com/" + requestData["user_id"].(string) + "?access_token=" + requestData["access_token"].(string)
+	url := "https://graph.facebook.com/" + requestData["user_id"].(string) +
+		"?access_token=" + requestData["access_token"].(string) +
+		"&appsecret_proof=" + fbAppsecretProof
+
 	facebookResponse, err := http.Get(url)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
