@@ -81,7 +81,7 @@ func APICreateVisitorAddress(context api.InterfaceApplicationContext) (interface
 	}
 
 	if _, ok := requestData["visitor_id"]; !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9da4ac4-d073-48f3-b062-2ba536d2c577", "visitor id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a9da4ac4-d073-48f3-b062-2ba536d2c577", "No Visitor ID found, unable to create address entry.  Please log in first.")
 	}
 
 	// check rights
@@ -122,7 +122,7 @@ func APIUpdateVisitorAddress(context api.InterfaceApplicationContext) (interface
 	//---------------------
 	addressID := context.GetRequestArgument("addressID")
 	if addressID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c0-85fe-4d60-a134-415f7ac12075", "visitor address 'id' was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c0-85fe-4d60-a134-415f7ac12075", "No Visitor ID found, unable to process update request.  Please log in first.")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -167,7 +167,7 @@ func APIDeleteVisitorAddress(context api.InterfaceApplicationContext) (interface
 	//--------------------
 	addressID := context.GetRequestArgument("addressID")
 	if addressID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "eec1ef1b-25d9-4dbe-8bd2-b907a0897203", "visitor address id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "eec1ef1b-25d9-4dbe-8bd2-b907a0897203", "No Visitor ID found, unable to process request.  Please log in first.")
 	}
 
 	visitorAddressModel, err := visitor.LoadVisitorAddressByID(addressID)
@@ -218,7 +218,7 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 
 		sessionVisitorID := visitor.GetCurrentVisitorID(context)
 		if sessionVisitorID == "" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "you are not logined in")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "No Visitor ID found, unable to retrieve associated addresses.  Please log in first.")
 		}
 		visitorID = sessionVisitorID
 	}
@@ -261,7 +261,7 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 func APIGetVisitorAddress(context api.InterfaceApplicationContext) (interface{}, error) {
 	visitorAddressID := context.GetRequestArgument("addressID")
 	if visitorAddressID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b94882c6-bbdd-428d-88b0-7ea5623d80f7", "visitor 'id' was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b94882c6-bbdd-428d-88b0-7ea5623d80f7", "No Visitor ID found, unable to retrieve associated address.  Please log in first.")
 	}
 
 	visitorAddressModel, err := visitor.LoadVisitorAddressByID(visitorAddressID)

@@ -644,7 +644,7 @@ func APIGetVisit(context api.InterfaceApplicationContext) (interface{}, error) {
 		if isAdmin {
 			return map[string]interface{}{"is_admin": true}, nil
 		}
-		return "you are not logined in", nil
+		return "No session found, please log in first", nil
 	}
 
 	// visitor info
@@ -672,7 +672,7 @@ func APILogout(context api.InterfaceApplicationContext) (interface{}, error) {
 	// if session cookie is set, expire it
 	request := context.GetRequest()
 	// use secure cookies if OTTEMOCOOKIE is set to a valid true value
-	flagSecure, err := strconv.ParseBool(os.Getenv("OTTEMO_SECURE_COOKIE"))
+	flagSecure, err := strconv.ParseBool(os.Getenv("SECURE_COOKIE"))
 	if err != nil {
 		flagSecure = false
 	}
@@ -978,7 +978,7 @@ func APIGoogleLogin(context api.InterfaceApplicationContext) (interface{}, error
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		return "you are not logined in", nil
+		return "No Visitor ID found, unable to process order request. Please log in first.", nil
 	}
 
 	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
@@ -987,7 +987,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "order is not belongs to logined user")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
 	}
 
 	result := orderModel.ToHashMap()
@@ -1003,7 +1003,7 @@ func APIGetOrders(context api.InterfaceApplicationContext) (interface{}, error) 
 	//---------------
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		return "you are not logined in", nil
+		return "No Visitor ID found, unable to process request.  Please log in first.", nil
 	}
 
 	orderCollection, err := order.GetOrderCollectionModel()
@@ -1036,7 +1036,7 @@ func APIMailToVisitor(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	if !utils.StrKeysInMap(requestData, "subject", "content", "visitor_ids") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "21ac9f9d-956f-4963-b37d-fbd0469b8890", "'visitor_ids', 'subject' or 'content' field was not set")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "21ac9f9d-956f-4963-b37d-fbd0469b8890", "One of the following fields was not set: visitor_ids, content, or subject.")
 	}
 
 	subject := utils.InterfaceToString(requestData["subject"])

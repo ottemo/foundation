@@ -19,7 +19,7 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 
 	request := context.GetRequest()
 	// use secure cookies if OTTEMOCOOKIE is set to a valid true value
-	flagSecure, err := strconv.ParseBool(os.Getenv("OTTEMO_SECURE_COOKIE"))
+	flagSecure, err := strconv.ParseBool(os.Getenv("SECURE_COOKIE"))
 	if err != nil {
 		flagSecure = false
 	}
