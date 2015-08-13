@@ -98,10 +98,36 @@ var (
 			"Income", "", "",
 			// Amount with negative value
 			func(record map[string]interface{}) string {
-				return "-" + utils.InterfaceToString(record["grand_total"])
+				return "-" + utils.InterfaceToString(utils.InterfaceToFloat64(record["grand_total"])-utils.InterfaceToFloat64(record["tax_amount"]))
 			},
 			// "DOCNUM", "MEMO", "CLEAR", "QNTY", "PRICE", "INVITEM", "EXTRA"
-			"$increment_id", "$description", "N", "1", "$grand_total", "Product", "$description",
+			"$increment_id", "$description", "N", "1", "", "Product", "$description",
+		},
+		{
+			// "!SPL", "SPLID", "TRNSTYPE"
+			"SPL", "$_id", "INVOICE",
+			// Date
+			func(record map[string]interface{}) string {
+				return utils.InterfaceToTime(record["created_at"]).Format("01/02/06")
+			},
+			// "ACCNT", "NAME", "CLASS"
+			"Sales Tax Payable", "Sales Tax Vendor", "",
+			// Amount with negative value
+			func(record map[string]interface{}) string {
+				return "-" + utils.InterfaceToString(record["tax_amount"])
+			},
+			// "DOCNUM",
+			"$increment_id",
+			// MEMO - description for taxes
+			func(record map[string]interface{}) string {
+				result := "Taxes: "
+				for _, taxValue := range utils.InterfaceToArray(record["taxes"]) {
+					result += utils.InterfaceToString(utils.InterfaceToMap(taxValue)["Code"]) + " "
+				}
+				return result
+			},
+			// "CLEAR", "QNTY", "PRICE", "INVITEM", "EXTRA"
+			"N", "", "", "", "Tax",
 		},
 		{
 			"ENDTRNS",
