@@ -359,7 +359,7 @@ func APICreateDiscount(context api.InterfaceApplicationContext) (interface{}, er
 		valueSince, _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
 	}
 
-	valueLimits := make(map[string]interface {})
+	valueLimits := make(map[string]interface{})
 	if value, present := postValues["limits"]; present {
 		valueLimits = utils.InterfaceToMap(value)
 	}
