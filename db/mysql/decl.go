@@ -1,10 +1,10 @@
 package mysql
 
 import (
+	"database/sql"
 	"regexp"
 	"sync"
 	"time"
-	"database/sql"
 
 	"github.com/ottemo/foundation/env"
 )
@@ -13,7 +13,7 @@ import (
 const (
 	ConstConnectionValidateInterval = time.Second * 10 // timer interval to ping connection and refresh it by perforce
 
-	ConstUseUUIDids = true  // flag which indicates to use UUID "_id" column type instead of default integer
+	ConstUseUUIDids = true // flag which indicates to use UUID "_id" column type instead of default integer
 	ConstDebugSQL   = true // flag which indicates to perform log on each SQL operation
 	ConstDebugFile  = "mysql.log"
 
@@ -34,6 +34,7 @@ var (
 	// ConstSQLNameValidator is a regex expression used to check names used within SQL queries
 	ConstSQLNameValidator = regexp.MustCompile("^[A-Za-z_][A-Za-z0-9_]*$")
 )
+
 // RowMap - represents row of data from database
 type RowMap map[string]interface{}
 
@@ -58,7 +59,7 @@ type DBCollection struct {
 
 // DBEngine is a InterfaceDBEngine implementer
 type DBEngine struct {
-	connection      *sql.DB
+	connection *sql.DB
 
 	attributeTypes      map[string]map[string]string
 	attributeTypesMutex sync.RWMutex

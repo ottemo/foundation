@@ -56,11 +56,11 @@ func (it *DBEngine) Startup() error {
 		return env.ErrorDispatch(err)
 	}
 
-	if (poolConnections > 0) {
+	if poolConnections > 0 {
 		it.connection.SetMaxIdleConns(poolConnections)
 	}
 
-	if (maxConnections > 0) {
+	if maxConnections > 0 {
 		it.connection.SetMaxOpenConns(maxConnections)
 	}
 

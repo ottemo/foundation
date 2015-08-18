@@ -120,8 +120,6 @@ func GetDateFrom() (time.Time, error) {
 
 func initSalesHistory() error {
 
-	durationDay := time.Hour * 24
-
 	// GetDateFrom return data from where need to update our rts_sales_history
 	dateFrom, err := GetDateFrom()
 	if err != nil {
@@ -135,7 +133,7 @@ func initSalesHistory() error {
 	}
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
 	dbOrderCollection.SetResultColumns("_id", "created_at")
-	dbOrderCollection.AddFilter("created_at", ">=", dateFrom.Add(time.Hour*24).Truncate(durationDay))
+	dbOrderCollection.AddFilter("created_at", ">", dateFrom)
 
 	ordersForPeriod, err := dbOrderCollection.Load()
 	if err != nil {
@@ -147,14 +145,21 @@ func initSalesHistory() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+
 	dbOrderItemCollection := orderItemCollectionModel.GetDBCollection()
 
+	// get sales history collection
+	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	salesHistoryData := make(map[string]map[int64]int)
-	salesData := make(map[string]int)
 
 	// collect data from all orders into salesHistoryData
-	// in format map[pid][day]qty
+	// in format map[pid][time]qty
 	for _, order := range ordersForPeriod {
+
 		dbOrderItemCollection.ClearFilters()
 		dbOrderItemCollection.AddFilter("order_id", "=", order["_id"])
 		dbOrderItemCollection.SetResultColumns("product_id", "qty")
@@ -163,7 +168,9 @@ func initSalesHistory() error {
 			return env.ErrorDispatch(err)
 		}
 
-		currentDateUnix := utils.InterfaceToTime(order["created_at"]).Unix()
+		// collect records by time with rounding top on hour basics -- all orders which are saved to sales_history
+		// would be rounded on one hour up order at time 17;16 -> 18;00
+		currentDateUnix := utils.InterfaceToTime(order["created_at"]).Truncate(time.Hour).Add(time.Hour).Unix()
 
 		for _, orderItem := range orderItems {
 			currentProductID := utils.InterfaceToString(orderItem["product_id"])
@@ -179,29 +186,17 @@ func initSalesHistory() error {
 			} else {
 				salesHistoryData[currentProductID] = map[int64]int{currentDateUnix: count}
 			}
-
-			// collect data to salesData
-			if oldCounter, present := salesData[currentProductID]; present {
-				salesData[currentProductID] = oldCounter + count
-			} else {
-				salesData[currentProductID] = count
-			}
 		}
-	}
-
-	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
-	if err != nil {
-		return env.ErrorDispatch(err)
 	}
 
 	// save records to database
 	for productID, productStats := range salesHistoryData {
-		for day, count := range productStats {
+		for orderTime, count := range productStats {
 
 			salesRow := make(map[string]interface{})
 
 			salesHistoryCollection.ClearFilters()
-			salesHistoryCollection.AddFilter("created_at", "=", day)
+			salesHistoryCollection.AddFilter("created_at", "=", orderTime)
 			salesHistoryCollection.AddFilter("product_id", "=", productID)
 
 			dbSaleRow, err := salesHistoryCollection.Load()
@@ -214,7 +209,7 @@ func initSalesHistory() error {
 				count = count + utils.InterfaceToInt(dbSaleRow[0]["count"])
 			}
 
-			salesRow["created_at"] = day
+			salesRow["created_at"] = orderTime
 			salesRow["product_id"] = productID
 			salesRow["count"] = count
 			_, err = salesHistoryCollection.Save(salesRow)
@@ -224,56 +219,7 @@ func initSalesHistory() error {
 		}
 	}
 
-	SaveSalesData(salesData)
 	return nil
-}
-
-// SaveSalesData will persist the given map[string]int representing sales data
-func SaveSalesData(data map[string]int) error {
-
-	if len(data) == 0 {
-		return nil
-	}
-
-	salesCollection, err := db.GetCollection(ConstCollectionNameRTSSales)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	for productID, count := range data {
-		// Add history row
-		salesRow := make(map[string]interface{})
-
-		salesCollection.ClearFilters()
-		salesCollection.AddFilter("range", "=", GetSalesRange())
-		salesCollection.AddFilter("product_id", "=", productID)
-
-		dbSaleRow, err := salesCollection.Load()
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		if len(dbSaleRow) > 0 {
-			salesRow["_id"] = utils.InterfaceToString(dbSaleRow[0]["_id"])
-			count = count + utils.InterfaceToInt(dbSaleRow[0]["count"])
-		}
-
-		salesRow["product_id"] = productID
-		salesRow["count"] = count
-		salesRow["range"] = GetSalesRange()
-		_, err = salesCollection.Save(salesRow)
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-	}
-
-	return nil
-}
-
-// GetSalesRange will return the date range for the sales data
-func GetSalesRange() string {
-	_range := utils.InterfaceToString(time.Now().Truncate(24 * time.Hour))
-	return _range
 }
 
 // GetRangeStats returns stats for range
@@ -456,18 +402,18 @@ func saveNewReferrer(referral string) error {
 // initReferrals get info from referrals database to variable
 func initReferrals() error {
 
-	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSReferrals)
+	rtsReferralsCollection, err := db.GetCollection(ConstCollectionNameRTSReferrals)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	dbRecords, err := visitorInfoCollection.Load()
+	dbRecords, err := rtsReferralsCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	for _, record := range dbRecords {
-		referrers[utils.InterfaceToString(record["referrer"])] = utils.InterfaceToInt(record["count"])
+		referrers[utils.InterfaceToString(record["referral"])] = utils.InterfaceToInt(record["count"])
 	}
 
 	return nil

@@ -46,16 +46,16 @@ func (it *DefaultCronSchedule) Execute() {
 // Enable  - enable schedule
 func (it *DefaultCronSchedule) Enable() error {
 	// this code make no sense
-//	found := false
-//	for _, item := range it.scheduler.schedules {
-//		if item == it {
-//			found = true
-//			break
-//		}
-//	}
-//	if !found {
-//		it.scheduler.schedules = append(it.scheduler.schedules, it)
-//	}
+	//	found := false
+	//	for _, item := range it.scheduler.schedules {
+	//		if item == it {
+	//			found = true
+	//			break
+	//		}
+	//	}
+	//	if !found {
+	//		it.scheduler.schedules = append(it.scheduler.schedules, it)
+	//	}
 	if !it.active {
 		it.Execute()
 		it.active = true
@@ -67,13 +67,13 @@ func (it *DefaultCronSchedule) Enable() error {
 // Disable  - disables schedule
 func (it *DefaultCronSchedule) Disable() error {
 	// this code make no sense
-//	var newList []*DefaultCronSchedule
-//	for _, item := range it.scheduler.schedules {
-//		if item != it {
-//			newList = append(newList, item)
-//		}
-//	}
-//	it.scheduler.schedules = newList
+	//	var newList []*DefaultCronSchedule
+	//	for _, item := range it.scheduler.schedules {
+	//		if item != it {
+	//			newList = append(newList, item)
+	//		}
+	//	}
+	//	it.scheduler.schedules = newList
 
 	if it.active {
 		it.active = false

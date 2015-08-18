@@ -164,6 +164,7 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 	case "taxes":
 		arrayValue := utils.InterfaceToArray(value)
+		it.Taxes = make([]order.StructTaxRate, 0)
 		for _, arrayItem := range arrayValue {
 			mapValue := utils.InterfaceToMap(arrayItem)
 			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
@@ -180,6 +181,7 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 	case "discounts":
 		arrayValue := utils.InterfaceToArray(value)
+		it.Discounts = make([]order.StructDiscount, 0)
 		for _, arrayItem := range arrayValue {
 			mapValue := utils.InterfaceToMap(arrayItem)
 			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {

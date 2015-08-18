@@ -61,15 +61,6 @@ func setupDB() error {
 	collection.AddColumn("created_at", db.ConstTypeDatetime, false)
 	collection.AddColumn("count", db.ConstTypeInteger, false)
 
-	collection, err = db.GetCollection(ConstCollectionNameRTSSales)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	collection.AddColumn("product_id", db.ConstTypeID, true)
-	collection.AddColumn("count", db.ConstTypeInteger, false)
-	collection.AddColumn("range", db.TypeWPrecision(db.ConstTypeVarchar, 21), false)
-
 	collection, err = db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)

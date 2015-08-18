@@ -16,6 +16,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok {
+
 			xReferrer := utils.InterfaceToString(context.GetRequestSetting("X-Referer"))
 			if "" == xReferrer {
 				return true
@@ -178,7 +179,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 
 		productQtys := make(map[string]int)
 		for _, cartItem := range cartProducts {
-			productQtys[cartItem.GetProductID()] = cartItem.GetQty()
+			productQtys[cartItem.GetProductID()] = cartItem.GetQty() + productQtys[cartItem.GetProductID()]
 		}
 
 		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
@@ -186,9 +187,8 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 			env.LogError(err)
 			return true
 		}
-
+		currentDate := time.Now().Truncate(time.Hour).Add(time.Hour)
 		for productID, count := range productQtys {
-			currentDate := time.Now().Truncate(time.Hour * 24).Unix()
 
 			salesHistoryRecord := make(map[string]interface{})
 
@@ -201,6 +201,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				return true
 			}
 
+			//			rewrite exisitng record if we have one in database
 			newCount := utils.InterfaceToInt(count)
 			if len(dbSaleRow) > 0 {
 				salesHistoryRecord["_id"] = dbSaleRow[0]["_id"]
@@ -219,8 +220,6 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				}
 			}
 		}
-
-		SaveSalesData(productQtys)
 	}
 
 	return true

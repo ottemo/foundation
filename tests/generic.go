@@ -123,7 +123,6 @@ func CheckTestIniDefaults() error {
 	envConfig := env.GetConfig()
 	envConfig.SetValue(app.ConstConfigPathMailPort, nil)
 
-
 	return nil
 }
 

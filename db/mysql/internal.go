@@ -5,11 +5,11 @@ import (
 
 	"database/sql"
 
+	"fmt"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"time"
-	"fmt"
 )
 
 // exec routines
@@ -45,7 +45,7 @@ func connectionExec(SQL string, args ...interface{}) error {
 		env.Log(ConstDebugFile, env.ConstLogPrefixInfo, SQL)
 	}
 
-	_, err  := dbEngine.connection.Exec(SQL, args...)
+	_, err := dbEngine.connection.Exec(SQL, args...)
 
 	return err
 }
@@ -176,7 +176,7 @@ func GetDBType(ColumnType string) (string, error) {
 			return fmt.Sprintf("VARCHAR(%d)", dataType.Precision), nil
 		}
 		return "VARCHAR(255)", nil
-	case  ColumnType == "text" || ColumnType == "json":
+	case ColumnType == "text" || ColumnType == "json":
 		return "TEXT", nil
 	case ColumnType == "blob" || ColumnType == "struct" || ColumnType == "data":
 		return "BLOB", nil

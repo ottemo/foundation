@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# Use this script to dump all mongodb collections to CSV format for import
+# into mysql or sqlite tables.  Tables will be dumped into a local folder with
+# the same name as DBNAME and dropped into files named after their collection.
+
 OIFS=$IFS;
 IFS=",";
 

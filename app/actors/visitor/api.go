@@ -576,7 +576,7 @@ func APIVisitorEmailAvailable(context api.InterfaceApplicationContext) (interfac
 	}
 	visitorEmail := strings.ToLower(utils.InterfaceToString(requestData["email"]))
 
-	if !utils.ValidEmail(visitorEmail) {
+	if !utils.ValidEmailAddress(visitorEmail) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "362efeb5-331a-484c-b5f3-daef1e7b065b", "The email address specified is not in a valid format, "+visitorEmail+".")
 	}
 	visitorModel, err := visitor.GetVisitorModel()

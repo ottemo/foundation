@@ -10,7 +10,6 @@ import "time"
 // Package global constants
 const (
 	ConstCollectionNameRTSSalesHistory = "rts_sales_history"
-	ConstCollectionNameRTSSales        = "rts_sales"
 	ConstCollectionNameRTSVisitors     = "rts_visitors"
 	ConstCollectionNameRTSReferrals    = "rts_referrals"
 
