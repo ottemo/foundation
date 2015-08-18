@@ -62,8 +62,10 @@ type DefaultOrder struct {
 	VisitorID string
 	CartID    string
 
-	Description string
-	PaymentInfo map[string]interface{}
+	Description  string
+	PaymentInfo  map[string]interface{}
+	CustomInfo   map[string]interface{}
+	ShippingInfo map[string]interface{}
 
 	BillingAddress  map[string]interface{}
 	ShippingAddress map[string]interface{}
@@ -82,6 +84,8 @@ type DefaultOrder struct {
 
 	Taxes     []order.StructTaxRate
 	Discounts []order.StructDiscount
+
+	Notes []string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

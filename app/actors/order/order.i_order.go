@@ -177,7 +177,7 @@ func (it *DefaultOrder) GetDiscountAmount() float64 {
 	return it.Discount
 }
 
-// GetDiscountAmount returns discount amount applied to order
+// GetDiscounts returns discount applied to order
 func (it *DefaultOrder) GetDiscounts() []order.StructDiscount {
 	return it.Discounts
 }
@@ -187,7 +187,7 @@ func (it *DefaultOrder) GetTaxAmount() float64 {
 	return it.TaxAmount
 }
 
-// GetTaxAmount returns tax amount applied to order
+// GetTaxes returns taxes applied to order
 func (it *DefaultOrder) GetTaxes() []order.StructTaxRate {
 	return it.Taxes
 }
@@ -252,7 +252,7 @@ func (it *DefaultOrder) SetStatus(newStatus string) error {
 	} else {
 
 		// taking items from stock
-		if oldStatus == order.ConstOrderStatusCancelled || oldStatus == "" {
+		if oldStatus == order.ConstOrderStatusCancelled || oldStatus == order.ConstOrderStatusNew || oldStatus == "" {
 			err = it.Proceed()
 		}
 	}

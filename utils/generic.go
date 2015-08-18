@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math"
+	"regexp"
 	"strings"
 )
 
@@ -238,6 +239,11 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 	return false
 }
 
+func ValidEmail(email string) bool {
+	Re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return Re.MatchString(email)
+}
+
 // EscapeRegexSpecials returns regular expression special characters escaped value
 func EscapeRegexSpecials(value string) string {
 	specials := []string{"\\", "-", "[", "]", "/", "{", "}", "(", ")", "*", "+", "?", ".", "^", "$", "|"}
@@ -247,4 +253,12 @@ func EscapeRegexSpecials(value string) string {
 	}
 
 	return value
+}
+
+// ValidEmailAddress takes an email address as string compares it agasint a regular expression
+// - returns true if email address is in a valid format
+// - returns false if email address is not in a valid format
+func ValidEmailAddress(email string) bool {
+	re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return re.MatchString(email)
 }

@@ -60,10 +60,14 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6244e778-a837-4425-849b-fbce26d5b095", "Cart is not specified")
 			}
 			if checkoutOrder != nil {
-				checkoutOrder.NewIncrementID()
 
-				checkoutOrder.SetStatus(order.ConstOrderStatusPending)
-				checkoutOrder.Set("payment_info", requestData)
+				paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
+				for key, value := range requestData {
+					paymentInfo[key] = value
+				}
+
+				checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
+				checkoutOrder.Set("payment_info", paymentInfo)
 
 				err = checkoutOrder.Save()
 				if err != nil {
@@ -71,12 +75,6 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 				}
 
 				err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
-				if err != nil {
-					return nil, err
-				}
-
-				// Send confirmation email
-				err = currentCheckout.SendOrderConfirmationMail()
 				if err != nil {
 					return nil, err
 				}
@@ -164,7 +162,7 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6244e778-a837-4425-849b-fbce26d5b095", "Cart is not specified")
 			}
 			if checkoutOrder != nil {
-				checkoutOrder.SetStatus(order.ConstOrderStatusPending)
+				checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
 				checkoutOrder.Set("payment_info", requestData)
 
 				err = checkoutOrder.Save()

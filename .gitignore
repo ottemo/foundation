@@ -13,6 +13,7 @@ tmp
 release
 var
 .vagrant
+kg-media
 
 # Architecture specific extensions/prefixes
 *.[568vq]

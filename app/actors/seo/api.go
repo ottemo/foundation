@@ -2,6 +2,7 @@ package seo
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -34,7 +35,10 @@ func setupAPI() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-
+	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOItem)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -105,7 +109,10 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("url", "=", context.GetRequestArgument("url"))
+	// No starting slashes pls
+	specifiedURL := context.GetRequestArgument("url")
+	specifiedURL = strings.Trim(specifiedURL, "/")
+	collection.AddFilter("url", "=", specifiedURL)
 	records, err := collection.Load()
 
 	return records, env.ErrorDispatch(err)

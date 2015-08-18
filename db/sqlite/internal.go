@@ -115,7 +115,7 @@ func convertValueForSQL(value interface{}) string {
 			if result != "" {
 				result += ", "
 			}
-			result += utils.InterfaceToString(item)
+			result += strings.Replace(utils.InterfaceToString(item), ",", "#2C;", -1)
 		}
 		return convertValueForSQL(result)
 	}

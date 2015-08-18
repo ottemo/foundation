@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -10,7 +11,7 @@ import (
 
 var (
 	// StaticTypeRegexp is a regular expression used to parse datatype
-	StaticTypeRegexp = regexp.MustCompile(`^\s*(\[\])?(\w+)\s*(?:\(\s*(\d+)?\s*(?:\)|,\s*(\d+)\s*\)))$`)
+	StaticTypeRegexp = regexp.MustCompile(`^\s*(\[\])?(\w+)\s*(?:\(\s*(\d+)?\s*(?:\)|,\s*(\d+)\s*\)))?$`)
 )
 
 // set of known data types
@@ -96,6 +97,11 @@ func DataTypeArrayOf(dataType string) string {
 	return "[]" + dataType
 }
 
+// DataTypeArrayBaseType returns data type of array elements
+func DataTypeArrayBaseType(dataType string) string {
+	return strings.TrimPrefix(dataType, "[]")
+}
+
 // DataTypeWPrecision adds precision modifier to given dataType, returns "" for unknown types
 func DataTypeWPrecision(dataType string, precision int) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
@@ -126,7 +132,7 @@ func DataTypeParse(typeName string) DataType {
 
 	regexpGroups := StaticTypeRegexp.FindStringSubmatch(typeName)
 
-	if len(regexpGroups) != 0 {
+	if regexpGroups == nil || len(regexpGroups) == 0 {
 		result.Name = typeName
 	} else {
 		result.IsArray = !(regexpGroups[1] == "")
@@ -239,6 +245,10 @@ func InterfaceToBool(value interface{}) bool {
 func InterfaceToStringArray(value interface{}) []string {
 	var result []string
 
+	if value == nil {
+		return result
+	}
+
 	switch typedValue := value.(type) {
 	case []string:
 		return typedValue
@@ -246,7 +256,9 @@ func InterfaceToStringArray(value interface{}) []string {
 	case []interface{}:
 		result = make([]string, len(typedValue))
 		for idx, value := range typedValue {
-			result[idx] = InterfaceToString(value)
+			if value != nil {
+				result[idx] = InterfaceToString(value)
+			}
 		}
 	case []int:
 		result = make([]string, len(typedValue))
@@ -287,6 +299,10 @@ func InterfaceToStringArray(value interface{}) []string {
 func InterfaceToArray(value interface{}) []interface{} {
 	var result []interface{}
 
+	if value == nil {
+		return result
+	}
+
 	switch typedValue := value.(type) {
 	case []string:
 		result = make([]interface{}, len(typedValue))
@@ -294,6 +310,16 @@ func InterfaceToArray(value interface{}) []interface{} {
 			result[idx] = value
 		}
 	case []int:
+		result = make([]interface{}, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = value
+		}
+	case []bool:
+		result = make([]interface{}, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = value
+		}
+	case []uint64:
 		result = make([]interface{}, len(typedValue))
 		for idx, value := range typedValue {
 			result[idx] = value
@@ -308,6 +334,12 @@ func InterfaceToArray(value interface{}) []interface{} {
 		for idx, value := range typedValue {
 			result[idx] = value
 		}
+	case []time.Time:
+		result = make([]interface{}, len(typedValue))
+		for idx, value := range typedValue {
+			result[idx] = value
+		}
+
 	case []interface{}:
 		return typedValue
 
@@ -320,11 +352,20 @@ func InterfaceToArray(value interface{}) []interface{} {
 		splitValues := strings.Split(typedValue, ",")
 		result = make([]interface{}, len(splitValues))
 		for idx, value := range splitValues {
+			value = strings.Replace(value, "#2C;", ",", -1)
 			result[idx] = strings.Trim(value, " \t\n")
 		}
 
 	default:
-		result = append(result, value)
+		reflectValue := reflect.ValueOf(value)
+		kind := reflectValue.Kind()
+		if kind == reflect.Slice || kind == reflect.Array {
+			for i := 0; i < reflectValue.Len(); i++ {
+				result = append(result, reflectValue.Index(i).Interface())
+			}
+		} else {
+			result = append(result, value)
+		}
 	}
 
 	return result
@@ -334,12 +375,21 @@ func InterfaceToArray(value interface{}) []interface{} {
 func InterfaceToMap(value interface{}) map[string]interface{} {
 	switch typedValue := value.(type) {
 	case map[string]interface{}:
-		return typedValue
+		if typedValue != nil {
+			return typedValue
+		}
 
 	case string:
 		value, err := DecodeJSONToStringKeyMap(value)
 		if err == nil {
 			return value
+		}
+	default:
+		reflectValue := reflect.ValueOf(value)
+		if reflectValue.Kind() == reflect.Struct {
+			if result, err := DecodeJSONToStringKeyMap(EncodeToJSONString(value)); err == nil {
+				return result
+			}
 		}
 	}
 

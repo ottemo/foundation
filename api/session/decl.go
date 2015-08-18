@@ -3,17 +3,18 @@
 package session
 
 import (
-	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/env"
 	"sync"
 	"time"
+
+	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/env"
 )
 
 // Package global constants
 const (
-	ConstSessionLifeTime          = 3600 // session idle period before expire (in sec)
-	ConstSessionUpdateTime        = 10   // '0' - immediate mode, '>0' - update timer mode (in sec)
-	ConstSessionKeepInMemoryItems = 1000 // limits application sessions array for "immediate mode", '0' - unlimited
+	ConstSessionLifeTime          = 26280000 // session idle period before expire (in sec); set to 365 days
+	ConstSessionUpdateTime        = 10       // '0' - immediate mode, '>0' - update timer mode (in sec)
+	ConstSessionKeepInMemoryItems = 1000     // limits application sessions array for "immediate mode", '0' - unlimited
 
 	ConstErrorModule = "api/session"
 	ConstErrorLevel  = env.ConstErrorLevelService

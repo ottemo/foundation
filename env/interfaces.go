@@ -2,6 +2,7 @@ package env
 
 import (
 	"github.com/ottemo/foundation/utils"
+	"time"
 )
 
 // Package global constants
@@ -37,6 +38,31 @@ const (
 	ConstErrorModule = "env"
 	ConstErrorLevel  = ConstErrorLevelService
 )
+
+// InterfaceSchedule is an interface to system schedule service
+type InterfaceSchedule interface {
+	Execute()
+
+	Enable() error
+	Disable() error
+
+	Set(param string, value interface{}) error
+	Get(param string) interface{}
+
+	GetInfo() map[string]interface{}
+}
+
+// InterfaceScheduler is an interface to system scheduler service
+type InterfaceScheduler interface {
+	ListTasks() []string
+	RegisterTask(name string, task FuncCronTask) error
+
+	ScheduleAtTime(scheduleTime time.Time, taskName string, taskParams map[string]interface{}) (InterfaceSchedule, error)
+	ScheduleRepeat(cronExpr string, taskName string, taskParams map[string]interface{}) (InterfaceSchedule, error)
+	ScheduleOnce(cronExpr string, taskName string, taskParams map[string]interface{}) (InterfaceSchedule, error)
+
+	ListSchedules() []InterfaceSchedule
+}
 
 // InterfaceEventBus is an interface to system event processor
 type InterfaceEventBus interface {
@@ -118,6 +144,9 @@ type FuncEventListener func(string, map[string]interface{}) bool
 
 // FuncErrorListener is an error listener callback function prototype
 type FuncErrorListener func(error) bool
+
+// FuncCronTask is a callback function prototype executes by scheduler
+type FuncCronTask func(params map[string]interface{}) error
 
 // StructConfigItem is a structure to hold information about particular configuration value
 type StructConfigItem struct {

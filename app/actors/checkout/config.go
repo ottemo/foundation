@@ -56,21 +56,6 @@ Total: ${{.Order.grand_total}}<br />`,
 		return env.ErrorDispatch(err)
 	}
 
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        checkout.ConstConfigPathCheckoutType,
-		Value:       "accordion",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "select",
-		Options:     map[string]string{"accordion": "Accordion checkout", "onepage": "OnePage checkout"},
-		Label:       "Type of checkout",
-		Description: "type of checkout customer will be reached by default",
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
 	// Payment
 	//--------
 	err = config.RegisterItem(env.StructConfigItem{
@@ -321,8 +306,8 @@ Total: ${{.Order.grand_total}}<br />`,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Oversell",
-		Description: "Allow product to oversell, (i.e. continue to sell product when qty < 0)",
+		Label:       "Limit Oversell",
+		Description: "Do not allow product to oversell, (i.e. do not sell product when qty < 0)",
 		Image:       "",
 	}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
 

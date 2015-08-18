@@ -12,6 +12,7 @@ var (
 	registeredLogger    InterfaceLogger
 	registeredErrorBus  InterfaceErrorBus
 	registeredEventBus  InterfaceEventBus
+	registeredScheduler InterfaceScheduler
 
 	// variables to hold callback functions on configuration services startup
 	callbacksOnConfigStart    = []func() error{}
@@ -103,29 +104,45 @@ func RegisterErrorBus(errorBus InterfaceErrorBus) error {
 	return nil
 }
 
-// GetConfig returns currently used config service implementation
+// RegisterScheduler registers scheduler in the system
+//   - will cause error if there are couple candidates for that role
+func RegisterScheduler(scheduler InterfaceScheduler) error {
+	if registeredScheduler == nil {
+		registeredScheduler = scheduler
+	} else {
+		return errors.New("Scheduler already registered")
+	}
+	return nil
+}
+
+// GetConfig returns currently used config service implementation or nil
 func GetConfig() InterfaceConfig {
 	return registeredConfig
 }
 
-// GetIniConfig returns currently used ini config service implementation
+// GetIniConfig returns currently used ini config service implementation or nil
 func GetIniConfig() InterfaceIniConfig {
 	return registeredIniConfig
 }
 
-// GetLogger returns currently used logging service implementation
+// GetLogger returns currently used logging service implementation or nil
 func GetLogger() InterfaceLogger {
 	return registeredLogger
 }
 
-// GetErrorBus returns currently used error processor implementation
+// GetErrorBus returns currently used error processor implementation or nil
 func GetErrorBus() InterfaceErrorBus {
 	return registeredErrorBus
 }
 
-// GetEventBus returns currently used event processor implementation
+// GetEventBus returns currently used event processor implementation or nil
 func GetEventBus() InterfaceEventBus {
 	return registeredEventBus
+}
+
+// GetScheduler returns currently used scheduler implementation or nil
+func GetScheduler() InterfaceScheduler {
+	return registeredScheduler
 }
 
 // ConfigEmptyValueValidator is a default validator function to accept any value

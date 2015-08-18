@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupConfig setups package configuration values for a system
@@ -253,6 +254,21 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathStoreTimeZone,
+		Value:       "UTC",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "select",
+		Options:     models.ConstTimeZonesList,
+		Label:       "Time zone",
+		Description: "store location time zone",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailGroup,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
@@ -334,7 +350,7 @@ func setupConfig() error {
 		Editor:      "text",
 		Options:     nil,
 		Label:       "From",
-		Description: "sending mail from field",
+		Description: "full name for from field",
 		Image:       "",
 	}, nil)
 
@@ -349,9 +365,55 @@ func setupConfig() error {
 		Editor:      "multiline_text",
 		Options:     nil,
 		Label:       "Signature",
-		Description: "sending mail signature",
+		Description: "mail signature",
 		Image:       "",
 	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Email Verfication
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathVerfifyEmail,
+		Value:       false,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
+		Options:     nil,
+		Label:       "Enable Email Verification for Registration",
+		Description: "send email verification link",
+		Image:       "",
+	}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Hide levels
+	emailValidator := func(newValue interface{}) (interface{}, error) {
+		newEmail := utils.InterfaceToString(newValue)
+		if newEmail == "" {
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "d5abe68b-5bde-4b14-a3a7-b89507c14597", "recipient e-mail can not be blank")
+			return "support+ContactUs@ottemo.io", err
+		}
+		if !utils.ValidEmailAddress(newEmail) {
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "720c5b82-4aa9-405b-b52d-b94d1f31e49d", "recipient e-mail is not in a valid format")
+			return "support+ContactUs@ottemo.io", err
+
+		}
+
+		return newEmail, nil
+	}
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathContactUsRecipient,
+		Value:       "support+ContactUs@ottemo.io",
+		Type:        utils.DataTypeWPrecision(env.ConstConfigTypeVarchar, 255),
+		Editor:      "text",
+		Options:     nil,
+		Label:       "Contact Us Recipient",
+		Description: "email of contact form recipient",
+		Image:       "",
+	}, emailValidator)
 
 	if err != nil {
 		return env.ErrorDispatch(err)

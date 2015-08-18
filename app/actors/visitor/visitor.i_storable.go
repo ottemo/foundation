@@ -78,7 +78,7 @@ func (it *DefaultVisitor) Save() error {
 			return env.ErrorDispatch(err)
 		}
 		if n > 0 {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "29be1531-cb6b-44cf-a78e-f1bf9aae1163", "email already exists")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "29be1531-cb6b-44cf-a78e-f1bf9aae1163", "The requested email address is already in use.")
 		}
 	}
 
@@ -87,14 +87,10 @@ func (it *DefaultVisitor) Save() error {
 	delete(storableValues, "billing_address")
 	delete(storableValues, "shipping_address")
 
-	/*if it.Password == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "56a1aaaa-897b-445c-8536-27cd95ecc705", "password can't be blank")
-	}*/
-
 	storableValues["facebook_id"] = it.FacebookID
 	storableValues["google_id"] = it.GoogleID
 	storableValues["password"] = it.Password
-	storableValues["validate"] = it.ValidateKey
+	storableValues["validate"] = it.VerificationKey
 
 	// shipping address save
 	if it.ShippingAddress != nil {

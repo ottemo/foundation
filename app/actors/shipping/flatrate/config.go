@@ -2,6 +2,9 @@ package flatrate
 
 import (
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+	"regexp"
+	"strings"
 )
 
 // setupConfig setups package configuration values for a system
@@ -22,7 +25,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -37,7 +40,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathAmount,
 			Value:       10,
 			Type:        env.ConstConfigTypeInteger,
@@ -52,7 +55,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathName,
 			Value:       "Flat Rate",
 			Type:        env.ConstConfigTypeVarchar,
@@ -67,7 +70,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDays,
 			Value:       0,
 			Type:        env.ConstConfigTypeInteger,
@@ -77,6 +80,82 @@ func setupConfig() error {
 			Description: "amount of days for shipping",
 			Image:       "",
 		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		// validateNewRates validate structure of new shipping rates
+		validateNewRates := func(newRatesValues interface{}) (interface{}, error) {
+
+			if utils.InterfaceToString(newRatesValues) == "[]" || newRatesValues == nil || utils.InterfaceToString(newRatesValues) == "" {
+				additionalRates = make([]interface{}, 0)
+				return newRatesValues, nil
+			}
+
+			// taking rules as array
+			newRatesArray, err := utils.DecodeJSONToArray(newRatesValues)
+			if err != nil {
+				return nil, err
+			}
+
+			methods := make(map[string]map[string]interface{})
+
+			// checking rules array
+			for _, rate := range newRatesArray {
+				shippingRate := utils.InterfaceToMap(rate)
+
+				if !utils.KeysInMapAndNotBlank(shippingRate, "title", "code", "price") {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9593d30e-0df3-4571-8bb1-2e29656b9fe2", "keys 'title', 'code' and 'price' should be not null")
+				}
+
+				shippingRateCode := strings.Replace(strings.ToLower(utils.InterfaceToString(shippingRate["code"])), " ", "_", -1)
+				shippingRatePrice := utils.InterfaceToFloat64(shippingRate["price"])
+
+				matched, err := regexp.MatchString("^[a-z0-9_]+$", shippingRateCode)
+				if !matched || err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea826349-4823-45fe-93c0-46c529f6bcac", "code must be only alphanumeric")
+				}
+
+				if shippingRatePrice < 0 {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0db031e3-6961-4d90-99e9-736e156acbed", "price can't have negative value")
+				}
+
+				if _, present := methods[shippingRateCode]; present {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "beeccbfb-68b4-4379-8d9a-78a834c5911c", "duplicate code - "+shippingRateCode)
+				}
+
+				methods[shippingRateCode] = shippingRate
+			}
+
+			var rates []interface{}
+
+			for rateCode, rate := range methods {
+				rate["code"] = rateCode
+				rates = append(rates, rate)
+			}
+
+			additionalRates = rates
+
+			return utils.EncodeToJSONString(rates), nil
+		}
+
+		// grouping rules config setup
+		//----------------------------
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:    ConstConfigPathAdditionalRates,
+			Value:   `[]`,
+			Type:    env.ConstConfigTypeText,
+			Editor:  "multiline_text",
+			Options: "",
+			Label:   "Additional rates",
+			Description: `flat rate additional shipping rates, pattern:
+   [{"title": "State Shipping", "code": "State", "price": 4.99},
+   {"title": "Expedited Shipping", "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
+   {"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},    ... ]
+    make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
+			Image: "",
+		}, env.FuncConfigValueValidator(validateNewRates))
 
 		if err != nil {
 			return env.ErrorDispatch(err)

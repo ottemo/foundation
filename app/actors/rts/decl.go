@@ -57,11 +57,13 @@ var (
 
 // ActionsMade contains info of visits, cart create and sales made for a hour
 type ActionsMade struct {
-	Visit       int     // count site visits
-	Cart        int     // count times products was added to cart
-	Sales       int     // count of orders visitors made
-	TotalVisits int     // total visits count
-	SalesAmount float64 // count sales
+	Visit         int     // count site visits
+	Cart          int     // count times products was added to cart
+	Sales         int     // count of orders visitors made
+	TotalVisits   int     // total visits count
+	SalesAmount   float64 // count sales
+	VisitCheckout int     // count visitors reached checkout
+	SetPayment    int     // count payment methods used
 }
 
 // SellerInfo represents particular product in TopSellers struct

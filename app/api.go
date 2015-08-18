@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"runtime"
 	"time"
 
@@ -14,6 +15,10 @@ import (
 func setupAPI() error {
 	var err error
 
+	err = api.GetRestService().RegisterAPI("app/email", api.ConstRESTOperationCreate, restSendEmail)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationGet, restLogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -31,6 +36,14 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 	err = api.GetRestService().RegisterAPI("app/status", api.ConstRESTOperationGet, restStatusInfo)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationCreate, setSessionTimeZone)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationGet, getSessionTimeZone)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -80,6 +93,44 @@ func restLogout(context api.InterfaceApplicationContext) (interface{}, error) {
 	return "ok", nil
 }
 
+// restContactUs creates a new email message via a POST from the Contact Us form
+//   - following attributes are required:
+//   - "formLocation"
+func restSendEmail(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// formLocation is the only required parameter
+	if !utils.KeysInMapAndNotBlank(requestData, "formLocation") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e47f0671-0e19-4bbd-a771-ae4fac56a714", "A required parameter is missing: 'formLocation'")
+	}
+
+	// remove form location from map
+	frmLocation := utils.InterfaceToString(requestData["formLocation"])
+	delete(requestData, "formLocation")
+
+	recipient := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathContactUsRecipient))
+
+	// create body of email
+	var body bytes.Buffer
+	body.WriteString("The form contained the following information: <br><br>")
+	for key, val := range requestData {
+		body.WriteString(key + ": " + utils.InterfaceToString(val) + "<br>")
+	}
+
+	err = SendMail(recipient,
+		"New Message from Form: "+frmLocation,
+		body.String())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return "ok", nil
+}
+
 // WEB REST API function to get info about current rights
 func restRightsInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 	result := make(map[string]interface{})
@@ -98,7 +149,7 @@ func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error
 		result["Ottemo.DBEngine"] = dbEngine.GetName()
 	}
 	result["Ottemo.VersionMajor"] = ConstVersionMajor
-	result["Ottemo.VersionMainor"] = ConstVersionMinor
+	result["Ottemo.VersionMinor"] = ConstVersionMinor
 	result["Ottemo.BuildTags"] = buildTags
 
 	result["StartTime"] = startTime
@@ -112,6 +163,9 @@ func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error
 	}
 	if buildBranch != "" {
 		result["Ottemo.BuildBranch"] = buildBranch
+	}
+	if buildHash != "" {
+		result["Ottemo.BuildHash"] = buildHash
 	}
 
 	result["GO"] = runtime.Version()
@@ -158,4 +212,31 @@ func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error
 	result["memStats.DebugGC"] = memStats.DebugGC
 
 	return result, nil
+}
+
+// getSessionTimeZone return a time zone of session
+func getSessionTimeZone(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	return context.GetSession().Get(api.ConstSessionKeyTimeZone), nil
+}
+
+// setSessionTimeZone validate time zone and set it to session
+func setSessionTimeZone(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if requestTimeZone := utils.GetFirstMapValue(requestData, "timeZone", "time_zone", "time"); requestTimeZone != nil {
+
+		result, err := SetSessionTimeZone(context.GetSession(), utils.InterfaceToString(requestTimeZone))
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		return result, nil
+	}
+
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a33f0f5d-2110-4208-8fb6-023da3ffd241", "time zone should be specified")
 }

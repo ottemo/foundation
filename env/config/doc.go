@@ -24,7 +24,7 @@ type application using to filter groups. For an instance path "app.checkout" cou
 "app.checkout.allow_oversell" and "app.checkout.oversell_limit" are config values related to this group. So, with usage
 of functions config.GetGroupItems() and config.GetItemsInfo() you can filter group based items.
 
-Each config value can have validator function associated, which can also modify value puring validation.
+Each config value can have validator function associated, which can also modify value puring verification.
 
 To be more consistent and clear it is highly recommended to declare config value paths as a package constants.
 

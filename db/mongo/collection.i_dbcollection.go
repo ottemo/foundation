@@ -61,7 +61,7 @@ func (it *DBCollection) Distinct(columnName string) ([]interface{}, error) {
 // Save stores record in DB for current collection
 func (it *DBCollection) Save(Item map[string]interface{}) (string, error) {
 
-	// id validation/updating
+	// id verification/updating
 	//-----------------------
 	id := bson.NewObjectId().Hex()
 
@@ -154,7 +154,6 @@ func (it *DBCollection) AddStaticFilter(ColumnName string, Operator string, Valu
 
 // AddFilter adds selection filter to current collection object
 func (it *DBCollection) AddFilter(ColumnName string, Operator string, Value interface{}) error {
-	Value = it.convertValueToType(it.GetColumnType(ColumnName), Value)
 	err := it.updateFilterGroup(ConstFilterGroupDefault, ColumnName, Operator, Value)
 	if err != nil {
 		return err

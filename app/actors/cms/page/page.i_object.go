@@ -136,7 +136,7 @@ func (it *DefaultCMSPage) GetAttributesInfo() []models.StructAttributeInfo {
 			Collection: ConstCmsPageCollectionName,
 			Attribute:  "title",
 			Type:       db.ConstTypeVarchar,
-			IsRequired: false,
+			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Title",
 			Group:      "General",

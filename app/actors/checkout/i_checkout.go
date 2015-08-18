@@ -178,56 +178,54 @@ func (it *DefaultCheckout) GetSession() api.InterfaceSession {
 	return sessionInstance
 }
 
+// GetTaxAmount returns total amount of taxes for current checkout
+func (it *DefaultCheckout) GetTaxAmount() float64 {
+
+	return it.taxesAmount
+}
+
+// GetDiscountAmount returns total amount of discounts applied for current checkout
+func (it *DefaultCheckout) GetDiscountAmount() float64 {
+
+	return it.discountsAmount
+}
+
 // GetTaxes collects taxes applied for current checkout
-func (it *DefaultCheckout) GetTaxes() (float64, []checkout.StructTaxRate) {
+func (it *DefaultCheckout) GetTaxes() []checkout.StructTaxRate {
 
-	var amount float64
-
-	if !it.taxesCalculateFlag {
+	if !it.taxesCalculateFlag && it.calculateFlag {
 		it.taxesCalculateFlag = true
 
 		it.Taxes = make([]checkout.StructTaxRate, 0)
 		for _, tax := range checkout.GetRegisteredTaxes() {
 			for _, taxRate := range tax.CalculateTax(it) {
 				it.Taxes = append(it.Taxes, taxRate)
-				amount += taxRate.Amount
 			}
 		}
 
 		it.taxesCalculateFlag = false
-	} else {
-		for _, taxRate := range it.Taxes {
-			amount += taxRate.Amount
-		}
 	}
 
-	return amount, it.Taxes
+	return it.Taxes
 }
 
 // GetDiscounts collects discounts applied for current checkout
-func (it *DefaultCheckout) GetDiscounts() (float64, []checkout.StructDiscount) {
+func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
 
-	var amount float64
-
-	if !it.discountsCalculateFlag {
+	if !it.discountsCalculateFlag && it.calculateFlag {
 		it.discountsCalculateFlag = true
 
 		it.Discounts = make([]checkout.StructDiscount, 0)
 		for _, discount := range checkout.GetRegisteredDiscounts() {
 			for _, discountValue := range discount.CalculateDiscount(it) {
 				it.Discounts = append(it.Discounts, discountValue)
-				amount += discountValue.Amount
 			}
 		}
 
 		it.discountsCalculateFlag = false
-	} else {
-		for _, discount := range it.Discounts {
-			amount += discount.Amount
-		}
 	}
 
-	return amount, it.Discounts
+	return it.Discounts
 }
 
 // GetSubtotal returns subtotal total for current checkout
@@ -240,21 +238,147 @@ func (it *DefaultCheckout) GetSubtotal() float64 {
 	return 0
 }
 
-// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
-func (it *DefaultCheckout) GetGrandTotal() float64 {
-	amount := it.GetSubtotal()
-
+// GetShippingAmount returns shipping price for current checkout
+func (it *DefaultCheckout) GetShippingAmount() float64 {
 	if shippingRate := it.GetShippingRate(); shippingRate != nil {
-		amount += shippingRate.Price
+		return shippingRate.Price
+	}
+	return 0
+}
+
+// CalculateAmount do a calculation of all amounts for checkout
+// TODO: make function use calculateTarget as a limit for priority to where it need to be calculated
+func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
+
+	if !it.calculateFlag {
+		it.calculateFlag = true
+
+		discounts := it.GetDiscounts()
+		taxes := it.GetTaxes()
+
+		basePoints := map[float64]func() float64{
+			checkout.ConstCalculateTargetSubtotal:   func() float64 { return it.GetSubtotal() },
+			checkout.ConstCalculateTargetShipping:   func() float64 { return it.GetShippingAmount() },
+			checkout.ConstCalculateTargetGrandTotal: func() float64 { return 0 },
+		}
+
+		it.calculateAmount = 0
+		it.discountsAmount = 0
+		it.taxesAmount = 0
+
+		var minPriority float64
+		var maxPriority float64
+
+		minIsSet := false
+		maxIsSet := false
+
+		searchMode := true
+
+		// 2 cycle calculation loop
+		// 1st loop - search mode, looks for current minimal priority to apply
+		// 2nd loop - apply current priority items
+		for searchMode || maxIsSet {
+
+			// setting previousPriority since 2nd search
+			if searchMode && maxIsSet {
+				minPriority = maxPriority
+				minIsSet = true
+				maxIsSet = false
+			}
+
+			// base points lookup (subtotal, shipping)
+			for priority, value := range basePoints {
+
+				if searchMode {
+					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
+						maxPriority = priority
+						maxIsSet = true
+					}
+				} else {
+					if priority == maxPriority {
+						it.calculateAmount += value()
+					}
+				}
+			}
+
+			// discounts lookup
+			for index, discount := range discounts {
+
+				if searchMode {
+					priority := discount.Priority
+					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
+						maxPriority = discount.Priority
+						maxIsSet = true
+					}
+				} else {
+					if discount.Priority == maxPriority {
+						amount := discount.Amount
+						if discount.IsPercent {
+							amount = it.calculateAmount * discount.Amount / 100
+						}
+
+						// prevent negative values for grand total subtract
+						if amount > it.calculateAmount {
+							amount = it.calculateAmount
+						}
+
+						// round amount add it to calculating amounts and set to discount amount
+						amount = utils.RoundPrice(amount)
+						discounts[index].Amount = amount
+						it.discountsAmount += amount
+						it.calculateAmount -= amount
+					}
+				}
+			}
+
+			// taxes lookup
+			for index, tax := range taxes {
+				if searchMode {
+					priority := tax.Priority
+					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
+						maxPriority = tax.Priority
+						maxIsSet = true
+					}
+				} else {
+					if tax.Priority == maxPriority {
+						amount := tax.Amount
+						if tax.IsPercent {
+							amount = it.calculateAmount * tax.Amount / 100
+						}
+
+						// round amount add it to calculating amounts and set to taxes amount
+						amount = utils.RoundPrice(amount)
+						taxes[index].Amount = amount
+						it.taxesAmount += amount
+						it.calculateAmount += amount
+					}
+				}
+			}
+
+			// cycle mode switcher
+			if searchMode {
+				searchMode = false
+			} else {
+				searchMode = true
+			}
+		}
+
+		it.Discounts = discounts
+		it.Taxes = taxes
+
+		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
+		it.taxesAmount = utils.RoundPrice(it.taxesAmount)
+		it.discountsAmount = utils.RoundPrice(it.discountsAmount)
+
+		it.calculateFlag = false
 	}
 
-	taxAmount, _ := it.GetTaxes()
-	amount += taxAmount
+	return it.calculateAmount
+}
 
-	discountAmount, _ := it.GetDiscounts()
-	amount -= discountAmount
-
-	return amount
+// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
+func (it *DefaultCheckout) GetGrandTotal() float64 {
+	return it.CalculateAmount(0)
 }
 
 // SetInfo sets additional info for checkout - any values related to checkout process
@@ -383,15 +507,34 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	shippingAddress := it.GetShippingAddress().ToHashMap()
 	checkoutOrder.Set("shipping_address", shippingAddress)
 
-	checkoutOrder.Set("cart_id", currentCart.GetID())
-	checkoutOrder.Set("payment_method", it.GetPaymentMethod().GetCode())
+	shippingInfo := utils.InterfaceToMap(checkoutOrder.Get("shipping_info"))
+	shippingInfo["shipping_method_name"] = it.GetShippingMethod().GetName() + "/" + it.GetShippingRate().Name
+	if notes := utils.InterfaceToString(it.GetInfo("notes")); notes != "" {
+		shippingInfo["notes"] = notes
+	}
+	checkoutOrder.Set("shipping_info", shippingInfo)
 	checkoutOrder.Set("shipping_method", it.GetShippingMethod().GetCode()+"/"+it.GetShippingRate().Code)
 
-	discountAmount, discounts := it.GetDiscounts()
+	checkoutOrder.Set("cart_id", currentCart.GetID())
+
+	paymentMethod := it.GetPaymentMethod()
+
+	if !paymentMethod.IsAllowed(it) {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a5490ee-daa3-42b4-a84a-dade12d103e8", "Payment method not allowed")
+	}
+
+	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
+	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
+	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetName()
+	checkoutOrder.Set("payment_info", paymentInfo)
+
+	discounts := it.GetDiscounts()
+	discountAmount := it.GetDiscountAmount()
 	checkoutOrder.Set("discount", discountAmount)
 	checkoutOrder.Set("discounts", discounts)
 
-	taxAmount, taxes := it.GetTaxes()
+	taxes := it.GetTaxes()
+	taxAmount := it.GetTaxAmount()
 	checkoutOrder.Set("tax_amount", taxAmount)
 	checkoutOrder.Set("taxes", taxes)
 
@@ -423,7 +566,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = checkoutOrder.Proceed()
+	err = checkoutOrder.SetStatus(order.ConstOrderStatusPending)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -435,17 +578,27 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	// trying to process payment
 	//--------------------------
-	paymentInfo := make(map[string]interface{})
-	paymentInfo["sessionID"] = it.GetSession().GetID()
+	if checkoutOrder.GetGrandTotal() > 0 {
+		paymentInfo := make(map[string]interface{})
+		paymentInfo["sessionID"] = it.GetSession().GetID()
+		paymentInfo["cc"] = it.GetInfo("cc")
 
-	result, err := it.GetPaymentMethod().Authorize(checkoutOrder, paymentInfo)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		result, err := paymentMethod.Authorize(checkoutOrder, paymentInfo)
+		if err != nil {
+			checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+			return nil, env.ErrorDispatch(err)
+		}
+
+		// if payment.Authorize returns non nil result, that supposing additional operations to complete payment
+		if result != nil {
+			return result, nil
+		}
 	}
 
-	// if payment.Authorize returns non nil result, that supposing additional operations to complete payment
-	if result != nil {
-		return result, nil
+	// set status to paid for processing without Authorize
+	if checkoutOrder.GetStatus() == order.ConstOrderStatusPending {
+		checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
+		checkoutOrder.Save()
 	}
 
 	err = it.CheckoutSuccess(checkoutOrder, it.GetSession())

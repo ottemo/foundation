@@ -25,15 +25,21 @@ func ConvertTypeFromDbToGo(value interface{}, valueType string) interface{} {
 			return result
 		}
 
-		valueString := utils.InterfaceToString(value)
-		if valueString == "" {
+		stringValue := utils.InterfaceToString(value)
+		if stringValue == "" {
 			return result
 		}
 
-		array := strings.Split(valueString, ", ")
+		jsonArray, err := utils.DecodeJSONToArray(stringValue)
+		if err == nil {
+			return jsonArray
+		}
+
+		array := strings.Split(stringValue, ", ")
 		arrayType := strings.TrimPrefix(valueType, "[]")
 
 		for _, arrayValue := range array {
+			arrayValue = strings.Replace(arrayValue, "#2C;", ",", -1)
 			result = append(result, ConvertTypeFromDbToGo(arrayValue, arrayType))
 		}
 		return result

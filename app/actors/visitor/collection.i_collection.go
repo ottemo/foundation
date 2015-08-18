@@ -65,10 +65,10 @@ func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) erro
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
 		} else {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3700f6c-65a1-4fd0-b8f5-37af1b6922a7", "attribute already in list")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3700f6c-65a1-4fd0-b8f5-37af1b6922a7", "The provided attribute, "+attribute+", already exists, unable to insert it.")
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a4bee81b-f975-40a2-94cf-fdbdfbf80627", "not allowed attribute")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a4bee81b-f975-40a2-94cf-fdbdfbf80627", "The following attribute is not allowed to be added to the attribute list: "+attribute+".")
 	}
 
 	return nil

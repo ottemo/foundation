@@ -9,13 +9,20 @@ import (
 
 // Package global constants
 const (
-	ConstPaymentCode = "paypal_express"
-	ConstPaymentName = "PayPal Express"
+	// PayPal general constants
 
 	ConstLogStorage = "paypal.log"
 
+	ConstErrorModule = "payment/paypal"
+	ConstErrorLevel  = env.ConstErrorLevelActor
+
 	ConstPaymentActionSale          = "Sale"
 	ConstPaymentActionAuthorization = "Authorization"
+
+	// PayPal express constants
+
+	ConstPaymentCode = "paypal_express"
+	ConstPaymentName = "PayPal Express"
 
 	ConstConfigPathGroup = "payment.paypal"
 
@@ -31,8 +38,21 @@ const (
 	ConstConfigPathSignature = "payment.paypal.signature"
 	ConstConfigPathAction    = "payment.paypal.action"
 
-	ConstErrorModule = "payment/paypal"
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	// PayPal pro API constants
+
+	ConstPaymentPayPalPayflowCode = "paypal_payflow"
+
+	ConstConfigPathPayPalPayflowGroup = "payment.paypalpayflow"
+
+	ConstConfigPathPayPalPayflowEnabled = "payment.paypalpayflow.enabled"
+	ConstConfigPathPayPalPayflowTitle   = "payment.paypalpayflow.title"
+
+	ConstConfigPathPayPalPayflowURL  = "payment.paypalpayflow.url"
+	ConstConfigPathPayPalPayflowHost = "payment.paypalpayflow.host"
+
+	ConstConfigPathPayPalPayflowUser   = "payment.paypalpayflow.user"
+	ConstConfigPathPayPalPayflowPass   = "payment.paypalpayflow.password"
+	ConstConfigPathPayPalPayflowVendor = "payment.paypalpayflow.vendor"
 )
 
 // Package global variables
@@ -46,3 +66,6 @@ type Express struct{}
 
 // RestAPI is a implementer of InterfacePaymentMethod for a PayPal REST API method (currently not working)
 type RestAPI struct{}
+
+// PayFlowAPI is a implementer of PayPal Pro payflow API methods
+type PayFlowAPI struct{}

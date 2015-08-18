@@ -10,7 +10,6 @@ const (
 
 	ConstConfigPathGroup             = "general.checkout"
 	ConstConfigPathConfirmationEmail = "general.checkout.order_confirmation_email"
-	ConstConfigPathCheckoutType      = "general.checkout.checkout_type"
 	ConstConfigPathOversell          = "general.checkout.oversell"
 
 	ConstConfigPathShippingGroup              = "shipping"
@@ -36,6 +35,10 @@ const (
 	ConstPaymentTypeRemote     = "remote"
 	ConstPaymentTypePost       = "post"
 	ConstPaymentTypePostCC     = "post_cc"
+
+	ConstCalculateTargetSubtotal   = 1.0
+	ConstCalculateTargetShipping   = 2.0
+	ConstCalculateTargetGrandTotal = 3.0
 
 	ConstSessionKeyCurrentCheckout = "Checkout"
 

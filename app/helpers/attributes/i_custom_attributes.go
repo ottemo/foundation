@@ -209,7 +209,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0402b818-03e9-4c56-bee8-0c1471b8d2ba", "There is already atribute '"+newAttribute.Attribute+"' in collection '"+it.collection+"'")
 	}
 
-	// type validation
+	// type verification
 	if !utils.IsAmongStr(strings.Trim(newAttribute.Type, "[]"),
 		db.ConstTypeID,
 		db.ConstTypeBoolean,

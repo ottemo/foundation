@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -102,4 +103,33 @@ Content-Type: text/html
 
 	err = smtp.SendMail(mailServer+mailPort, auth, userName, []string{to}, doc.Bytes())
 	return env.ErrorDispatch(err)
+}
+
+// GetSessionTimeZone - return time zone of session
+func GetSessionTimeZone(session api.InterfaceSession) (string, error) {
+
+	if session != nil {
+		return utils.InterfaceToString(session.Get(api.ConstSessionKeyTimeZone)), nil
+	}
+
+	return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelHelper, "d29c25ff-ffd0-4fd0-a02b-6f22a1bf9969", "session is not specified")
+}
+
+// SetSessionTimeZone - validate time zone and set it to session
+func SetSessionTimeZone(session api.InterfaceSession, zone string) (interface{}, error) {
+
+	if session != nil && zone != "" {
+		zoneName, zoneOffset := utils.ParseTimeZone(utils.InterfaceToString(zone))
+
+		if zoneUTCOffset, present := utils.TimeZones[zoneName]; present {
+			session.Set(api.ConstSessionKeyTimeZone, zone)
+			zoneOffset += zoneUTCOffset
+
+			return zoneName + zoneOffset.String(), nil
+		}
+
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelHelper, "962f865e-be19-44c6-8139-aca808f047d3", " specified time zone can't be parsed")
+	}
+
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelHelper, "b981731d-907b-4271-8087-095cff6edf3b", "session or zone is not specified")
 }

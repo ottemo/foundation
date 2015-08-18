@@ -46,6 +46,9 @@ func (it *DefaultSessionService) allocateSessionInstance(sessionInstance *Defaul
 // Get returns session object for given session id or nil of not currently exists
 func (it *DefaultSessionService) Get(sessionID string) (api.InterfaceSession, error) {
 
+	if sessionID == "" {
+		return nil, nil
+	}
 	replaceInstanceFlag := false
 
 	// taking application instance of session

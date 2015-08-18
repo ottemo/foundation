@@ -34,12 +34,18 @@ const (
 	ConstConfigPathStoreAddressline2 = "general.store.addressline2"
 	ConstConfigPathStoreZip          = "general.store.zip"
 
+	ConstConfigPathStoreTimeZone = "general.store.timezone"
+
 	ConstConfigPathMailFrom      = "general.mail.from"
 	ConstConfigPathMailSignature = "general.mail.footer"
 	ConstConfigPathMailServer    = "general.mail.server"
 	ConstConfigPathMailPort      = "general.mail.port"
 	ConstConfigPathMailUser      = "general.mail.user"
 	ConstConfigPathMailPassword  = "general.mail.password"
+
+	ConstConfigPathContactUsRecipient = "general.app.recipient"
+
+	ConstConfigPathVerfifyEmail = ConstConfigPathAppGroup + ".verifyemail"
 
 	ConstErrorModule = "app"
 	ConstErrorLevel  = env.ConstErrorLevelService
@@ -54,6 +60,7 @@ var (
 	buildDate   string
 	buildNumber string
 	buildBranch string
+	buildHash   string
 
 	startTime = time.Now().UTC().Truncate(time.Second)
 )

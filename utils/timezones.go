@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-var timeZones = map[string]time.Duration{
+// TimeZones list of known Time Zone Abbreviations – Worldwide List
+var TimeZones = map[string]time.Duration{
 	"A":     1*time.Hour + 00*time.Minute,
 	"ACDT":  10*time.Hour + 30*time.Minute,
 	"ACST":  9*time.Hour + 30*time.Minute,
@@ -226,9 +227,8 @@ var timeZones = map[string]time.Duration{
 	"Z":     0*time.Hour + 00*time.Minute,
 }
 
-// ApplyTimeZone adds timeZone offset to a given time (given time considered as UTC timezone time and it's hour offset)
-func ApplyTimeZone(inTime time.Time, timeZone string) (time.Time, time.Duration) {
-	result := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), time.UTC)
+// ParseTimeZone returns zone name and it's offset from GMT
+func ParseTimeZone(timeZone string) (string, time.Duration) {
 
 	zoneName := strings.TrimSpace(timeZone)
 	var zoneOffset time.Duration
@@ -239,7 +239,7 @@ func ApplyTimeZone(inTime time.Time, timeZone string) (time.Time, time.Duration)
 		zoneName = timeZone[:offsetIndex]
 		offsetString := timeZone[offsetIndex+1:]
 
-		offsetString = strings.Replace(offsetString, ":", " ", -1)
+		offsetString = strings.Replace(offsetString, ":", "", -1)
 		if len(offsetString) >= 6 {
 			zoneOffset += time.Second * time.Duration(InterfaceToInt(offsetString[4:6]))
 		}
@@ -256,26 +256,79 @@ func ApplyTimeZone(inTime time.Time, timeZone string) (time.Time, time.Duration)
 		if timeZone[offsetIndex] == '-' {
 			zoneOffset = -zoneOffset
 		}
+	} else {
+		zoneOffset = time.Hour * time.Duration(InterfaceToInt(timeZone))
+		zoneName = strings.Replace(zoneName, InterfaceToString(InterfaceToInt(timeZone)), "", -1)
+	}
+	// set zone name to UTC when zone name not specified
+	if zoneName == "" {
+		zoneName = "UTC"
 	}
 
-	timeDifference := zoneOffset
-
-	if zoneUTCOffset, present := timeZones[zoneName]; present {
-		result = result.Add(-time.Duration(zoneUTCOffset))
-		timeDifference = time.Duration(zoneUTCOffset)
-	}
-
-	result = result.Add(-zoneOffset)
-
-	return result, timeDifference
+	return zoneName, zoneOffset
 }
 
-// ConvertTimeToUTC returns a given time in UTC timezone (converts timezone to offset for UTC)
-func ConvertTimeToUTC(inTime time.Time) time.Time {
+// MakeUTCTime returns given time in UTC-00:00 timezone (current time.Locale() ignores)
+// and offset from GMT in duration format
+func MakeUTCTime(inTime time.Time, timeZone string) (time.Time, time.Duration) {
+	UTCTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), time.UTC)
+
+	zoneName, zoneOffset := ParseTimeZone(timeZone)
+
+	if zoneUTCOffset, present := TimeZones[zoneName]; present {
+		zoneOffset += time.Duration(zoneUTCOffset)
+	} else {
+		return time.Time{}, time.Duration(0)
+	}
+
+	UTCTime = UTCTime.Add(-zoneOffset)
+
+	return UTCTime, zoneOffset
+}
+
+// MakeUTCOffsetTime returns given time in UTC offset timezone (i.e. PST = UTC-08:00, current time.Locale() ignores)
+// and offset from GMT in duration format
+func MakeUTCOffsetTime(inTime time.Time, timeZone string) (time.Time, time.Duration) {
+	zoneName, zoneOffset := ParseTimeZone(timeZone)
+
+	if timeZoneOffset, present := TimeZones[zoneName]; present {
+		zoneOffset += timeZoneOffset
+	} else {
+		return time.Time{}, time.Duration(0)
+	}
+
+	locale := time.FixedZone("UTC", InterfaceToInt(zoneOffset.Seconds()))
+	resultTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), locale)
+	resultTime = resultTime.Add(zoneOffset)
+
+	return resultTime, zoneOffset
+}
+
+// MakeTZTime returns given time in specified timezone (current time.Locale() ignores)
+// and offset from GMT in duration format
+func MakeTZTime(inTime time.Time, timeZone string) (time.Time, time.Duration) {
+	zoneName, zoneOffset := ParseTimeZone(timeZone)
+
+	locale := time.FixedZone(zoneName, InterfaceToInt(zoneOffset.Seconds()))
+
+	if timeZoneOffset, present := TimeZones[zoneName]; present {
+		zoneOffset += timeZoneOffset
+	} else {
+		return time.Time{}, time.Duration(0)
+	}
+
+	resultTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), locale)
+	resultTime = resultTime.Add(zoneOffset)
+
+	return resultTime, zoneOffset
+}
+
+// TimeToUTCTime returns a given time in UTC timezone (converts time.Locale() to offset for UTC time)
+func TimeToUTCTime(inTime time.Time) time.Time {
 	result := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), time.UTC)
 
 	zoneName, offset := inTime.Zone()
-	if zoneOffset, present := timeZones[zoneName]; present {
+	if zoneOffset, present := TimeZones[zoneName]; present {
 		result = result.Add(-zoneOffset)
 	}
 

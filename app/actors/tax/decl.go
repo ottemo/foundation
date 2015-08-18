@@ -10,6 +10,8 @@ import (
 const (
 	ConstErrorModule = "tax"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstPriorityValue = 2.50
 )
 
 // DefaultTax is a default implementer of InterfaceTax

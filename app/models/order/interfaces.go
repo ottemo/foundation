@@ -16,7 +16,8 @@ const (
 
 	ConstOrderStatusCancelled = "cancelled" // means that order was created and then declined
 	ConstOrderStatusNew       = "new"       // means that order created but not payed
-	ConstOrderStatusPending   = "pending"   // means that order was payed but not fulfilled
+	ConstOrderStatusPending   = "pending"   // means that order was submitted and currently in processing
+	ConstOrderStatusProcessed = "processed" // means that order was payed
 	ConstOrderStatusCompleted = "completed" // means that order was completed
 
 	ConstErrorModule = "order"
@@ -65,7 +66,7 @@ type InterfaceOrder interface {
 	GetTaxAmount() float64
 	GetShippingAmount() float64
 
-	GetTaxes()  []StructTaxRate
+	GetTaxes() []StructTaxRate
 	GetDiscounts() []StructDiscount
 
 	GetShippingAddress() visitor.InterfaceVisitorAddress

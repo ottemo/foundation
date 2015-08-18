@@ -2,18 +2,19 @@
 package visitor
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/helpers/attributes"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"time"
 )
 
 // Package global constants
 const (
 	ConstCollectionNameVisitor = "visitor"
 
-	ConstEmailValidateExpire = 60 * 60 * 24
+	ConstEmailVerifyExpire = 60 * 60 * 24
 
 	ConstErrorModule = "visitor"
 	ConstErrorLevel  = env.ConstErrorLevelActor
@@ -33,8 +34,8 @@ type DefaultVisitor struct {
 	BillingAddress  visitor.InterfaceVisitorAddress
 	ShippingAddress visitor.InterfaceVisitorAddress
 
-	Password    string
-	ValidateKey string
+	Password        string
+	VerificationKey string
 
 	Admin bool
 

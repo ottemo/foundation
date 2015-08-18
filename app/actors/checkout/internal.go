@@ -3,12 +3,15 @@ package checkout
 import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
-	"github.com/ottemo/foundation/app/models/cart"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/actors/discount/coupon"
+	"github.com/ottemo/foundation/app/actors/discount/giftcard"
+
+	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/order"
 )
 
 // SendOrderConfirmationMail sends an order confirmation email
@@ -34,10 +37,45 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 			visitorMap["email"] = checkoutOrder.Get("customer_email")
 		}
 
+		orderMap := checkoutOrder.ToHashMap()
+		var orderItems []map[string]interface{}
+
+		for _, item := range checkoutOrder.GetItems() {
+			options := make(map[string]interface{})
+
+			for optionName, optionKeys := range item.GetOptions() {
+				optionMap := utils.InterfaceToMap(optionKeys)
+				options[optionName] = optionMap["value"]
+			}
+			orderItems = append(orderItems, map[string]interface{}{
+				"name":    item.GetName(),
+				"options": options,
+				"sku":     item.GetSku(),
+				"qty":     item.GetQty(),
+				"price":   item.GetPrice()})
+		}
+
+		// convert date of order creation to store time zone
+		timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+		if date, present := orderMap["created_at"]; present {
+			convertedDate, _ := utils.MakeUTCOffsetTime(utils.InterfaceToTime(date), timeZone)
+			if !utils.IsZeroTime(convertedDate) {
+				orderMap["created_at"] = convertedDate
+			}
+		}
+
+		orderMap["items"] = orderItems
+		orderMap["payment_method_title"] = it.GetPaymentMethod().GetName()
+		orderMap["shipping_method_title"] = it.GetShippingMethod().GetName()
+
+		customInfo := make(map[string]interface{})
+		customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
+
 		confirmationEmail, err := utils.TextTemplate(confirmationEmail,
 			map[string]interface{}{
-				"Order":   checkoutOrder.ToHashMap(),
+				"Order":   orderMap,
 				"Visitor": visitorMap,
+				"Info":    customInfo,
 			})
 		if err != nil {
 			return env.ErrorDispatch(err)
@@ -57,15 +95,12 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 
 	// making sure order and session were specified
 	if checkoutOrder == nil || session == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "17d45365-7808-4a1b-ad36-1741a83e820f", "Order or session is null")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "17d45365-7808-4a1b-ad36-1741a83e820f", "Either the order or the session is null")
 	}
 
-	// if payment method did not set status by itself - making this
-	if orderStatus := checkoutOrder.GetStatus(); orderStatus == "" || orderStatus == order.ConstOrderStatusNew {
-		err := checkoutOrder.SetStatus(order.ConstOrderStatusPending)
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
+	// check order status for funds collected before  proceeding to checkout success
+	if orderStatus := checkoutOrder.GetStatus(); orderStatus != order.ConstOrderStatusProcessed && orderStatus != order.ConstOrderStatusCompleted {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7dec976e-084b-4d29-9301-bb3b328be95f", "Funds were not colletecd on the order")
 	}
 
 	// checkout information cleanup
@@ -84,6 +119,8 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 
 	session.Set(cart.ConstSessionKeyCurrentCart, nil)
 	session.Set(checkout.ConstSessionKeyCurrentCheckout, nil)
+	session.Set(coupon.ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+	session.Set(giftcard.ConstSessionKeyAppliedGiftCardCodes, make([]string, 0))
 
 	// sending notifications
 	//----------------------

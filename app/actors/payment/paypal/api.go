@@ -9,10 +9,11 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/order"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -155,11 +156,14 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "af2103b1-8501-4e4b-bc1b-9086ef7c63be", "Transaction not confirmed")
 		}
+		
+		paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
+		for key, value := range completeData {
+			paymentInfo[key] = value
+		}
 
-		checkoutOrder.NewIncrementID()
-
-		checkoutOrder.SetStatus(order.ConstOrderStatusPending)
-		checkoutOrder.Set("payment_info", completeData)
+		checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
+		checkoutOrder.Set("payment_info", paymentInfo)
 
 		err = checkoutOrder.Save()
 		if err != nil {
@@ -176,7 +180,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 			"OrderID - "+checkoutOrder.GetID()+", "+
 			"TOKEN - : "+completeData["TOKEN"])
 
-		return api.StructRestRedirect{Location: app.GetStorefrontURL("account/order/" + checkoutOrder.GetID()), DoRedirect: true}, nil
+		return api.StructRestRedirect{Location: app.GetStorefrontURL("checkout/success/" + checkoutOrder.GetID()), DoRedirect: true}, nil
 	}
 
 	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8d449c1c-ca34-4260-a93b-8af999c1ff04", "Checkout not exist")

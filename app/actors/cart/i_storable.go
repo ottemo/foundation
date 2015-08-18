@@ -4,9 +4,10 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
 
+	"time"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // GetID returns id of current cart

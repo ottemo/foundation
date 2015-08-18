@@ -288,7 +288,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "weight",
 			Type:       db.ConstTypeDecimal,
-			IsRequired: false,
+			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Weight",
 			Group:      "General",

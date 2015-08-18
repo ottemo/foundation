@@ -36,7 +36,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "shipping_address":
 		return it.ShippingAddress
 	case "validate":
-		return it.ValidateKey
+		return it.VerificationKey
 	case "facebook_id":
 		return it.FacebookID
 	case "google_id":
@@ -66,7 +66,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "password", "passwd":
 		it.SetPassword(utils.InterfaceToString(value))
 	case "validate":
-		it.ValidateKey = utils.InterfaceToString(value)
+		it.VerificationKey = utils.InterfaceToString(value)
 	case "facebook_id":
 		it.FacebookID = utils.InterfaceToString(value)
 	case "google_id":
@@ -135,7 +135,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 				it.ShippingAddress = addressModel
 			}
 		default:
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "unsupported billing or shipping address value")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "Unable to set the Address due to an unknown error.")
 		}
 
 	default:

@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 
+	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -63,6 +64,10 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// record rts event for  checkout
+	eventData := map[string]interface{}{"session": context.GetSession(), "checkout": currentCheckout}
+	env.Event("api.checkout.visit", eventData)
+
 	result := map[string]interface{}{
 		"billing_address":  nil,
 		"shipping_address": nil,
@@ -92,7 +97,13 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	if shippingAddress := currentCheckout.GetShippingAddress(); shippingAddress != nil {
-		result["shipping_address"] = shippingAddress.ToHashMap()
+		shippingAddressMap := shippingAddress.ToHashMap()
+
+		if notes := utils.InterfaceToString(currentCheckout.GetInfo("notes")); notes != "" {
+			shippingAddressMap["notes"] = notes
+		}
+
+		result["shipping_address"] = shippingAddressMap
 	}
 
 	if paymentMethod := currentCheckout.GetPaymentMethod(); paymentMethod != nil {
@@ -113,13 +124,23 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	if checkoutCart := currentCheckout.GetCart(); checkoutCart != nil {
 		result["subtotal"] = checkoutCart.GetSubtotal()
 	}
-
-	result["discount_amount"], result["discounts"] = currentCheckout.GetDiscounts()
-
-	result["tax_amount"], result["taxes"] = currentCheckout.GetTaxes()
-
 	result["grandtotal"] = currentCheckout.GetGrandTotal()
-	result["info"] = currentCheckout.GetInfo("*")
+
+	result["tax_amount"] = currentCheckout.GetTaxAmount()
+	result["taxes"] = currentCheckout.GetTaxes()
+
+	result["discount_amount"] = currentCheckout.GetDiscountAmount()
+	result["discounts"] = currentCheckout.GetDiscounts()
+
+	// prevent from showing cc values in info
+	infoMap := make(map[string]interface{})
+	for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
+		if key != "cc" {
+			infoMap[key] = value
+		}
+	}
+
+	result["info"] = infoMap
 
 	return result, nil
 }
@@ -285,6 +306,12 @@ func APISetShippingAddress(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
+	requestContents, _ := api.GetRequestContentAsMap(context)
+
+	if notes, present := requestContents["notes"]; present {
+		currentCheckout.SetInfo("notes", notes)
+	}
+
 	// updating session
 	checkout.SetCurrentCheckout(context, currentCheckout)
 
@@ -340,6 +367,7 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 					currentCheckout.SetInfo(key, value)
 				}
 
+				// visitor event for setting payment method
 				eventData := map[string]interface{}{"session": context.GetSession(), "paymentMethod": paymentMethod, "checkout": currentCheckout}
 				env.Event("api.checkout.setPayment", eventData)
 
@@ -470,6 +498,20 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 
 		if !found {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8384a47-8806-4a54-90fc-cccb5e958b4e", "payment method not found")
+		}
+	}
+
+	// set ZeroPayment method for checkout without payment method
+	if currentCheckout.GetPaymentMethod() == nil {
+		for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
+			if zeropay.ConstPaymentZeroPaymentCode == paymentMethod.GetCode() {
+				if paymentMethod.IsAllowed(currentCheckout) {
+					err := currentCheckout.SetPaymentMethod(paymentMethod)
+					if err != nil {
+						return nil, env.ErrorDispatch(err)
+					}
+				}
+			}
 		}
 	}
 

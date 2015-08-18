@@ -282,19 +282,17 @@ func GetRangeStats(dateFrom, dateTo time.Time) (ActionsMade, error) {
 	var stats ActionsMade
 
 	// Go thru period and summarise a visits
-	for dateFrom.Before(dateTo) {
-
-		if _, present := statistic[dateFrom.Unix()]; present {
-			stats.Visit = statistic[dateFrom.Unix()].Visit + stats.Visit
-			stats.Sales = statistic[dateFrom.Unix()].Sales + stats.Sales
-			stats.Cart = statistic[dateFrom.Unix()].Cart + stats.Cart
-			stats.TotalVisits = statistic[dateFrom.Unix()].TotalVisits + stats.TotalVisits
-			stats.SalesAmount = statistic[dateFrom.Unix()].SalesAmount + stats.SalesAmount
+	for dateFrom.Before(dateTo.Add(time.Nanosecond)) {
+		if actions, present := statistic[dateFrom.Unix()]; present {
+			stats.Visit = actions.Visit + stats.Visit
+			stats.Sales = actions.Sales + stats.Sales
+			stats.Cart = actions.Cart + stats.Cart
+			stats.TotalVisits = actions.TotalVisits + stats.TotalVisits
+			stats.SalesAmount = actions.SalesAmount + stats.SalesAmount
 		}
 
 		dateFrom = dateFrom.Add(time.Hour)
 	}
-
 	return stats, nil
 }
 
@@ -304,58 +302,54 @@ func initStatistic() error {
 	timeScope := time.Hour
 	durationWeek := time.Hour * 168
 
-	dateTo := time.Now().Add(time.Hour).Truncate(timeScope)
+	dateTo := time.Now().Truncate(timeScope)
 	dateFrom := dateTo.Add(-durationWeek)
 
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	visitorInfoCollection.AddSort("day", false)
 
-	for dateFrom.Before(dateTo) {
+	visitorInfoCollection.AddFilter("day", "<=", dateTo)
+	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
 
-		timeIterator := dateFrom.Unix()
-		// get database records for every hour
-		visitorInfoCollection.ClearFilters()
-		visitorInfoCollection.AddFilter("day", "=", timeIterator)
-		dbRecords, err := visitorInfoCollection.Load()
-		if err != nil {
-			return env.ErrorDispatch(err)
+	dbRecords, err := visitorInfoCollection.Load()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	timeIterator := dateFrom.Unix()
+
+	// add info from db record if not null to variable
+	for _, item := range dbRecords {
+		timeIterator = utils.InterfaceToTime(item["day"]).Unix()
+		if _, present := statistic[timeIterator]; !present {
+			statistic[timeIterator] = new(ActionsMade)
 		}
-
-		// add info from db record if not null to variable
-		for _, item := range dbRecords {
-
-			// create record for non existing hour
-			if _, present := statistic[timeIterator]; !present {
-				statistic[timeIterator] = new(ActionsMade)
-			}
-
-			// add info to hour
-			statistic[timeIterator].TotalVisits = statistic[timeIterator].TotalVisits + utils.InterfaceToInt(item["total_visits"])
-			statistic[timeIterator].SalesAmount = statistic[timeIterator].SalesAmount + utils.InterfaceToFloat64(item["sales_amount"])
-			statistic[timeIterator].Visit = statistic[timeIterator].Visit + utils.InterfaceToInt(item["visitors"])
-			statistic[timeIterator].Sales = statistic[timeIterator].Sales + utils.InterfaceToInt(item["sales"])
-			statistic[timeIterator].Cart = statistic[timeIterator].Cart + utils.InterfaceToInt(item["cart"])
-		}
-
-		dateFrom = dateFrom.Add(timeScope)
+		// add info to hour
+		statistic[timeIterator].TotalVisits = statistic[timeIterator].TotalVisits + utils.InterfaceToInt(item["total_visits"])
+		statistic[timeIterator].SalesAmount = statistic[timeIterator].SalesAmount + utils.InterfaceToFloat64(item["sales_amount"])
+		statistic[timeIterator].Visit = statistic[timeIterator].Visit + utils.InterfaceToInt(item["visitors"])
+		statistic[timeIterator].Sales = statistic[timeIterator].Sales + utils.InterfaceToInt(item["sales"])
+		statistic[timeIterator].VisitCheckout = statistic[timeIterator].VisitCheckout + utils.InterfaceToInt(item["visit_checkout"])
+		statistic[timeIterator].SetPayment = statistic[timeIterator].SetPayment + utils.InterfaceToInt(item["set_payment"])
+		statistic[timeIterator].Cart = statistic[timeIterator].Cart + utils.InterfaceToInt(item["cart"])
 	}
 
 	return nil
 }
 
-// SaveStatisticsData make save a statistic data row to database from last updated record in database to current hour
+// SaveStatisticsData save a statistic data row gor last hour to database
 func SaveStatisticsData() error {
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
+	currentHour := time.Now().Truncate(time.Hour)
+
 	// find last saved record time to start saving from it
-	visitorInfoCollection.AddSort("day", true)
-	visitorInfoCollection.SetLimit(0, 1)
+	visitorInfoCollection.AddFilter("day", "=", currentHour)
 	dbRecord, err := visitorInfoCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -365,63 +359,26 @@ func SaveStatisticsData() error {
 
 	// write current records to database with rewrite of last
 	if len(dbRecord) > 0 {
-		lastRecord := dbRecord[0]
+		visitorInfoRow = utils.InterfaceToMap(dbRecord[0])
+	}
 
-		dateTo := time.Now().Add(time.Hour)
-		dateFrom := utils.InterfaceToTime(lastRecord["day"]).Truncate(time.Hour)
+	if lastActions, present := statistic[currentHour.Unix()]; present {
+		visitorInfoRow["day"] = currentHour
+		visitorInfoRow["visitors"] = lastActions.Visit
+		visitorInfoRow["cart"] = lastActions.Cart
+		visitorInfoRow["sales"] = lastActions.Sales
+		visitorInfoRow["visit_checkout"] = lastActions.VisitCheckout
+		visitorInfoRow["set_payment"] = lastActions.SetPayment
+		visitorInfoRow["sales_amount"] = lastActions.SalesAmount
+		visitorInfoRow["total_visits"] = lastActions.TotalVisits
 
-		if statisticValue, present := statistic[dateFrom.Unix()]; present {
-			lastRecord["day"] = dateFrom.Unix()
-			lastRecord["visitors"] = statisticValue.Visit
-			lastRecord["cart"] = statisticValue.Cart
-			lastRecord["sales"] = statisticValue.Sales
-			lastRecord["sales_amount"] = statisticValue.SalesAmount
-			lastRecord["total_visits"] = statisticValue.TotalVisits
-
-			// save data to database
-			_, err = visitorInfoCollection.Save(lastRecord)
-			if err != nil {
-				return env.ErrorDispatch(err)
-			}
-
-			dateFrom = dateFrom.Add(time.Hour)
+		// save data to database
+		_, err = visitorInfoCollection.Save(visitorInfoRow)
+		if err != nil {
+			return env.ErrorDispatch(err)
 		}
-
-		// save data to database for every hour in statistic
-		// beginning from last database record to current time
-		for dateFrom.Before(dateTo) {
-			if statisticValue, present := statistic[dateFrom.Unix()]; present {
-				visitorInfoRow["day"] = dateFrom.Unix()
-				visitorInfoRow["visitors"] = statisticValue.Visit
-				visitorInfoRow["cart"] = statisticValue.Cart
-				visitorInfoRow["sales"] = statisticValue.Sales
-				visitorInfoRow["sales_amount"] = statisticValue.SalesAmount
-				visitorInfoRow["total_visits"] = statisticValue.TotalVisits
-
-				// save data to database
-				_, err = visitorInfoCollection.Save(visitorInfoRow)
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
-			}
-			dateFrom = dateFrom.Add(time.Hour)
-		}
-
 	} else {
-		for time, actions := range statistic {
-			visitorInfoRow["day"] = time
-			visitorInfoRow["visitors"] = actions.Visit
-			visitorInfoRow["cart"] = actions.Cart
-			visitorInfoRow["sales"] = actions.Sales
-			visitorInfoRow["sales_amount"] = actions.SalesAmount
-			visitorInfoRow["total_visits"] = actions.TotalVisits
-
-			// save data to database
-			_, err = visitorInfoCollection.Save(visitorInfoRow)
-			if err != nil {
-				return env.ErrorDispatch(err)
-			}
-		}
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9712c601-662e-4744-b9fb-991a959cff32", "last rts_visitors statistic save failed"))
 	}
 
 	return nil
@@ -519,7 +476,7 @@ func initReferrals() error {
 // sortArrayOfMapByKey sort array from biggest to lowest value of map[key] element
 func sortArrayOfMapByKey(data []map[string]interface{}, key string) []map[string]interface{} {
 
-	var result[]map[string]interface{}
+	var result []map[string]interface{}
 	var indexOfMaxValueItem int
 	var maxValue float64
 
