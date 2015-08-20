@@ -248,7 +248,11 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
 		}
 
-		resp.Write(result.([]byte))
+		if value, ok := result.([]byte); ok {
+			resp.Write(value)
+		} else {
+			resp.Write([]byte(fmt.Sprint(result)))
+		}
 	}
 
 	path := "/" + resource

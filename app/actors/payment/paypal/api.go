@@ -215,6 +215,13 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	checkoutOrder := currentCheckout.GetOrder()
 
+	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+
+	err = checkoutOrder.Save()
+	if err != nil {
+		return nil, err
+	}
+
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "CANCELED: "+
 		"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 		"OrderID - "+checkoutOrder.GetID()+", "+

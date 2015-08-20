@@ -540,11 +540,15 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	checkoutOrder.Set("shipping_amount", it.GetShippingRate().Price)
 
-	generateDescriptionFlag := false
-	orderDescription := utils.InterfaceToString(it.GetInfo("order_description"))
-	if orderDescription == "" {
-		generateDescriptionFlag = true
+	// remove order items, and add new from current cart with new description
+	for index, _ := range checkoutOrder.GetItems() {
+		err := checkoutOrder.RemoveItem(index + 1)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
 	}
+
+	orderDescription := ""
 
 	for _, cartItem := range cartItems {
 		orderItem, err := checkoutOrder.AddItem(cartItem.GetProductID(), cartItem.GetQty(), cartItem.GetOptions())
@@ -552,13 +556,13 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		if generateDescriptionFlag {
-			if orderDescription != "" {
-				orderDescription += ", "
-			}
-			orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
+		if orderDescription != "" {
+			orderDescription += ", "
 		}
+		orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
+
 	}
+
 	checkoutOrder.Set("description", orderDescription)
 
 	err := checkoutOrder.CalculateTotals()

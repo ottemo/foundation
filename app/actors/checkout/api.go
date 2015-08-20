@@ -279,7 +279,7 @@ func checkoutObtainAddress(data interface{}) (visitor.InterfaceVisitorAddress, e
 
 	// if address id was specified it means that address was changed, so saving it
 	// new address we are not saving as if could be temporary address
-	if visitorAddressModel.GetID() != "" {
+	if (visitorAddressModel.GetID() != "" || currentVisitorID != "") && utils.InterfaceToBool(addressData["save"]) {
 		err = visitorAddressModel.Save()
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
