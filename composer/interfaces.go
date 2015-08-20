@@ -13,6 +13,16 @@ type InterfaceComposeUnit interface {
 type InterfaceComposer interface {
 	RegisterUnit(unit InterfaceComposeUnit) error
 	UnRegisterUnit(unit InterfaceComposeUnit) error
+	ListUnits() []InterfaceComposeUnit
 
 	Process(unit InterfaceComposeUnit, in map[string]interface{}) (interface{}, error)
+}
+
+
+func InKey(name string) {
+	return ConstInPrefix + name
+}
+
+func OutKey(name string) {
+	return ConstOutPrefix + name
 }

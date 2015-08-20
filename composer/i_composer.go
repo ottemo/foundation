@@ -28,6 +28,10 @@ func (it *DefaultComposer) UnRegisterUnit(unit InterfaceComposeUnit) error {
 	return nil
 }
 
+func (it *DefaultComposer) ListUnits() []InterfaceComposeUnit {
+
+}
+
 func (it *DefaultComposer) Process(unit InterfaceComposeUnit, in map[string]interface{}) (interface{}, error) {
 	return nil, nil
 }
