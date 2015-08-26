@@ -398,38 +398,13 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 	for _, productModel := range productsCollection.ListProducts() {
 		productInfo := productModel.ToHashMap()
 
-		itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage)
+		defaultImage := utils.InterfaceToString(productInfo["default_image"])
+		mediaPath, err := productModel.GetMediaPath("image")
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		if defaultImage, present := productInfo["default_image"]; present {
-			mediaPath, err := productModel.GetMediaPath("image")
-			if defaultImage, ok := defaultImage.(string); ok && defaultImage != "" && err == nil {
-				productInfo["default_image"] = mediaPath + defaultImage
-
-				// move default image to first position in array
-				if len(itemImages) > 1 {
-					found := false
-					for index, images := range itemImages {
-						for sizeName, sizeValue := range images {
-							basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
-							if strings.Contains(basicName, defaultImage) {
-								found = true
-								itemImages = append(itemImages[:index], itemImages[index+1:]...)
-								itemImages = append([]map[string]string{images}, itemImages...)
-							}
-							break
-						}
-						if found {
-							break
-						}
-					}
-				}
-			}
-		}
-
-		productInfo["images"] = itemImages
+		productInfo["image"] = mediaStorage.GetSizes(defaultImage, mediaPath)
 		result = append(result, productInfo)
 	}
 
@@ -544,32 +519,13 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		productID, present := productInfo["_id"]
 		if present && utils.InterfaceToString(productID) != "" {
 
-			itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage)
+			defaultImage := utils.InterfaceToString(productInfo["default_image"])
+			mediaPath, err := mediaStorage.GetMediaPath(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage)
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
 
-			// move default image to first position in array
-			defaultImage := utils.InterfaceToString(productInfo["default_image"])
-			if _, present := productInfo["default_image"]; present && defaultImage != "" && len(itemImages) > 1 {
-				found := false
-				for index, images := range itemImages {
-					for sizeName, sizeValue := range images {
-						basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
-						if strings.Contains(basicName, defaultImage) {
-							found = true
-							itemImages = append(itemImages[:index], itemImages[index+1:]...)
-							itemImages = append([]map[string]string{images}, itemImages...)
-						}
-						break
-					}
-					if found {
-						break
-					}
-				}
-			}
-
-			productInfo["images"] = itemImages
+			productInfo["image"] = mediaStorage.GetSizes(defaultImage, mediaPath)
 			productsResult = append(productsResult, productInfo)
 		}
 	}
