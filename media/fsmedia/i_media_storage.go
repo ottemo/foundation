@@ -286,18 +286,19 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 }
 
 func (it *FilesystemMediaStorage) GetSizes(mediaName string, path string) (map[string]string) {
+// TODO: in case we need the methods inside we'll have to update our func declaration
 // func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaName string, path string) (map[string]string) {
 	mediaSet := map[string]string{}
 
 	// Loop over the sizes we support
 	for imageSize := range it.imageSizes {
-		// is this needed?
+		// TODO: is this needed?
 		// it.ResizeMediaImage(model, objID, mediaName, imageSize)
 
 		mediaSet[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
 	}
 
-	// not sure what this one does
+	// TODO: not sure what this one does
 	// it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
 
 	return mediaSet;
