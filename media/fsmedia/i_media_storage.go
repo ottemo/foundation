@@ -19,8 +19,15 @@ func (it *FilesystemMediaStorage) GetName() string {
 }
 
 // GetMediaPath returns path you can use to access media file (if possible for storage of course)
+// func (it *FilesystemMediaStorage) GetMediaPath(model string, objID string, mediaType string) (string, error) {
+// 	return mediaType + "/" + model + "/" + objID + "/", nil
+// }
+
+//
 func (it *FilesystemMediaStorage) GetMediaPath(model string, objID string, mediaType string) (string, error) {
-	return mediaType + "/" + model + "/" + objID + "/", nil
+	baseUrl := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
+
+	return baseUrl + "/" + mediaType + "/" + model + "/" + objID + "/", nil
 }
 
 // Load retrieves contents of media entity for given model object
@@ -267,25 +274,31 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 		return result, env.ErrorDispatch(err)
 	}
 
-	// Adding "/" to this thing to be responsive to all dashboard values
-	mediaBasePath := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
-	path = mediaBasePath + "/" + path
-
 	for _, record := range records {
 
 		if mediaName, ok := record["media"].(string); ok {
-			resultItem := map[string]string{}
-
-			for imageSize := range it.imageSizes {
-				it.ResizeMediaImage(model, objID, mediaName, imageSize)
-				resultItem[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
-			}
-
-			it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
-			result = append(result, resultItem)
+			mediaSet := it.GetSizes(mediaName, path)
+			result = append(result, mediaSet)
 		}
 	}
 
 	return result, nil
+}
 
+func (it *FilesystemMediaStorage) GetSizes(mediaName string, path string) (map[string]string) {
+// func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaName string, path string) (map[string]string) {
+	mediaSet := map[string]string{}
+
+	// Loop over the sizes we support
+	for imageSize := range it.imageSizes {
+		// is this needed?
+		// it.ResizeMediaImage(model, objID, mediaName, imageSize)
+
+		mediaSet[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
+	}
+
+	// not sure what this one does
+	// it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+
+	return mediaSet;
 }

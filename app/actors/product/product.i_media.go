@@ -81,3 +81,4 @@ func (it *DefaultProduct) GetMediaPath(mediaType string) (string, error) {
 
 	return mediaStorage.GetMediaPath(it.GetModelName(), productID, mediaType)
 }
+

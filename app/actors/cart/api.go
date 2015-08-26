@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/media"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -42,6 +43,12 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	var items []map[string]interface{}
 
+	// Adding "/" to this thing to be responsive to all dashboard values
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return "", env.ErrorDispatch(err)
+	}
+
 	cartItems := currentCart.GetItems()
 	for _, cartItem := range cartItems {
 
@@ -63,7 +70,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 			productData["name"] = product.GetName()
 			productData["sku"] = product.GetSku()
-			productData["image"] = mediaPath + product.GetDefaultImage()
+			productData["image"] = mediaStorage.GetSizes(product.GetDefaultImage(), mediaPath)
 			productData["price"] = product.GetPrice()
 			productData["weight"] = product.GetWeight()
 			productData["options"] = product.GetOptions()
