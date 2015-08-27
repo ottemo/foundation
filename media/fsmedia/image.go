@@ -121,9 +121,7 @@ func (it *FilesystemMediaStorage) GetResizedMediaName(mediaName string, size str
 		return mediaName
 	}
 
-	// return size + "_" + mediaName
-
-	// checking file extension
+	// Get the extension and name
 	var fileExtension string
 	fileName := mediaName
 
@@ -133,14 +131,10 @@ func (it *FilesystemMediaStorage) GetResizedMediaName(mediaName string, size str
 		fileName = mediaName[0:idx]
 	}
 
-	// if we have predefined size
-	if _, present := it.imageSizes[size]; present {
-		return fmt.Sprintf("%s_%s%s", fileName, size, fileExtension)
-	}
-
-	// otherwise
+	// Get the dimensions
 	width, height, _ := it.GetSizeDimensions(size)
-	return fmt.Sprintf("%s_%dx%d", fileName, width, height)
+
+	return fmt.Sprintf("%s_%dx%d%s", fileName, width, height, fileExtension)
 }
 
 // TODO: need to refactor this method to several smaller methods to reduce complexity - jwv
