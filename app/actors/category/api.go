@@ -399,12 +399,11 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 		productInfo := productModel.ToHashMap()
 
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
-		mediaPath, err := productModel.GetMediaPath("image")
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
 
-		productInfo["image"] = mediaStorage.GetSizes(defaultImage, mediaPath)
+		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage, defaultImage)
+		if err != nil {
+			env.LogError(err)
+		}
 		result = append(result, productInfo)
 	}
 
@@ -520,12 +519,10 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		if present && utils.InterfaceToString(productID) != "" {
 
 			defaultImage := utils.InterfaceToString(productInfo["default_image"])
-			mediaPath, err := mediaStorage.GetMediaPath(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage)
+			productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage, defaultImage)
 			if err != nil {
-				return nil, env.ErrorDispatch(err)
+				env.LogError(err)
 			}
-
-			productInfo["image"] = mediaStorage.GetSizes(defaultImage, mediaPath)
 			productsResult = append(productsResult, productInfo)
 		}
 	}

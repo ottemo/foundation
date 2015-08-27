@@ -19,15 +19,8 @@ func (it *FilesystemMediaStorage) GetName() string {
 }
 
 // GetMediaPath returns path you can use to access media file (if possible for storage of course)
-// func (it *FilesystemMediaStorage) GetMediaPath(model string, objID string, mediaType string) (string, error) {
-// 	return mediaType + "/" + model + "/" + objID + "/", nil
-// }
-
-//
 func (it *FilesystemMediaStorage) GetMediaPath(model string, objID string, mediaType string) (string, error) {
-	baseUrl := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
-
-	return baseUrl + "/" + mediaType + "/" + model + "/" + objID + "/", nil
+	return mediaType + "/" + model + "/" + objID + "/", nil
 }
 
 // Load retrieves contents of media entity for given model object
@@ -245,7 +238,7 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 	return result, env.ErrorDispatch(err)
 }
 
-// GetAllSizes returns list of all size images as a path to them for given type of media an model object
+// GetAllSizes returns list of all size images as a path to them for given type of media and model object
 func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaType string) ([]map[string]string, error) {
 
 	var result []map[string]string
@@ -269,15 +262,14 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 		return result, env.ErrorDispatch(err)
 	}
 
-	path, err := it.GetMediaPath(model, objID, mediaType)
-	if err != nil {
-		return result, env.ErrorDispatch(err)
-	}
-
 	for _, record := range records {
 
 		if mediaName, ok := record["media"].(string); ok {
-			mediaSet := it.GetSizes(mediaName, path)
+			mediaSet, err := it.GetSizes(model, objID, mediaType, mediaName)
+			if err != nil {
+				env.LogError(err)
+			}
+
 			result = append(result, mediaSet)
 		}
 	}
@@ -285,21 +277,25 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 	return result, nil
 }
 
-func (it *FilesystemMediaStorage) GetSizes(mediaName string, path string) (map[string]string) {
-// TODO: in case we need the methods inside we'll have to update our func declaration
-// func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaName string, path string) (map[string]string) {
-	mediaSet := map[string]string{}
+// GetSizes returns list of all sizes for image as a path to them for given type of media, model object and image name
+func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error) {
+	mediaSet := make(map[string]string)
+
+	path, err := it.GetMediaPath(model, objID, mediaType)
+	if err != nil {
+		return mediaSet, env.ErrorDispatch(err)
+	}
+
+	mediaBasePath := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
+	path = mediaBasePath + "/" + path
 
 	// Loop over the sizes we support
 	for imageSize := range it.imageSizes {
-		// TODO: is this needed?
-		// it.ResizeMediaImage(model, objID, mediaName, imageSize)
-
+		it.ResizeMediaImage(model, objID, mediaName, imageSize)
 		mediaSet[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
 	}
 
-	// TODO: not sure what this one does
-	// it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+	it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
 
-	return mediaSet;
+	return mediaSet, nil
 }
