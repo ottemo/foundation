@@ -20,14 +20,12 @@ func (it *DefaultSessionService) allocateSessionInstance(sessionInstance *Defaul
 		it.GC()
 
 		numOfSessionsToClean := len(it.Sessions) - ConstSessionKeepInMemoryItems
-		if numOfSessionsToClean >= 0 {
-			for sessionID := range it.Sessions {
-				it.Storage.FlushSession(sessionID)
-				numOfSessionsToClean--
+		for sessionID := range it.Sessions {
+			it.Storage.FlushSession(sessionID)
 
-				if numOfSessionsToClean <= 0 {
-					break
-				}
+			numOfSessionsToClean--
+			if numOfSessionsToClean == 0 {
+				break
 			}
 		}
 	}
@@ -46,13 +44,10 @@ func (it *DefaultSessionService) allocateSessionInstance(sessionInstance *Defaul
 }
 
 // Get returns session object for given session id or nil of not currently exists
-func (it *DefaultSessionService) Get(sessionID string, create bool) (api.InterfaceSession, error) {
-
-	var resultError error
-	var resultSession api.InterfaceSession
+func (it *DefaultSessionService) Get(sessionID string) (api.InterfaceSession, error) {
 
 	if sessionID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "15fc38db-0848-4992-897e-82b93513f4c6", "blank session id")
+		return nil, nil
 	}
 	replaceInstanceFlag := false
 
@@ -78,7 +73,7 @@ func (it *DefaultSessionService) Get(sessionID string, create bool) (api.Interfa
 	}
 
 	// checking if session was found, if not - making new session for given id
-	if create && sessionInstance == nil {
+	if sessionInstance == nil {
 		sessionInstance = new(DefaultSessionContainer)
 		sessionInstance.id = DefaultSession(sessionID)
 		sessionInstance.Data = make(map[string]interface{})
@@ -89,7 +84,6 @@ func (it *DefaultSessionService) Get(sessionID string, create bool) (api.Interfa
 			return nil, env.ErrorDispatch(err)
 		}
 
-		resultError = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "11670fe2-ee1c-45c9-a732-1349737b53f6", "new session created")
 		replaceInstanceFlag = true
 	}
 
@@ -104,11 +98,7 @@ func (it *DefaultSessionService) Get(sessionID string, create bool) (api.Interfa
 		}
 	}
 
-	if sessionInstance != nil {
-		resultSession = sessionInstance.id
-	}
-
-	return resultSession, resultError
+	return sessionInstance.id, nil
 }
 
 // New initializes new session instance
@@ -136,7 +126,7 @@ func (it *DefaultSessionService) New() (api.InterfaceSession, error) {
 
 // Touch updates session last modification time to current moment
 func (it *DefaultSessionService) Touch(sessionID string) error {
-	sessionInstance, err := it.Get(sessionID, false)
+	sessionInstance, err := it.Get(sessionID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -164,7 +154,7 @@ func (it *DefaultSessionService) Close(sessionID string) error {
 		if _, err := os.Stat(filename); err == nil {
 			err := os.Remove(filename)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 
@@ -179,7 +169,7 @@ func (it *DefaultSessionService) Close(sessionID string) error {
 
 // GetKey returns session value for a given key or nil - if not set
 func (it *DefaultSessionService) GetKey(sessionID string, key string) interface{} {
-	sessionInstance, err := it.Get(sessionID, false)
+	sessionInstance, err := it.Get(sessionID)
 	if sessionInstance == nil || err != nil {
 		return nil
 	}
@@ -198,7 +188,7 @@ func (it *DefaultSessionService) GetKey(sessionID string, key string) interface{
 
 // SetKey assigns value to session key
 func (it *DefaultSessionService) SetKey(sessionID string, key string, value interface{}) {
-	sessionInstance, _ := it.Get(sessionID, true)
+	sessionInstance, _ := it.Get(sessionID)
 
 	if sessionInstance != nil {
 		if sessionInstance, present := it.Sessions[sessionID]; present {
@@ -227,24 +217,10 @@ func (it *DefaultSessionService) GC() error {
 		if secondsAfterLastUpdate > ConstSessionUpdateTime {
 			err := it.Storage.FlushSession(sessionID)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	}
 
 	return nil
-}
-
-// IsEmpty checks if session contains data
-func (it *DefaultSessionService) IsEmpty(sessionID string) bool {
-
-	_, err := it.Get(sessionID, false)
-	if err != nil {
-		env.LogError(err)
-	}
-
-	if sessionInstance, present := it.Sessions[sessionID]; present {
-		return len(sessionInstance.Data) == 0
-	}
-	return true
 }

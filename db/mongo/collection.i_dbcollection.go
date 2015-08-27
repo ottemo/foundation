@@ -13,7 +13,7 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 
 	err := it.collection.FindId(id).One(&result)
 
-	return result, err
+	return result, env.ErrorDispatch(err)
 }
 
 // Load loads records from DB for current collection and filter if it set

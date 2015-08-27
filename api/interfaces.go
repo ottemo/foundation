@@ -12,9 +12,7 @@ type InterfaceSessionService interface {
 	GC() error
 
 	New() (InterfaceSession, error)
-	Get(sessionID string, create bool) (InterfaceSession, error)
-
-	IsEmpty(sessionID string) bool
+	Get(sessionID string) (InterfaceSession, error)
 
 	Touch(sessionID string) error
 	Close(sessionID string) error
@@ -29,8 +27,6 @@ type InterfaceSession interface {
 
 	Get(key string) interface{}
 	Set(key string, value interface{})
-
-	IsEmpty() bool
 
 	Touch() error
 	Close() error

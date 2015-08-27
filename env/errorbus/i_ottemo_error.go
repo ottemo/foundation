@@ -6,14 +6,6 @@ import (
 
 // returns error message only
 func (it *OttemoError) Error() string {
-	if it.Level < hideLevel {
-		return hideMessage
-	}
-	return it.Message
-}
-
-// ErrorMessage returns original error message
-func (it *OttemoError) ErrorMessage() string {
 	return it.Message
 }
 
@@ -45,26 +37,4 @@ func (it *OttemoError) ErrorCode() string {
 //   Note: ConstCollectStack constant should be set to true, otherwise, stack information will be blank
 func (it *OttemoError) ErrorCallStack() string {
 	return it.CallStack
-}
-
-// IsHandled returns handled flag
-func (it *OttemoError) IsHandled() bool {
-	return it.handled
-}
-
-// MarkHandled makes error as already processed (prevents from future processing)
-func (it *OttemoError) MarkHandled() bool {
-	it.handled = true
-	return it.handled
-}
-
-// IsLogged returns logged flag
-func (it *OttemoError) IsLogged() bool {
-	return it.logged
-}
-
-// MarkLogged makes error as already logged (prevents from future logging)
-func (it *OttemoError) MarkLogged() bool {
-	it.logged = true
-	return it.logged
 }

@@ -125,8 +125,8 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
-	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID), false)
-	if sessionInstance == nil {
+	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
+	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
 	err = context.SetSession(sessionInstance)
@@ -134,7 +134,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +183,8 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
-	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID), false)
-	if session == nil {
+	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
+	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
 	err = context.SetSession(session)
@@ -192,7 +192,7 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, err
 	}

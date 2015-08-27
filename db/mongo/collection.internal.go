@@ -24,7 +24,7 @@ func (it *DBCollection) convertValueToType(columnType string, value interface{})
 		}
 	default:
 		switch {
-		case columnType == "id" || columnType == "string" || columnType == "text" || strings.Contains(columnType, "char"):
+		case columnType == "string" || columnType == "text" || strings.Contains(columnType, "char"):
 			return utils.InterfaceToString(value)
 		case columnType == "int" || columnType == "integer":
 			return utils.InterfaceToInt(value)
@@ -48,7 +48,7 @@ func (it *DBCollection) getSelectorValue(columnName string, operator string, val
 
 	switch operator {
 	case "=":
-		return it.convertValueToType(columnType, value), nil
+		return value, nil
 	case "!=", "<>":
 		return bson.D{bson.DocElem{Name: "$ne", Value: it.convertValueToType(columnType, value)}}, nil
 	case ">":

@@ -59,7 +59,7 @@ func setupAPI() error {
 // APIGetCheckout returns information related to current checkkout
 func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -121,8 +121,9 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 		result["shipping_amount"] = shippingRate.Price
 	}
 
-	result["subtotal"] = currentCheckout.GetSubtotal()
-
+	if checkoutCart := currentCheckout.GetCart(); checkoutCart != nil {
+		result["subtotal"] = checkoutCart.GetSubtotal()
+	}
 	result["grandtotal"] = currentCheckout.GetGrandTotal()
 
 	result["tax_amount"] = currentCheckout.GetTaxAmount()
@@ -147,7 +148,7 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 // APIGetPaymentMethods returns currently available payment methods
 func APIGetPaymentMethods(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -171,7 +172,7 @@ func APIGetPaymentMethods(context api.InterfaceApplicationContext) (interface{},
 // APIGetShippingMethods returns currently available shipping methods
 func APIGetShippingMethods(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -195,7 +196,7 @@ func APIGetShippingMethods(context api.InterfaceApplicationContext) (interface{}
 // APISetCheckoutInfo allows to specify and assign to checkout extra information
 func APISetCheckoutInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -290,7 +291,7 @@ func checkoutObtainAddress(data interface{}) (visitor.InterfaceVisitorAddress, e
 
 // APISetShippingAddress specifies shipping address for a current checkout
 func APISetShippingAddress(context api.InterfaceApplicationContext) (interface{}, error) {
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -319,7 +320,7 @@ func APISetShippingAddress(context api.InterfaceApplicationContext) (interface{}
 
 // APISetBillingAddress specifies billing address for a current checkout
 func APISetBillingAddress(context api.InterfaceApplicationContext) (interface{}, error) {
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -344,7 +345,7 @@ func APISetBillingAddress(context api.InterfaceApplicationContext) (interface{},
 //   - "method" argument specifies requested payment method (it should be available for a meaning time)
 func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -387,7 +388,7 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 //   - "rate" argument specifies requested shipping rate (it should be available and belongs to shipping method)
 func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -432,7 +433,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 
 	// preparations
 	//--------------
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	currentCheckout, err := checkout.GetCurrentCheckout(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

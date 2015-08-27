@@ -14,7 +14,7 @@ func setupConfig() error {
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathError,
+		Path:        ConstConfigPatError,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
@@ -23,6 +23,31 @@ func setupConfig() error {
 		Description: "error handling settings",
 		Image:       "",
 	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Log level
+	logLevelValidator := func(newValue interface{}) (interface{}, error) {
+		newLevel := utils.InterfaceToInt(newValue)
+		if newLevel > 10 || newLevel < 0 {
+			return logLevel, errors.New("'Log level' config value should be between 0 and 10")
+		}
+		logLevel = newLevel
+
+		return logLevel, nil
+	}
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathErrorLogLevel,
+		Value:       5,
+		Type:        env.ConstConfigTypeInteger,
+		Editor:      "integer",
+		Options:     nil,
+		Label:       "Log level",
+		Description: "errors below specified level will be send to logger service",
+		Image:       "",
+	}, logLevelValidator)
 
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -72,26 +97,6 @@ func setupConfig() error {
 		Description: "system error message to substitute error message above hide level",
 		Image:       "",
 	}, hideMessageValidator)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	// instant debug
-	debugValidator := func(newValue interface{}) (interface{}, error) {
-		debug = utils.InterfaceToBool(newValue)
-		return debug, nil
-	}
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathErrorDebug,
-		Value:       false,
-		Type:        env.ConstConfigTypeBoolean,
-		Editor:      "boolean",
-		Options:     nil,
-		Label:       "Debug",
-		Description: "errors would be logged instantly on dispatch (depends on error levels)",
-		Image:       "",
-	}, debugValidator)
 
 	if err != nil {
 		return env.ErrorDispatch(err)

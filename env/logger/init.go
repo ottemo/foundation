@@ -12,7 +12,6 @@ func init() {
 
 	env.RegisterLogger(instance)
 	env.RegisterOnConfigIniStart(startup)
-	env.RegisterOnConfigStart(setupConfig)
 }
 
 // startup is a service pre-initialization stuff

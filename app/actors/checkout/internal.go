@@ -92,11 +92,13 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 
 // CheckoutSuccess will save the order and clear the shopping in the session.
 func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, session api.InterfaceSession) error {
-	var err error
 
-	// making sure order was specified
+	// making sure order and session were specified
 	if checkoutOrder == nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "17d45365-7808-4a1b-ad36-1741a83e820f", "Must specify an Order.")
+	}
+	if session == nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "17d45365-7808-4a1b-ad36-1741a83e820f", "Must specify a Session.")
 	}
 
 	// check order status for funds collected before  proceeding to checkout success
@@ -108,24 +110,20 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 	//-----------------------------
 	currentCart := it.GetCart()
 
-	if currentCart != nil {
-		err = currentCart.Deactivate()
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		err = currentCart.Save()
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
+	err := currentCart.Deactivate()
+	if err != nil {
+		return env.ErrorDispatch(err)
 	}
 
-	if session != nil {
-		session.Set(cart.ConstSessionKeyCurrentCart, nil)
-		session.Set(checkout.ConstSessionKeyCurrentCheckout, nil)
-		session.Set(coupon.ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
-		session.Set(giftcard.ConstSessionKeyAppliedGiftCardCodes, make([]string, 0))
+	err = currentCart.Save()
+	if err != nil {
+		return env.ErrorDispatch(err)
 	}
+
+	session.Set(cart.ConstSessionKeyCurrentCart, nil)
+	session.Set(checkout.ConstSessionKeyCurrentCheckout, nil)
+	session.Set(coupon.ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+	session.Set(giftcard.ConstSessionKeyAppliedGiftCardCodes, make([]string, 0))
 
 	// sending notifications
 	//----------------------
@@ -134,7 +132,7 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 
 	err = it.SendOrderConfirmationMail()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return nil

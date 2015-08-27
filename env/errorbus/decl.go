@@ -9,10 +9,10 @@ import (
 const (
 	ConstCollectCallStack = true // flag to indicate that call stack information within error is required
 
-	ConstConfigPathError            = "general.error"
+	ConstConfigPatError             = "general.error"
+	ConstConfigPathErrorLogLevel    = "general.error.log_level"
 	ConstConfigPathErrorHideLevel   = "general.error.hide_level"
 	ConstConfigPathErrorHideMessage = "general.error.hide_message"
-	ConstConfigPathErrorDebug       = "general.error.debug"
 
 	ConstErrorModule = "env/errorbus"
 	ConstErrorLevel  = env.ConstErrorLevelService
@@ -23,7 +23,7 @@ var (
 	// ConstMsgRegexp is a regular expression used to parse error message
 	ConstMsgRegexp = regexp.MustCompile(`^[\[{(]?\s*(?:(?:([a-zA-Z_\/-]+)?[:])?([0-9]+)?[-: ]([0-9a-fA-F-]+)?)?\s*[\]})]?\s*[:\->]*\s*(.+)`)
 
-	debug       = false
+	logLevel    = 5
 	hideLevel   = 5
 	hideMessage = "System error has occured"
 )
@@ -43,5 +43,4 @@ type OttemoError struct {
 	CallStack string
 
 	handled bool
-	logged  bool
 }

@@ -75,7 +75,7 @@ func startup() error {
 		if currentTime.Sub(fileInfo.ModTime()).Seconds() >= ConstSessionLifeTime {
 			err := os.Remove(ConstStorageFolder + fileInfo.Name())
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			continue
 		}
@@ -104,7 +104,7 @@ func shutdown() error {
 
 		// flushing session
 		if err := filesystemService.FlushSession(sessionID); err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 
@@ -178,11 +178,6 @@ func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 	sessionInstance, present := it.Sessions[sessionID]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
-	}
-
-	// skipping flush for empty sessions
-	if SessionService.IsEmpty(sessionID) {
-		return nil
 	}
 
 	// serializing session data to file

@@ -394,11 +394,11 @@ func setupConfig() error {
 		newEmail := utils.InterfaceToString(newValue)
 		if newEmail == "" {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "d5abe68b-5bde-4b14-a3a7-b89507c14597", "recipient e-mail can not be blank")
-			return "support+contactus@ottemo.io", err
+			return "support+ContactUs@ottemo.io", err
 		}
 		if !utils.ValidEmailAddress(newEmail) {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "720c5b82-4aa9-405b-b52d-b94d1f31e49d", "recipient e-mail is not in a valid format")
-			return "support+contactus@ottemo.io", err
+			return "support+ContactUs@ottemo.io", err
 
 		}
 
@@ -406,7 +406,7 @@ func setupConfig() error {
 	}
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathContactUsRecipient,
-		Value:       "support+contactus@ottemo.io",
+		Value:       "support+ContactUs@ottemo.io",
 		Type:        utils.DataTypeWPrecision(env.ConstConfigTypeVarchar, 255),
 		Editor:      "text",
 		Options:     nil,

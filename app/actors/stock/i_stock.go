@@ -15,19 +15,19 @@ func (it *DefaultStock) GetProductQty(productID string, options map[string]inter
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 
 	err = dbCollection.AddFilter("product_id", "=", productID)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 
 	dbRecords, err := dbCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 

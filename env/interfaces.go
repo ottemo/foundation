@@ -81,7 +81,6 @@ type InterfaceErrorBus interface {
 	Dispatch(err error) error
 	Modify(err error, module string, level int, code string) error
 
-	Prepare(module string, level int, code string, message string) error
 	New(module string, level int, code string, message string) error
 	Raw(message string) error
 }
@@ -131,14 +130,7 @@ type InterfaceOttemoError interface {
 	ErrorFull() string
 	ErrorLevel() int
 	ErrorCode() string
-	ErrorMessage() string
 	ErrorCallStack() string
-
-	IsHandled() bool
-	MarkHandled() bool
-
-	IsLogged() bool
-	MarkLogged() bool
 
 	error
 }

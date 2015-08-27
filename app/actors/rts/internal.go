@@ -285,7 +285,7 @@ func initStatistic() error {
 	return nil
 }
 
-// SaveStatisticsData save a statistic data row for last hour to database
+// SaveStatisticsData save a statistic data row gor last hour to database
 func SaveStatisticsData() error {
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
@@ -324,7 +324,7 @@ func SaveStatisticsData() error {
 			return env.ErrorDispatch(err)
 		}
 	} else {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9712c601-662e-4744-b9fb-991a959cff32", "key "+currentHour.String()+" not present in memory statistic value"))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9712c601-662e-4744-b9fb-991a959cff32", "last rts_visitors statistic save failed"))
 	}
 
 	return nil
