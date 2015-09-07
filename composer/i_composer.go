@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"regexp"
 	"strings"
+	"github.com/ottemo/foundation/utils"
 )
 
 func (it *DefaultComposer) RegisterUnit(unit InterfaceComposeUnit) error {
@@ -109,13 +110,16 @@ func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{})
 			}
 		}
 
-		// case 2 - {"item": {"$unit": ...}} or {"item": {"subItem": ...}}
-		if ruleValue.(map[string]interface{}) {
-
+		// case 2 - {"item": {"$unit": ...}} or {"item": {"item": ...}}
+		if ruleValueMap, ok := ruleValue.(map[string]interface{}); ok {
+			it.Process(in, ruleValueMap)
 		}
 
-		// case 3 - {"item": []}
-		// ...
+		// case 3 - {"item": [...]} or {"item": value}
+		var results []interface{}
+		for _, item := range utils.InterfaceToArray(ruleValue) {
+			results = append(results, item)
+		}
 
 		result = (ruleKey == ruleValue)
 	}

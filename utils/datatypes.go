@@ -209,6 +209,11 @@ func IsMD5(value string) bool {
 	return ok
 }
 
+// InterfaceGetType returns string representation of interface type
+func InterfaceGetType(value interface{}) string {
+	return reflect.TypeOf(value).String()
+}
+
 // InterfaceToBool converts interface{} to string
 func InterfaceToBool(value interface{}) bool {
 	switch typedValue := value.(type) {
@@ -506,6 +511,15 @@ func InterfaceToTime(value interface{}) time.Time {
 	}
 
 	return (time.Time{})
+}
+
+// IsArray checks if given value is array
+func IsArray(value interface{}) bool {
+	kind := reflect.TypeOf(value).Kind()
+	if kind == "slice" || kind == "array" {
+		return true
+	}
+	return false
 }
 
 // IsZeroTime checks time for zero value
