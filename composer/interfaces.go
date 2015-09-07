@@ -3,6 +3,8 @@ package composer
 type InterfaceComposeUnit interface {
 	GetName() string
 
+	ListItems() []string
+
 	GetType(item string) string
 	GetLabel(item string) string
 	GetDescription(item string) string
@@ -15,7 +17,10 @@ type InterfaceComposer interface {
 	UnRegisterUnit(unit InterfaceComposeUnit) error
 	ListUnits() []InterfaceComposeUnit
 
-	Process(unit InterfaceComposeUnit, in map[string]interface{}) (interface{}, error)
+	GetUnit(name string) InterfaceComposeUnit
+	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
+
+	Process(in interface{}, rules map[string]interface{}) (interface{}, error)
 }
 
 

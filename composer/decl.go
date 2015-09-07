@@ -10,19 +10,23 @@ var (
 
 // Package global constants
 const (
+	ConstUnitPrefix = "$"
+
 	ConstInPrefix = "@"
-	ConstInKey = ConstInPrefix
+	ConstInItem = ConstInPrefix
 
 	ConstOutPrefix = ""
-	ConstOutKey = ConstOutPrefix
+	ConstOutItem = ConstOutPrefix
 
-	ConstUnitDescriptionKey = ConstOutPrefix
+	ConstUnitLabelItem = ConstOutPrefix
+	ConstUnitDescriptionItem = ConstOutPrefix
 
 	ConstTypeAny = "*"
 
 	ConstErrorModule = "composer"
 	ConstErrorLevel  = env.ConstErrorLevelService
 )
+
 
 type FuncUnitAction func(in map[string]interface{}) (map[string]interface{}, error)
 
