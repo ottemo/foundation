@@ -75,53 +75,70 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 	return result
 }
 
-func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{}) (interface{}, error) {
+func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{}) (bool, error) {
 
 	var result interface{}
 	var err error
 
-	// checking if input item is a Compose unit
+	// checking if in parameter is a ComposeUnit, then it should be processed
 	if unit, ok := in.(InterfaceComposeUnit); ok {
 		unitIn := make(map[string]interface{})
 
-		// gathering input for a unit
+		// looking for arguments addressed to CompositeUnit and not for unit process result
 		for ruleKey, ruleValue := range rules {
 			if strings.HasPrefix(ruleKey, ConstInPrefix) {
 				key := strings.TrimPrefix(ruleKey, ConstInPrefix)
 				unitIn[key] = ruleValue
-				delete(unitIn, key)
+				delete(rules, key)
 			}
 
 		}
-		result, err = unit.Process(unitIn)
+
+		// processing unit with it's arguments
+		in, err = unit.Process(unitIn)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	for ruleKey, ruleValue := range rules {
-		currentIn := in
+	// unifying {"item": value} to {"item": [value]} as particular case of {"item": [...]}
+	for _, rule := range utils.InterfaceToArray(rules) {
+		var result interface{}
+		var err error
 
-		// case 1 - {"$unit": ...}
-		if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
-			if unit := it.GetUnit(strings.TrimPrefix(ruleKey, ConstUnitPrefix)); unit != nil {
-				currentIn, err == unit.Process(currentIn)
-				if err != nil {
-					env.LogError(env.ErrorDispatch(err))
-					result = false
+		if utils.IsArray(rule) {
+			// case 1: in <- [...]
+			result, err = it.Process(in, rule)
+			if err != nil {
+				env.LogError(err)
+				result = false
+			}
+
+		} else if mapRule, ok := rule.(map[string]interface{}); ok {
+
+			// case 2: in <- {"key": ...}
+			for ruleKey, ruleValue := range mapRule {
+
+				// case 2.1: in <- {"$unit": ...}
+				if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
+					if unit := it.GetUnit(strings.TrimPrefix(ruleKey, ConstUnitPrefix)); unit != nil {
+						result, err == unit.Process(ruleValue)
+						if err != nil {
+							env.LogError(err)
+							result = false
+						}
+					}
+				}
+
+				// case 2 - {"item": {"$unit": ...}} or {"item": {"item": ...}}
+				if ruleValueMap, ok := ruleValue.(map[string]interface{}); ok {
+					result = it.Process(in, ruleValueMap)
 				}
 			}
+
 		}
 
-		// case 2 - {"item": {"$unit": ...}} or {"item": {"item": ...}}
-		if ruleValueMap, ok := ruleValue.(map[string]interface{}); ok {
-			it.Process(in, ruleValueMap)
-		}
 
-		// case 3 - {"item": [...]} or {"item": value}
-		var results []interface{}
-		for _, item := range utils.InterfaceToArray(ruleValue) {
-			results = append(results, item)
-		}
-
-		result = (ruleKey == ruleValue)
 	}
 
 	return result, err

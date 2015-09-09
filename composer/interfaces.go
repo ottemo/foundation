@@ -9,7 +9,7 @@ type InterfaceComposeUnit interface {
 	GetLabel(item string) string
 	GetDescription(item string) string
 
-	Process(in map[string]interface{}) (map[string]interface{}, error)
+	Process(args map[string]interface{}, composer InterfaceComposer) (interface{}, error)
 }
 
 type InterfaceComposer interface {
@@ -20,9 +20,8 @@ type InterfaceComposer interface {
 	GetUnit(name string) InterfaceComposeUnit
 	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
 
-	Process(in interface{}, rules map[string]interface{}) (interface{}, error)
+	Validate(in interface{}, rules map[string]interface{}) (bool, error)
 }
-
 
 func InKey(name string) {
 	return ConstInPrefix + name
