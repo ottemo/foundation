@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models"
 )
 
 func (it *DefaultComposer) RegisterUnit(unit InterfaceComposeUnit) error {
@@ -75,8 +76,7 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 	return result
 }
 
-func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{}) (bool, error) {
-
+func (it *DefaultComposer) Expand(in interface{}, rule interface{}) (bool, error) {
 	var result interface{}
 	var err error
 
@@ -85,30 +85,33 @@ func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{})
 		unitIn := make(map[string]interface{})
 
 		// looking for arguments addressed to CompositeUnit and not for unit process result
-		for ruleKey, ruleValue := range rules {
-			if strings.HasPrefix(ruleKey, ConstInPrefix) {
-				key := strings.TrimPrefix(ruleKey, ConstInPrefix)
-				unitIn[key] = ruleValue
-				delete(rules, key)
-			}
+		if mapRule, ok := rule.(map[string]interface{}); ok {
+			for ruleKey, ruleValue := range mapRule {
+				if strings.HasPrefix(ruleKey, ConstInPrefix) {
+					key := strings.TrimPrefix(ruleKey, ConstInPrefix)
+					unitIn[key] = ruleValue
+					delete(mapRule, key)
+				}
 
+			}
 		}
 
 		// processing unit with it's arguments
-		in, err = unit.Process(unitIn)
+		in, err = unit.Process(unitIn, it)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 	}
 
 	// unifying {"item": value} to {"item": [value]} as particular case of {"item": [...]}
-	for _, rule := range utils.InterfaceToArray(rules) {
-		var result interface{}
+	for _, rule := range utils.InterfaceToArray(rule) {
+		var result bool
 		var err error
 
 		if utils.IsArray(rule) {
+
 			// case 1: in <- [...]
-			result, err = it.Process(in, rule)
+			result, err = it.Expand(in, rule)
 			if err != nil {
 				env.LogError(err)
 				result = false
@@ -119,27 +122,40 @@ func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{})
 			// case 2: in <- {"key": ...}
 			for ruleKey, ruleValue := range mapRule {
 
-				// case 2.1: in <- {"$unit": ...}
+				// case 2.1: in <- {"$unit": value}
 				if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
 					if unit := it.GetUnit(strings.TrimPrefix(ruleKey, ConstUnitPrefix)); unit != nil {
-						result, err == unit.Process(ruleValue)
+						result, err == unit.Process(ruleValue, it)
 						if err != nil {
 							env.LogError(err)
 							result = false
 						}
 					}
+
 				}
 
-				// case 2 - {"item": {"$unit": ...}} or {"item": {"item": ...}}
-				if ruleValueMap, ok := ruleValue.(map[string]interface{}); ok {
-					result = it.Process(in, ruleValueMap)
+				// case 2.2: in <- {"key": value}
+				if inAsMap, ok := in.(map[string]interface{}); ok {
+					if inValue, present := inAsMap[ruleKey]; present {
+						result = (inValue == ruleValue)
+					}
+
+				} else if inAsObject, ok := ruleValue.(models.InterfaceObject); ok {
+					result = (inAsObject.Get(ruleKey) == ruleValue)
 				}
 			}
 
+		} else {
+			in
 		}
 
 
 	}
 
 	return result, err
+}
+
+func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{}) (bool, error) {
+
+
 }

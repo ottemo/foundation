@@ -20,7 +20,7 @@ type InterfaceComposer interface {
 	GetUnit(name string) InterfaceComposeUnit
 	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
 
-	Validate(in interface{}, rules map[string]interface{}) (bool, error)
+	Process(in interface{}, rules map[string]interface{}) (bool, error)
 }
 
 func InKey(name string) {
