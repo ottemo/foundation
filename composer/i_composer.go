@@ -61,7 +61,8 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 
 			ok := true
 			for typeName, typeValue := range typeFilter {
-				if !regexp.MatchString(typeValue, composerUnit.GetType(typeName)) {
+
+				if matched, err := regexp.MatchString(utils.InterfaceToString(typeValue), composerUnit.GetType(typeName)); err != nil || !matched {
 					ok = false
 					break
 				}
@@ -76,8 +77,8 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 	return result
 }
 
-func (it *DefaultComposer) Expand(in interface{}, rule interface{}) (bool, error) {
-	var result interface{}
+func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, error) {
+	var result bool
 	var err error
 
 	// checking if in parameter is a ComposeUnit, then it should be processed
@@ -97,65 +98,56 @@ func (it *DefaultComposer) Expand(in interface{}, rule interface{}) (bool, error
 		}
 
 		// processing unit with it's arguments
-		in, err = unit.Process(unitIn, it)
+		in, err = unit.Process(MakeComposeValue(unitIn), it)
 		if err != nil {
 			return false, err
 		}
 	}
 
-	// unifying {"item": value} to {"item": [value]} as particular case of {"item": [...]}
-	for _, rule := range utils.InterfaceToArray(rule) {
-		var result bool
-		var err error
-
-		if utils.IsArray(rule) {
+	// unifying input (utils.InterfaceToArray(...) will do nothing if value already array)
+	for _, ruleItem := range utils.InterfaceToArray(rule) {
+		if utils.IsArray(ruleItem) {
 
 			// case 1: in <- [...]
-			result, err = it.Expand(in, rule)
+			result, err = it.Validate(in, ruleItem)
 			if err != nil {
 				env.LogError(err)
 				result = false
 			}
 
-		} else if mapRule, ok := rule.(map[string]interface{}); ok {
+		} else if mapRule, ok := ruleItem.(map[string]interface{}); ok {
 
 			// case 2: in <- {"key": ...}
 			for ruleKey, ruleValue := range mapRule {
 
 				// case 2.1: in <- {"$unit": value}
 				if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
-					if unit := it.GetUnit(strings.TrimPrefix(ruleKey, ConstUnitPrefix)); unit != nil {
-						result, err == unit.Process(ruleValue, it)
-						if err != nil {
-							env.LogError(err)
-							result = false
-						}
-					}
-
+					it.Validate(in, ruleValue)
 				}
 
 				// case 2.2: in <- {"key": value}
 				if inAsMap, ok := in.(map[string]interface{}); ok {
 					if inValue, present := inAsMap[ruleKey]; present {
 						result = (inValue == ruleValue)
+					} else {
+						result = false
 					}
 
 				} else if inAsObject, ok := ruleValue.(models.InterfaceObject); ok {
 					result = (inAsObject.Get(ruleKey) == ruleValue)
+				} else {
+					result = (in == ruleValue)
 				}
 			}
 
+			if !result { break }
+
 		} else {
-			in
+			result = (in == rule)
 		}
 
-
+		if !result { break }
 	}
 
 	return result, err
-}
-
-func (it *DefaultComposer) Process(in interface{}, rules map[string]interface{}) (bool, error) {
-
-
 }

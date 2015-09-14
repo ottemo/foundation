@@ -1,13 +1,43 @@
 package composer
+import (
+	"strings"
+	"sort"
+)
 
 func (it *BasicUnit) GetName() string {
 	return it.Name
 }
 
+func (it *BasicUnit) ValidateType(item string, inType string) bool {
+	if it.Validator != nil {
+		return it.Validator(item, inType)
+	}
+
+	inType = strings.TrimSpace(inType)
+	allowed := it.GetType(item)
+	for _, typeName := range strings.Split(allowed, "|") {
+		if strings.TrimSpace(typeName) == inType {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (it *BasicUnit) ListItems() []string {
+	var result []string
+
+	for itemName, _ := range it.Type {
+		result = append(result, itemName)
+	}
+
+	sort.Strings(result)
+	return result
+}
+
 func (it *BasicUnit) GetType(item string) string {
-	switch item {
-		case "":
-			return
+	if value, present := it.Type[item]; present {
+		return value
 	}
 	return ""
 }
@@ -26,9 +56,9 @@ func (it *BasicUnit) GetDescription(item string) string {
 	return ""
 }
 
-func (it *BasicUnit) Process(in map[string]interface{}) (map[string]interface{}, error) {
+func (it *BasicUnit) Process(in map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error) {
 	if it.Action != nil {
-		return it.Action(in)
+		return it.Action(in, composer)
 	}
 	return nil, nil
 }

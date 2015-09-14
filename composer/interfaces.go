@@ -6,10 +6,12 @@ type InterfaceComposeUnit interface {
 	ListItems() []string
 
 	GetType(item string) string
+	ValidateType(item string, inType string) bool
+
 	GetLabel(item string) string
 	GetDescription(item string) string
 
-	Process(args map[string]interface{}, composer InterfaceComposer) (interface{}, error)
+	Process(args map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error)
 }
 
 type InterfaceComposer interface {
@@ -20,13 +22,5 @@ type InterfaceComposer interface {
 	GetUnit(name string) InterfaceComposeUnit
 	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
 
-	Process(in interface{}, rules map[string]interface{}) (bool, error)
-}
-
-func InKey(name string) {
-	return ConstInPrefix + name
-}
-
-func OutKey(name string) {
-	return ConstOutPrefix + name
+	Validate(item interface{}, value interface{}) (bool, error)
 }

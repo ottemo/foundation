@@ -515,7 +515,7 @@ func InterfaceToTime(value interface{}) time.Time {
 
 // IsArray checks if given value is array
 func IsArray(value interface{}) bool {
-	kind := reflect.TypeOf(value).Kind()
+	kind := reflect.TypeOf(value).Kind().String()
 	if kind == "slice" || kind == "array" {
 		return true
 	}

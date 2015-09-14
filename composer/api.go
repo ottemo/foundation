@@ -1,16 +1,8 @@
 package composer
 
 import (
-	"encoding/csv"
-	"fmt"
-	"io"
-	"strings"
-	"time"
-
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/composer"
 )
 
 // setups package related API endpoint routines
