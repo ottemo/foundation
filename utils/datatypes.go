@@ -423,6 +423,40 @@ func InterfaceToString(value interface{}) string {
 	}
 }
 
+// InterfaceToUint converts interface{} to unsigned integer
+func InterfaceToUint(value interface{}) uint {
+	if value == nil {
+		return 0
+	}
+
+	switch typedValue := value.(type) {
+		case uint:
+			return typedValue
+		case uint8:
+			return uint(typedValue)
+		case uint16:
+			return uint(typedValue)
+		case uint32:
+			return uint(typedValue)
+		case uint64:
+			return uint(typedValue)
+		case float64:
+			return uint(typedValue)
+		case string:
+			uintValue, err := strconv.ParseUint(typedValue, 10, 64)
+			if err != nil {
+				floatValue, err := strconv.ParseFloat(typedValue, 64)
+				if err != nil {
+					return 0
+				}
+				return uint(floatValue)
+			}
+			return uint(uintValue)
+		default:
+			return 0
+	}
+}
+
 // InterfaceToInt converts interface{} to integer
 func InterfaceToInt(value interface{}) int {
 	if value == nil {
@@ -616,4 +650,96 @@ func StringToInterface(value string) interface{} {
 	}
 
 	return trimmedValue
+}
+
+// Equals converts operands to comparable values and compares them, returns true for zero or one argument
+func Equals(operands ...interface{}) bool {
+
+	// constant represents types conversion priority
+	const (
+		t_bool   = iota  // 0
+		t_float  = iota  // 1
+		t_date   = iota  // 2
+		t_string = iota  // 3  stands before int as ("10.1" == 10) supposedly should return false
+		t_int    = iota  // 4
+		t_uint   = iota  // 5
+	)
+
+	// determining types of operands
+	compareAs := t_uint
+	for _, x := range operands {
+		operandType := t_string
+		switch x.(type) {
+			case uint:
+				operandType = t_uint
+			case uint8:
+				operandType = t_uint
+			case uint16:
+				operandType = t_uint
+			case uint32:
+				operandType = t_uint
+			case uint64:
+				operandType = t_uint
+
+			case int:
+				operandType = t_int
+			case int8:
+				operandType = t_int
+			case int16:
+				operandType = t_int
+			case int32:
+				operandType = t_int
+			case int64:
+				operandType = t_int
+
+			case float32:
+				operandType = t_float
+			case float64:
+				operandType = t_float
+
+			case bool:
+				operandType = t_bool
+
+			case time.Time:
+				operandType = t_date
+
+			case string:
+				operandType = t_string
+			case []byte:
+				operandType = t_string
+		}
+
+		// compare should happen by lowest priority
+		if operandType < compareAs {
+			compareAs = operandType
+		}
+	}
+
+	// compare operation
+	result := true
+	var previousOperand interface{}
+	for _, operand := range operands {
+		switch compareAs {
+			case t_bool:
+				operand = InterfaceToBool(operand)
+			case t_string:
+				operand = InterfaceToString(operand)
+			case t_date:
+				operand = InterfaceToTime(operand)
+			case t_float:
+				operand = InterfaceToFloat64(operand)
+			case t_uint:
+				operand = InterfaceToUint(operand)
+			case t_int:
+				operand = InterfaceToInt(operand)
+		}
+
+		if previousOperand == nil {
+			previousOperand = operand
+		} else {
+			result = (operand == previousOperand)
+		}
+	}
+
+	return result
 }

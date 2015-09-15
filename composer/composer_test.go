@@ -26,7 +26,7 @@ func TestOperations(tst *testing.T) {
 	}
 
 	rules, err := utils.DecodeJSONToStringKeyMap(`{
-		"a": 10
+		"a": "10"
 	}`)
 	if err != nil {
 		tst.Errorf("JSON decode fail: %v", err)

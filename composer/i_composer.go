@@ -128,22 +128,22 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 				// case 2.2: in <- {"key": value}
 				if inAsMap, ok := in.(map[string]interface{}); ok {
 					if inValue, present := inAsMap[ruleKey]; present {
-						result = (inValue == ruleValue)
+						result = utils.Equals(inValue, ruleValue)
 					} else {
 						result = false
 					}
 
 				} else if inAsObject, ok := ruleValue.(models.InterfaceObject); ok {
-					result = (inAsObject.Get(ruleKey) == ruleValue)
+					result = utils.Equals(inAsObject.Get(ruleKey), ruleValue)
 				} else {
-					result = (in == ruleValue)
+					result = utils.Equals(in, ruleValue)
 				}
 			}
 
 			if !result { break }
 
 		} else {
-			result = (in == rule)
+			result = utils.Equals(in, rule)
 		}
 
 		if !result { break }
