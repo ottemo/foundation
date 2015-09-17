@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
+	"runtime/debug"
 )
 
 var (
@@ -654,6 +656,14 @@ func StringToInterface(value string) interface{} {
 
 // Equals converts operands to comparable values and compares them, returns true for zero or one argument
 func Equals(operands ...interface{}) bool {
+
+	for _,x := range operands {
+		if _, ok := x.(map[string]interface{}); ok {
+			debug.PrintStack()
+		}
+		fmt.Printf("%v=", x)
+	}
+	fmt.Println()
 
 	// constant represents types conversion priority
 	const (

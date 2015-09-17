@@ -122,19 +122,24 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 
 				// case 2.1: in <- {"$unit": value}
 				if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
-					it.Validate(in, ruleValue)
-				}
+					if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstUnitPrefix)]; present {
+						result, err = it.Validate(unit, ruleValue)
+					} else {
+						err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3537c93c-4f22-466a-8c76-da47373a26ba", "unit not exists")
+						result = false
+					}
 
 				// case 2.2: in <- {"key": value}
-				if inAsMap, ok := in.(map[string]interface{}); ok {
+				} else if inAsMap, ok := in.(map[string]interface{}); ok {
 					if inValue, present := inAsMap[ruleKey]; present {
-						result = utils.Equals(inValue, ruleValue)
+						result, err = it.Validate(inValue, ruleValue)
 					} else {
 						result = false
 					}
 
-				} else if inAsObject, ok := ruleValue.(models.InterfaceObject); ok {
-					result = utils.Equals(inAsObject.Get(ruleKey), ruleValue)
+				} else if inAsObject, ok := in.(models.InterfaceObject); ok {
+					result, err = it.Validate(inAsObject.Get(ruleKey), ruleValue)
+
 				} else {
 					result = utils.Equals(in, ruleValue)
 				}
