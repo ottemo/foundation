@@ -52,10 +52,10 @@ func TestOperations(tst *testing.T) {
 	rules, err := utils.DecodeJSONToStringKeyMap(`{
 		"a": "10",
 		"b": "test",
-		"c": {"$gt": 5},
+		"c": {"$gt": 3},
 		"d": {
 			"price": 1.1,
-			"sku": "test_product"
+			"sku": {"$contains": "test"}
 		}
 	}`)
 	if err != nil {

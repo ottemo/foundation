@@ -81,26 +81,50 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 	var result bool
 	var err error
 
-	// checking if in parameter is a ComposeUnit, then it should be processed
-	if unit, ok := in.(InterfaceComposeUnit); ok {
+	// subroutine used within 2 places
+	applyRuleToUnit := func(unit InterfaceComposeUnit, rule interface{}) (interface{}, error) {
 		args := make(map[string]interface{})
+
+		useAsResult := false
 
 		// looking for arguments addressed to CompositeUnit and not for unit process result
 		if mapRule, ok := rule.(map[string]interface{}); ok {
+			nonArgsKeys := 0
 			for ruleKey, ruleValue := range mapRule {
 				if strings.HasPrefix(ruleKey, ConstPrefixArg) {
-					key := strings.TrimPrefix(ruleKey, ConstPrefixArg)
-					args[key] = ruleValue
-					delete(mapRule, key)
+					argKey := strings.TrimPrefix(ruleKey, ConstPrefixArg)
+					args[argKey] = ruleValue
+				} else {
+					nonArgsKeys++
 				}
+			}
 
+			if nonArgsKeys == 0 {
+				useAsResult = true
 			}
 		} else {
-			args[ConstPrefixArg] = rule
+			if unit.GetType(ConstPrefixArg) != "" {
+				args[ConstPrefixArg] = rule
+				useAsResult = true
+			}
 		}
 
 		// processing unit with it's arguments
-		in, err = unit.Process(in, args, it)
+		output, outErr := unit.Process(in, args, it)
+		if outErr != nil {
+			return false, outErr
+		}
+
+		if useAsResult {
+			return utils.InterfaceToBool(output), outErr
+		}
+
+		return output, outErr
+	}
+
+	// checking if in parameter is a ComposeUnit, then it should be processed
+	if unit, ok := in.(InterfaceComposeUnit); ok {
+		in, err = applyRuleToUnit(unit, rule)
 		if err != nil {
 			return false, err
 		}
@@ -108,30 +132,35 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 
 	// unifying input (utils.InterfaceToArray(...) will do nothing if value already array)
 	for _, ruleItem := range utils.InterfaceToArray(rule) {
+
+		// case 1: in interface{} <- [...]
 		if utils.IsArray(ruleItem) {
 
-			// case 1: in <- [...]
 			result, err = it.Validate(in, ruleItem)
 			if err != nil {
 				env.LogError(err)
 				result = false
 			}
 
+		// case 2: in interface{} <- {...}
 		} else if mapRule, ok := ruleItem.(map[string]interface{}); ok {
 
-			// case 2: in <- {"key": ...}
 			for ruleKey, ruleValue := range mapRule {
 
-				// case 2.1: in <- {"$unit": value}
+				// case 2.1: in interface{} <- {"$unit": value}
 				if strings.HasPrefix(ruleKey, ConstPrefixUnit) {
 					if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstPrefixUnit)]; present {
-						result, err = it.Validate(unit, ruleValue)
+						if out, outErr := applyRuleToUnit(unit, ruleValue); err == nil {
+							result, err = it.Validate(out, ruleValue)
+						} else {
+							err = outErr
+						}
 					} else {
 						err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3537c93c-4f22-466a-8c76-da47373a26ba", "unit not exists")
 						result = false
 					}
 
-				// case 2.2: in <- {"key": value}
+				// case 2.2: in map[string]interface{} <- {"key": value}
 				} else if inAsMap, ok := in.(map[string]interface{}); ok {
 					if inValue, present := inAsMap[ruleKey]; present {
 						result, err = it.Validate(inValue, ruleValue)
@@ -139,20 +168,25 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 						result = false
 					}
 
+				// case 2.3: in InterfaceObject <- {"key": value}
 				} else if inAsObject, ok := in.(models.InterfaceObject); ok {
 					result, err = it.Validate(inAsObject.Get(ruleKey), ruleValue)
 
+				// case 2.4: in interface{} <- {"key": value}
 				} else {
 					result = utils.Equals(in, ruleValue)
 				}
 			}
 
+			if err != nil { result = false }
 			if !result { break }
 
+		// case 3: in interface{} <- interface{}
 		} else {
 			result = utils.Equals(in, rule)
 		}
 
+		if err != nil { result = false }
 		if !result { break }
 	}
 
