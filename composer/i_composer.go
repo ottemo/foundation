@@ -83,22 +83,24 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 
 	// checking if in parameter is a ComposeUnit, then it should be processed
 	if unit, ok := in.(InterfaceComposeUnit); ok {
-		unitIn := make(map[string]interface{})
+		args := make(map[string]interface{})
 
 		// looking for arguments addressed to CompositeUnit and not for unit process result
 		if mapRule, ok := rule.(map[string]interface{}); ok {
 			for ruleKey, ruleValue := range mapRule {
-				if strings.HasPrefix(ruleKey, ConstInPrefix) {
-					key := strings.TrimPrefix(ruleKey, ConstInPrefix)
-					unitIn[key] = ruleValue
+				if strings.HasPrefix(ruleKey, ConstPrefixArg) {
+					key := strings.TrimPrefix(ruleKey, ConstPrefixArg)
+					args[key] = ruleValue
 					delete(mapRule, key)
 				}
 
 			}
+		} else {
+			args[ConstPrefixArg] = rule
 		}
 
 		// processing unit with it's arguments
-		in, err = unit.Process(MakeComposeValue(unitIn), it)
+		in, err = unit.Process(in, args, it)
 		if err != nil {
 			return false, err
 		}
@@ -121,8 +123,8 @@ func (it *DefaultComposer) Validate(in interface{}, rule interface{}) (bool, err
 			for ruleKey, ruleValue := range mapRule {
 
 				// case 2.1: in <- {"$unit": value}
-				if strings.HasPrefix(ruleKey, ConstUnitPrefix) {
-					if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstUnitPrefix)]; present {
+				if strings.HasPrefix(ruleKey, ConstPrefixUnit) {
+					if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstPrefixUnit)]; present {
 						result, err = it.Validate(unit, ruleValue)
 					} else {
 						err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3537c93c-4f22-466a-8c76-da47373a26ba", "unit not exists")

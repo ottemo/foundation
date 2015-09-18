@@ -11,7 +11,7 @@ type InterfaceComposeUnit interface {
 	GetLabel(item string) string
 	GetDescription(item string) string
 
-	Process(args map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error)
+	Process(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error)
 }
 
 type InterfaceComposer interface {
@@ -22,5 +22,5 @@ type InterfaceComposer interface {
 	GetUnit(name string) InterfaceComposeUnit
 	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
 
-	Validate(item interface{}, value interface{}) (bool, error)
+	Validate(in interface{}, rule interface{}) (bool, error)
 }

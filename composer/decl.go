@@ -10,16 +10,8 @@ var (
 
 // Package global constants
 const (
-	ConstUnitPrefix = "$"
-
-	ConstInPrefix = "@"
-	ConstInItem = ConstInPrefix
-
-	ConstOutPrefix = ""
-	ConstOutItem = ConstOutPrefix
-
-	ConstUnitLabelItem = ConstOutPrefix
-	ConstUnitDescriptionItem = ConstOutPrefix
+	ConstPrefixUnit = "$"
+	ConstPrefixArg = "@"
 
 	ConstTypeAny = "*"
 	ConstTypeValidate = "validate"
@@ -29,7 +21,7 @@ const (
 )
 
 
-type FuncUnitAction func(in map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error)
+type FuncUnitAction func(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error)
 type FuncTypeValidator func(item string, inType string) bool
 
 type DefaultComposer struct {
@@ -46,21 +38,4 @@ type BasicUnit struct {
 
 	Validator FuncTypeValidator
 	Action FuncUnitAction
-}
-
-
-
-func MakeComposeValue(inValue interface{}) map[string] interface{} {
-	if typedValue, ok := inValue.(map[string]interface{}); !ok {
-		return typedValue
-	}
-	return map[string]interface{} { ConstInItem: inValue }
-}
-
-func MakeInKey(name string) string {
-	return ConstInPrefix + name
-}
-
-func MakeOutKey(name string) string {
-	return ConstOutPrefix + name
 }

@@ -56,9 +56,9 @@ func (it *BasicUnit) GetDescription(item string) string {
 	return ""
 }
 
-func (it *BasicUnit) Process(in map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error) {
+func (it *BasicUnit) Process(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error) {
 	if it.Action != nil {
-		return it.Action(in, composer)
+		return it.Action(in, args, composer)
 	}
 	return nil, nil
 }

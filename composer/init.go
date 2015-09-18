@@ -19,38 +19,44 @@ func init() {
 
 func initBaseUnits() {
 
-	action := func(in map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error) {
-		result := true
-		if utils.InterfaceToString(in[ConstInItem]) == utils.InterfaceToString(in[MakeInKey("cmp")]) {
-			result = false
+	action := func(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error) {
+		if argValue, present := args[ConstPrefixArg]; present {
+			return utils.Equals(in, argValue), nil
 		}
-		return map[string]interface{} {ConstOutItem: result}, nil
+		return false, nil
 	}
 
 	composer.RegisterUnit( &BasicUnit{
-		Name: "same",
+		Name: "eq",
 		Type: map[string]string{
-			ConstInItem: ConstTypeAny, MakeInKey("cmp"): ConstTypeAny, ConstOutItem: "bool"},
-		Label: map[string]string{MakeInKey("cmp"): "="},
-		Description: map[string]string{ConstUnitDescriptionItem: "Checks if value same to other value"},
+			ConstPrefixUnit: ConstTypeAny, // input type
+			ConstPrefixArg: ConstTypeAny,  // operand type (unnamed argument is a key for rule right-side value if it is not a map)
+			"": "bool",                    // output type
+		},
+		Label: map[string]string{ ConstPrefixUnit: "equals" },
+		Description: map[string]string{ ConstPrefixUnit: "Checks if value equals to other value" },
 		Action: action,
 	})
 
 
-	action = func(in map[string]interface{}, composer InterfaceComposer) (map[string]interface{}, error) {
-		result := true
-		if utils.InterfaceToString(in[ConstInItem]) == utils.InterfaceToString(in[MakeInKey("cmp")]) {
-			result = false
+	action = func(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error) {
+		if argValue, present := args[ConstPrefixArg]; present {
+			if utils.InterfaceToFloat64(in) > utils.InterfaceToFloat64(argValue) {
+				return true, nil
+			}
 		}
-		return map[string]interface{} {ConstOutItem: result}, nil
+		return false, nil
 	}
 
 	composer.RegisterUnit( &BasicUnit{
 		Name: "gt",
 		Type: map[string]string{
-			ConstInItem: ConstTypeAny, MakeInKey("cmp"): ConstTypeAny, ConstOutItem: "bool"},
-		Label: map[string]string{MakeInKey("cmp"): "="},
-		Description: map[string]string{ConstUnitDescriptionItem: "Checks if value same to other value"},
+			ConstPrefixUnit: ConstTypeAny,
+			ConstPrefixArg: ConstTypeAny,
+			"": "bool",
+		},
+		Label: map[string]string{  ConstPrefixUnit: "greather" },
+		Description: map[string]string{ ConstPrefixUnit: "Checks if value if greather then other value" },
 		Action: action,
 	})
 
