@@ -62,7 +62,8 @@ func TestOperations(tst *testing.T) {
 		tst.Errorf("JSON decode fail: %v", err)
 	}
 
-	result, err := GetComposer().Validate(input, rules)
+
+	result, err := GetComposer().Check(input, rules)
 	if err != nil {
 		tst.Errorf("Validation fail", err)
 	} else if !result {

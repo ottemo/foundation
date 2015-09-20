@@ -22,5 +22,5 @@ type InterfaceComposer interface {
 	GetUnit(name string) InterfaceComposeUnit
 	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
 
-	Validate(in interface{}, rule interface{}) (bool, error)
+	Check(in interface{}, rule interface{}) (bool, error)
 }
