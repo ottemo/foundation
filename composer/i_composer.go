@@ -32,6 +32,11 @@ func (it *DefaultComposer) UnRegisterUnit(unit InterfaceComposeUnit) error {
 	return nil
 }
 
+
+func (it *DefaultComposer) GetName() string {
+	return "DefaultComposer"
+}
+
 func (it *DefaultComposer) GetUnit(name string) InterfaceComposeUnit {
 	if unit, present := it.units[name]; present {
 		return unit
@@ -43,12 +48,14 @@ func (it *DefaultComposer) ListUnits() []InterfaceComposeUnit {
 	return it.SearchUnits("", nil)
 }
 
-func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit {
+func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string]string) []InterfaceComposeUnit {
 	var result []InterfaceComposeUnit
 
 	if namePattern != "" && !(strings.HasPrefix(namePattern, "^") || strings.HasSuffix(namePattern, "$")) {
 		namePattern = "^" + namePattern + "$"
 	}
+
+	namePattern = strings.Replace(namePattern, "%", ".*", -1)
 
 	nameRegex, err := regexp.Compile(namePattern)
 	if err != nil {
@@ -62,7 +69,7 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 			ok := true
 			for typeName, typeValue := range typeFilter {
 
-				if matched, err := regexp.MatchString(utils.InterfaceToString(typeValue), composerUnit.GetType(typeName)); err != nil || !matched {
+				if matched, err := regexp.MatchString(typeValue, composerUnit.GetType(typeName)); err != nil || !matched {
 					ok = false
 					break
 				}

@@ -56,6 +56,13 @@ func (it *BasicUnit) GetDescription(item string) string {
 	return ""
 }
 
+func (it *BasicUnit) IsRequired(item string) bool {
+	if value, present := it.Required[item]; present {
+		return value
+	}
+	return true
+}
+
 func (it *BasicUnit) Process(in interface{}, args map[string]interface{}, composer InterfaceComposer) (interface{}, error) {
 	if it.Action != nil {
 		return it.Action(in, args, composer)

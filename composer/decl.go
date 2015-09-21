@@ -5,7 +5,7 @@ import(
 )
 
 var (
-	composer InterfaceComposer
+	registeredComposer InterfaceComposer
 )
 
 // Package global constants
@@ -35,6 +35,8 @@ type BasicUnit struct {
 	Type  map[string]string
 	Label map[string]string
 	Description map[string]string
+
+	Required map[string]bool
 
 	Validator FuncTypeValidator
 	Action FuncUnitAction

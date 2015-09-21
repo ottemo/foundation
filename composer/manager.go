@@ -1,5 +1,5 @@
 package composer
 
 func GetComposer() InterfaceComposer {
-	return composer
+	return registeredComposer
 }

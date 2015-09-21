@@ -8,6 +8,8 @@ type InterfaceComposeUnit interface {
 	GetType(item string) string
 	ValidateType(item string, inType string) bool
 
+	IsRequired(item string) bool
+
 	GetLabel(item string) string
 	GetDescription(item string) string
 
@@ -15,12 +17,14 @@ type InterfaceComposeUnit interface {
 }
 
 type InterfaceComposer interface {
+	GetName() string
+
 	RegisterUnit(unit InterfaceComposeUnit) error
 	UnRegisterUnit(unit InterfaceComposeUnit) error
 	ListUnits() []InterfaceComposeUnit
 
 	GetUnit(name string) InterfaceComposeUnit
-	SearchUnits(namePattern string, typeFilter map[string]interface{}) []InterfaceComposeUnit
+	SearchUnits(namePattern string, typeFilter map[string]string) []InterfaceComposeUnit
 
 	Check(in interface{}, rule interface{}) (bool, error)
 }

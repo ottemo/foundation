@@ -12,7 +12,7 @@ func init() {
 	instance := new(DefaultComposer)
 	instance.units = make(map[string]InterfaceComposeUnit)
 
-	composer = instance
+	registeredComposer = instance
 
 	api.RegisterOnRestServiceStart(setupAPI)
 	initBaseUnits()
@@ -28,7 +28,7 @@ func initBaseUnits() {
 		return false, nil
 	}
 
-	composer.RegisterUnit( &BasicUnit{
+	registeredComposer.RegisterUnit( &BasicUnit{
 		Name: "eq",
 		Type: map[string]string{
 			ConstPrefixUnit: ConstTypeAny, // input type
@@ -50,7 +50,7 @@ func initBaseUnits() {
 		return false, nil
 	}
 
-	composer.RegisterUnit( &BasicUnit{
+	registeredComposer.RegisterUnit( &BasicUnit{
 		Name: "gt",
 		Type: map[string]string{
 			ConstPrefixUnit: ConstTypeAny,
@@ -71,7 +71,7 @@ func initBaseUnits() {
 		return false, nil
 	}
 
-	composer.RegisterUnit( &BasicUnit{
+	registeredComposer.RegisterUnit( &BasicUnit{
 		Name: "lt",
 		Type: map[string]string{
 			ConstPrefixUnit: ConstTypeAny,
@@ -92,7 +92,7 @@ func initBaseUnits() {
 		return false, nil
 	}
 
-	composer.RegisterUnit( &BasicUnit{
+	registeredComposer.RegisterUnit( &BasicUnit{
 		Name: "contains",
 		Type: map[string]string{
 			ConstPrefixUnit: "string",
@@ -113,7 +113,7 @@ func initBaseUnits() {
 		return false, nil
 	}
 
-	composer.RegisterUnit( &BasicUnit{
+	registeredComposer.RegisterUnit( &BasicUnit{
 		Name: "regex",
 		Type: map[string]string{
 			ConstPrefixUnit: "string",
