@@ -14,6 +14,8 @@ const (
 
 	ConstErrorModule = "product"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstProductMediaTypeImage = "image"
 )
 
 // DefaultProduct is a default implementer of InterfaceProduct

@@ -3,9 +3,11 @@ package fsmedia
 import (
 	"os"
 
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
+	"github.com/ottemo/foundation/utils"
 )
 
 // init makes package self-initialization routine
@@ -19,6 +21,11 @@ func init() {
 		env.RegisterOnConfigIniStart(instance.setupOnIniConfigStart)
 		env.RegisterOnConfigStart(instance.setupConfig)
 		db.RegisterOnDatabaseStart(instance.setupOnDatabaseStart)
+
+		api.RegisterOnRestServiceStart(setupAPI)
+
+		// process of resizing images on media start
+		//		media.RegisterOnMediaStorageStart(instance.ResizeAllMediaImages)
 	}
 }
 
@@ -27,7 +34,10 @@ func (it *FilesystemMediaStorage) setupCheckDone() {
 
 	// so, we are not sure on events sequence order
 	if it.setupWaitCnt--; it.setupWaitCnt == 0 {
-		media.OnMediaStorageStart()
+		err := media.OnMediaStorageStart()
+		if err != nil {
+			env.LogError(err)
+		}
 	}
 }
 
@@ -39,6 +49,10 @@ func (it *FilesystemMediaStorage) setupOnIniConfigStart() error {
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("media.fsmedia.folder", "?"+ConstMediaDefaultFolder); iniValue != "" {
 			storageFolder = iniValue
+		}
+
+		if iniValue := iniConfig.GetValue("media.resize.images.onfly", "false"); iniValue != "" {
+			resizeImagesOnFly = utils.InterfaceToBool(iniValue)
 		}
 	}
 
@@ -63,7 +77,10 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b50f7128-a32f-4d92-866e-1ee35ba079df", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule,
+			env.ConstErrorLevelStartStop,
+			"b50f7128-a32f-4d92-866e-1ee35ba079df",
+			"Unable to find database engine specified in configuration file to start.")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)

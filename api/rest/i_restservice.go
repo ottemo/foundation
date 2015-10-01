@@ -31,7 +31,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail")
+				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: " + fmt.Sprintf("%v", recoverResult))
 			}
 		}()
 
@@ -78,7 +78,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.ErrorDispatch(err)
+				env.LogError(err)
 			}
 			json.Unmarshal(body, &newContent)
 
@@ -119,7 +119,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 			body, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.ErrorDispatch(err)
+				env.LogError(err)
 			}
 
 			content = string(body)
@@ -184,6 +184,9 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 		// API handler processing
 		result, err := handler(applicationContext)
+		if err != nil {
+			env.LogError(err)
+		}
 
 		if err == nil {
 			applicationContext.Result = result
@@ -305,7 +308,7 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 // Run is the Ottemo REST server startup function, analogous to "ListenAndServe"
 func (it *DefaultRestService) Run() error {
 	fmt.Println("REST API Service [HTTPRouter] starting to listen on " + it.ListenOn)
-	env.ErrorDispatch(http.ListenAndServe(it.ListenOn, it))
+	env.LogError(http.ListenAndServe(it.ListenOn, it))
 
 	return nil
 }

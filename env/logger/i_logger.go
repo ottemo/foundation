@@ -25,10 +25,15 @@ func (it *DefaultLogger) Log(storage string, prefix string, msg string) {
 
 // LogError makes error log
 func (it *DefaultLogger) LogError(err error) {
-	if ottemoErr, ok := err.(env.InterfaceOttemoError); ok {
-		it.Log(defaultErrorsFile, env.ConstLogPrefixError, ottemoErr.ErrorFull())
-	} else {
-		it.Log(defaultErrorsFile, env.ConstLogPrefixError, err.Error())
+	if err != nil {
+		if ottemoErr, ok := err.(env.InterfaceOttemoError); ok {
+			if ottemoErr.ErrorLevel() <= errorLogLevel && !ottemoErr.IsLogged() {
+				it.Log(defaultErrorsFile, env.ConstLogPrefixError, ottemoErr.ErrorFull())
+				ottemoErr.MarkLogged()
+			}
+		} else {
+			it.Log(defaultErrorsFile, env.ConstLogPrefixError, err.Error())
+		}
 	}
 }
 

@@ -4,9 +4,9 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"strings"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -28,6 +28,7 @@ func setupAPI() error {
 }
 
 // APIReceipt processes Authorize.net receipt response
+// can be used for redirecting customer to it on exit from authorize.net
 //   - "x_session" should be specified in request contents with id of existing session
 //   - refer to http://www.authorize.net/support/DirectPost_guide.pdf for other fields receipt response should contain
 func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -39,13 +40,13 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	status := requestData["x_response_code"]
 
-	session, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]))
-	if err != nil {
+	session, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]), false)
+	if session == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "48f70911-836f-41ba-9ed9-b2afcb7ca462", "Wrong session ID")
 	}
 	context.SetSession(session)
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context)
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
 		return nil, err
 	}
@@ -61,22 +62,14 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 			}
 			if checkoutOrder != nil {
 
-				paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
-				for key, value := range requestData {
-					paymentInfo[key] = value
+				orderMap, err := currentCheckout.SubmitFinish(requestData)
+				if err != nil {
+					env.LogError(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "54296509-fc83-447d-9826-3b7a94ea1acb", "Can't proceed submiting order from Authorize relay"))
 				}
 
-				checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
-				checkoutOrder.Set("payment_info", paymentInfo)
-
-				err = checkoutOrder.Save()
-				if err != nil {
-					return nil, err
-				}
-
-				err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
-				if err != nil {
-					return nil, err
+				redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMReceiptURL))
+				if strings.TrimSpace(redirectURL) == "" {
+					redirectURL = app.GetStorefrontURL("account/order") + checkoutOrder.GetID()
 				}
 
 				env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION APPROVED: "+
@@ -86,11 +79,11 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 					"Total - "+utils.InterfaceToString(requestData["x_amount"])+", "+
 					"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
 
-				return api.StructRestRedirect{Location: app.GetStorefrontURL("account/order/" + checkoutOrder.GetID()), DoRedirect: true}, nil
+				return api.StructRestRedirect{Result: orderMap, Location: redirectURL, DoRedirect: true}, err
 			}
 		}
-	case ConstTransactionDeclined:
-	case ConstTransactionWaitingReview:
+	//	case ConstTransactionDeclined:
+	//	case ConstTransactionWaitingReview:
 	default:
 		{
 			if checkoutOrder != nil {
@@ -102,20 +95,23 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 					"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
 			}
 
-			return []byte(`<html>
-					 <head>
-						 <noscript>
-						 	<meta http-equiv='refresh' content='1;url=` + app.GetStorefrontURL("checkout") + `'>
-						 </noscript>
-					 </head>
-					 <body>
-					 	<h1>Something went wrong</h1>
-					 	<p>` + utils.InterfaceToString(requestData["x_response_reason_text"]) + `</p>
+			redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMDeclineURL))
+			if strings.TrimSpace(redirectURL) == "" {
+				redirectURL = app.GetStorefrontURL("checkout")
+			}
 
-						<p><a href="` + app.GetStorefrontURL("checkout") + `">Back to store</a></p>
+			templateContext := map[string]interface{}{
+				"backURL":  redirectURL,
+				"response": requestData}
 
-					 </body>
-				</html>`), nil
+			template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMDeclineHTML))
+			if strings.TrimSpace(template) == "" {
+				template = ConstDefaultDeclineTemplate
+			}
+
+			result, err := utils.TextTemplate(template, templateContext)
+
+			return []byte(result), err
 		}
 	}
 	if checkoutOrder != nil {
@@ -141,13 +137,13 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	status := requestData["x_response_code"]
 
-	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]))
-	if err != nil {
+	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]), false)
+	if sessionInstance == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "48f70911-836f-41ba-9ed9-b2afcb7ca462", "Wrong session ID")
 	}
 	context.SetSession(sessionInstance)
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context)
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
 		return nil, err
 	}
@@ -162,16 +158,10 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6244e778-a837-4425-849b-fbce26d5b095", "Cart is not specified")
 			}
 			if checkoutOrder != nil {
-				checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
-				checkoutOrder.Set("payment_info", requestData)
 
-				err = checkoutOrder.Save()
+				orderMap, err := currentCheckout.SubmitFinish(requestData)
 				if err != nil {
-					return nil, err
-				}
-
-				err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
-				if err != nil {
+					env.LogError(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "54296509-fc83-447d-9826-3b7a94ea1acb", "Can't proceed submiting order from Authorize relay"))
 					return nil, err
 				}
 
@@ -184,35 +174,32 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 					"Total - "+utils.InterfaceToString(requestData["x_amount"])+", "+
 					"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
 
-				return []byte(`<html>
-					 <head>
-						 <noscript>
-						 	<meta http-equiv='refresh' content='1;url=` + app.GetStorefrontURL("account/order/"+checkoutOrder.GetID()) + `'>
-						 </noscript>
-					 </head>
-					 <body>
-					 	<h1>Thanks for your purchase.</h1>
-					 	<p>Your transaction ID: <b>` + utils.InterfaceToString(requestData["x_trans_id"]) + `</b></p>
-					 	<p>You will  redirect to the store after <span id="sec"></span> sec.	<a href="` + app.GetStorefrontURL("account/order/"+checkoutOrder.GetID()) + `">Back to store</a></p>
-					 </body>
-					 <script type='text/javascript' charset='utf-8'>
-					 	(function(){
-							var seconds = 10;
-							document.getElementById("sec").innerHTML = seconds;
-							setInterval(function(){
-								seconds -= 1;
-								document.getElementById("sec").innerHTML = seconds;
-								if(0 === seconds){
-									window.location='` + app.GetStorefrontURL("account/order/"+checkoutOrder.GetID()) + `';
-								}
-							}, 1000);
-					 	})();
-					 </script>
-				</html>`), nil
+				redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMReceiptURL))
+				if strings.TrimSpace(redirectURL) == "" {
+					redirectURL = app.GetStorefrontURL("account/order") + checkoutOrder.GetID()
+				}
+
+				templateContext := map[string]interface{}{
+					"backURL":  redirectURL,
+					"response": requestData,
+					"order":    orderMap,
+				}
+
+				template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMReceiptHTML))
+				if strings.TrimSpace(template) == "" {
+					template = ConstDefaultReceiptTemplate
+				}
+
+				result, err := utils.TextTemplate(template, templateContext)
+				if err != nil {
+					return result, err
+				}
+
+				return []byte(result), nil
 			}
 		}
-	case ConstTransactionDeclined:
-	case ConstTransactionWaitingReview:
+	//	case ConstTransactionDeclined:
+	//	case ConstTransactionWaitingReview:
 	default:
 		{
 			if checkoutOrder != nil {
@@ -223,20 +210,24 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 					"Total - "+utils.InterfaceToString(requestData["x_amount"])+", "+
 					"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
 			}
-			return []byte(`<html>
-					 <head>
-						 <noscript>
-						 	<meta http-equiv='refresh' content='1;url=` + app.GetStorefrontURL("checkout") + `'>
-						 </noscript>
-					 </head>
-					 <body>
-					 	<h1>Something went wrong</h1>
-					 	<p>` + utils.InterfaceToString(requestData["x_response_reason_text"]) + `</p>
 
-						<p><a href="` + app.GetStorefrontURL("checkout") + `">Back to store</a></p>
+			redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMDeclineURL))
+			if strings.TrimSpace(redirectURL) == "" {
+				redirectURL = app.GetStorefrontURL("checkout")
+			}
 
-					 </body>
-				</html>`), nil
+			templateContext := map[string]interface{}{
+				"backURL":  redirectURL,
+				"response": requestData}
+
+			template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMDeclineHTML))
+			if strings.TrimSpace(template) == "" {
+				template = ConstDefaultDeclineTemplate
+			}
+
+			result, err := utils.TextTemplate(template, templateContext)
+
+			return []byte(result), err
 		}
 	}
 	if checkoutOrder != nil {

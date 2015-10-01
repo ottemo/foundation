@@ -582,7 +582,7 @@ func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvR
 				if ConstImpexLog || ConstDebugLog {
 					env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Error: %s", err.Error()))
 				}
-				env.ErrorDispatch(err)
+				env.LogError(err)
 				return true
 			}
 

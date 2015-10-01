@@ -6,6 +6,11 @@
 ;;;;;;;;;;;;;
 ; Path to media folder, must be writeable by Foundation
 media.fsmedia.folder=/Users/james/code/kg-media
+; Size images automatically
+;   this value is set to false by default
+;   a true value will cause foundation to resize images whenever images are needed
+;   this will heavily impact performance.  You have been warned.
+media.resize.images.onfly=false
 
 ; MySQL Settings
 ;;;;;;;;;;;;;;;;

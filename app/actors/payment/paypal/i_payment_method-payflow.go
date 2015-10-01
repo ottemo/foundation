@@ -105,12 +105,12 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	//-----------------------------------
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	responseValues, err := url.ParseQuery(string(responseBody))
 	if err != nil {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b18cdcad-8c21-4acf-a2e0-56e0541103de", "payment unexpected response")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b18cdcad-8c21-4acf-a2e0-56e0541103de", "payment unexpected response")
 	}
 
 	// get info about transaction from response response
@@ -118,7 +118,7 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 
 	if responseValues.Get("RESPMSG") != "Approved" || orderTransactionID == "" {
 		env.Log("paypal.log", env.ConstLogPrefixInfo, "Redjected payment: "+fmt.Sprint(responseValues))
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e48403bb-c15d-4302-8894-da7146b93260", "payment error: "+responseValues.Get("RESPMSG")+", "+responseValues.Get("PREFPSMSG"))
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e48403bb-c15d-4302-8894-da7146b93260", "payment error: "+responseValues.Get("RESPMSG")+", "+responseValues.Get("PREFPSMSG"))
 	}
 
 	env.Log("paypal.log", env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
@@ -126,22 +126,13 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
 		"TRANSACTIONID - "+orderTransactionID)
 
-	orderPaymentInfo := utils.InterfaceToMap(orderInstance.Get("payment_info"))
-
-	if oldTransaction, present := orderPaymentInfo["transactionID"]; !present {
-		orderPaymentInfo["transactionID"] = orderTransactionID
-		orderPaymentInfo["creditCardNumbers"] = responseValues.Get("ACCT")
-		orderPaymentInfo["creditCardType"] = getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE")))
-
-	} else {
-		orderPaymentInfo["previosTransactionID"] = oldTransaction
-		orderPaymentInfo["transactionID"] = orderTransactionID
+	orderPaymentInfo := map[string]interface{}{
+		"transactionID":     orderTransactionID,
+		"creditCardNumbers": responseValues.Get("ACCT"),
+		"creditCardType":    getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE"))),
 	}
 
-	orderInstance.Set("payment_info", orderPaymentInfo)
-	orderInstance.SetStatus(order.ConstOrderStatusProcessed)
-	orderInstance.Save()
-	return nil, nil
+	return orderPaymentInfo, nil
 }
 
 // Capture payment method capture operation

@@ -138,7 +138,7 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 func (it *DefaultProduct) FromHashMap(input map[string]interface{}) error {
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.ErrorDispatch(err)
+			env.LogError(err)
 		}
 	}
 	return nil

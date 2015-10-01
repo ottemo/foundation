@@ -8,6 +8,8 @@ import (
 const (
 	ConstErrorModule = "models"
 	ConstErrorLevel  = env.ConstErrorLevelModel
+
+	ConstCollectionListLimit = 20
 )
 
 // StructListItem represents type to hold business layer object information within collection

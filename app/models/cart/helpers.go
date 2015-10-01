@@ -72,7 +72,7 @@ func GetCartForVisitor(visitorID string) (InterfaceCart, error) {
 }
 
 // GetCurrentCart returns cart for current session or creates new one
-func GetCurrentCart(context api.InterfaceApplicationContext) (InterfaceCart, error) {
+func GetCurrentCart(context api.InterfaceApplicationContext, createNew bool) (InterfaceCart, error) {
 	sessionCartID := context.GetSession().Get(ConstSessionKeyCurrentCart)
 	visitorID := context.GetSession().Get(visitor.ConstSessionKeyVisitorID)
 
@@ -80,65 +80,68 @@ func GetCurrentCart(context api.InterfaceApplicationContext) (InterfaceCart, err
 	if sessionCartID != nil && sessionCartID != "" {
 		// cart id was found in session - loading cart by id
 		sessionCart, err := LoadCartByID(utils.InterfaceToString(sessionCartID))
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
+		if err == nil && sessionCart != nil {
+
+			if visitorID != nil && sessionCart.GetVisitorID() == "" {
+				visitorCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
+				if err == nil && visitorCart != nil {
+					for _, item := range sessionCart.GetItems() {
+						visitorCart.AddItem(item.GetProductID(), item.GetQty(), item.GetOptions())
+					}
+
+					visitorCart.SetSessionID(context.GetSession().GetID())
+
+					err = visitorCart.Save()
+					if err != nil {
+						env.LogError(err)
+					}
+
+					err = sessionCart.Delete()
+					if err != nil {
+						env.LogError(err)
+					}
+
+					context.GetSession().Set(ConstSessionKeyCurrentCart, visitorCart.GetID())
+
+					return visitorCart, nil
+				}
+			}
+
+			return sessionCart, nil
 		}
-		if visitorID != nil && sessionCart.GetVisitorID() == "" {
-			visitorCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
+	}
+
+	if createNew {
+		// no cart id was in session, trying to get cart for visitor
+		if visitorID != nil {
+			currentCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
 
-			for _, item := range sessionCart.GetItems() {
-				visitorCart.AddItem(item.GetProductID(), item.GetQty(), item.GetOptions())
-			}
+			context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
 
-			visitorCart.SetSessionID(context.GetSession().GetID())
+			return currentCart, nil
+		}
 
-			err = visitorCart.Save()
+		// making new cart for guest if allowed
+		if app.ConstAllowGuest {
+
+			currentCart, err := GetCartModel()
 			if err != nil {
-				env.ErrorDispatch(err)
+				return nil, env.ErrorDispatch(err)
 			}
+			currentCart.SetSessionID(context.GetSession().GetID())
+			currentCart.Activate()
+			currentCart.Save()
 
-			err = sessionCart.Delete()
-			if err != nil {
-				env.ErrorDispatch(err)
-			}
+			context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
 
-			context.GetSession().Set(ConstSessionKeyCurrentCart, visitorCart.GetID())
-
-			return visitorCart, nil
-		}
-		return sessionCart, nil
-
-	}
-
-	// no cart id was in session, trying to get cart for visitor
-	if visitorID != nil {
-		currentCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return currentCart, nil
 		}
 
-		context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
-
-		return currentCart, nil
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5acb5ee-f689-4dd8-a85f-f2ec47425ba1", "not registered visitor")
 	}
 
-	// making new cart for guest if allowed
-	if app.ConstAllowGuest {
-		currentCart, err := GetCartModel()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-		currentCart.SetSessionID(context.GetSession().GetID())
-		currentCart.Activate()
-		currentCart.Save()
-
-		context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
-
-		return currentCart, nil
-	}
-
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5acb5ee-f689-4dd8-a85f-f2ec47425ba1", "not registered visitor")
+	return nil, nil
 }

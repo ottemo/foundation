@@ -3,11 +3,12 @@ package coupon
 import (
 	"time"
 
+	"strings"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // GetName returns name of current discount implementation
@@ -29,7 +30,6 @@ func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.Interface
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
 
 		appliedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
-		usedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyUsedDiscountCodes))
 
 		if len(appliedCodes) > 0 {
 
@@ -52,7 +52,7 @@ func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.Interface
 			discountCodes := make(map[string]map[string]interface{})
 			for _, record := range records {
 				if discountCode := utils.InterfaceToString(record["code"]); discountCode != "" &&
-					!utils.IsInArray(discountCode, usedCodes) && !isLimited(checkoutInstance, record) {
+					!isLimited(checkoutInstance, record) {
 					discountCodes[discountCode] = record
 				}
 			}

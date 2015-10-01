@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -35,49 +36,62 @@ func setupAPI() error {
 // APICartInfo returns get cart related information
 func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	currentCart, err := cart.GetCurrentCart(context)
+	currentCart, err := cart.GetCurrentCart(context, false)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	var items []map[string]interface{}
-
-	cartItems := currentCart.GetItems()
-	for _, cartItem := range cartItems {
-
-		item := make(map[string]interface{})
-
-		item["_id"] = cartItem.GetID()
-		item["idx"] = cartItem.GetIdx()
-		item["qty"] = cartItem.GetQty()
-		item["pid"] = cartItem.GetProductID()
-		item["options"] = cartItem.GetOptions()
-
-		if product := cartItem.GetProduct(); product != nil {
-
-			product.ApplyOptions(cartItem.GetOptions())
-
-			productData := make(map[string]interface{})
-
-			mediaPath, _ := product.GetMediaPath("image")
-
-			productData["name"] = product.GetName()
-			productData["sku"] = product.GetSku()
-			productData["image"] = mediaPath + product.GetDefaultImage()
-			productData["price"] = product.GetPrice()
-			productData["weight"] = product.GetWeight()
-			productData["options"] = product.GetOptions()
-
-			item["product"] = productData
-		}
-
-		items = append(items, item)
+	result := map[string]interface{}{
+		"visitor_id": "",
+		"cart_info":  nil,
+		"items":      items,
 	}
 
-	result := map[string]interface{}{
-		"visitor_id": currentCart.GetVisitorID(),
-		"cart_info":  currentCart.GetCartInfo(),
-		"items":      items,
+	if currentCart != nil {
+
+		mediaStorage, err := media.GetMediaStorage()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		cartItems := currentCart.GetItems()
+		for _, cartItem := range cartItems {
+
+			item := make(map[string]interface{})
+
+			item["_id"] = cartItem.GetID()
+			item["idx"] = cartItem.GetIdx()
+			item["qty"] = cartItem.GetQty()
+			item["pid"] = cartItem.GetProductID()
+			item["options"] = cartItem.GetOptions()
+
+			if product := cartItem.GetProduct(); product != nil {
+
+				product.ApplyOptions(cartItem.GetOptions())
+
+				productData := make(map[string]interface{})
+
+				productData["name"] = product.GetName()
+				productData["sku"] = product.GetSku()
+				productData["price"] = product.GetPrice()
+				productData["weight"] = product.GetWeight()
+				productData["options"] = product.GetOptions()
+
+				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
+				if err != nil {
+					env.LogError(err)
+				}
+
+				item["product"] = productData
+			}
+
+			items = append(items, item)
+		}
+
+		result["visitor_id"] = currentCart.GetVisitorID()
+		result["cart_info"] = currentCart.GetCartInfo()
+		result["items"] = items
 	}
 
 	return result, nil
@@ -117,7 +131,7 @@ func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(context)
+	currentCart, err := cart.GetCurrentCart(context, true)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -163,7 +177,7 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(context)
+	currentCart, err := cart.GetCurrentCart(context, true)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -212,7 +226,7 @@ func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, er
 
 	// operation
 	//----------
-	currentCart, err := cart.GetCurrentCart(context)
+	currentCart, err := cart.GetCurrentCart(context, true)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

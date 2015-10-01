@@ -15,10 +15,10 @@ import (
 func referrerHandler(event string, eventData map[string]interface{}) bool {
 
 	if _, present := eventData["context"]; present {
-		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok {
+		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
 			xReferrer := utils.InterfaceToString(context.GetRequestSetting("X-Referer"))
-			if "" == xReferrer {
+			if xReferrer == "" {
 				return true
 			}
 
@@ -32,6 +32,11 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 				return true
 			}
 
+			if _, present := referrers[referrer]; !present {
+				updateSync.Lock()
+				referrers[referrer] = 0
+				updateSync.Unlock()
+			}
 			referrers[referrer]++
 
 			if err := saveNewReferrer(referrer); err != nil {
@@ -45,20 +50,24 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 
 func visitsHandler(event string, eventData map[string]interface{}) bool {
 
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
+		if sessionID := sessionInstance.GetID(); sessionID != "" {
+			currentHour := time.Now().Truncate(time.Hour).Unix()
+			CheckHourUpdateForStatistic()
+			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+				statistic[currentHour].TotalVisits++
+			}
 
-		currentHour := time.Now().Truncate(time.Hour).Unix()
-		CheckHourUpdateForStatistic()
-		statistic[currentHour].TotalVisits++
+			if _, present := visitState[sessionID]; !present {
+				visitState[sessionID] = false
+				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+					statistic[currentHour].Visit++
+				}
 
-		if _, present := visitState[sessionID]; !present {
-			visitState[sessionID] = false
-			statistic[currentHour].Visit++
-
-			err := SaveStatisticsData()
-			if err != nil {
-				env.LogError(err)
+				err := SaveStatisticsData()
+				if err != nil {
+					env.LogError(err)
+				}
 			}
 		}
 	}
@@ -68,34 +77,41 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
+		if sessionID := sessionInstance.GetID(); sessionID != "" {
 
-		currentHour := time.Now().Truncate(time.Hour).Unix()
-		CheckHourUpdateForStatistic()
+			currentHour := time.Now().Truncate(time.Hour).Unix()
+			CheckHourUpdateForStatistic()
 
-		// Add cart counter if it's a visitor that work in this hour
-		if haveCard, present := visitState[sessionID]; present {
-			if !haveCard {
+			// Add cart counter if it's a visitor that work in this hour
+			if haveCard, present := visitState[sessionID]; present {
+				if !haveCard {
+					visitState[sessionID] = true
+
+					if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+						statistic[currentHour].Cart++
+					}
+
+					err := SaveStatisticsData()
+					if err != nil {
+						env.LogError(err)
+					}
+				}
+
+				// Add cart and visit counter if it's a visitor that work for a past hour
+			} else {
 				visitState[sessionID] = true
-				statistic[currentHour].Cart++
+
+				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+					statistic[currentHour].Visit++
+					statistic[currentHour].TotalVisits++
+					statistic[currentHour].Cart++
+				}
 
 				err := SaveStatisticsData()
 				if err != nil {
 					env.LogError(err)
 				}
-			}
-
-			// Add cart and visit counter if it's a visitor that work for a past hour
-		} else {
-			visitState[sessionID] = true
-			statistic[currentHour].Visit++
-			statistic[currentHour].TotalVisits++
-			statistic[currentHour].Cart++
-
-			err := SaveStatisticsData()
-			if err != nil {
-				env.LogError(err)
 			}
 		}
 	}
@@ -108,7 +124,9 @@ func visitCheckoutHandler(event string, eventData map[string]interface{}) bool {
 	currentHour := time.Now().Truncate(time.Hour).Unix()
 	CheckHourUpdateForStatistic()
 
-	statistic[currentHour].VisitCheckout++
+	if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+		statistic[currentHour].VisitCheckout++
+	}
 
 	err := SaveStatisticsData()
 	if err != nil {
@@ -123,7 +141,9 @@ func setPaymentHandler(event string, eventData map[string]interface{}) bool {
 	currentHour := time.Now().Truncate(time.Hour).Unix()
 	CheckHourUpdateForStatistic()
 
-	statistic[currentHour].SetPayment++
+	if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+		statistic[currentHour].SetPayment++
+	}
 
 	err := SaveStatisticsData()
 	if err != nil {
@@ -135,33 +155,37 @@ func setPaymentHandler(event string, eventData map[string]interface{}) bool {
 
 func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
+		if sessionID := sessionInstance.GetID(); sessionID != "" {
+			saleAmount := float64(0)
+			if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
+				saleAmount = cartInstance.GetSubtotal()
+			}
 
-		saleAmount := float64(0)
-		if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
-			saleAmount = cartInstance.GetSubtotal()
-		}
+			currentHour := time.Now().Truncate(time.Hour).Unix()
+			CheckHourUpdateForStatistic()
 
-		currentHour := time.Now().Truncate(time.Hour).Unix()
-		CheckHourUpdateForStatistic()
+			if _, present := visitState[sessionID]; !present {
+				// Increasing sales, cart and visit counters for visitor of a purchase
+				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+					statistic[currentHour].Visit++
+					statistic[currentHour].TotalVisits++
+					statistic[currentHour].Cart++
+					statistic[currentHour].VisitCheckout++
+					statistic[currentHour].SetPayment++
+				}
+			}
 
-		if _, present := visitState[sessionID]; !present {
-			// Increasing sales, cart and visit counters for visitor of a purchase
-			statistic[currentHour].Visit++
-			statistic[currentHour].TotalVisits++
-			statistic[currentHour].Cart++
-			statistic[currentHour].VisitCheckout++
-			statistic[currentHour].SetPayment++
-		}
+			visitState[sessionID] = false
+			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+				statistic[currentHour].Sales++
+				statistic[currentHour].SalesAmount += saleAmount
+			}
 
-		visitState[sessionID] = false
-		statistic[currentHour].Sales++
-		statistic[currentHour].SalesAmount = statistic[currentHour].SalesAmount + saleAmount
-
-		err := SaveStatisticsData()
-		if err != nil {
-			env.LogError(err)
+			err := SaveStatisticsData()
+			if err != nil {
+				env.LogError(err)
+			}
 		}
 	}
 
@@ -170,16 +194,16 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 func salesHandler(event string, eventData map[string]interface{}) bool {
 
-	if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
+	if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok && cartInstance != nil {
 		cartProducts := cartInstance.GetItems()
 
 		if len(cartProducts) == 0 {
 			return true
 		}
 
-		productQtys := make(map[string]int)
+		productQty := make(map[string]int)
 		for _, cartItem := range cartProducts {
-			productQtys[cartItem.GetProductID()] = cartItem.GetQty() + productQtys[cartItem.GetProductID()]
+			productQty[cartItem.GetProductID()] += cartItem.GetQty()
 		}
 
 		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
@@ -188,7 +212,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 			return true
 		}
 		currentDate := time.Now().Truncate(time.Hour).Add(time.Hour)
-		for productID, count := range productQtys {
+		for productID, count := range productQty {
 
 			salesHistoryRecord := make(map[string]interface{})
 
@@ -201,7 +225,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				return true
 			}
 
-			//			rewrite exisitng record if we have one in database
+			//	rewrite existing record if we have one in database
 			newCount := utils.InterfaceToInt(count)
 			if len(dbSaleRow) > 0 {
 				salesHistoryRecord["_id"] = dbSaleRow[0]["_id"]
@@ -266,11 +290,14 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 			}
 		}
 
-		if _, ok := OnlineSessions[sessionID]; !ok {
+		if _, present := OnlineSessions[sessionID]; !present || OnlineSessions[sessionID] == nil {
+			updateSync.Lock()
 			OnlineSessions[sessionID] = &OnlineReferrer{}
+			updateSync.Unlock()
+
 			IncreaseOnline(referrerType)
-			if len(OnlineSessions) > OnlineSessionsMax {
-				OnlineSessionsMax = len(OnlineSessions)
+			if OnlineSessionsCount := len(OnlineSessions); OnlineSessionsCount > OnlineSessionsMax {
+				OnlineSessionsMax = OnlineSessionsCount
 			}
 		} else {
 			if OnlineSessions[sessionID].referrerType != referrerType {
@@ -279,8 +306,10 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 			}
 		}
 
-		OnlineSessions[sessionID].time = time.Now()
-		OnlineSessions[sessionID].referrerType = referrerType
+		if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] == nil {
+			OnlineSessions[sessionID].time = time.Now()
+			OnlineSessions[sessionID].referrerType = referrerType
+		}
 	}
 
 	return true
@@ -288,10 +317,11 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
 
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
-		if _, ok := OnlineSessions[sessionID]; ok {
-			OnlineSessions[sessionID].time = time.Now()
+	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
+		if sessionID := sessionInstance.GetID(); sessionID != "" {
+			if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] != nil {
+				OnlineSessions[sessionID].time = time.Now()
+			}
 		}
 	}
 

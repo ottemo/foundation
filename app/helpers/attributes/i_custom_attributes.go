@@ -35,7 +35,7 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 		customAttributesCollection.AddFilter("model", "=", it.model)
 		records, err := customAttributesCollection.Load()
 		if err != nil {
-			env.ErrorDispatch(err)
+			env.LogError(err)
 			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+it.model+"'")
 		}
 

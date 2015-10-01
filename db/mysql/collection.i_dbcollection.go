@@ -29,7 +29,10 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 		return false
 	})
 
-	return result, env.ErrorDispatch(err)
+	if len(result) == 0 {
+		err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96aa4214-3c7e-40df-934c-e0584e21dc95", "not found")
+	}
+	return result, err
 }
 
 // Load loads records from DB for current collection and filter if it set
@@ -396,7 +399,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 	for ok := rows.Next(); ok == true; ok = rows.Next() {
 		row, err := getRowAsStringMap(rows)
 		if err != nil {
-			env.ErrorDispatch(err)
+			env.LogError(err)
 		}
 
 		key := row["column"].(string)

@@ -38,7 +38,7 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 				// looking for cookie-based session
 				sessionID := cookie.Value
 
-				sessionInstance, err := currentSessionService.Get(sessionID)
+				sessionInstance, err := currentSessionService.Get(sessionID, true)
 				if err == nil {
 					return sessionInstance, nil
 				}
@@ -75,7 +75,7 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 	// new approach - not HTTP related
 	if sessionID := context.GetRequestSetting(ConstSessionCookieName); sessionID != nil {
 		sessionID := utils.InterfaceToString(sessionID)
-		sessionInstance, err := currentSessionService.Get(sessionID)
+		sessionInstance, err := currentSessionService.Get(sessionID, true)
 		if err == nil {
 			context.SetResponseSetting(ConstSessionCookieName, sessionInstance.GetID())
 			return sessionInstance, nil
@@ -97,8 +97,8 @@ func NewSession() (InterfaceSession, error) {
 }
 
 // GetSessionByID returns session instance by id or nil
-func GetSessionByID(sessionID string) (InterfaceSession, error) {
-	sessionInstance, err := currentSessionService.Get(sessionID)
+func GetSessionByID(sessionID string, create bool) (InterfaceSession, error) {
+	sessionInstance, err := currentSessionService.Get(sessionID, create)
 
 	// "(*session.DefaultSession)(nil)" is not "nil", and we want to have exact nil
 	if sessionInstance == nil {

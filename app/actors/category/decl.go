@@ -15,6 +15,8 @@ const (
 
 	ConstErrorModule = "category"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstCategoryMediaTypeImage = "image"
 )
 
 // DefaultCategory is a default implementer of InterfaceCategory

@@ -478,7 +478,6 @@ func InterfaceToTime(value interface{}) time.Time {
 	case time.Time:
 		return typedValue
 	case string:
-
 		tryFirst := []string{time.RFC3339, time.UnixDate}
 
 		for _, currentFormat := range tryFirst {
@@ -502,6 +501,12 @@ func InterfaceToTime(value interface{}) time.Time {
 					}
 				}
 			}
+		}
+
+		// convert to time from string of unix timestamp
+		newValue, err := strconv.ParseInt(typedValue, 10, 64)
+		if err == nil {
+			return time.Unix(newValue, 0)
 		}
 	}
 

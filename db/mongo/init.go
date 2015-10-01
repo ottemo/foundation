@@ -64,9 +64,9 @@ func (it *DBEngine) Startup() error {
 		}
 	}
 
-	db.OnDatabaseStart()
+	err = db.OnDatabaseStart()
 
-	return nil
+	return err
 }
 
 // Output is a implementation of mgo.log_Logger interface

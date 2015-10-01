@@ -2,6 +2,7 @@ package coupon
 
 import (
 	"encoding/csv"
+	"strings"
 
 	"time"
 
@@ -74,15 +75,10 @@ func APIApplyDiscount(context api.InterfaceApplicationContext) (interface{}, err
 
 	// getting applied coupons array for current session
 	appliedCoupons := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
-	usedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyUsedDiscountCodes))
 
 	// checking if coupon was already applied
 	if utils.IsInArray(couponCode, appliedCoupons) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "coupon code already applied")
-	}
-
-	if utils.IsInArray(couponCode, usedCodes) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "32315c6c-c932-4ad4-a1a1-5eaf86f1dcdc", "coupon code already used")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code: "+couponCode+" has already been applied.")
 	}
 
 	// loading coupon for specified code
@@ -131,10 +127,10 @@ func APIApplyDiscount(context api.InterfaceApplicationContext) (interface{}, err
 			currentSession.Set(ConstSessionKeyAppliedDiscountCodes, appliedCoupons)
 
 		} else {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "coupon is not applicable")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
 		}
 	} else {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2934505-06e9-4250-bb98-c22e4918799e", "coupon code not found")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2934505-06e9-4250-bb98-c22e4918799e", "Coupon code, "+strings.ToUpper(couponCode)+", is not a valid coupon code.")
 	}
 
 	return "ok", nil
@@ -244,7 +240,7 @@ func APIUploadDiscountCSV(context api.InterfaceApplicationContext) (interface{},
 
 	csvFile := context.GetRequestFile("file")
 	if csvFile == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "file unspecified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "A file name must be specified.")
 	}
 
 	csvReader := csv.NewReader(csvFile)
@@ -341,7 +337,7 @@ func APICreateDiscount(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	if !utils.KeysInMapAndNotBlank(postValues, "code", "name") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "842d3ba9-3354-4470-a85f-cbaf909c3827", "'code' or 'name' value is not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "842d3ba9-3354-4470-a85f-cbaf909c3827", "Required fields, 'code' and 'name', cannot be blank.")
 	}
 
 	valueCode := utils.InterfaceToString(postValues["code"])
@@ -375,7 +371,7 @@ func APICreateDiscount(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 	if recordsNumber > 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34cb6cfe-fba3-4c1f-afc5-1ff7266a9a86", "discount with such code: '"+valueCode+"', already exists")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34cb6cfe-fba3-4c1f-afc5-1ff7266a9a86", "A Discount with the provided code: '"+valueCode+"', already exists.")
 	}
 
 	// making new record and storing it
@@ -446,7 +442,7 @@ func APIUpdateDiscount(context api.InterfaceApplicationContext) (interface{}, er
 			return nil, env.ErrorDispatch(err)
 		}
 		if recordsNumber > 0 {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e49e5e01-4f6f-4ff0-bd28-dfb616308aa7", "discount with such code: '"+codeValue+"', already exists")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e49e5e01-4f6f-4ff0-bd28-dfb616308aa7", "A Discount with the provided code: '"+codeValue+"', already exists.")
 		}
 
 		record["code"] = codeValue

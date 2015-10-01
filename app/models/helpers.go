@@ -148,6 +148,7 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 
 	}
 
+	collection.SetLimit(0, ConstCollectionListLimit)
 	// checking arguments user set
 	for attributeName, attributeValue := range context.GetRequestArguments() {
 		switch attributeName {

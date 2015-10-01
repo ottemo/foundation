@@ -48,12 +48,8 @@ func (it *DefaultErrorBus) process(ottemoErr *OttemoError) *OttemoError {
 		}
 	}
 
-	if ottemoErr.Level <= logLevel {
+	if debug {
 		env.LogError(ottemoErr)
-	}
-
-	if ottemoErr.Level < hideLevel {
-		ottemoErr.Message = hideMessage
 	}
 
 	return ottemoErr
@@ -114,6 +110,18 @@ func (it *DefaultErrorBus) GetErrorMessage(err error) string {
 // RegisterListener registers error listener
 func (it *DefaultErrorBus) RegisterListener(listener env.FuncErrorListener) {
 	it.listeners = append(it.listeners, listener)
+}
+
+// Prepare creates OttemoError without processing
+func (it *DefaultErrorBus) Prepare(module string, level int, code string, message string) error {
+	ottemoErr := new(OttemoError)
+
+	ottemoErr.Module = module
+	ottemoErr.Level = level
+	ottemoErr.Code = code
+	ottemoErr.Message = message
+
+	return ottemoErr
 }
 
 // New creates and processes OttemoError

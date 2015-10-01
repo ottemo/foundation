@@ -32,12 +32,74 @@ const (
 	ConstConfigPathDPMKey     = "payment.authorizeNetDPM.key"
 	ConstConfigPathDPMGateway = "payment.authorizeNetDPM.gateway"
 
+	ConstConfigPathDPMReceiptURL  = "payment.authorizeNetDPM.receiptURL"
+	ConstConfigPathDPMDeclineURL  = "payment.authorizeNetDPM.declineURL"
+	ConstConfigPathDPMReceiptHTML = "payment.authorizeNetDPM.receiptHTML"
+	ConstConfigPathDPMDeclineHTML = "payment.authorizeNetDPM.declineHTML"
+
 	ConstConfigPathDPMTest     = "payment.authorizeNetDPM.test"
 	ConstConfigPathDPMDebug    = "payment.authorizeNetDPM.debug"
 	ConstConfigPathDPMCheckout = "payment.authorizeNetDPM.checkout"
 
 	ConstErrorModule = "payment/authorizenet"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstDefaultDeclineTemplate = `<html>
+		 <head>
+			<noscript>
+				<meta http-equiv='refresh' content='1;url={{ .backURL }}'>
+			</noscript>
+		 </head>
+
+		 <body>
+			<h1>Something went wrong</h1>
+			<p>Response text: {{ .response.x_response_reason_text }}</p>
+
+			<p>You will be redirected beck to the store in <span id="countdown"></span> sec.
+			<p><a href="{{ .backURL }}">Back to store</a></p>
+		 </body>
+
+		 <script type='text/javascript' charset='utf-8'>
+				 var seconds = 13;
+				 document.getElementById("countdown").innerHTML = seconds;
+				 setInterval(function(){
+					 seconds -= 1;
+					 document.getElementById("countdown").innerHTML = seconds;
+					 if (seconds == 0) {
+						 window.location='{{ .backURL }}';
+					 }
+				 }, 1000);
+		 </script>
+	</html>`
+
+	ConstDefaultReceiptTemplate = `<html>
+		 <head>
+			 <noscript>
+				 <meta http-equiv='refresh' content='1;url={{ .backURL }}'>
+			 </noscript>
+		 </head>
+
+		 <body>
+			<h1>Thanks for your purchase.</h1>
+			<p>Your transaction ID: <b>{{ .response.x_trans_id }}</b></p>
+			<p>Order #{{.Order.increment_id}}</p>
+
+			<p>You will be redirected back to the store in <span id="countdown"></span> sec.
+			<a href="{{ .backURL }}">Back to store</a></p>
+		 </body>
+
+		 <script type='text/javascript' charset='utf-8'>
+			 var seconds = 13;
+			 document.getElementById("countdown").innerHTML = seconds;
+			 setInterval(function(){
+				 seconds -= 1;
+				 document.getElementById("countdown").innerHTML = seconds;
+				 if (seconds == 0) {
+					 window.location='{{ .backURL }}';
+				 }
+			 }, 1000);
+		 </script>
+	</html>`
 )
 
 // DirectPostMethod is a implementer of InterfacePaymentMethod for a Authorize.Net Direct Post method

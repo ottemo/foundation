@@ -15,6 +15,11 @@ func (it DefaultSession) Set(key string, value interface{}) {
 	SessionService.SetKey(string(it), key, value)
 }
 
+// IsEmpty checks if session contains data
+func (it DefaultSession) IsEmpty() bool {
+	return SessionService.IsEmpty(it.GetID())
+}
+
 // Touch updates session last modification time to current moment
 func (it DefaultSession) Touch() error {
 	return SessionService.Touch(string(it))

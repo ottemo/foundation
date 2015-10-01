@@ -131,6 +131,11 @@ func (it *RedisSessionService) FlushSession(sessionID string) error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
 	}
 
+	// skipping flush for empty sessions
+	if SessionService.IsEmpty(sessionID) {
+		return nil
+	}
+
 	// preparing session data writer
 	var buffer bytes.Buffer
 

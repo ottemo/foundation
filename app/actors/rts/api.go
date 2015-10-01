@@ -135,14 +135,18 @@ func APIGetVisits(context api.InterfaceApplicationContext) (interface{}, error) 
 	todayVisits := todayStats.Visit
 	todayTotalVisits := todayStats.TotalVisits
 
-	yesterdayStats, err := GetRangeStats(yesterdayFrom, todayFrom.Add(-time.Nanosecond))
+	// excluding last our for yesterday range statistic
+	yesterdayTo := todayFrom.Add(-time.Nanosecond)
+	yesterdayStats, err := GetRangeStats(yesterdayFrom, yesterdayTo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 	yesterdayVisits := yesterdayStats.Visit
 	yesterdayTotalVisits := yesterdayStats.TotalVisits
 
-	weekStats, err := GetRangeStats(weekFrom, yesterdayFrom.Add(-time.Nanosecond))
+	// excluding last our for week range statistic
+	weekTo := yesterdayFrom.Add(-time.Nanosecond)
+	weekStats, err := GetRangeStats(weekFrom, weekTo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -275,15 +279,16 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 	setPayment := 0
 	sales := 0
 
-	// Go thrue period and summarise a visits
+	// Go through period and summarise a visits
 	for todayFrom.Before(todayTo) {
 
-		if _, ok := statistic[todayFrom.Unix()]; ok {
-			visits = visits + statistic[todayFrom.Unix()].TotalVisits
-			addToCart = addToCart + statistic[todayFrom.Unix()].Cart
-			visitCheckout = visitCheckout + statistic[todayFrom.Unix()].VisitCheckout
-			setPayment = setPayment + statistic[todayFrom.Unix()].SetPayment
-			sales = sales + statistic[todayFrom.Unix()].Sales
+		todayFromStamp := todayFrom.Unix()
+		if _, present := statistic[todayFromStamp]; present && statistic[todayFromStamp] != nil {
+			visits += statistic[todayFromStamp].TotalVisits
+			addToCart += statistic[todayFromStamp].Cart
+			visitCheckout += statistic[todayFromStamp].VisitCheckout
+			setPayment += statistic[todayFromStamp].SetPayment
+			sales += statistic[todayFromStamp].Sales
 		}
 
 		todayFrom = todayFrom.Add(time.Hour)
@@ -327,14 +332,16 @@ func APIGetSales(context api.InterfaceApplicationContext) (interface{}, error) {
 	todaySales := todayStats.Sales
 	todaySalesAmount := todayStats.SalesAmount
 
-	yesterdayStats, err := GetRangeStats(yesterdayFrom, todayFrom.Add(-time.Nanosecond))
+	yesterdayTo := todayFrom.Add(-time.Nanosecond)
+	yesterdayStats, err := GetRangeStats(yesterdayFrom, yesterdayTo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 	yesterdaySales := yesterdayStats.Sales
 	yesterdaySalesAmount := yesterdayStats.SalesAmount
 
-	weekStats, err := GetRangeStats(weekFrom, yesterdayFrom.Add(-time.Nanosecond))
+	weekTo := yesterdayFrom.Add(-time.Nanosecond)
+	weekStats, err := GetRangeStats(weekFrom, weekTo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -543,11 +550,13 @@ func APIGetVisitsRealtime(context api.InterfaceApplicationContext) (interface{},
 	result := make(map[string]interface{})
 	ratio := float64(0)
 
-	result["Online"] = len(OnlineSessions)
-	if OnlineSessionsMax == 0 || len(OnlineSessions) == 0 {
+	onlineSessionCount := len(OnlineSessions)
+
+	result["Online"] = onlineSessionCount
+	if OnlineSessionsMax == 0 || onlineSessionCount == 0 {
 		ratio = float64(0)
 	} else {
-		ratio = float64(len(OnlineSessions)) / float64(OnlineSessionsMax)
+		ratio = float64(onlineSessionCount) / float64(OnlineSessionsMax)
 	}
 	result["OnlineRatio"] = utils.Round(ratio, 0.5, 2)
 

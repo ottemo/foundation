@@ -116,14 +116,26 @@ func restSendEmail(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// create body of email
 	var body bytes.Buffer
+
 	body.WriteString("The form contained the following information: <br><br>")
 	for key, val := range requestData {
 		body.WriteString(key + ": " + utils.InterfaceToString(val) + "<br>")
 	}
 
-	err = SendMail(recipient,
-		"New Message from Form: "+frmLocation,
-		body.String())
+	headers := map[string]string{
+		"To": recipient,
+	}
+
+	if replyToEmail, present := requestData["email"]; present {
+		headers["Reply-To"] = utils.InterfaceToString(replyToEmail)
+	}
+
+	emailContext := map[string]interface{}{
+		"Subject": "New Message from Form: " + frmLocation,
+	}
+
+	err = SendMailEx(headers, body.String(), emailContext)
+
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

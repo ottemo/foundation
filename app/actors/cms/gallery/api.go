@@ -2,10 +2,13 @@ package gallery
 
 import (
 	"io/ioutil"
+	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -107,6 +110,10 @@ func APIAddGalleryImage(context api.InterfaceApplicationContext) (interface{}, e
 		fileContents = contents
 		break
 	}
+
+	// Adding timestamp to image name to prevent overwriting
+	mediaNameParts := strings.SplitN(imageName, ".", 2)
+	imageName = mediaNameParts[0] + "_" + utils.InterfaceToString(time.Now().Unix()) + "." + mediaNameParts[1]
 
 	// add media operation
 	//--------------------

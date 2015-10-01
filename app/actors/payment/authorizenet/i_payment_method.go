@@ -61,7 +61,7 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	//---------------------------
 	formValues := map[string]string{
 		"x_relay_response": utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMCheckout)),
-		"x_relay_url":      utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "authorizenet/relay",
+		"x_relay_url":      app.GetFoundationURL("") + "authorizenet/relay",
 
 		"x_test_request": utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMTest)),
 

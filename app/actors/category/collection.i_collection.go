@@ -30,10 +30,19 @@ func (it *DefaultCategoryCollection) List() ([]models.StructListItem, error) {
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
 
+		mediaPath, err := categoryModel.GetMediaPath("image")
+		if err != nil {
+			return result, env.ErrorDispatch(err)
+		}
+
 		resultItem.ID = categoryModel.GetID()
 		resultItem.Name = categoryModel.GetName()
 		resultItem.Image = ""
-		resultItem.Desc = ""
+		resultItem.Desc = categoryModel.GetDescription()
+
+		if categoryModel.GetImage() != "" {
+			resultItem.Image = mediaPath + categoryModel.GetImage()
+		}
 
 		// serving extra attributes
 		//-------------------------

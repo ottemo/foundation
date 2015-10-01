@@ -43,10 +43,13 @@ type InterfaceVisitor interface {
 	CheckPassword(passwd string) bool
 	GenerateNewPassword() error
 
+	ResetPassword() error
+	UpdateResetPassword(key string, passwd string) error
+
 	IsAdmin() bool
 	IsGuest() bool
 
-	IsVerfied() bool
+	IsVerified() bool
 	Invalidate() error
 	Validate(key string) error
 

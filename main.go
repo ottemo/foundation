@@ -11,6 +11,7 @@ import (
 
 	// using standard set of packages
 	_ "github.com/ottemo/foundation/basebuild"
+	"github.com/ottemo/foundation/env"
 )
 
 func init() {
@@ -29,6 +30,7 @@ func main() {
 		for _ = range signalChain {
 			err := app.End()
 			if err != nil {
+				env.LogError(err)
 				fmt.Println(err.Error())
 			}
 
@@ -38,6 +40,7 @@ func main() {
 
 	// application start event
 	if err := app.Start(); err != nil {
+		env.LogError(err)
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}

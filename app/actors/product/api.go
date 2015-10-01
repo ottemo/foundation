@@ -5,11 +5,13 @@ import (
 	"math/rand"
 	"mime"
 	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -309,7 +311,42 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153673ac-1008-40b5-ada9-2286ad3f02b0", "product not available")
 	}
 
-	return productModel.ToHashMap(), nil
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	result := productModel.ToHashMap()
+
+	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	defaultImage := productModel.GetDefaultImage()
+
+	// move default image to first position in array
+	if defaultImage != "" && len(itemImages) > 1 {
+		found := false
+		for index, images := range itemImages {
+			for sizeName, sizeValue := range images {
+				basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
+				if strings.Contains(basicName, defaultImage) {
+					found = true
+					itemImages = append(itemImages[:index], itemImages[index+1:]...)
+					itemImages = append([]map[string]string{images}, itemImages...)
+				}
+				break
+			}
+			if found {
+				break
+			}
+		}
+	}
+
+	result["images"] = itemImages
+
+	return result, nil
 }
 
 // APICreateProduct creates a new product
@@ -543,6 +580,10 @@ func APIAddMediaForProduct(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// Adding timestamp to image name to prevent overwriting
+	mediaNameParts := strings.SplitN(mediaName, ".", 2)
+	mediaName = mediaNameParts[0] + "_" + utils.InterfaceToString(time.Now().Unix()) + "." + mediaNameParts[1]
+
 	err = productModel.AddMedia(mediaType, mediaName, fileContents)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -655,7 +696,57 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	// extra parameter handle
 	models.ApplyExtraAttributes(context, productCollectionModel)
 
-	return productCollectionModel.List()
+	listItems, err := productCollectionModel.List()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	var result []map[string]interface{}
+
+	for _, listItem := range listItems {
+
+		itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, listItem.ID, ConstProductMediaTypeImage)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		// move default image to first position in array
+		if listItem.Image != "" && len(itemImages) > 1 {
+			found := false
+			for index, images := range itemImages {
+				for sizeName, sizeValue := range images {
+					basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
+					if strings.Contains(basicName, listItem.Image) {
+						found = true
+						itemImages = append(itemImages[:index], itemImages[index+1:]...)
+						itemImages = append([]map[string]string{images}, itemImages...)
+					}
+					break
+				}
+				if found {
+					break
+				}
+			}
+		}
+
+		item := map[string]interface{}{
+			"ID":     listItem.ID,
+			"Name":   listItem.Name,
+			"Desc":   listItem.Desc,
+			"Extra":  listItem.Extra,
+			"Image":  listItem.Image,
+			"Images": itemImages,
+		}
+
+		result = append(result, item)
+	}
+
+	return result, nil
 }
 
 // APIListRelatedProducts returns related products list for a given product
@@ -803,17 +894,24 @@ func APIListShopProducts(context api.InterfaceApplicationContext) (interface{}, 
 		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
 	}
 
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	// preparing product information
 	var result []map[string]interface{}
 
 	for _, productModel := range productsCollection.ListProducts() {
 		productInfo := productModel.ToHashMap()
-		if defaultImage, present := productInfo["default_image"]; present {
-			mediaPath, err := productModel.GetMediaPath("image")
-			if defaultImage, ok := defaultImage.(string); ok && defaultImage != "" && err == nil {
-				productInfo["default_image"] = mediaPath + defaultImage
-			}
+
+		defaultImage := utils.InterfaceToString(productInfo["default_image"])
+		itemImages, err := mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage, defaultImage)
+		if err != nil {
+			env.LogError(err)
 		}
+
+		productInfo["image"] = itemImages
 		result = append(result, productInfo)
 	}
 

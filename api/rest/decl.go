@@ -12,7 +12,7 @@ import (
 // Package global constants
 const (
 	ConstUseDebugLog     = true       // flag to use REST API logging
-	ConstDebugLogStorage = "rest.txt" // log storage for debug log records
+	ConstDebugLogStorage = "rest.log" // log storage for debug log records
 
 	ConstErrorModule = "api/rest"
 	ConstErrorLevel  = env.ConstErrorLevelService

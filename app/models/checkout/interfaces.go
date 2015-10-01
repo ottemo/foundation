@@ -59,6 +59,8 @@ type InterfaceCheckout interface {
 
 	Submit() (interface{}, error)
 
+	SubmitFinish(map[string]interface{}) (interface{}, error)
+
 	models.InterfaceModel
 	models.InterfaceObject
 }

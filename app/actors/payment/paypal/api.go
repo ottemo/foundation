@@ -125,8 +125,8 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
-	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
-	if err != nil {
+	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID), false)
+	if sessionInstance == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
 	err = context.SetSession(sessionInstance)
@@ -134,7 +134,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context)
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
 		return nil, err
 	}
@@ -157,30 +157,14 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "af2103b1-8501-4e4b-bc1b-9086ef7c63be", "Transaction not confirmed")
 		}
 
-		paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
-		for key, value := range completeData {
-			paymentInfo[key] = value
-		}
-
-		checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
-		checkoutOrder.Set("payment_info", paymentInfo)
-
-		err = checkoutOrder.Save()
-		if err != nil {
-			return nil, err
-		}
-
-		err = currentCheckout.CheckoutSuccess(checkoutOrder, context.GetSession())
-		if err != nil {
-			return nil, err
-		}
+		result, err := currentCheckout.SubmitFinish(utils.InterfaceToMap(completeData))
 
 		env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION COMPLETED: "+
 			"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 			"OrderID - "+checkoutOrder.GetID()+", "+
 			"TOKEN - : "+completeData["TOKEN"])
 
-		return api.StructRestRedirect{Location: app.GetStorefrontURL("checkout/success/" + checkoutOrder.GetID()), DoRedirect: true}, nil
+		return api.StructRestRedirect{Result: result, Location: app.GetStorefrontURL("checkout/success/" + checkoutOrder.GetID()), DoRedirect: true}, err
 	}
 
 	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8d449c1c-ca34-4260-a93b-8af999c1ff04", "Checkout not exist")
@@ -199,8 +183,8 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 	delete(waitingTokens, requestData["token"])
 	waitingTokensMutex.Unlock()
 
-	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID))
-	if err != nil {
+	session, err := api.GetSessionByID(utils.InterfaceToString(sessionID), false)
+	if session == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
 	}
 	err = context.SetSession(session)
@@ -208,7 +192,7 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	currentCheckout, err := checkout.GetCurrentCheckout(context)
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
 		return nil, err
 	}

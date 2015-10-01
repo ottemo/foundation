@@ -798,7 +798,7 @@ func (it *ImportCmdAttributeAdd) Process(itemData map[string]interface{}, input 
 	modelAsCustomAttributesInterface := it.model.(models.InterfaceCustomAttributes)
 	err := modelAsCustomAttributesInterface.AddNewAttribute(it.attribute)
 	if err != nil {
-		env.ErrorDispatch(err)
+		env.LogError(err)
 	}
 
 	return input, nil

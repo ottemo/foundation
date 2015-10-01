@@ -48,7 +48,7 @@ func GetPaymentMethodByCode(code string) InterfacePaymentMethod {
 }
 
 // GetCurrentCheckout returns checkout for current session or creates new one
-func GetCurrentCheckout(context api.InterfaceApplicationContext) (InterfaceCheckout, error) {
+func GetCurrentCheckout(context api.InterfaceApplicationContext, bindToSession bool) (InterfaceCheckout, error) {
 	sessionObject := context.GetSession().Get(ConstSessionKeyCurrentCheckout)
 
 	var checkoutInstance InterfaceCheckout
@@ -86,13 +86,15 @@ func GetCurrentCheckout(context api.InterfaceApplicationContext) (InterfaceCheck
 	}
 
 	// storing checkout object to session
-	context.GetSession().Set(ConstSessionKeyCurrentCheckout, checkoutInstance)
+	if bindToSession {
+		context.GetSession().Set(ConstSessionKeyCurrentCheckout, checkoutInstance)
+	}
 
 	// updating checkout object
 	//-------------------------
 
 	// setting cart
-	currentCart, err := cart.GetCurrentCart(context)
+	currentCart, err := cart.GetCurrentCart(context, false)
 	if err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}

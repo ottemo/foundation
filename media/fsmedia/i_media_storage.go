@@ -2,26 +2,28 @@ package fsmedia
 
 import (
 	"bytes"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
 	"image"
 	"image/jpeg"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
-// GetName returns media storage name
+// GetName returns the media storage name
 func (it *FilesystemMediaStorage) GetName() string {
 	return "FilesystemMediaStorage"
 }
 
-// GetMediaPath returns path you can use to access media file (if possible for storage of course)
+// GetMediaPath returns the path needed to access the media file
 func (it *FilesystemMediaStorage) GetMediaPath(model string, objID string, mediaType string) (string, error) {
 	return mediaType + "/" + model + "/" + objID + "/", nil
 }
 
-// Load retrieves contents of media entity for given model object
+// Load retrieves contents of the media entity for a given model object
 func (it *FilesystemMediaStorage) Load(model string, objID string, mediaType string, mediaName string) ([]byte, error) {
 	mediaPath, err := it.GetMediaPath(model, objID, mediaType)
 	if err != nil {
@@ -33,7 +35,8 @@ func (it *FilesystemMediaStorage) Load(model string, objID string, mediaType str
 	return ioutil.ReadFile(mediaFilePath)
 }
 
-// Save adds media entity for model object
+// Save adds a media entity for the model object to the database and saves it on
+// the filesystem.
 func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType string, mediaName string, mediaData []byte) error {
 	mediaPath, err := it.GetMediaPath(model, objID, mediaType)
 	if err != nil {
@@ -148,13 +151,16 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 	return nil
 }
 
-// Remove removes media entity for model object
+// Remove will delete the entity for the model object from the database and
+// remove it from the filesystem.
 func (it *FilesystemMediaStorage) Remove(model string, objID string, mediaType string, mediaName string) error {
 
 	// preparing DB collection
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3af959a-4d1e-4dd8-a827-7652fcb5402a", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"f3af959a-4d1e-4dd8-a827-7652fcb5402a",
+			"Unable to find database engine to remove media entity.")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -196,13 +202,15 @@ func (it *FilesystemMediaStorage) Remove(model string, objID string, mediaType s
 	return env.ErrorDispatch(err)
 }
 
-// ListMedia returns list of given type media entities for a given model object
+// ListMedia returns the list of given type media entities for a given model object
 func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaType string) ([]string, error) {
 	var result []string
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4c8dd6e-95be-4b8f-b606-5544b633cd7c", "Can't get database engine")
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"d4c8dd6e-95be-4b8f-b606-5544b633cd7c",
+			"Unable fo find database engine in order to return the current list of media.")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -222,8 +230,9 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 		}
 	}
 
-	// checking that object have all image sizes
-	if mediaType == ConstMediaTypeImage {
+	// checking that obj
+	// ect have all image sizes
+	if resizeImagesOnFly && mediaType == ConstMediaTypeImage {
 		// ResizeMediaImage will check necessity of resize by it self
 		for _, mediaName := range result {
 			for imageSize := range it.imageSizes {
@@ -234,4 +243,129 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 	}
 
 	return result, env.ErrorDispatch(err)
+}
+
+// GetAllSizes returns a list of all image sizes in a []map[string], included is
+// the path and type of media.
+func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaType string) ([]map[string]string, error) {
+
+	var result []map[string]string
+
+	dbEngine := db.GetDBEngine()
+	if dbEngine == nil {
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"d4c8dd6e-95be-4b8f-b606-5544b633cd7c",
+			"Unable to find a database engine to return all image sizes.")
+	}
+
+	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
+	if err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+
+	dbCollection.AddFilter("model", "=", model)
+	dbCollection.AddFilter("object", "=", objID)
+	dbCollection.AddFilter("type", "=", mediaType)
+
+	records, err := dbCollection.Load()
+	if err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+
+	for _, record := range records {
+
+		if mediaName, ok := record["media"].(string); ok {
+			mediaSet, err := it.GetSizes(model, objID, mediaType, mediaName)
+			if err != nil {
+				env.LogError(err)
+			}
+
+			result = append(result, mediaSet)
+		}
+	}
+
+	return result, nil
+}
+
+// GetSizes returns a list of all sizes for specificed image in a map[string],
+// included is image path, model object and the image name.
+func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error) {
+	mediaSet := make(map[string]string)
+
+	path, err := it.GetMediaPath(model, objID, mediaType)
+	if err != nil {
+		return mediaSet, env.ErrorDispatch(err)
+	}
+
+	mediaBasePath := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
+	path = mediaBasePath + "/" + path
+
+	// Loop over the sizes we support
+	for imageSize := range it.imageSizes {
+		mediaSet[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
+		if resizeImagesOnFly {
+			it.ResizeMediaImage(model, objID, mediaName, imageSize)
+		}
+	}
+
+	if resizeImagesOnFly {
+		it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+	}
+
+	return mediaSet, nil
+}
+
+// ResizeAllMediaImages will resize all images for currently specified sizes
+func (it *FilesystemMediaStorage) ResizeAllMediaImages() error {
+	dbEngine := db.GetDBEngine()
+	if dbEngine == nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"92bd8bc9-8d04-43a0-9721-7b57aaabac7f",
+			"Unable to find a database engine when attempting to resize all media.")
+	}
+
+	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	dbCollection.AddFilter("type", "=", ConstMediaTypeImage)
+
+	records, err := dbCollection.Load()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	var imagesResized int
+	for _, record := range records {
+		if !utils.KeysInMapAndNotBlank(record, "model", "object", "media") {
+			env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+				"c85a9dc8-01eb-4f42-845b-34a0863dbd43",
+				"Media associated with the following id, "+utils.InterfaceToString(record["id"])+", did not contain one of the required column values."))
+			continue
+		}
+
+		mediaModel := utils.InterfaceToString(record["model"])
+		mediaObject := utils.InterfaceToString(record["object"])
+		mediaName := utils.InterfaceToString(record["media"])
+
+		if err := it.ResizeMediaImage(mediaModel, mediaObject, mediaName, it.baseSize); err == nil {
+			for _, size := range it.imageSizes {
+				if it.ResizeMediaImage(mediaModel, mediaObject, mediaName, size) != nil {
+					break
+				}
+			}
+			imagesResized++
+		} else {
+			env.LogError(err)
+		}
+	}
+
+	if imagesResized != len(records) {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"73da10f7-8f40-4ba3-bcbf-ac9a505fa922",
+			"Unable to resize all all images, result: "+utils.InterfaceToString(imagesResized)+" from "+utils.InterfaceToString(len(records)))
+	}
+
+	return nil
 }

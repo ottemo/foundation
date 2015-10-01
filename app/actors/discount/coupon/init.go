@@ -26,7 +26,7 @@ func setupDB() error {
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		env.ErrorDispatch(err)
+		return env.ErrorDispatch(err)
 	}
 
 	collection.AddColumn("code", db.ConstTypeVarchar, true)

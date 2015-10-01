@@ -22,4 +22,9 @@ type InterfaceMediaStorage interface {
 	ListMedia(model string, objID string, mediaType string) ([]string, error)
 
 	GetMediaPath(model string, objID string, mediaType string) (string, error)
+
+	GetAllSizes(model string, objID string, mediaType string) ([]map[string]string, error)
+	GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error)
+
+	ResizeAllMediaImages() error
 }

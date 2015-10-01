@@ -156,8 +156,8 @@ func createSchedule(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	taskParams := make(map[string]interface{})
-	if taskParams, present := postValues["params"]; present {
-		taskParams = utils.InterfaceToMap(taskParams)
+	if params, present := postValues["params"]; present {
+		taskParams = utils.InterfaceToMap(params)
 	}
 
 	var newSchedule env.InterfaceSchedule

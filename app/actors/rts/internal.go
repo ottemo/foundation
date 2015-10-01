@@ -40,19 +40,16 @@ func IncreaseOnline(typeCounter int) {
 		if OnlineDirect > OnlineDirectMax {
 			OnlineDirectMax = OnlineDirect
 		}
-		break
 	case ConstReferrerTypeSearch:
 		OnlineSearch++
 		if OnlineSearch > OnlineSearchMax {
 			OnlineSearchMax = OnlineSearch
 		}
-		break
 	case ConstReferrerTypeSite:
 		OnlineSite++
 		if OnlineSite > OnlineSiteMax {
 			OnlineSiteMax = OnlineSite
 		}
-		break
 	}
 }
 
@@ -63,18 +60,14 @@ func DecreaseOnline(typeCounter int) {
 		if OnlineDirect != 0 {
 			OnlineDirect--
 		}
-		break
 	case ConstReferrerTypeSearch:
 		if OnlineSearch != 0 {
 			OnlineSearch--
 		}
-
-		break
 	case ConstReferrerTypeSite:
 		if OnlineSite != 0 {
 			OnlineSite--
 		}
-		break
 	}
 }
 
@@ -224,22 +217,26 @@ func initSalesHistory() error {
 
 // GetRangeStats returns stats for range
 func GetRangeStats(dateFrom, dateTo time.Time) (ActionsMade, error) {
+	var result ActionsMade
 
-	var stats ActionsMade
+	// making minimal offset to include dateTo timestamp,
+	// dateFrom timestamp includes by default in time.Before() function
+	dateTo = dateTo.Add(time.Nanosecond)
 
-	// Go thru period and summarise a visits
-	for dateFrom.Before(dateTo.Add(time.Nanosecond)) {
-		if actions, present := statistic[dateFrom.Unix()]; present {
-			stats.Visit = actions.Visit + stats.Visit
-			stats.Sales = actions.Sales + stats.Sales
-			stats.Cart = actions.Cart + stats.Cart
-			stats.TotalVisits = actions.TotalVisits + stats.TotalVisits
-			stats.SalesAmount = actions.SalesAmount + stats.SalesAmount
+	// Go through period and summarise counters
+	for dateFrom.Before(dateTo) {
+		timestamp := dateFrom.Unix()
+		if statisticValue, present := statistic[timestamp]; present {
+			result.Visit += statisticValue.Visit
+			result.Sales += statisticValue.Sales
+			result.Cart += statisticValue.Cart
+			result.TotalVisits += statisticValue.TotalVisits
+			result.SalesAmount += statisticValue.SalesAmount
 		}
 
 		dateFrom = dateFrom.Add(time.Hour)
 	}
-	return stats, nil
+	return result, nil
 }
 
 // initStatistic get info from visitor database for 60 hours
@@ -270,22 +267,24 @@ func initStatistic() error {
 	for _, item := range dbRecords {
 		timeIterator = utils.InterfaceToTime(item["day"]).Unix()
 		if _, present := statistic[timeIterator]; !present {
-			statistic[timeIterator] = new(ActionsMade)
+			updateSync.Lock()
+			statistic[timeIterator] = &ActionsMade{}
+			updateSync.Unlock()
 		}
 		// add info to hour
-		statistic[timeIterator].TotalVisits = statistic[timeIterator].TotalVisits + utils.InterfaceToInt(item["total_visits"])
-		statistic[timeIterator].SalesAmount = statistic[timeIterator].SalesAmount + utils.InterfaceToFloat64(item["sales_amount"])
-		statistic[timeIterator].Visit = statistic[timeIterator].Visit + utils.InterfaceToInt(item["visitors"])
-		statistic[timeIterator].Sales = statistic[timeIterator].Sales + utils.InterfaceToInt(item["sales"])
-		statistic[timeIterator].VisitCheckout = statistic[timeIterator].VisitCheckout + utils.InterfaceToInt(item["visit_checkout"])
-		statistic[timeIterator].SetPayment = statistic[timeIterator].SetPayment + utils.InterfaceToInt(item["set_payment"])
-		statistic[timeIterator].Cart = statistic[timeIterator].Cart + utils.InterfaceToInt(item["cart"])
+		statistic[timeIterator].TotalVisits += utils.InterfaceToInt(item["total_visits"])
+		statistic[timeIterator].SalesAmount += utils.InterfaceToFloat64(item["sales_amount"])
+		statistic[timeIterator].Visit += utils.InterfaceToInt(item["visitors"])
+		statistic[timeIterator].Sales += utils.InterfaceToInt(item["sales"])
+		statistic[timeIterator].VisitCheckout += utils.InterfaceToInt(item["visit_checkout"])
+		statistic[timeIterator].SetPayment += utils.InterfaceToInt(item["set_payment"])
+		statistic[timeIterator].Cart += utils.InterfaceToInt(item["cart"])
 	}
 
 	return nil
 }
 
-// SaveStatisticsData save a statistic data row gor last hour to database
+// SaveStatisticsData save a statistic data row for last hour to database
 func SaveStatisticsData() error {
 	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSVisitors)
 	if err != nil {
@@ -324,7 +323,7 @@ func SaveStatisticsData() error {
 			return env.ErrorDispatch(err)
 		}
 	} else {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9712c601-662e-4744-b9fb-991a959cff32", "last rts_visitors statistic save failed"))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9712c601-662e-4744-b9fb-991a959cff32", "key "+currentHour.String()+" not present in memory statistic value"))
 	}
 
 	return nil
@@ -355,14 +354,19 @@ func CheckHourUpdateForStatistic() {
 			}
 			visitState = cartCreatedPersons
 		}
-		statistic[currentHour] = new(ActionsMade)
+
+		updateSync.Lock()
+		statistic[currentHour] = &ActionsMade{}
+		updateSync.Unlock()
 	}
 
+	updateSync.Lock()
 	for timeIn := range statistic {
 		if timeIn < lastHour {
 			delete(statistic, timeIn)
 		}
 	}
+	updateSync.Unlock()
 
 	lastUpdate = time.Now()
 }
@@ -412,9 +416,11 @@ func initReferrals() error {
 		return env.ErrorDispatch(err)
 	}
 
+	updateSync.Lock()
 	for _, record := range dbRecords {
 		referrers[utils.InterfaceToString(record["referral"])] = utils.InterfaceToInt(record["count"])
 	}
+	updateSync.Unlock()
 
 	return nil
 }

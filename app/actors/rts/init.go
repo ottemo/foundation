@@ -22,13 +22,17 @@ func init() {
 	ticker := time.NewTicker(seconds)
 	go func() {
 		for _ = range ticker.C {
+			updateSync.Lock()
 			for sessionID := range OnlineSessions {
-				delta := time.Now().Sub(OnlineSessions[sessionID].time)
-				if float64(ConstVisitorOnlineSeconds) < delta.Seconds() {
-					DecreaseOnline(OnlineSessions[sessionID].referrerType)
-					delete(OnlineSessions, sessionID)
+				if OnlineSessions[sessionID] != nil {
+					delta := time.Now().Sub(OnlineSessions[sessionID].time)
+					if float64(ConstVisitorOnlineSeconds) < delta.Seconds() {
+						DecreaseOnline(OnlineSessions[sessionID].referrerType)
+						delete(OnlineSessions, sessionID)
+					}
 				}
 			}
+			updateSync.Unlock()
 		}
 	}()
 }
