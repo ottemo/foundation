@@ -1,7 +1,6 @@
 package giftcard
 
 import (
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -27,24 +26,8 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		return false
 	}
 
-	// collect necessary info to variables
-	// get a customer and his mail to set him as addressee
-	giftCardRecipientEmail := utils.InterfaceToString(orderProceed.Get("customer_email"))
-	visitorID := orderProceed.Get("visitor_id")
 	orderID := orderProceed.GetID()
-	cartProducts := orderProceed.GetItems()
-	giftCardsSKUElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
-	// check is operations with this order was already done
-	giftCardCollection.AddFilter("order_id", "=", orderID)
-
-	orderGiftCardCreation, err := giftCardCollection.Load()
-	if err != nil {
-		env.LogError(err)
-		return false
-	}
-
-	giftCardCollection.ClearFilters()
 	giftCardCollection.AddFilter("orders_used", "LIKE", orderID)
 
 	orderGiftCardApplying, err := giftCardCollection.Load()
@@ -53,82 +36,11 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		return false
 	}
 
-	if len(orderGiftCardCreation) > 0 || len(orderGiftCardApplying) > 0 {
-		return true
-	}
-
-	// check cart for gift card's and save in table if they present
-	for _, cartItem := range cartProducts {
-		giftCardSKU := cartItem.GetSku()
-
-		if strings.Contains(giftCardSKU, giftCardsSKUElement) {
-
-			recipientName := orderProceed.Get("customer_name")
-			giftCardAmount := float64(0)
-
-			// split item SKU with config gift card SKU value and sign "-" take last element
-			giftCardSplitedSKU := strings.Split(giftCardSKU, giftCardsSKUElement)
-			giftCardSplitedSKU = strings.Split(giftCardSplitedSKU[len(giftCardSplitedSKU)-1], "-")
-
-			// reed recipient options
-			productOptions := cartItem.GetOptions()
-			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "Recipient email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
-
-				recipientEmailOption := utils.InterfaceToMap(recipientEmailOption)
-				emailValue, present := recipientEmailOption["value"]
-
-				if present {
-					giftCardRecipientEmail = utils.InterfaceToString(emailValue)
-				}
-			}
-
-			if recipientNameOption := utils.GetFirstMapValue(productOptions, "Recipient", "Recipient name", "Name", "name"); recipientNameOption != nil {
-
-				recipientNameOption := utils.InterfaceToMap(recipientNameOption)
-				nameValue, present := recipientNameOption["value"]
-
-				if present && utils.InterfaceToString(nameValue) != "" {
-					recipientName = utils.InterfaceToString(nameValue)
-				}
-			}
-
-			// check is result value is number if not take amount as a price of item
-			if giftCardAmount = utils.InterfaceToFloat64(giftCardSplitedSKU[len(giftCardSplitedSKU)-1]); giftCardAmount <= 0 {
-				giftCardAmount = cartItem.GetPrice()
-			}
-
-			for i := 0; i < cartItem.GetQty(); i++ {
-
-				// generate unique code by unix nano time
-				giftCardUniqueCode := utils.InterfaceToString(time.Now().UnixNano())
-
-				giftCard := make(map[string]interface{})
-
-				giftCard["code"] = giftCardUniqueCode
-				giftCard["name"] = recipientName
-				giftCard["sku"] = giftCardSKU
-
-				giftCard["amount"] = giftCardAmount
-
-				giftCard["order_id"] = orderID
-				giftCard["visitor_id"] = visitorID
-
-				giftCard["status"] = ConstGiftCardStatusNew
-				giftCard["orders_used"] = make(map[string]float64)
-				giftCard["recipient_mailbox"] = giftCardRecipientEmail
-
-				if _, err = giftCardCollection.Save(giftCard); err != nil {
-					env.LogError(err)
-					return false
-				}
-			}
-		}
-	}
-
 	// check is discounts are applied to this order if they make change of used gift card's
 	orderAppliedDiscounts := orderProceed.GetDiscounts()
 
-	if len(orderAppliedDiscounts) > 0 {
+	// check used gift card's to update amount or if this procedure was already done
+	if len(orderGiftCardApplying) == 0 && len(orderAppliedDiscounts) > 0 {
 
 		for _, orderAppliedDiscount := range orderAppliedDiscounts {
 
@@ -184,8 +96,6 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 // orderRollbackHandler check order for present gift cards in apply
 // - refill used amount on gift card and change status to 'refilled'
-// and in order:
-// - set status of gift card to cancelled and amount to '0'
 func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	rollbackOrder, ok := eventData["order"].(order.InterfaceOrder)
@@ -237,47 +147,13 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 		}
 	}
 
-	// get gift cards that was buyed and change their amount to 0 and status to canceled
-	if err := giftCardCollection.ClearFilters(); err != nil {
-		env.LogError(err)
-	}
-
-	if err := giftCardCollection.AddFilter("order_id", "=", orderID); err != nil {
-		env.LogError(err)
-	}
-
-	records, err = giftCardCollection.Load()
-	if err != nil {
-		env.LogError(err)
-		return false
-	}
-
-	for _, record := range records {
-
-		// if gift card is not used, we remove it else change status to cancelled and amount to "0"
-		if len(utils.InterfaceToMap(record["orders_used"])) == 0 && record["status"] == ConstGiftCardStatusNew {
-			giftCardCollection.DeleteByID(utils.InterfaceToString(record["_id"]))
-
-		} else {
-			env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6d02f68-157f-421c-904d-7f33c8408d6f", "cancell gift card that was already apllied or delivered"))
-			record["status"] = ConstGiftCardStatusCanceled
-			record["amount"] = 0
-
-			_, err := giftCardCollection.Save(record)
-			if err != nil {
-				env.LogError(err)
-				return false
-			}
-		}
-	}
-
 	return true
 }
 
-// checkoutSuccessHandler send email to customer that purchased a gift cards with codes of them
+// checkoutSuccessHandler create gift cards object from placed order
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
-	orderPlaced, ok := eventData["order"].(order.InterfaceOrder)
+	orderProceed, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
 		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "order can't be used"))
 		return false
@@ -289,80 +165,104 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 		return false
 	}
 
-	// set a customer mail as addressee
-	buyerEmail := utils.InterfaceToString(orderPlaced.Get("customer_email"))
-	orderID := orderPlaced.GetID()
+	// collect necessary info to variables
+	// get a customer and his mail to set him as addressee
+	visitorID := orderProceed.Get("visitor_id")
+	orderID := orderProceed.GetID()
 
-	// send email if we have gift cards in order
-	// mail template get from config value
-	giftCardTemplateEmail := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftEmailTemplate))
+	cartProducts := orderProceed.GetItems()
+	giftCardsSKUElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
-	if err := giftCardCollection.AddFilter("order_id", "=", orderID); err != nil {
-		env.LogError(err)
-		return false
-	}
+	// check cart for gift card's and save in table if they present
+	for _, cartItem := range cartProducts {
+		giftCardSKU := cartItem.GetSku()
 
-	records, err := giftCardCollection.Load()
-	if err != nil {
-		env.LogError(err)
-		return false
-	}
+		if strings.Contains(giftCardSKU, giftCardsSKUElement) {
 
-	if len(records) > 0 && giftCardTemplateEmail != "" {
+			recipientEmail := utils.InterfaceToString(orderProceed.Get("customer_email"))
+			recipientName := orderProceed.Get("customer_name")
+			giftCardAmount := float64(0)
+			deliveryDate := time.Now()
+			customMessage := ""
 
-		// use buyer info for giving name to gifted person
-		buyerInfo := make(map[string]interface{})
-		buyerInfo["email"] = buyerEmail
-		buyerInfo["name"] = orderPlaced.Get("customer_name")
+			// split item SKU with config gift card SKU value and sign "-" take last element
+			giftCardSplitedSKU := strings.Split(giftCardSKU, giftCardsSKUElement)
+			giftCardSplitedSKU = strings.Split(giftCardSplitedSKU[len(giftCardSplitedSKU)-1], "-")
 
-		customInfo := map[string]interface{}{
-			"Url": app.GetStorefrontURL(""),
-		}
+			// reed recipient options
+			productOptions := cartItem.GetOptions()
+			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "Recipient email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
 
-		giftCardEmailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftEmailSubject))
-		if len(giftCardEmailSubject) < 2 {
-			giftCardEmailSubject = "Your giftcard has arrived"
-		}
+				recipientEmailOption := utils.InterfaceToMap(recipientEmailOption)
+				emailValue, present := recipientEmailOption["value"]
 
-		var giftCardRecipientEmail string
-
-		for _, record := range records {
-			giftCardRecipientEmail = utils.InterfaceToString(record["recipient_mailbox"])
-			if !utils.ValidEmailAddress(giftCardRecipientEmail) {
-				record["recipient_mailbox"] = buyerEmail
-				giftCardRecipientEmail = buyerEmail
+				if present {
+					email := utils.InterfaceToString(emailValue)
+					if utils.ValidEmailAddress(email) && email != "" {
+						recipientEmail = utils.InterfaceToString(emailValue)
+					}
+				}
 			}
 
-			buyerInfo["name"] = utils.InterfaceToString(record["name"])
+			if recipientNameOption := utils.GetFirstMapValue(productOptions, "Recipient", "Recipient name", "Name", "name"); recipientNameOption != nil {
 
-			giftCardInfo := map[string]interface{}{
-				"Amount": utils.RoundPrice(utils.InterfaceToFloat64(record["amount"])),
-				"Code":   utils.InterfaceToString(record["code"]),
+				recipientNameOption := utils.InterfaceToMap(recipientNameOption)
+				nameValue, present := recipientNameOption["value"]
+
+				if present && utils.InterfaceToString(nameValue) != "" {
+					recipientName = utils.InterfaceToString(nameValue)
+				}
 			}
 
-			giftCardsEmail, err := utils.TextTemplate(giftCardTemplateEmail,
-				map[string]interface{}{
-					"Visitor":  buyerInfo,
-					"GiftCard": giftCardInfo,
-					"Site":     customInfo,
-				})
-
-			if err != nil {
-				env.LogError(err)
-				continue
+			if customMessageOption := utils.GetFirstMapValue(productOptions, "Message", "Gift message", "Note", "message"); customMessageOption != nil {
+				customMessageOption := utils.InterfaceToMap(customMessageOption)
+				messageValue, present := customMessageOption["value"]
+				if present {
+					customMessage = utils.InterfaceToString(messageValue)
+				}
 			}
 
-			err = app.SendMail(giftCardRecipientEmail, giftCardEmailSubject, giftCardsEmail)
-			if err != nil {
-				env.LogError(err)
-				continue
+			if deliveryDateOption := utils.GetFirstMapValue(productOptions, "Date", "Delivery date", "send_date", "send date", "date"); deliveryDateOption != nil {
+				deliveryDateOption := utils.InterfaceToMap(deliveryDateOption)
+				dateValue, present := deliveryDateOption["value"]
+				if present && !utils.IsZeroTime(utils.InterfaceToTime(dateValue)) {
+					deliveryDate = utils.InterfaceToTime(dateValue)
+				}
 			}
 
-			record["status"] = ConstGiftCardStatusDelivered
+			// check is result value is number if not take amount as a price of item
+			if giftCardAmount = utils.InterfaceToFloat64(giftCardSplitedSKU[len(giftCardSplitedSKU)-1]); giftCardAmount <= 0 {
+				giftCardAmount = cartItem.GetPrice()
+			}
 
-			_, err = giftCardCollection.Save(record)
-			if err != nil {
-				env.LogError(err)
+			for i := 0; i < cartItem.GetQty(); i++ {
+
+				// generate unique code by unix nano time
+				giftCardUniqueCode := utils.InterfaceToString(time.Now().UnixNano())
+
+				giftCard := make(map[string]interface{})
+
+				giftCard["code"] = giftCardUniqueCode
+				giftCard["sku"] = giftCardSKU
+
+				giftCard["amount"] = giftCardAmount
+
+				giftCard["order_id"] = orderID
+				giftCard["visitor_id"] = visitorID
+
+				giftCard["status"] = ConstGiftCardStatusNew
+				giftCard["orders_used"] = make(map[string]float64)
+
+				giftCard["name"] = recipientName
+				giftCard["message"] = customMessage
+
+				giftCard["recipient_mailbox"] = recipientEmail
+				giftCard["delivery_date"] = deliveryDate
+
+				if _, err = giftCardCollection.Save(giftCard); err != nil {
+					env.LogError(err)
+					return false
+				}
 			}
 		}
 	}

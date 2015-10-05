@@ -18,7 +18,7 @@ func init() {
 	env.RegisterOnConfigStart(setupConfig)
 	api.RegisterOnRestServiceStart(setupAPI)
 
-	app.OnAppStart(initListeners)
+	app.OnAppStart(onAppStart)
 }
 
 // DB preparations for current model implementation
@@ -29,7 +29,6 @@ func setupDB() error {
 	}
 
 	collection.AddColumn("code", db.ConstTypeID, true)
-	collection.AddColumn("name", db.TypeWPrecision(db.ConstTypeVarchar, 150), false)
 	collection.AddColumn("sku", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 
 	collection.AddColumn("amount", db.ConstTypeMoney, false)
@@ -39,17 +38,27 @@ func setupDB() error {
 
 	collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)
 	collection.AddColumn("orders_used", db.ConstTypeJSON, false)
+
+	collection.AddColumn("name", db.TypeWPrecision(db.ConstTypeVarchar, 150), false)
+	collection.AddColumn("message", db.TypeWPrecision(db.ConstTypeVarchar, 150), false)
+
 	collection.AddColumn("recipient_mailbox", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("delivery_date", db.ConstTypeDatetime, true)
 
 	return nil
 }
 
-// initListeners register event listeners
-func initListeners() error {
+// onAppStart makes module initialization on application startup
+func onAppStart() error {
 
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 	env.EventRegisterListener("order.proceed", orderProceedHandler)
 	env.EventRegisterListener("order.rollback", orderRollbackHandler)
+
+	if scheduler := env.GetScheduler(); scheduler != nil {
+		scheduler.RegisterTask("checkGiftCardsToSent", GiftCardsSendTask)
+		scheduler.ScheduleRepeat("0 8 * * *", "checkGiftCardsToSent", nil)
+	}
 
 	return nil
 }
