@@ -8,7 +8,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures the API endpoints for the giftcard package
 func setupAPI() error {
 	var err error
 
@@ -35,7 +35,8 @@ func setupAPI() error {
 	return nil
 }
 
-// APIGetGiftCard return gift card info buy it's code
+// APIGetGiftCard returns the gift card and related info
+//    - giftcode must be specified on the request
 func APIGetGiftCard(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("giftcode")
