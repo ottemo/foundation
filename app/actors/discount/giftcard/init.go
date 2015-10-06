@@ -56,7 +56,7 @@ func onAppStart() error {
 	env.EventRegisterListener("order.rollback", orderRollbackHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("checkGiftCardsToSent", GiftCardsSendTask)
+		scheduler.RegisterTask("checkGiftCardsToSent", GiftCardSendTask)
 		scheduler.ScheduleRepeat("0 8 * * *", "checkGiftCardsToSent", nil)
 	}
 

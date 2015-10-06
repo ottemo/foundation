@@ -242,7 +242,7 @@ func (it *DefaultOrder) SetStatus(newStatus string) error {
 	oldStatus := it.Status
 	it.Status = newStatus
 
-	// if order new status is "new" or "canceled" - returning items to stock, otherwise taking them from
+	// if order new status is "new" or "cancelled" - returning items to stock, otherwise taking them from
 	if newStatus == order.ConstOrderStatusCancelled || newStatus == order.ConstOrderStatusNew {
 
 		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusCancelled && oldStatus != "" {
@@ -309,7 +309,7 @@ func (it *DefaultOrder) Proceed() error {
 	return nil
 }
 
-// Rollback returns order items to stock, changing order status to canceled if status was not set yet, saves order
+// Rollback returns order items to stock, changing order status to cancelled if status was not set yet, saves order
 func (it *DefaultOrder) Rollback() error {
 
 	if it.Status == "" {

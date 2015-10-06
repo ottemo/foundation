@@ -206,7 +206,7 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, err
 	}
 
-	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "CANCELED: "+
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "CANCELLED: "+
 		"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 		"OrderID - "+checkoutOrder.GetID()+", "+
 		"TOKEN - : "+requestData["token"])

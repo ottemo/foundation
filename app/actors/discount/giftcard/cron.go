@@ -1,27 +1,27 @@
 package giftcard
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"github.com/ottemo/foundation/app/models/order"
-	"time"
 )
 
-// GiftCardsSendTask send email with purchased gift cards info
-func GiftCardsSendTask(params map[string]interface{}) error {
+// GiftCardSendTask send email with purchased gift cards info
+func GiftCardSendTask(params map[string]interface{}) error {
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	// send email if we have gift cards in order
-	// mail template get from config value
+	// send an email if we find gift cards in the order
+	// use the email template from the configuration value
 	giftCardTemplateEmail := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftEmailTemplate))
 	if giftCardTemplateEmail == "" {
-		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cccda57c-7f13-48be-a1fb-d29e545051ce", "gift card template not set"))
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cccda57c-7f13-48be-a1fb-d29e545051ce", "No GiftCard Email Template found."))
 	}
 
 	currentTime := time.Now()
@@ -73,7 +73,7 @@ func GiftCardsSendTask(params map[string]interface{}) error {
 			}
 		}
 
-		giftCardsEmail, err := utils.TextTemplate(giftCardTemplateEmail,
+		giftCardEmail, err := utils.TextTemplate(giftCardTemplateEmail,
 			map[string]interface{}{
 				"Visitor":  buyerInfo,
 				"GiftCard": giftCardInfo,
@@ -85,7 +85,7 @@ func GiftCardsSendTask(params map[string]interface{}) error {
 			continue
 		}
 
-		err = app.SendMail(giftCardRecipientEmail, giftCardEmailSubject, giftCardsEmail)
+		err = app.SendMail(giftCardRecipientEmail, giftCardEmailSubject, giftCardEmail)
 		if err != nil {
 			env.LogError(err)
 			continue

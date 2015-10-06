@@ -171,13 +171,13 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	orderID := orderProceed.GetID()
 
 	cartProducts := orderProceed.GetItems()
-	giftCardsSKUElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
+	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
 	// check cart for gift card's and save in table if they present
 	for _, cartItem := range cartProducts {
-		giftCardSKU := cartItem.GetSku()
+		giftCardSku := cartItem.GetSku()
 
-		if strings.Contains(giftCardSKU, giftCardsSKUElement) {
+		if strings.Contains(giftCardSku, giftCardSkuElement) {
 
 			recipientEmail := utils.InterfaceToString(orderProceed.Get("customer_email"))
 			recipientName := orderProceed.Get("customer_name")
@@ -186,7 +186,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 			customMessage := ""
 
 			// split item SKU with config gift card SKU value and sign "-" take last element
-			giftCardSplitedSKU := strings.Split(giftCardSKU, giftCardsSKUElement)
+			giftCardSplitedSKU := strings.Split(giftCardSku, giftCardSkuElement)
 			giftCardSplitedSKU = strings.Split(giftCardSplitedSKU[len(giftCardSplitedSKU)-1], "-")
 
 			// reed recipient options
@@ -243,7 +243,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				giftCard := make(map[string]interface{})
 
 				giftCard["code"] = giftCardUniqueCode
-				giftCard["sku"] = giftCardSKU
+				giftCard["sku"] = giftCardSku
 
 				giftCard["amount"] = giftCardAmount
 
