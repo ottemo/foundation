@@ -1,4 +1,4 @@
-// Package giftcard creates and manage giftCards
+// Package giftcard creates and manage gift cards
 package giftcard
 
 import (
@@ -24,7 +24,7 @@ const (
 	ConstGiftCardStatusUsed      = "used"
 	ConstGiftCardStatusOverUsed  = "over-used"
 	ConstGiftCardStatusRefilled  = "refilled"
-	ConstGiftCardStatusCanceled  = "canceled"
+	ConstGiftCardStatusCancelled = "cancelled"
 	ConstGiftCardStatusDelivered = "delivered"
 )
 
