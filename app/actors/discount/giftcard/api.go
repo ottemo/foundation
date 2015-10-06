@@ -97,7 +97,7 @@ func APIApplyGiftCard(context api.InterfaceApplicationContext) (interface{}, err
 
 	// checking if codes have previously been applied
 	if utils.IsInArray(giftCardCode, appliedGiftCardCodes) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1c310f79-0f79-493a-b761-ad4f24542559", "This code previously been applied, "+giftCardCode+" and is no longer valid.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1c310f79-0f79-493a-b761-ad4f24542559", "This code, "+giftCardCode+" has already been applied.")
 	}
 
 	// loading gift codes for specified code
@@ -140,7 +140,7 @@ func APINeglectGiftCard(context api.InterfaceApplicationContext) (interface{}, e
 
 	giftCardID := context.GetRequestArgument("giftcode")
 	if giftCardID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e2bad33a-36e7-41d4-aea7-8fe1b97eb31c", "No GiftCard code found on the request.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e2bad33a-36e7-41d4-aea7-8fe1b97eb31c", "No giftcard code found on the request.")
 	}
 
 	if giftCardID == "*" {

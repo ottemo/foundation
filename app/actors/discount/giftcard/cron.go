@@ -57,11 +57,11 @@ func GiftCardSendTask(params map[string]interface{}) error {
 		giftCardRecipientEmail := utils.InterfaceToString(record["recipient_mailbox"])
 
 		giftCardInfo := map[string]interface{}{
-			"Amount":        utils.RoundPrice(utils.InterfaceToFloat64(record["amount"])),
-			"Code":          utils.InterfaceToString(record["code"]),
-			"RecieverName":  utils.InterfaceToString(record["name"]),
-			"RecieverEmail": giftCardRecipientEmail,
-			"Message":       utils.InterfaceToString(record["message"]),
+			"Amount":         utils.RoundPrice(utils.InterfaceToFloat64(record["amount"])),
+			"Code":           utils.InterfaceToString(record["code"]),
+			"RecipientName":  utils.InterfaceToString(record["name"]),
+			"RecipientEmail": giftCardRecipientEmail,
+			"Message":        utils.InterfaceToString(record["message"]),
 		}
 
 		buyerInfo := make(map[string]interface{})

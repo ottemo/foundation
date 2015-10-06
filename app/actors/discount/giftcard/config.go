@@ -58,8 +58,8 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path: ConstConfigPathGiftEmailTemplate,
-		Value: `Dear friend, a gift card has been purchased on your behalf
-			by {{.Visitor.name}}
+		Value: `Dear {{.Recipient.Name}}, a gift card has been purchased on your behalf
+			by {{.Buyer.Name}}
 			<br />
 			You are free to use this gift card at any time upon checkout.
 			<br />
