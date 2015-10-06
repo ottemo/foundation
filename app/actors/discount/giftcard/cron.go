@@ -10,8 +10,8 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// GiftCardSendTask send email with purchased gift cards info
-func GiftCardSendTask(params map[string]interface{}) error {
+// SendTask send email with purchased gift cards info
+func SendTask(params map[string]interface{}) error {
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
 		return env.ErrorDispatch(err)
