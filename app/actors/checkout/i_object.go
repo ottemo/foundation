@@ -57,21 +57,27 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 		it.SessionID = utils.InterfaceToString(value)
 
 	case "ShippingAddress":
-		shippingAddress := utils.InterfaceToMap(value)
-
-		if address, err := checkout.ValidateAddress(shippingAddress); err == nil {
-			it.ShippingAddress = address.ToHashMap()
-		} else {
+		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
+		if err == nil {
 			return err
 		}
 
-	case "BillingAddress":
-		billingAddress := utils.InterfaceToMap(value)
+		if address != nil {
+			it.ShippingAddress = address.ToHashMap()
+		} else {
+			it.ShippingAddress = make(map[string]interface{})
+		}
 
-		if address, err := checkout.ValidateAddress(billingAddress); err == nil {
+	case "BillingAddress":
+		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
+		if err == nil {
+			return err
+		}
+
+		if address != nil {
 			it.BillingAddress = address.ToHashMap()
 		} else {
-			return err
+			it.BillingAddress = make(map[string]interface{})
 		}
 
 	case "PaymentMethodCode":
