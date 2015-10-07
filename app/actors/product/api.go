@@ -344,8 +344,13 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		}
 	}
 
-	// JSON re-structuring from {"#optionCode": {"options": }}
-	productOptions := productModel.GetOptions()
+	// JSON re-structuring from {"#optionCode": {"options": {"#optionValueCode": ...} }}
+	// to [{"code": "#optionCode", "options": [{"code": "#optionValueCode"}, ...]}, ...]
+	// i.e. converting unsorted maps to sorted arrays
+	productOptions, success := utils.Clone(productModel.GetOptions()).(map[string]interface{})
+	if !success {
+		productOptions = make(map[string]interface{})
+	}
 	var newProductOptions []interface{}
 
 	// product options sorting loop
@@ -422,18 +427,18 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 						optionDataMap["options"] = newValueOptions
 					}
 				}
+			}
 
-				// determining current option element order
-				optionOrder := 0
-				if value, present := optionDataMap["order"]; present {
-					optionOrder = utils.InterfaceToInt(value)
-				}
+			// determining current option element order
+			optionOrder := 0
+			if value, present := optionDataMap["order"]; present {
+				optionOrder = utils.InterfaceToInt(value)
+			}
 
-				// comparing it to minimal element
-				if minOptionKey == "" || optionOrder < minOptionOrder {
-					minOptionKey = optionCode
-					minOptionOrder = optionOrder
-				}
+			// comparing it to minimal element
+			if minOptionKey == "" || optionOrder < minOptionOrder {
+				minOptionKey = optionCode
+				minOptionOrder = optionOrder
 			}
 		}
 
@@ -446,7 +451,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		newProductOptions = append(newProductOptions, productOptions[minOptionKey])
 		delete(productOptions, minOptionKey)
 	}
-	result["options"] = newProductOptions
+	result["options_sorted"] = newProductOptions
 
 	result["images"] = itemImages
 
