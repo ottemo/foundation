@@ -73,11 +73,17 @@ func SendTask(params map[string]interface{}) error {
 			}
 		}
 
+		recipientInfo := map[string]interface{}{
+			"Name":  utils.InterfaceToString(record["name"]),
+			"Email": giftCardRecipientEmail,
+		}
+
 		giftCardEmail, err := utils.TextTemplate(giftCardTemplateEmail,
 			map[string]interface{}{
-				"Visitor":  buyerInfo,
-				"GiftCard": giftCardInfo,
-				"Site":     customInfo,
+				"Recipient": recipientInfo,
+				"Buyer":     buyerInfo,
+				"GiftCard":  giftCardInfo,
+				"Site":      customInfo,
 			})
 
 		if err != nil {

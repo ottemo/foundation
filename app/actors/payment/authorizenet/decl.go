@@ -82,7 +82,7 @@ const (
 		 <body>
 			<h1>Thanks for your purchase.</h1>
 			<p>Your transaction ID: <b>{{ .response.x_trans_id }}</b></p>
-			<p>Order #{{.Order.increment_id}}</p>
+			<p>Order #{{ .order.increment_id }}</p>
 
 			<p>You will be redirected back to the store in <span id="countdown"></span> sec.
 			<a href="{{ .backURL }}">Back to store</a></p>

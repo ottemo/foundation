@@ -58,7 +58,7 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 
 	case "ShippingAddress":
 		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
-		if err == nil {
+		if err != nil {
 			return err
 		}
 
@@ -70,7 +70,7 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 
 	case "BillingAddress":
 		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
-		if err == nil {
+		if err != nil {
 			return err
 		}
 

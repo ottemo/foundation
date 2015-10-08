@@ -69,7 +69,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMReceiptURL))
 				if strings.TrimSpace(redirectURL) == "" {
-					redirectURL = app.GetStorefrontURL("account/order") + checkoutOrder.GetID()
+					redirectURL = app.GetStorefrontURL("")
 				}
 
 				env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION APPROVED: "+
@@ -176,7 +176,7 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				redirectURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMReceiptURL))
 				if strings.TrimSpace(redirectURL) == "" {
-					redirectURL = app.GetStorefrontURL("account/order") + checkoutOrder.GetID()
+					redirectURL = app.GetStorefrontURL("")
 				}
 
 				templateContext := map[string]interface{}{
