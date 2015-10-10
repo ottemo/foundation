@@ -21,7 +21,7 @@ func SendTask(params map[string]interface{}) error {
 	// use the email template from the configuration value
 	giftCardTemplateEmail := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftEmailTemplate))
 	if giftCardTemplateEmail == "" {
-		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cccda57c-7f13-48be-a1fb-d29e545051ce", "No GiftCard Email Template found."))
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cccda57c-7f13-48be-a1fb-d29e545051ce", "No giftcard email template found."))
 	}
 
 	currentTime := time.Now()
