@@ -344,6 +344,115 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		}
 	}
 
+	// JSON re-structuring from {"#optionCode": {"options": {"#optionValueCode": ...} }}
+	// to [{"code": "#optionCode", "options": [{"code": "#optionValueCode"}, ...]}, ...]
+	// i.e. converting unsorted maps to sorted arrays
+	productOptions, success := utils.Clone(productModel.GetOptions()).(map[string]interface{})
+	if !success {
+		productOptions = make(map[string]interface{})
+	}
+	var newProductOptions []interface{}
+
+	// product options sorting loop
+	firstProductOptionsLoop := true
+	for len(productOptions) > 0 {
+		var minOptionKey string
+		var minOptionOrder int
+
+		// minimal product option element search loop
+		for optionCode, optionData := range productOptions {
+			// typing interface{}
+			var optionDataMap map[string]interface{}
+			if typedOptionData, ok := optionData.(map[string]interface{}); ok {
+				optionDataMap = typedOptionData
+			} else {
+				optionDataMap = map[string]interface{}{"value": optionData}
+			}
+
+			// first iteration operations (option code move from map key to item field, option values re-structure)
+			if firstProductOptionsLoop {
+				// option code move from map key to item field
+				optionDataMap["code"] = optionCode
+
+				// option values re-structure
+				if optionValues, present := optionDataMap["options"]; present {
+					if optionValuesMap, ok := optionValues.(map[string]interface{}); ok {
+						var newValueOptions []interface{}
+
+						// option values sorting loop
+						firstOptionValuesLoop := true
+						for len(optionValuesMap) > 0 {
+							var minOptionValueKey string
+							var minOptionValueOrder int
+
+							// minimal option value element search loop
+							for optionValueCode, optionValueData := range optionValuesMap {
+								// typing interface{}
+								var optionValueDataMap map[string]interface{}
+								if typedOptionValueData, ok := optionValueData.(map[string]interface{}); ok {
+									optionValueDataMap = typedOptionValueData
+								} else {
+									optionValueDataMap = map[string]interface{}{"value": optionValueData}
+								}
+
+								// first iteration operations (option value code from map key to item field)
+								if firstOptionValuesLoop {
+									// option value code move from map key to item field
+									optionValueDataMap["code"] = optionValueCode
+								}
+
+								// determining current option value element order
+								optionValueOrder := 0
+								if value, present := optionValueDataMap["order"]; present {
+									optionValueOrder = utils.InterfaceToInt(value)
+								}
+
+								// comparing it to minimal element
+								if minOptionValueKey == "" || optionValueOrder < minOptionValueOrder {
+									minOptionValueKey = optionValueCode
+									minOptionValueOrder = optionValueOrder
+								}
+							}
+
+							// switching first loop flag
+							if firstOptionValuesLoop {
+								firstOptionValuesLoop = false
+							}
+
+							// moving option value element from map to array
+							newValueOptions = append(newValueOptions, optionValuesMap[minOptionValueKey])
+							delete(optionValuesMap, minOptionValueKey)
+						}
+						// replacing "options" field with a new sorted array
+						optionDataMap["options"] = newValueOptions
+					}
+				}
+			}
+
+			// determining current option element order
+			optionOrder := 0
+			if value, present := optionDataMap["order"]; present {
+				optionOrder = utils.InterfaceToInt(value)
+			}
+
+			// comparing it to minimal element
+			if minOptionKey == "" || optionOrder < minOptionOrder {
+				minOptionKey = optionCode
+				minOptionOrder = optionOrder
+			}
+		}
+
+		// switching first loop flag
+		if firstProductOptionsLoop {
+			firstProductOptionsLoop = false
+		}
+
+		// moving option value element from map to array
+		newProductOptions = append(newProductOptions, productOptions[minOptionKey])
+		delete(productOptions, minOptionKey)
+	}
+	result["options_sorted"] = newProductOptions
+
 	result["images"] = itemImages
 
 	return result, nil
