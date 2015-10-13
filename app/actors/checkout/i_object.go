@@ -57,14 +57,18 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 		it.SessionID = utils.InterfaceToString(value)
 
 	case "ShippingAddress":
-		if address, err := checkout.ValidateAddress(utils.InterfaceToMap(value)); err == nil {
+		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
+
+		if err != nil {
 			it.ShippingAddress = address.ToHashMap()
 		} else {
 			return err
 		}
 
 	case "BillingAddress":
-		if address, err := checkout.ValidateAddress(utils.InterfaceToMap(value)); err == nil {
+		address, err := checkout.ValidateAddress(utils.InterfaceToMap(value))
+
+		if err != nil {
 			it.BillingAddress = address.ToHashMap()
 		} else {
 			return err
