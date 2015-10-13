@@ -72,9 +72,9 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 				giftCard["status"] = ConstGiftCardStatusApplied
 
 				if giftCardAmountAfterApply < 0 {
-					env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "987929ab-8d20-4413-a0aa-bb4baae02aeb", "Discount code, "+orderAppliedDiscount.Code+" is over-subscribed."))
+					env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "987929ab-8d20-4413-a0aa-bb4baae02aeb", "Discount code, "+orderAppliedDiscount.Code+" has been over credited."))
 					giftCard["amount"] = 0
-					giftCard["status"] = ConstGiftCardStatusOverSubscribed
+					giftCard["status"] = ConstGiftCardStatusOverCredited
 				}
 
 				if giftCardAmountAfterApply == 0 {
