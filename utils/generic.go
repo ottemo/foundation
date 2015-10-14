@@ -255,11 +255,11 @@ func EscapeRegexSpecials(value string) string {
 // - returns true if email address is in a valid format
 // - returns false if email address is not in a valid format
 func ValidEmailAddress(email string) bool {
-	re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}$`)
 	return re.MatchString(email)
 }
 
-// makes a clone for a given object
+// Clone will create a replica for a given object
 func Clone(subject interface{}) interface{} {
 	result := subject
 

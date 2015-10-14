@@ -3,13 +3,14 @@ package friendmail
 import (
 	"bytes"
 	"encoding/base64"
+	"time"
+
 	"github.com/dchest/captcha"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -30,7 +31,7 @@ func setupAPI() error {
 	return nil
 }
 
-// APIFriendCaptcha generates captcha for a email form
+// APIFriendCaptcha will generate a captcha for use in a form
 func APIFriendCaptcha(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	var captchaDigits []byte
@@ -56,9 +57,10 @@ func APIFriendCaptcha(context api.InterfaceApplicationContext) (interface{}, err
 	captchaValues[captchaValue] = time.Now()
 	captchaValuesMutex.Unlock()
 
+	// generate a captcha image
 	image := captcha.NewImage(captchaValue, captchaDigits, captcha.StdWidth, captcha.StdHeight)
 	if image == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7224c8fe-6079-4bb3-9dc3-ad0847db8e29", "captcha image generation error")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7224c8fe-6079-4bb3-9dc3-ad0847db8e29", "Unable to generate a captcha image.")
 	}
 
 	if context.GetRequestArguments()["json"] != "" {
@@ -94,7 +96,7 @@ func APIFriendEmail(context api.InterfaceApplicationContext) (interface{}, error
 
 	friendEmail = utils.InterfaceToString(requestData["friend_email"])
 	if !utils.ValidEmailAddress(friendEmail) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5821734e-4c84-449b-9f75-fd1154623c42", "invalid email")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5821734e-4c84-449b-9f75-fd1154623c42", "The email address, "+friendmail+", is not in valid format.")
 	}
 
 	// checking captcha
@@ -103,7 +105,7 @@ func APIFriendEmail(context api.InterfaceApplicationContext) (interface{}, error
 	captchaValuesMutex.Lock()
 	if _, present := captchaValues[captchaValue]; !present {
 		captchaValuesMutex.Unlock()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8bd3ad79-e464-4355-8a13-27ff55980fbb", "invalid captcha value")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8bd3ad79-e464-4355-8a13-27ff55980fbb", "The entered character sequence does not match the captcha value.")
 	}
 	captchaStore.Get(captchaValue, true)
 	delete(captchaValues, captchaValue)
