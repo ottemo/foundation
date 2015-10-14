@@ -1,12 +1,13 @@
 package checkout
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
-	"strings"
 )
 
 // GetCheckoutModel retrieves current InterfaceCheckout model implementation
@@ -132,10 +133,6 @@ func ValidateAddress(address interface{}) (visitor.InterfaceVisitorAddress, erro
 		visitorAddressModel.FromHashMap(typedValue)
 	default:
 		return visitorAddress, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f029c930-5f37-4999-9c76-3e739dd2f578", "Unknown address format")
-	}
-
-	if visitorAddress == nil {
-		return nil, nil
 	}
 
 	if visitorAddress.GetAddressLine1() == "" {
