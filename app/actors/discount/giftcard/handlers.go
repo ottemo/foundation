@@ -205,7 +205,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				}
 			}
 
-			if recipientNameOption := utils.GetFirstMapValue(productOptions, "Recipient", "Recipient name", "Name", "name"); recipientNameOption != nil {
+			if recipientNameOption := utils.GetFirstMapValue(productOptions, "Recipient", "Recipient Name", "Name", "name"); recipientNameOption != nil {
 
 				recipientNameOption := utils.InterfaceToMap(recipientNameOption)
 				nameValue, present := recipientNameOption["value"]
