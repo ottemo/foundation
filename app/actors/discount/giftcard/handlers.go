@@ -10,13 +10,14 @@ import (
 	"time"
 )
 
-// orderProceedHandler check cart for gift cards, if present create them into table gift_card and
-// check checkout for applied discounts and make change of gift card amount in database
+// orderProceedHandler is fired during order creation to check the cart for
+// gift cards, if a card is present add it to the table gift_card.  Next step is
+// inspect the checkout object for applied discounts and record usage amounts in db
 func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderProceed, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "order can't be used"))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "Unable to find an order when firing event, order.proceed."))
 		return false
 	}
 
@@ -71,9 +72,9 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 				giftCard["status"] = ConstGiftCardStatusApplied
 
 				if giftCardAmountAfterApply < 0 {
-					env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "987929ab-8d20-4413-a0aa-bb4baae02aeb", "discount "+orderAppliedDiscount.Code+" is over used"))
+					env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "987929ab-8d20-4413-a0aa-bb4baae02aeb", "Discount code, "+orderAppliedDiscount.Code+" has been over credited."))
 					giftCard["amount"] = 0
-					giftCard["status"] = ConstGiftCardStatusOverUsed
+					giftCard["status"] = ConstGiftCardStatusOverCredited
 				}
 
 				if giftCardAmountAfterApply == 0 {
@@ -94,13 +95,13 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 	return true
 }
 
-// orderRollbackHandler check order for present gift cards in apply
+// orderRollbackHandler inspects the order for presence of gift cards in the apply state
 // - refill used amount on gift card and change status to 'refilled'
 func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	rollbackOrder, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d674d4d-be5e-42d0-a3d7-b9731dbcc207", "order can't be used"))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d674d4d-be5e-42d0-a3d7-b9731dbcc207", "Unable to find an order when firing event, order.rollback."))
 		return false
 	}
 
@@ -155,7 +156,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	orderProceed, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "order can't be used"))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "Unable to find an order when firing event, order.success."))
 		return false
 	}
 
