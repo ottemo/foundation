@@ -96,7 +96,7 @@ func APIFriendEmail(context api.InterfaceApplicationContext) (interface{}, error
 
 	friendEmail = utils.InterfaceToString(requestData["friend_email"])
 	if !utils.ValidEmailAddress(friendEmail) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5821734e-4c84-449b-9f75-fd1154623c42", "The email address, "+friendmail+", is not in valid format.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5821734e-4c84-449b-9f75-fd1154623c42", "The email address, "+friendEmail+", is not in valid format.")
 	}
 
 	// checking captcha
