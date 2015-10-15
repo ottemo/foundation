@@ -1054,18 +1054,19 @@ func APIGoogleLogin(context api.InterfaceApplicationContext) (interface{}, error
 // APIGetOrder returns current visitor order details for specified order
 //   - orderID should be specified in arguments
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		return "No Visitor ID found, unable to process order request. Please log in first.", nil
-	}
 
 	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc719b01-c1e4-4b69-9c89-5735f5c0d339", "Unable to retrieve an order associated with OrderID: "+context.GetRequestArgument("orderID")+".")
 	}
 
-	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
-		if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
+	// allow anonymous visitors through if the session id matches
+	if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
+		// force anonymous visitors to log in if their session id does not match the one on the order
+		visitorID := visitor.GetCurrentVisitorID(context)
+		if visitorID == "" {
+			return "No Visitor ID found, unable to process order request. Please log in first.", nil
+		} else if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
 		}
 	}
