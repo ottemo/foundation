@@ -103,9 +103,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
 	if err := api.ValidateAdminRights(context); err != nil {
-		if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
-			return nil, env.ErrorDispatch(err)
-		}
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation
