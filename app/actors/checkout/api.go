@@ -442,6 +442,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
+	currentCheckout.SetInfo("session_id", context.GetSession().GetID())
 	currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID))
 
 	addressInfoToAddress := func(addressInfo interface{}) (visitor.InterfaceVisitorAddress, error) {

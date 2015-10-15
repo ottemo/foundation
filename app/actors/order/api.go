@@ -91,23 +91,25 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	//---------------------
-	blockID := context.GetRequestArgument("orderID")
-	if blockID == "" {
+	orderID := context.GetRequestArgument("orderID")
+	if orderID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443-f974-4455-9be0-a8af13916554", "order id should be specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// operation
-	//----------
-	orderModel, err := order.LoadOrderByID(blockID)
+	orderModel, err := order.LoadOrderByID(orderID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	// operation
+	//----------
 	result := orderModel.ToHashMap()
 	if notes, present := utils.InterfaceToMap(result["shipping_info"])["notes"]; present {
 		utils.InterfaceToMap(result["shipping_address"])["notes"] = notes
@@ -123,8 +125,8 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 
 	// check request context
 	//---------------------
-	blockID := context.GetRequestArgument("orderID")
-	if blockID == "" {
+	orderID := context.GetRequestArgument("orderID")
+	if orderID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638-e9e6-428b-b70c-a418d7821e4b", "order id should be specified")
 	}
 
@@ -140,7 +142,7 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 
 	// operation
 	//----------
-	orderModel, err := order.LoadOrderByID(blockID)
+	orderModel, err := order.LoadOrderByID(orderID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -149,7 +151,7 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 		orderModel.Set(attribute, value)
 	}
 
-	orderModel.SetID(blockID)
+	orderModel.SetID(orderID)
 	orderModel.Save()
 
 	return orderModel.ToHashMap(), nil
@@ -161,8 +163,8 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 
 	// check request context
 	//---------------------
-	blockID := context.GetRequestArgument("orderID")
-	if blockID == "" {
+	orderID := context.GetRequestArgument("orderID")
+	if orderID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
 	}
 
@@ -173,7 +175,7 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 
 	// operation
 	//----------
-	orderModel, err := order.GetOrderModelAndSetID(blockID)
+	orderModel, err := order.GetOrderModelAndSetID(orderID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

@@ -1065,7 +1065,9 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
+		if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
+		}
 	}
 
 	result := orderModel.ToHashMap()
