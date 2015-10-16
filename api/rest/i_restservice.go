@@ -31,7 +31,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: " + fmt.Sprintf("%v", recoverResult))
+				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
 			}
 		}()
 

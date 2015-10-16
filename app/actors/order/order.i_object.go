@@ -25,6 +25,9 @@ func (it *DefaultOrder) Get(attribute string) interface{} {
 	case "visitor_id":
 		return it.VisitorID
 
+	case "session_id":
+		return it.SessionID
+
 	case "cart_id":
 		return it.CartID
 
@@ -125,6 +128,9 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 	case "visitor_id":
 		it.VisitorID = utils.InterfaceToString(value)
+
+	case "session_id":
+		it.SessionID = utils.InterfaceToString(value)
 
 	case "cart_id":
 		it.CartID = utils.InterfaceToString(value)
@@ -259,6 +265,7 @@ func (it *DefaultOrder) ToHashMap() map[string]interface{} {
 	result["status"] = it.Get("status")
 
 	result["visitor_id"] = it.Get("visitor_id")
+	result["session_id"] = it.Get("session_id")
 	result["cart_id"] = it.Get("cart_id")
 
 	result["customer_email"] = it.Get("customer_email")
@@ -332,7 +339,7 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Label:      "Status",
 			Group:      "General",
 			Editors:    "selector",
-			Options:    "new,pending,canceled,complete",
+			Options:    "new,pending,cancelled,complete",
 			Default:    "new",
 		},
 		models.StructAttributeInfo{
@@ -340,12 +347,25 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Collection: ConstCollectionNameOrder,
 			Attribute:  "visitor_id",
 			Type:       db.ConstTypeID,
-			IsRequired: true,
+			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Visitor",
 			Group:      "General",
 			Editors:    "model_selector",
 			Options:    "model: visitor",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      order.ConstModelNameOrder,
+			Collection: ConstCollectionNameOrder,
+			Attribute:  "session_id",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Session",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
 			Default:    "",
 		},
 		models.StructAttributeInfo{

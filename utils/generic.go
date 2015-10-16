@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -254,6 +255,34 @@ func EscapeRegexSpecials(value string) string {
 // - returns true if email address is in a valid format
 // - returns false if email address is not in a valid format
 func ValidEmailAddress(email string) bool {
-	re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}$`)
 	return re.MatchString(email)
+}
+
+// Clone will create a replica for a given object
+func Clone(subject interface{}) interface{} {
+	result := subject
+
+	subjectValue := reflect.ValueOf(subject)
+	subjectKind := subjectValue.Kind()
+
+	if subjectKind == reflect.Array || subjectKind == reflect.Slice {
+		len := subjectValue.Len()
+		newValue := reflect.MakeSlice(subjectValue.Type(), len, len)
+		for idx := 0; idx < subjectValue.Len(); idx++ {
+			value := Clone(subjectValue.Index(idx).Interface())
+			newValue.Index(idx).Set(reflect.ValueOf(value))
+		}
+		result = newValue.Interface()
+	} else if subjectKind == reflect.Map {
+		newValue := reflect.MakeMap(subjectValue.Type())
+		mapKeys := subjectValue.MapKeys()
+		for _, key := range mapKeys {
+			value := Clone(subjectValue.MapIndex(key).Interface())
+			newValue.SetMapIndex(key, reflect.ValueOf(value))
+		}
+		result = newValue.Interface()
+	}
+
+	return result
 }

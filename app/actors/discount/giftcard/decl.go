@@ -1,4 +1,4 @@
-// Package giftcard creates and manage giftCards
+// Package giftcard creates and manage gift cards
 package giftcard
 
 import (
@@ -19,13 +19,13 @@ const (
 	ConstErrorModule = "giftcard"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
-	ConstGiftCardStatusNew       = "new"
-	ConstGiftCardStatusApplied   = "applied"
-	ConstGiftCardStatusUsed      = "used"
-	ConstGiftCardStatusOverUsed  = "over-used"
-	ConstGiftCardStatusRefilled  = "refilled"
-	ConstGiftCardStatusCanceled  = "canceled"
-	ConstGiftCardStatusDelivered = "delivered"
+	ConstGiftCardStatusNew          = "new"
+	ConstGiftCardStatusApplied      = "applied"
+	ConstGiftCardStatusUsed         = "used"
+	ConstGiftCardStatusOverCredited = "negative"
+	ConstGiftCardStatusRefilled     = "refilled"
+	ConstGiftCardStatusCancelled    = "cancelled"
+	ConstGiftCardStatusDelivered    = "delivered"
 )
 
 // DefaultGiftcard is a default implementer of InterfaceDiscount

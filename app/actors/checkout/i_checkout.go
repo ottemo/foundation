@@ -490,6 +490,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	// updating order information
 	//---------------------------
+	checkoutOrder.Set("session_id", it.GetInfo("session_id"))
 	checkoutOrder.Set("updated_at", currentTime)
 
 	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
@@ -643,6 +644,11 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 		}
 
 		checkoutOrder.Set("payment_info", currentPaymentInfo)
+	}
+
+	checkoutOrder.Set("created_at", time.Now())
+	if utils.InterfaceToString(checkoutOrder.Get("session_id")) == "" {
+		checkoutOrder.Set("session_id", it.GetInfo("session_id"))
 	}
 
 	err := checkoutOrder.Save()
