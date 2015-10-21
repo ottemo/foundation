@@ -5,12 +5,26 @@ import (
 	"os"
 	"time"
 
+	"encoding/json"
 	"github.com/ottemo/foundation/env"
 )
 
 // Log is a general case logging function
 func (it *DefaultLogger) Log(storage string, prefix string, msg string) {
+	errorData := map[string]string{
+		"stack_trace": msg,
+		"@version":    "1",
+		"type":        "foundation-error",
+		"severity":    prefix,
+		"@timestamp":  time.Now().Format(time.RFC3339),
+	}
+
 	message := time.Now().Format(time.RFC3339) + " [" + prefix + "]: " + msg + "\n"
+
+	jsonMessage, err := json.Marshal(errorData)
+	if err == nil {
+		message = string(jsonMessage) + "\n"
+	}
 
 	logFile, err := os.OpenFile(baseDirectory+storage, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
