@@ -45,7 +45,7 @@ func APIFriendCaptcha(context api.InterfaceApplicationContext) (interface{}, err
 			captchaValue += string(captchaDigits[i] + '0')
 		}
 	} else {
-		for key, _ := range captchaValues {
+		for key := range captchaValues {
 			captchaValue = key
 			break
 		}

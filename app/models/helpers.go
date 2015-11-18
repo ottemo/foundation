@@ -122,7 +122,7 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 
 			default:
 				attributeType := collection.GetColumnType(attributeName)
-				if attributeType != db.ConstTypeText &&
+				if attributeType != db.ConstTypeText && attributeType != db.ConstTypeID &&
 					!strings.Contains(attributeType, db.ConstTypeVarchar) &&
 					filterOperator == "like" {
 

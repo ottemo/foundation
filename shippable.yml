@@ -4,7 +4,7 @@ go:
 env:
     global:
         - SLACK_ORG=Ottemo PROJECT=Foundation
-        - secure: IgdstVqJgSEKc/DjAhAiySFT43+GFxnm5Vejtb2fToZtMO+D1CFxn3tmFk3DOlHqBlBQPm6ADgW9lUbg/x1G7Kn2RyfMvbV2AkzRJzqfaHc5lXfUw+d5dniVyqcet/nC3Lul5C2fEsuHLsB1dTKunzGXJowHMTU/ZG4BdcgA9zM6h7XuGWO6euJylDpNfZ9nz9V9r14Wbxx2ndeaXgVtWXNpSdu85R1DaAKRzmuObtYmsnoKS5F6mL+v6UuM2A/4q08DRtD52jZwavrVOksAZynmLgjm2/wB2Ew6lZgPlRfCGdzRzCgIP5RenJd7jfrW2Q9tNrOGPpP8BEGjjBg7KQ==
+        - secure: T2ImzTpns/H12TPzWD+/XYWBJzvLdIdBj2rzO7EgCezxBRk3EcixCCcj6ImXKxk7kyCMHJR/fALjoE7u7elHG9Y+TmtR7useu95TMVekO66RD702jrEu4LA7tUGvDfBzTw8Dr4PVeCjr0NFQlJ/z1XHk9knrsHEXydHRtQ4ciN/DTw4M1yVImp3VXYMpOePCGIfjcYA20M8/ZvTZA9Nv5f/eBcGZbPLsNCdvMasUEekWwpZzJvXycX7tS7EYc5kUZdqzpHpToY1/HYLtcLm4qmILUahWiaMKAYloA0nT/FCUcPpZLCOf0hhm9nNaEuE1YfA/3anAhBu89rqqSPzM5Q==
 
 before_install:
     - wget -q -O ~/go.tgz https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz
@@ -28,8 +28,8 @@ after_failure:
     - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN
 
 after_success:
-    - REMOTE_HOST=rk.dev.ottemo.io bash bin/deploy.sh
-    - REMOTE_HOST=kg.dev.ottemo.io bash bin/deploy.sh
+    - REMOTE_HOST=rk.staging.ottemo.io bash bin/deploy.sh
+    - REMOTE_HOST=kg.staging.ottemo.io bash bin/deploy.sh
     - REMOTE_HOST=godoc.ottemo.io bash bin/update-docs.sh
     - REMOTE_HOST=ub.staging.ottemo.io bash bin/deploy.sh
     - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s

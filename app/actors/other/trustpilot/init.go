@@ -14,6 +14,7 @@ func init() {
 	env.RegisterOnConfigStart(setupConfig)
 }
 
+
 // Function for every day checking for email sent to customers who order is already two week
 func schedulerFunc(params map[string]interface{}) error {
 	timeDay := time.Hour * 24
@@ -42,6 +43,9 @@ func schedulerFunc(params map[string]interface{}) error {
 	dbOrderCollection.AddFilter("created_at", ">=", ordersFrom)
 	dbOrderCollection.AddFilter("created_at", "<", ordersTo)
 
+	validOrderStates := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
+	dbOrderCollection.AddFilter("status", "in", validOrderStates)
+
 	// Allows to use params value orders for specifying an array of orders by ID which would be processed
 	if ordersID, present := params["orders"]; present {
 		orders := utils.InterfaceToArray(ordersID)
@@ -63,9 +67,8 @@ func schedulerFunc(params map[string]interface{}) error {
 		currentOrder := utils.InterfaceToMap(dbRecord)
 		customInfo := utils.InterfaceToMap(currentOrder["custom_info"])
 		emailSent := utils.InterfaceToBool(customInfo[ConstOrderCustomInfoSentKey])
-		orderStatus := utils.InterfaceToString(currentOrder["status"])
 
-		if trustpilotLink, present := customInfo[ConstOrderCustomInfoLinkKey]; present && !emailSent && orderStatus != "new" {
+		if trustpilotLink, present := customInfo[ConstOrderCustomInfoLinkKey]; present && !emailSent {
 
 			visitorMap := make(map[string]interface{})
 			visitorEmail := utils.InterfaceToString(currentOrder["customer_email"])
@@ -113,8 +116,8 @@ func onAppStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("checkOrdersToSent", schedulerFunc)
-		scheduler.ScheduleRepeat("0 9 * * *", "checkOrdersToSent", nil)
+		scheduler.RegisterTask("trustPilotReview", schedulerFunc)
+		scheduler.ScheduleRepeat("0 9 * * *", "trustPilotReview", nil)
 	}
 
 	return nil

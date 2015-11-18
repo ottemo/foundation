@@ -8,6 +8,7 @@
 _obj
 _test
 tags
+.tags
 .idea
 tmp
 release

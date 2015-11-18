@@ -41,7 +41,31 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = api.GetRestService().RegisterAPI("cron/firenow/:taskName", api.ConstRESTOperationGet, fireNow)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
+}
+
+// Given a task name it will schedule a task to fire immediately
+func fireNow(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	cronExpression := "* * * * * *" // Fire immediately
+	taskName := context.GetRequestArgument("taskName")
+	taskParams := make(map[string]interface{})
+
+	scheduler := env.GetScheduler()
+	var newSchedule env.InterfaceSchedule
+	newSchedule, _ = scheduler.ScheduleOnce(cronExpression, taskName, taskParams)
+
+	return newSchedule, nil
 }
 
 // getSchedules to get information about current schedules

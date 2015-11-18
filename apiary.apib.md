@@ -2,7 +2,7 @@ FORMAT: 1A
 HOST: http://dev.ottemo.io:3000
 
 # Ottemo Foundation API
-Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/), 
+Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/),
 a rediculously fast eCommerce solution.
 
 
@@ -55,6 +55,35 @@ app/actors/category/api.go
 - [DELETE]   category/:categoryID/media/:mediaType/:mediaName
 - [GET]      category/:categoryID/mediapath/:mediaType
 
+# Group CMS
+
+## Blocks
+app/actors/cms/block/api.go
+
+- [GET]      cms/blocks
+- [GET]      cms/block/:id
+- [POST]     cms/block
+- [PUT]      cms/block/:id
+- [DELETE]   cms/block/:id
+- [GET]      cms/blocks/attributes
+
+## Pages
+app/actors/cms/page/api.go
+
+- [GET]      cms/pages
+- [GET]      cms/page/:id
+- [POST]     cms/page
+- [PUT]      cms/page/:id
+- [DELETE]   cms/page/:id
+- [GET]      cms/pages/attributes
+
+## Images
+app/actors/cms/images/api.go
+
+- [GET]      cms/images
+- [POST]     cms/images
+- [DELETE]   cms/images/:id
+
 # Group Unsorted
 
 ## app/actors/payment/authorizenet/api.go
@@ -100,31 +129,6 @@ app/actors/category/api.go
 - [GET]      taxes/csv
 - [POST]     taxes/csv
 
-## app/actors/cms/gallery/api.go
-
-- [GET]      cms/gallery/image/:mediaName
-- [GET]      cms/gallery/images
-- [POST]     cms/gallery/image/:mediaName
-- [DELETE]   cms/gallery/image/:mediaName
-- [GET]      cms/gallery/path
-
-## app/actors/cms/block/api.go
-
-- [GET]      cms/blocks
-- [GET]      cms/blocks/attributes
-- [GET]      cms/block/:blockID
-- [POST]     cms/block
-- [PUT]      cms/block/:blockID
-- [DELETE]   cms/block/:blockID
-
-## app/actors/cms/page/api.go
-
-- [GET]      cms/pages
-- [GET]      cms/pages/attributes
-- [GET]      cms/page/:pageID
-- [POST]     cms/page
-- [PUT]      cms/page/:pageID
-- [DELETE]   cms/page/:pageID
 
 ## app/actors/stock/api.go
 
