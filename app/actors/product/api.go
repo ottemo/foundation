@@ -329,9 +329,8 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	if defaultImage != "" && len(itemImages) > 1 {
 		found := false
 		for index, images := range itemImages {
-			for sizeName, sizeValue := range images {
-				basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
-				if strings.Contains(basicName, defaultImage) {
+			for _, sizeValue := range images {
+				if strings.Contains(sizeValue, defaultImage) {
 					found = true
 					itemImages = append(itemImages[:index], itemImages[index+1:]...)
 					itemImages = append([]map[string]string{images}, itemImages...)
@@ -717,11 +716,11 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 
 		// move default image to first position in array
 		if listItem.Image != "" && len(itemImages) > 1 {
+			defaultImageName := listItem.Image[strings.LastIndex(listItem.Image, "/")+1 : strings.Index(listItem.Image, ".")]
 			found := false
 			for index, images := range itemImages {
-				for sizeName, sizeValue := range images {
-					basicName := strings.Replace(sizeValue, "_"+sizeName, "", -1)
-					if strings.Contains(basicName, listItem.Image) {
+				for _, sizeValue := range images {
+					if strings.Contains(sizeValue, defaultImageName) {
 						found = true
 						itemImages = append(itemImages[:index], itemImages[index+1:]...)
 						itemImages = append([]map[string]string{images}, itemImages...)

@@ -25,9 +25,29 @@ func SendTask(params map[string]interface{}) error {
 	}
 
 	currentTime := time.Now()
+	ignoreDeliveryDate := false
 
-	if err := giftCardCollection.AddFilter("delivery_date", "<=", currentTime); err != nil {
-		return env.ErrorDispatch(err)
+	// handle usage of params
+	// key "giftCards" is required and should be an array of giftCard ids
+	// key "ignoreDeliveryDate" is optional and can be true or false
+	if params != nil {
+		if giftCardsToSend, present := params["giftCards"]; present {
+			giftCardsToSend := utils.InterfaceToArray(giftCardsToSend)
+			if len(giftCardsToSend) >= 1 {
+				if err := giftCardCollection.AddFilter("_id", "in", giftCardsToSend); err != nil {
+					return env.ErrorDispatch(err)
+				}
+			}
+		}
+
+		if ignoreDateValue, present := params["ignoreDeliveryDate"]; present {
+			ignoreDeliveryDate = utils.InterfaceToBool(ignoreDateValue)
+		}
+	}
+	if !ignoreDeliveryDate {
+		if err := giftCardCollection.AddFilter("delivery_date", "<=", currentTime); err != nil {
+			return env.ErrorDispatch(err)
+		}
 	}
 
 	if err := giftCardCollection.AddFilter("status", "=", ConstGiftCardStatusNew); err != nil {

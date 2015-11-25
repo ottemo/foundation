@@ -3,7 +3,7 @@ HOST: http://dev.ottemo.io:3000
 
 # Ottemo Foundation API
 Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/),
-a rediculously fast eCommerce solution.
+a ridiculously fast eCommerce solution.
 
 
 # Group Products
@@ -333,3 +333,31 @@ app/actors/cms/images/api.go
 - [POST]     config/value/:path
 - [PUT]      config/value/:path
 - [DELETE]   config/value/:path
+
+# Group Cron
+Cron is a utility to schedule tasks.  These tasks maybe scheduled for
+a specific time, they may be repeatable or intended to be run immediately.
+
+It is important to understand several concepts.
+
+<b>Task</b> - a job which can be scheduled to run at a specific time
+<b>Schedule</b> - a listing of all active tasks, when they will be executed and their respective metadata
+
+The API allows you to:
+        * Obtain a list of the currently scheduled tasks
+        * Create a task to be run on a schedule
+        * Obtain a list of possible tasks to be scheduled
+        * Enable a task to be run on a schedule
+        * Disable a task
+        * Update the specified task
+        * Run the specified task now
+
+## env/cron/api.go
+
+- [GET]     cron/schedule
+- [POST]    cron/task
+- [GET]     cron/task
+- [GET]     cron/task/enable/:taskIndex
+- [GET]     cron/task/disable/:taskIndex
+- [PUT]     cron/task/:taskIndex
+- [GET]     cron/task/run/:taskIndex

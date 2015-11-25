@@ -42,6 +42,7 @@ const (
 // InterfaceSchedule is an interface to system schedule service
 type InterfaceSchedule interface {
 	Execute()
+	RunTask(params map[string]interface{}) error
 
 	Enable() error
 	Disable() error

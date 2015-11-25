@@ -12,6 +12,8 @@ import (
 var (
 	// StaticTypeRegexp is a regular expression used to parse datatype
 	StaticTypeRegexp = regexp.MustCompile(`^\s*(\[\])?(\w+)\s*(?:\(\s*(\d+)?\s*(?:\)|,\s*(\d+)\s*\)))?$`)
+	// StaticTimezoneRegexp is a regular expression used to parse time zone
+	StaticTimezoneRegexp = regexp.MustCompile(`((?: [A-Za-z]+[ ]?[+-]?|Z| [+-])(?:[0-9]{1,2}(?::?[0-9]{1,2})?)?)([ ]*[A-Za-z]+)?`)
 )
 
 // set of known data types
@@ -489,7 +491,7 @@ func InterfaceToTime(value interface{}) time.Time {
 
 		dateFormats := []string{"02/01/2006", "02/01/06", "2006-01-02", "2006-Jan-_2", "_2 Jan 2006", "01.02.2006"}
 		timeFormats := []string{"", " 3:04PM", " 15:04", " 15:04:05", "T15:04:05"}
-		zoneFormats := []string{"", " MST-07", " MST", " MST-0700", " -0700", "Z07:00"}
+		zoneFormats := []string{"", " MST-07", " MST", " MST-0700", " -0700", " -0700MST", " -0700 MST", "Z07:00"}
 
 		for _, zoneFormat := range zoneFormats {
 			for _, timeFormat := range timeFormats {
@@ -497,6 +499,15 @@ func InterfaceToTime(value interface{}) time.Time {
 					currentFormat := dateFormat + timeFormat + zoneFormat
 					newValue, err := time.Parse(currentFormat, typedValue)
 					if err == nil {
+						if zoneFormat != "" {
+							str := newValue.Format(dateFormat) + newValue.Format(dateFormat)
+							if matches := StaticTimezoneRegexp.FindStringSubmatch(str); len(matches) > 0 {
+								newValue, _ = MakeUTCTime(newValue, matches[0])
+								if len(matches) == 2 && matches[1] != "" {
+									SetTimeZoneName(newValue, matches[1])
+								}
+							}
+						}
 						return newValue
 					}
 				}

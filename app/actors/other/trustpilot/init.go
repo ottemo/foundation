@@ -14,7 +14,6 @@ func init() {
 	env.RegisterOnConfigStart(setupConfig)
 }
 
-
 // Function for every day checking for email sent to customers who order is already two week
 func schedulerFunc(params map[string]interface{}) error {
 	timeDay := time.Hour * 24
