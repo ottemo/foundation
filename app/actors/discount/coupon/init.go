@@ -12,7 +12,7 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	instance := new(DefaultDiscount)
+	instance := new(Coupon)
 	var _ checkout.InterfaceDiscount = instance
 	checkout.RegisterDiscount(instance)
 

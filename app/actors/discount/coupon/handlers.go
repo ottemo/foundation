@@ -1,10 +1,10 @@
 package coupon
 
 import (
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/api"
 )
 
 // checkoutSuccessHandler will add visitorID to usedCoupons by code of discount

@@ -238,8 +238,14 @@ func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
 			}
 		}
 
+		currentCart := it.GetCart()
+		if currentCart == nil {
+			it.discountsCalculateFlag = false
+			return it.Discounts
+		}
+
 		// adding to discounts the biggest applicable discount per product
-		for _, productInCart := range it.GetCart().GetItems() {
+		for _, productInCart := range currentCart.GetItems() {
 
 			if cartProduct := productInCart.GetProduct(); cartProduct != nil {
 				cartProduct.ApplyOptions(productInCart.GetOptions())
@@ -287,6 +293,46 @@ func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
 	}
 
 	return it.Discounts
+}
+
+// GetAggregatedDiscounts returns aggregated total of used discounts
+func (it *DefaultCheckout) GetAggregatedDiscounts() []checkout.StructAggregatedDiscount {
+	var result []checkout.StructAggregatedDiscount
+
+	groupedDiscounts := make(map[string]checkout.StructAggregatedDiscount)
+	usedDiscounts := it.GetDiscounts()
+
+	for _, currentDiscount := range usedDiscounts {
+		key := currentDiscount.Code + currentDiscount.Type
+		var groupedDiscount checkout.StructAggregatedDiscount
+
+		if savedDiscount, present := groupedDiscounts[key]; present {
+			groupedDiscount = savedDiscount
+
+			groupedDiscount.Amount = groupedDiscount.Amount + currentDiscount.Amount
+
+			if _, present := groupedDiscount.Object[currentDiscount.Object]; present {
+				groupedDiscount.Object[currentDiscount.Object]++
+			} else {
+				groupedDiscount.Object[currentDiscount.Object] = 1
+			}
+		} else {
+			groupedDiscount.Code = currentDiscount.Code
+			groupedDiscount.Name = currentDiscount.Name
+			groupedDiscount.Amount = currentDiscount.Amount
+			groupedDiscount.Type = currentDiscount.Type
+
+			groupedDiscount.Object = map[string]int{currentDiscount.Object: 1}
+		}
+
+		groupedDiscounts[key] = groupedDiscount
+	}
+
+	for _, discount := range groupedDiscounts {
+		result = append(result, discount)
+	}
+
+	return result
 }
 
 // GetSubtotal returns subtotal total for current checkout

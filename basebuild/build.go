@@ -33,7 +33,6 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate" // "Flat Rate" shipping method
 	_ "github.com/ottemo/foundation/app/actors/shipping/usps"     // USPS shipping method
 
-	_ "github.com/ottemo/foundation/app/actors/discount"          // Discount module
 	_ "github.com/ottemo/foundation/app/actors/discount/coupon"   // Coupon based discounts
 	_ "github.com/ottemo/foundation/app/actors/discount/giftcard" // Gift Cards
 	_ "github.com/ottemo/foundation/app/actors/tax"               // Tax Rates

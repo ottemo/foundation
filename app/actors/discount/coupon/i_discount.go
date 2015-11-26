@@ -1,8 +1,8 @@
 package coupon
 
 import (
-	"time"
 	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
@@ -10,22 +10,22 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// GetName returns name of current discount implementation
-func (it *DefaultDiscount) GetName() string {
+// GetName returns the name of the current coupon implementation
+func (it *Coupon) GetName() string {
 	return "CouponDiscount"
 }
 
-// GetCode returns code of current discount implementation
-func (it *DefaultDiscount) GetCode() string {
+// GetCode returns the code of the current coupon implementation
+func (it *Coupon) GetCode() string {
 	return "coupon_discount"
 }
 
-// CalculateDiscount calculates and returns a set of discounts applied to given checkout
-func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout) []checkout.StructDiscount {
+// CalculateDiscount calculates and returns a set of coupons applied to the provided checkout
+func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout) []checkout.StructDiscount {
 
 	var result []checkout.StructDiscount
 
-	// checking session for applied coupon codes
+	// check session for applied coupon codes
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
 
 		appliedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
@@ -171,8 +171,8 @@ func (it *DefaultDiscount) CalculateDiscount(checkoutInstance checkout.Interface
 	return result
 }
 
-// checks discount limiting parameters for correspondence to current checkout values
-// return qty of usages if discount is allowed for current checkout and satisfy all conditions
+// check coupon limitation parameters for correspondence to current checkout values
+// return qty of usages if coupon is allowed for current checkout and satisfies all conditions
 func discountsUsage(checkoutInstance checkout.InterfaceCheckout, couponDiscount map[string]interface{}) int {
 
 	result := -1
@@ -183,15 +183,17 @@ func discountsUsage(checkoutInstance checkout.InterfaceCheckout, couponDiscount 
 			productsInCart := make(map[string]int)
 
 			// collect products to one map by ID and qty
-			for _, productInCart := range checkoutInstance.GetCart().GetItems() {
-				productID := productInCart.GetProductID()
-				productQty := productInCart.GetQty()
+			if currentCart := checkoutInstance.GetCart(); currentCart != nil {
+				for _, productInCart := range currentCart.GetItems() {
+					productID := productInCart.GetProductID()
+					productQty := productInCart.GetQty()
 
-				if qty, present := productsInCart[productID]; present {
-					productsInCart[productID] = qty + productQty
-					continue
+					if qty, present := productsInCart[productID]; present {
+						productsInCart[productID] = qty + productQty
+						continue
+					}
+					productsInCart[productID] = productQty
 				}
-				productsInCart[productID] = productQty
 			}
 
 			for limitingKey, limitingValue := range limitations {

@@ -149,7 +149,7 @@ func (it *DefaultCronSchedule) GetInfo() map[string]interface{} {
 // to execute with empty params you should use RunTask(make(map[string]interface{})
 // otherwise schedule params will be used
 func (it *DefaultCronSchedule) RunTask(params map[string]interface{}) error {
-	if (params != nil) {
+	if params != nil {
 		return it.task(params)
 	}
 
