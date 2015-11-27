@@ -82,3 +82,9 @@ type InterfaceApplicationContext interface {
 	GetResponseResult() interface{}
 	SetResponseResult(value interface{}) error
 }
+
+// InterfaceJSONLogger is an interface to log mapped data
+type InterfaceJSONLogger interface {
+	GetName() string
+	Log(storage string, data map[string]interface{}) error
+}
