@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -425,7 +426,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 // GetColumnType returns SQL like type of attribute in current collection, or if not present ""
 func (it *DBCollection) GetColumnType(columnName string) string {
 	if columnName == "_id" {
-		return "string"
+		return db.ConstTypeID
 	}
 
 	// looking in cache first

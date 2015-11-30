@@ -3,6 +3,7 @@ package mongo
 import (
 	"sort"
 
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -246,7 +247,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 func (it *DBCollection) GetColumnType(ColumnName string) string {
 	// _id - has static type
 	if ColumnName == "_id" {
-		return "string"
+		return db.ConstTypeID
 	}
 
 	// looking in cache first

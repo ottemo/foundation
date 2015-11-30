@@ -12,6 +12,8 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+
+	"strings"
 )
 
 // SendOrderConfirmationMail sends an order confirmation email
@@ -24,6 +26,9 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 
 	confirmationEmail := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
 	if confirmationEmail != "" {
+		timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+		giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
+
 		email := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 		if email == "" {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1202fcfb-da3f-4a0f-9a2e-92f288fd3881", "customer email for order is not set")
@@ -46,7 +51,20 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 			for optionName, optionKeys := range item.GetOptions() {
 				optionMap := utils.InterfaceToMap(optionKeys)
 				options[optionName] = optionMap["value"]
+
+				// Giftcard's delivery date
+				if strings.Contains(item.GetSku(), giftCardSku) {
+					if utils.IsAmongStr(optionName, "Date", "Delivery Date", "send_date", "Send Date", "date") {
+						// Localize and format the date
+						giftcardDeliveryDate, _ := utils.MakeTZTime(utils.InterfaceToTime(optionMap["value"]), timeZone)
+						if !utils.IsZeroTime(giftcardDeliveryDate) {
+							//TODO: Should be "Monday Jan 2 15:04 (MST)" but we have a bug
+							options[optionName] = giftcardDeliveryDate.Format("Monday Jan 2 15:04")
+						}
+					}
+				}
 			}
+
 			orderItems = append(orderItems, map[string]interface{}{
 				"name":    item.GetName(),
 				"options": options,
@@ -56,9 +74,8 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 		}
 
 		// convert date of order creation to store time zone
-		timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 		if date, present := orderMap["created_at"]; present {
-			convertedDate, _ := utils.MakeUTCOffsetTime(utils.InterfaceToTime(date), timeZone)
+			convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
 			if !utils.IsZeroTime(convertedDate) {
 				orderMap["created_at"] = convertedDate
 			}

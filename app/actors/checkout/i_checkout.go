@@ -676,8 +676,8 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 
 	result["items"] = orderItems
 
-	// return order in map in case if success processing was already executed
-	if previousOrderStatus == order.ConstOrderStatusProcessed || previousOrderStatus == order.ConstOrderStatusCompleted {
+	// return order in map if order has already been processed or marked completed by merchant
+	if previousOrderStatus == order.ConstOrderStatusProcessed || previousOrderStatus == order.ConstOrderStatusCancelled {
 		return result, nil
 	}
 

@@ -457,13 +457,12 @@ func APIUpdateDiscount(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	if value, present := postValues["until"]; present {
-		record["until"], _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		record["until"] = utils.InterfaceToTime(value)
 	}
 
 	if value, present := postValues["since"]; present {
-		record["since"], _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		record["since"] = utils.InterfaceToTime(value)
 	}
 
 	// saving updates

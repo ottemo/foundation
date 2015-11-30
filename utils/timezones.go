@@ -5,6 +5,7 @@ refer to http://www.timeanddate.com/time/zones/
 */
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -297,8 +298,7 @@ func MakeUTCOffsetTime(inTime time.Time, timeZone string) (time.Time, time.Durat
 		return time.Time{}, time.Duration(0)
 	}
 
-	locale := time.FixedZone("UTC", InterfaceToInt(zoneOffset.Seconds()))
-	resultTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), locale)
+	resultTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), time.UTC)
 	resultTime = resultTime.Add(zoneOffset)
 
 	return resultTime, zoneOffset
@@ -309,16 +309,19 @@ func MakeUTCOffsetTime(inTime time.Time, timeZone string) (time.Time, time.Durat
 func MakeTZTime(inTime time.Time, timeZone string) (time.Time, time.Duration) {
 	zoneName, zoneOffset := ParseTimeZone(timeZone)
 
-	locale := time.FixedZone(zoneName, InterfaceToInt(zoneOffset.Seconds()))
-
 	if timeZoneOffset, present := TimeZones[zoneName]; present {
+		if zoneOffset.Hours() != 0 {
+			zoneName = fmt.Sprintf("%s%+0.2d", zoneName, InterfaceToInt(zoneOffset.Hours()))
+		}
 		zoneOffset += timeZoneOffset
 	} else {
 		return time.Time{}, time.Duration(0)
 	}
+	locale := time.FixedZone(zoneName, InterfaceToInt(zoneOffset.Seconds()))
 
 	resultTime := time.Date(inTime.Year(), inTime.Month(), inTime.Day(), inTime.Hour(), inTime.Minute(), inTime.Second(), inTime.Nanosecond(), locale)
 	resultTime = resultTime.Add(zoneOffset)
+	resultTime = resultTime.In(locale)
 
 	return resultTime, zoneOffset
 }
@@ -335,4 +338,13 @@ func TimeToUTCTime(inTime time.Time) time.Time {
 	result = result.Add(time.Second * time.Duration(-offset))
 
 	return result
+}
+
+// SetTimeZoneName set name to zone for given time object
+func SetTimeZoneName(inTime time.Time, zoneName string) time.Time {
+
+	_, offset := inTime.Zone()
+	loc := time.FixedZone(zoneName, offset)
+
+	return inTime.In(loc)
 }

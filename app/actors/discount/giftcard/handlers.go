@@ -174,6 +174,8 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	cartProducts := orderProceed.GetItems()
 	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
+	giftCardsToSendImmediately := make([]string, 0)
+
 	// check cart for gift card's and save in table if they present
 	for _, cartItem := range cartProducts {
 		giftCardSku := cartItem.GetSku()
@@ -184,6 +186,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 			recipientName := orderProceed.Get("customer_name")
 			giftCardAmount := float64(0)
 			deliveryDate := time.Now()
+			currentTime := time.Now()
 			customMessage := ""
 
 			// split item SKU with config gift card SKU value and sign "-" take last element
@@ -192,7 +195,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 			// reed recipient options
 			productOptions := cartItem.GetOptions()
-			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "Recipient email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
+			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "Recipient Email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
 
 				recipientEmailOption := utils.InterfaceToMap(recipientEmailOption)
 				emailValue, present := recipientEmailOption["value"]
@@ -215,7 +218,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				}
 			}
 
-			if customMessageOption := utils.GetFirstMapValue(productOptions, "Message", "Gift message", "Note", "message"); customMessageOption != nil {
+			if customMessageOption := utils.GetFirstMapValue(productOptions, "Message", "Gift Message", "Note", "message"); customMessageOption != nil {
 				customMessageOption := utils.InterfaceToMap(customMessageOption)
 				messageValue, present := customMessageOption["value"]
 				if present {
@@ -223,7 +226,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				}
 			}
 
-			if deliveryDateOption := utils.GetFirstMapValue(productOptions, "Date", "Delivery date", "send_date", "send date", "date"); deliveryDateOption != nil {
+			if deliveryDateOption := utils.GetFirstMapValue(productOptions, "Date", "Delivery Date", "send_date", "Send Date", "date"); deliveryDateOption != nil {
 				deliveryDateOption := utils.InterfaceToMap(deliveryDateOption)
 				dateValue, present := deliveryDateOption["value"]
 				if present && !utils.IsZeroTime(utils.InterfaceToTime(dateValue)) {
@@ -260,12 +263,26 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				giftCard["recipient_mailbox"] = recipientEmail
 				giftCard["delivery_date"] = deliveryDate
 
-				if _, err = giftCardCollection.Save(giftCard); err != nil {
+				giftCardID, err := giftCardCollection.Save(giftCard)
+				if  err != nil {
 					env.LogError(err)
 					return false
 				}
+				if deliveryDate.Truncate(time.Hour).Before(currentTime) {
+					giftCardsToSendImmediately = append(giftCardsToSendImmediately, giftCardID)
+				}
 			}
 		}
+	}
+
+	// run SendTask task to send immediately if delivery_date is today's date
+	if len(giftCardsToSendImmediately) > 0 {
+		params := map[string]interface {} {
+			"giftCards" : giftCardsToSendImmediately,
+			"ignoreDeliveryDate" : true,
+		}
+
+		go SendTask(params)
 	}
 
 	return true
