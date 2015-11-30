@@ -7,12 +7,17 @@ import (
 	"time"
 )
 
-// GetName returns implementation name of our REST API service
+// GetName returns implementation name of JSON logger service
 func (it *DefaultJSONLogger) GetName() string {
 	return "jsonlogger"
 }
 
+// Log allows to write mapped data into log file
 func (it *DefaultJSONLogger) Log(storage string, data map[string]interface{}) error {
+
+	if storage == "" {
+		storage = defaultLogFile
+	}
 
 	logData := map[string]interface{}{
 		"@version":   "1",

@@ -15,12 +15,12 @@ const (
 
 // Package global variables
 var (
-	baseDirectory = "./var/log/" // folder location where to store logs
+	baseDirectory     = "./var/log/"     // folder location where to store logs
+	defaultLogFile    = "systemJSON.log" // filename for default log
+	defaultErrorsFile = "errorsJSON.log" // filename for json errors log
 
-	errorLogLevel = 5
+	jsonErrorLogLevel = 5
 )
 
 // DefaultJSONLogger is a structure to hold related information
-type DefaultJSONLogger struct {
-	Data interface{}
-}
+type DefaultJSONLogger struct{}

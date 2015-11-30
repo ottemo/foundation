@@ -170,6 +170,21 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 		if ConstUseDebugLog {
 			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+
+			if jsonLogger := api.GetJSONLogger(); jsonLogger != nil {
+				requestLogMap := map[string]interface{}{
+					"type":       "REQUEST",
+					"identifier": debugRequestIdentifier,
+					"session":    currentSession.GetID(),
+					"url":        req.RequestURI,
+				}
+				if content != nil {
+					requestLogMap["content"] = fmt.Sprintf("%#v\n", content)
+				}
+				if err := jsonLogger.Log(ConstDebugJSONLogStorage, requestLogMap); err != nil {
+					env.ErrorDispatch(err)
+				}
+			}
 		}
 
 		// event for request
@@ -185,6 +200,7 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		// API handler processing
 		result, err := handler(applicationContext)
 		if err != nil {
+			eventData["responseError"] = err
 			env.LogError(err)
 		}
 
@@ -249,6 +265,19 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		if ConstUseDebugLog {
 			responseTime := time.Now().Sub(startTime)
 			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+			if jsonLogger := api.GetJSONLogger(); jsonLogger != nil {
+				requestLogMap := map[string]interface{}{
+					"type":         "RESPONSE",
+					"identifier":   debugRequestIdentifier,
+					"responseTime": responseTime,
+					"session":      currentSession.GetID(),
+					"result":       fmt.Sprintf("%s\n", result),
+				}
+
+				if err := jsonLogger.Log(ConstDebugJSONLogStorage, requestLogMap); err != nil {
+					env.ErrorDispatch(err)
+				}
+			}
 		}
 
 		if value, ok := result.([]byte); ok {
