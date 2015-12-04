@@ -492,8 +492,9 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
+	currentPaymentMethod := currentCheckout.GetPaymentMethod()
 	// set ZeroPayment method for checkout without payment method
-	if currentCheckout.GetPaymentMethod() == nil {
+	if currentPaymentMethod == nil || (currentCheckout.GetGrandTotal() == 0 && currentPaymentMethod.GetCode() != zeropay.ConstPaymentZeroPaymentCode) {
 		for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
 			if zeropay.ConstPaymentZeroPaymentCode == paymentMethod.GetCode() {
 				if paymentMethod.IsAllowed(currentCheckout) {
