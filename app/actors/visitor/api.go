@@ -695,7 +695,7 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 		if strings.Contains(err.Error(), "Unable to find") {
 			return "ok", nil
 		}
-		
+
 		return nil, env.ErrorDispatch(err)
 	}
 
