@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 	"runtime"
+	"sync"
 )
 
 // package constants
@@ -13,6 +14,7 @@ const (
 // package variables
 var (
 	contexts = make(map[string]map[string]interface{})
+	contextsMutex sync.RWMutex
 
 	proxies      = make(map[uintptr]uint)
 	proxyBase    uint
@@ -61,12 +63,14 @@ func getCallStack(skip int) []uintptr {
 	pcSize := 100
 	pc := make([]uintptr, pcSize)
 	n := runtime.Callers(2+skip, pc)
+	//fmt.Println(" n: ", n)
 	for n >= pcSize {
 		pcSize = pcSize * 10
 		pc = make([]uintptr, pcSize)
 		runtime.Callers(2+skip, pc)
 	}
 	pcSize = n - 1
+	//fmt.Println(" n: ", n, "pcSize: ", pcSize)
 	return pc[0 : n-1]
 }
 
@@ -87,12 +91,20 @@ func MakeContext(target func()) {
 	// looking for already in use contexts for stack
 	var proxyIndex uint
 	var contextKey string
+
+
 	for true {
 		contextKey = fmt.Sprintf("%s%d", pcSource, proxyIndex)
-		if _, present := contexts[contextKey]; present {
+
+		contextsMutex.Lock()
+		_, present := contexts[contextKey]
+		contextsMutex.Unlock()
+
+		if present {
 			proxyIndex++
 			continue
 		}
+
 		break
 	}
 
@@ -105,10 +117,15 @@ func MakeContext(target func()) {
 		fmt.Println("making context: ", contextKey)
 	}
 
+	contextsMutex.Lock()
 	contexts[contextKey] = make(map[string]interface{})
-	defer delete(contexts, contextKey)
+	contextsMutex.Unlock()
 
 	proxy(proxyIndex, target)
+
+	contextsMutex.Lock()
+	delete(contexts, contextKey)
+	contextsMutex.Unlock()
 }
 
 // GetContext - returns context assigned to current call-stack, or nil if no context
@@ -154,9 +171,13 @@ func GetContext() map[string]interface{} {
 		fmt.Println("context lookup: ", contextKey)
 	}
 
-	if context, present := contexts[contextKey]; present {
+	contextsMutex.Lock()
+	context, present := contexts[contextKey]
+	if present {
+		contextsMutex.Unlock()
 		return context
 	}
+	contextsMutex.Unlock()
 
 	return nil
 }
