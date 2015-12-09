@@ -14,6 +14,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -183,10 +184,18 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 		env.Event("api.request", eventData)
 
 		// API handler processing
-		result, err := handler(applicationContext)
-		if err != nil {
-			env.LogError(err)
-		}
+		var result interface{}
+
+		context.MakeContext(func() {
+			if context := context.GetContext(); context != nil {
+				context["context"] = applicationContext
+			}
+
+			result, err = handler(applicationContext)
+			if err != nil {
+				env.LogError(err)
+			}
+		})
 
 		if err == nil {
 			applicationContext.Result = result
