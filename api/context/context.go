@@ -13,7 +13,7 @@ const (
 
 // package variables
 var (
-	contexts = make(map[string]map[string]interface{})
+	contexts      = make(map[string]map[string]interface{})
 	contextsMutex sync.RWMutex
 
 	proxies      = make(map[uintptr]uint)
@@ -32,10 +32,12 @@ func init() {
 		if _, present := proxies[pc]; !present {
 			proxies[pc] = i
 		} else {
-			i = 1000
+			pc, _, _, _ := runtime.Caller(2)
+			proxies[pc] = i - 1
+			i = 9999
 		}
 	}
-	for i < 1000 {
+	for i < 9999 {
 		proxy(i, discoverProxy)
 		i++
 	}
@@ -43,18 +45,21 @@ func init() {
 
 	// determination of proxy start point
 	discoverStartPC := func() {
+		// pointer to MakeContext func address,
+		// just after it call proxies comming
 		proxyStartPC, _, _, _ = runtime.Caller(2)
 	}
 	MakeContext(discoverStartPC)
 
 	// debug output
 	if debugOutput {
-		fmt.Println("init proxies:")
+		tmp := fmt.Sprintln("init proxies:")
 		for proxy, index := range proxies {
 			file, line := runtime.FuncForPC(proxy).FileLine(proxy)
-			fmt.Printf("%x=%x - %s:%d\n", index, proxy, file, line)
+			tmp += fmt.Sprintf("%x=%x - %s:%d\n", index, proxy, file, line)
 		}
-		fmt.Printf("proxyStartPC = %x\n\n", proxyStartPC)
+		tmp += fmt.Sprintf("proxyStartPC = %x\n\n", proxyStartPC)
+		fmt.Println(tmp)
 	}
 }
 
@@ -62,15 +67,15 @@ func init() {
 func getCallStack(skip int) []uintptr {
 	pcSize := 100
 	pc := make([]uintptr, pcSize)
+
 	n := runtime.Callers(2+skip, pc)
-	//fmt.Println(" n: ", n)
 	for n >= pcSize {
 		pcSize = pcSize * 10
 		pc = make([]uintptr, pcSize)
 		runtime.Callers(2+skip, pc)
 	}
+
 	pcSize = n - 1
-	//fmt.Println(" n: ", n, "pcSize: ", pcSize)
 	return pc[0 : n-1]
 }
 
@@ -92,40 +97,39 @@ func MakeContext(target func()) {
 	var proxyIndex uint
 	var contextKey string
 
-
 	for true {
 		contextKey = fmt.Sprintf("%s%d", pcSource, proxyIndex)
 
 		contextsMutex.Lock()
-		_, present := contexts[contextKey]
-		contextsMutex.Unlock()
-
-		if present {
+		if _, present := contexts[contextKey]; present {
+			contextsMutex.Unlock()
 			proxyIndex++
 			continue
 		}
+
+		contexts[contextKey] = make(map[string]interface{})
+		contextsMutex.Unlock()
 
 		break
 	}
 
 	if debugOutput {
-		fmt.Println("MakeContext:")
+		debugLogValue := fmt.Sprintln("MakeContext:")
 		for _, x := range pc {
 			file, line := runtime.FuncForPC(x).FileLine(x)
-			fmt.Printf("%x - %s:%d\n", x, file, line)
+			debugLogValue += fmt.Sprintf("%x - %s:%d\n", x, file, line)
 		}
-		fmt.Println("making context: ", contextKey)
+		debugLogValue += fmt.Sprintln("making context: ", contextKey)
+		fmt.Println(debugLogValue)
 	}
 
-	contextsMutex.Lock()
-	contexts[contextKey] = make(map[string]interface{})
-	contextsMutex.Unlock()
+	defer func() {
+		contextsMutex.Lock()
+		delete(contexts, contextKey)
+		contextsMutex.Unlock()
+	}()
 
 	proxy(proxyIndex, target)
-
-	contextsMutex.Lock()
-	delete(contexts, contextKey)
-	contextsMutex.Unlock()
 }
 
 // GetContext - returns context assigned to current call-stack, or nil if no context
@@ -135,7 +139,7 @@ func GetContext() map[string]interface{} {
 
 	// looking for context beginning
 	var baseIndex int
-	for i := pcSize - 1; i > 0; i-- {
+	for i := 0; i < pcSize; i++ {
 		if pc[i] == proxyStartPC {
 			baseIndex = i
 			break
@@ -150,7 +154,7 @@ func GetContext() map[string]interface{} {
 
 	for i := baseIndex - 1; i >= 0; i-- {
 		if digitValue, present := proxies[pc[i]]; present {
-			proxyIndex += digitValue * proxyPosition * proxyBase
+			proxyIndex += digitValue
 			proxyPosition++
 		} else {
 			break
@@ -163,23 +167,22 @@ func GetContext() map[string]interface{} {
 
 	contextKey := fmt.Sprintf("%s%d", pcSource, proxyIndex)
 
-	if debugOutput {
-		for _, x := range pc {
-			file, line := runtime.FuncForPC(x).FileLine(x)
-			fmt.Printf("%x - %s:%d\n", x, file, line)
-		}
-		fmt.Println("context lookup: ", contextKey)
-	}
-
+	// if no context for this key, function will return nil
 	contextsMutex.Lock()
-	context, present := contexts[contextKey]
-	if present {
-		contextsMutex.Unlock()
-		return context
-	}
+	context := contexts[contextKey]
 	contextsMutex.Unlock()
 
-	return nil
+	if debugOutput {
+		debugLogValue := fmt.Sprintln("context lookup: ", contextKey)
+		for _, x := range pc {
+			file, line := runtime.FuncForPC(x).FileLine(x)
+			debugLogValue += fmt.Sprintf("%x - %s:%d\n", x, file, line)
+		}
+		debugLogValue += fmt.Sprint(context)
+		fmt.Println(debugLogValue)
+	}
+
+	return context
 }
 
 // proxy points - the place which makes unique pc for target function call
@@ -703,6 +706,6 @@ func proxy(index uint, target func()) {
 	}
 
 	if index > 0xff {
-		proxy(index%0xff, target)
+		proxy(index-0xff, target)
 	}
 }
