@@ -15,9 +15,10 @@ const (
 
 // Package global variables
 var (
-	baseDirectory     = "./var/log/" // folder location where to store logs
-	defaultLogFile    = "system.log" // filename for default log
-	defaultErrorsFile = "errors.log" // filename for errors log
+	baseDirectory         = "./var/log/"     // folder location where to store logs
+	defaultLogFile        = "system.log"     // filename for default log
+	defaultErrorsFile     = "errors.log"     // filename for errors log
+	defaultJSONErrorsFile = "errorsJSON.log" // filename for JSON errors log
 
 	errorLogLevel = 5
 )

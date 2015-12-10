@@ -90,6 +90,7 @@ type InterfaceErrorBus interface {
 // InterfaceLogger is an interface to system logging service
 type InterfaceLogger interface {
 	Log(storage string, prefix string, message string)
+	LogMap(storage string, data map[string]interface{})
 
 	LogError(err error)
 	LogMessage(message string)
