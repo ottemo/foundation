@@ -8,6 +8,7 @@ import (
 var (
 	currentRestService          InterfaceRestService    // currently registered RESTFul service in system
 	currentSessionService       InterfaceSessionService // currently registered session service in system
+	currentJSONLogger           InterfaceJSONLogger     // currently registered JSON logger in system
 	callbacksOnRestServiceStart = []func() error{}      // set of callback function on RESTFul service start
 )
 
@@ -48,6 +49,17 @@ func RegisterSessionService(newService InterfaceSessionService) error {
 	return nil
 }
 
+// RegisterJSONLogger registers JSON logger in the system
+//   - will cause error if there are couple candidates for that role
+func RegisterJSONLogger(newService InterfaceJSONLogger) error {
+	if currentJSONLogger == nil {
+		currentJSONLogger = newService
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "aa0dda6d-f133-4da1-a6fe-ea5b3938db14", "Session service '"+currentJSONLogger.GetName()+"' was already registered")
+	}
+	return nil
+}
+
 // GetRestService returns currently using RESTFul service implementation
 func GetRestService() InterfaceRestService {
 	return currentRestService
@@ -56,4 +68,9 @@ func GetRestService() InterfaceRestService {
 // GetSessionService returns currently using session service implementation
 func GetSessionService() InterfaceSessionService {
 	return currentSessionService
+}
+
+// GetJSONLogger returns currently using JSON logger implementation
+func GetJSONLogger() InterfaceJSONLogger {
+	return currentJSONLogger
 }

@@ -8,10 +8,11 @@ import (
 	_ "github.com/ottemo/foundation/env/ini"      // INI Configuration service
 	_ "github.com/ottemo/foundation/env/logger"   // File-based Logging service
 
-	_ "github.com/ottemo/foundation/api/rest"      // RESTful API service
-	_ "github.com/ottemo/foundation/api/session"   // Session Management service
-	_ "github.com/ottemo/foundation/impex"         // Import/Export service
-	_ "github.com/ottemo/foundation/media/fsmedia" // Media Storage service
+	_ "github.com/ottemo/foundation/api/jsonlogger" // File-based Logging service for JSON format data
+	_ "github.com/ottemo/foundation/api/rest"       // RESTful API service
+	_ "github.com/ottemo/foundation/api/session"    // Session Management service
+	_ "github.com/ottemo/foundation/impex"          // Import/Export service
+	_ "github.com/ottemo/foundation/media/fsmedia"  // Media Storage service
 
 	_ "github.com/ottemo/foundation/app/actors/category"        // Category module
 	_ "github.com/ottemo/foundation/app/actors/cms"             // CMS Page/Block module
