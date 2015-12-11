@@ -2,11 +2,13 @@ package logger
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/env"
 )
 
-// handleErrorToJSONLog collect required info from stack context to map for logging purpose
-func handleErrorToJSONLog(err error, stackContext map[string]interface{}) map[string]interface{} {
+// logErrorToJSON collect required info from stack context to map for logging purpose
+func (it *DefaultLogger) logErrorToJSON(err error) {
+	stackContext := context.GetContext()
 	result := make(map[string]interface{})
 
 	if ottemoErr, ok := err.(env.InterfaceOttemoError); ok {
@@ -41,5 +43,5 @@ func handleErrorToJSONLog(err error, stackContext map[string]interface{}) map[st
 		result["result"] = response
 	}
 
-	return result
+	it.LogMap(defaultJSONErrorsFile, result)
 }

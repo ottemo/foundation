@@ -7,7 +7,11 @@ import (
 
 // EncodeToJSONString encodes inputData to JSON string if it's possible
 func EncodeToJSONString(inputData interface{}) string {
-	result, _ := json.Marshal(inputData)
+	if result, err := json.Marshal(inputData); err == nil {
+		return string(result)
+	}
+
+	result, _ := json.Marshal(checkToJSON(inputData, 0))
 	return string(result)
 }
 
@@ -47,14 +51,8 @@ func DecodeJSONToStringKeyMap(jsonData interface{}) (map[string]interface{}, err
 	return result, err
 }
 
-// HardEncodeToJSONString encodes inputData to JSON string
-func HardEncodeToJSONString(inputData interface{}) string {
-	result, _ := json.Marshal(makeValidToJSON(inputData, 0))
-	return string(result)
-}
-
-// makeValidToJSON internal function to convert data to JSON, some data may by not present after it
-func makeValidToJSON(value interface{}, count int) interface{} {
+// checkToJSON internal function to convert data to JSON, some data may by not present after it
+func checkToJSON(value interface{}, count int) interface{} {
 	if _, err := json.Marshal(value); err == nil {
 		return value
 	}
@@ -69,7 +67,7 @@ func makeValidToJSON(value interface{}, count int) interface{} {
 	switch typedValue := value.(type) {
 	case map[string]interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = makeValidToJSON(partValue, count)
+			typedValue[key] = checkToJSON(partValue, count)
 		}
 		result = typedValue
 		break
@@ -77,14 +75,14 @@ func makeValidToJSON(value interface{}, count int) interface{} {
 	case map[interface{}]interface{}:
 		convertedMap := make(map[string]interface{})
 		for key, partValue := range typedValue {
-			convertedMap[InterfaceToString(key)] = makeValidToJSON(partValue, count)
+			convertedMap[InterfaceToString(key)] = checkToJSON(partValue, count)
 		}
 		result = convertedMap
 		break
 
 	case []interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = makeValidToJSON(partValue, count)
+			typedValue[key] = checkToJSON(partValue, count)
 		}
 		result = typedValue
 		break

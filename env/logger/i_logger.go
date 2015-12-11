@@ -1,12 +1,10 @@
 package logger
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -42,14 +40,7 @@ func (it *DefaultLogger) LogMap(storage string, data map[string]interface{}) {
 		logData[key] = value
 	}
 
-	message := "\n"
-	jsonMessage, err := json.Marshal(logData)
-	if err == nil {
-		message = string(jsonMessage) + message
-	} else {
-		message = utils.HardEncodeToJSONString(logData) + message
-	}
-
+	message := utils.EncodeToJSONString(logData) + "\n"
 	logFile, err := os.OpenFile(baseDirectory+storage, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
 		fmt.Println(message)
@@ -64,24 +55,15 @@ func (it *DefaultLogger) LogMap(storage string, data map[string]interface{}) {
 // LogError makes error log
 func (it *DefaultLogger) LogError(err error) {
 	if err != nil {
-		logToJSON := false
 		if ottemoErr, ok := err.(env.InterfaceOttemoError); ok {
 			if ottemoErr.ErrorLevel() <= errorLogLevel && !ottemoErr.IsLogged() {
 				it.Log(defaultErrorsFile, env.ConstLogPrefixError, ottemoErr.ErrorFull())
 				ottemoErr.MarkLogged()
-				logToJSON = true
+				it.logErrorToJSON(err)
 			}
 		} else {
 			it.Log(defaultErrorsFile, env.ConstLogPrefixError, err.Error())
-			logToJSON = true
-		}
-
-		if logToJSON {
-			stackContext := make(map[string]interface{})
-			for key, value := range context.GetContext() {
-				stackContext[key] = value
-			}
-			it.LogMap(defaultJSONErrorsFile, handleErrorToJSONLog(err, stackContext))
+			it.logErrorToJSON(err)
 		}
 	}
 }
