@@ -11,7 +11,7 @@ func EncodeToJSONString(inputData interface{}) string {
 		return string(result)
 	}
 
-	result, _ := json.Marshal(checkToJSON(inputData, 0))
+	result, _ := json.Marshal(checkToJSON(inputData, nil))
 	return string(result)
 }
 
@@ -52,22 +52,23 @@ func DecodeJSONToStringKeyMap(jsonData interface{}) (map[string]interface{}, err
 }
 
 // checkToJSON internal function to convert data to JSON, some data may by not present after it
-func checkToJSON(value interface{}, count int) interface{} {
+func checkToJSON(value interface{}, executeStack []interface{}) interface{} {
 	if _, err := json.Marshal(value); err == nil {
 		return value
 	}
-	// limiting for execution from the same function
-	count++
-	if count >= 25 {
-		return InterfaceToString(value)
+
+	// prevent from infinite loop
+	if IsInArray(value, executeStack) {
+		return "*"+InterfaceToString(value)
 	}
+	executeStack = append(executeStack, value)
 
 	// this switch should use this function in case we can't convert object to json string using native method
 	var result interface{}
 	switch typedValue := value.(type) {
 	case map[string]interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = checkToJSON(partValue, count)
+			typedValue[key] = checkToJSON(partValue, executeStack)
 		}
 		result = typedValue
 		break
@@ -75,14 +76,14 @@ func checkToJSON(value interface{}, count int) interface{} {
 	case map[interface{}]interface{}:
 		convertedMap := make(map[string]interface{})
 		for key, partValue := range typedValue {
-			convertedMap[InterfaceToString(key)] = checkToJSON(partValue, count)
+			convertedMap[InterfaceToString(key)] = checkToJSON(partValue, executeStack)
 		}
 		result = convertedMap
 		break
 
 	case []interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = checkToJSON(partValue, count)
+			typedValue[key] = checkToJSON(partValue, executeStack)
 		}
 		result = typedValue
 		break
