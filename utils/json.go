@@ -11,7 +11,7 @@ func EncodeToJSONString(inputData interface{}) string {
 		return string(result)
 	}
 
-	result, _ := json.Marshal(checkToJSON(inputData, nil))
+	result, _ := json.Marshal(checkToJSON(inputData, make([]interface {}, 0)))
 	return string(result)
 }
 
