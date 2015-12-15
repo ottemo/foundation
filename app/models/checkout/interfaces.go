@@ -82,6 +82,7 @@ type InterfacePaymentMethod interface {
 	GetType() string
 
 	IsAllowed(checkoutInstance InterfaceCheckout) bool
+	IsTokenable(checkoutInstance InterfaceCheckout) bool
 
 	Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)
 	Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)

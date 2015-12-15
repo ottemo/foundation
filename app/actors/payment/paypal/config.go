@@ -278,5 +278,20 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathPayPalPayflowTokenable,
+		Value:       false,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
+		Options:     nil,
+		Label:       "Credit card saving",
+		Description: "enables/disables saving of credit card to visitor",
+		Image:       "",
+	}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

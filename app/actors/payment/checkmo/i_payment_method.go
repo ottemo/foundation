@@ -23,6 +23,11 @@ func (it *CheckMoneyOrder) GetType() string {
 	return checkout.ConstPaymentTypeSimple
 }
 
+// IsTokenable checks for method applicability
+func (it *CheckMoneyOrder) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
+}
+
 // IsAllowed checks for method applicability
 func (it *CheckMoneyOrder) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
