@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // EncodeToJSONString encodes inputData to JSON string if it's possible
@@ -11,7 +12,7 @@ func EncodeToJSONString(inputData interface{}) string {
 		return string(result)
 	}
 
-	result, _ := json.Marshal(checkToJSON(inputData, make([]interface {}, 0)))
+	result, _ := json.Marshal(checkToJSON(inputData, 0))
 	return string(result)
 }
 
@@ -52,23 +53,23 @@ func DecodeJSONToStringKeyMap(jsonData interface{}) (map[string]interface{}, err
 }
 
 // checkToJSON internal function to convert data to JSON, some data may by not present after it
-func checkToJSON(value interface{}, executeStack []interface{}) interface{} {
+func checkToJSON(value interface{}, depth int) interface{} {
 	if _, err := json.Marshal(value); err == nil {
 		return value
 	}
 
-	// prevent from infinite loop
-	if IsInArray(value, executeStack) {
-		return "*"+InterfaceToString(value)
+	// prevent from infinite loop of this function
+	if depth >= 25 {
+		return "*" + fmt.Sprint(value)
 	}
-	executeStack = append(executeStack, value)
+	depth++
 
 	// this switch should use this function in case we can't convert object to json string using native method
 	var result interface{}
 	switch typedValue := value.(type) {
 	case map[string]interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = checkToJSON(partValue, executeStack)
+			typedValue[key] = checkToJSON(partValue, depth)
 		}
 		result = typedValue
 		break
@@ -76,25 +77,24 @@ func checkToJSON(value interface{}, executeStack []interface{}) interface{} {
 	case map[interface{}]interface{}:
 		convertedMap := make(map[string]interface{})
 		for key, partValue := range typedValue {
-			convertedMap[InterfaceToString(key)] = checkToJSON(partValue, executeStack)
+			convertedMap[InterfaceToString(key)] = checkToJSON(partValue, depth)
 		}
 		result = convertedMap
 		break
 
 	case []interface{}:
 		for key, partValue := range typedValue {
-			typedValue[key] = checkToJSON(partValue, executeStack)
+			typedValue[key] = checkToJSON(partValue, depth)
 		}
 		result = typedValue
 		break
 
 	default:
-		return InterfaceToString(value)
+		return fmt.Sprint(value)
 	}
 
-	_, err := json.Marshal(result)
-	if err == nil {
-		return result
+	if _, err := json.Marshal(result); err != nil {
+		return fmt.Sprint(value)
 	}
-	return InterfaceToString(value)
+	return result
 }
