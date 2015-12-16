@@ -88,13 +88,15 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 
 	imageBasePathValidator := func(newValue interface{}) (interface{}, error) {
 		if newValue, ok := newValue.(string); ok {
+			mediaPath := newValue
 			if length := len(newValue); length > 1 && newValue[length-1:length] == "/" {
-				return newValue[0 : length-1], nil
+				mediaPath = newValue[0 : length-1]
 			}
-			return newValue, nil
+			mediaBasePath = mediaPath
+			return mediaBasePath, nil
 		}
 
-		return "media", env.ErrorNew(ConstErrorModule,
+		return mediaBasePath, env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
 			"eb97378b-a940-45b4-a653-3bdb47fe6b16",
 			"Unexpected value found for the image base url.")

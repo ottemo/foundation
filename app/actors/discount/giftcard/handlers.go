@@ -174,7 +174,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	cartProducts := orderProceed.GetItems()
 	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
-	giftCardsToSendImmediately := make([]string, 0)
+	var giftCardsToSendImmediately []string
 
 	// check cart for gift card's and save in table if they present
 	for _, cartItem := range cartProducts {
@@ -264,7 +264,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				giftCard["delivery_date"] = deliveryDate
 
 				giftCardID, err := giftCardCollection.Save(giftCard)
-				if  err != nil {
+				if err != nil {
 					env.LogError(err)
 					return false
 				}
@@ -277,9 +277,9 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// run SendTask task to send immediately if delivery_date is today's date
 	if len(giftCardsToSendImmediately) > 0 {
-		params := map[string]interface {} {
-			"giftCards" : giftCardsToSendImmediately,
-			"ignoreDeliveryDate" : true,
+		params := map[string]interface{}{
+			"giftCards":          giftCardsToSendImmediately,
+			"ignoreDeliveryDate": true,
 		}
 
 		go SendTask(params)

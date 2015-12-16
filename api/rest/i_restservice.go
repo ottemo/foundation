@@ -150,7 +150,10 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 						if contentDisposition, present := fileInfo.Header["Content-Disposition"]; present && len(contentDisposition) > 0 {
 							if _, mediaParams, err := mime.ParseMediaType(contentDisposition[0]); err == nil {
 								if value, present := mediaParams["name"]; present {
-									mediaFileName = value
+									if len(reqArguments[value]) != 0 {
+										reqArguments[value] += ", "
+									}
+									reqArguments[value] += mediaFileName
 								}
 							}
 

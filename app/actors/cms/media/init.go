@@ -1,4 +1,4 @@
-package gallery
+package media
 
 import (
 	"github.com/ottemo/foundation/api"
@@ -13,7 +13,7 @@ func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
 	app.OnAppStart(onAppStart)
 
-	utils.RegisterTemplateFunction("gallery", galleryTemplateDirective)
+	utils.RegisterTemplateFunction("media", mediaTemplateDirective)
 }
 
 func onAppStart() error {
@@ -26,9 +26,9 @@ func onAppStart() error {
 	return nil
 }
 
-// galleryTemplateDirective - for adding image to pages
-//   use {{gallery "mediaName" .}} to fetch image URL
-func galleryTemplateDirective(args ...interface{}) (string, error) {
+// mediaTemplateDirective - for adding image to pages
+//   use {{media "mediaName" .}} to fetch image URL
+func mediaTemplateDirective(args ...interface{}) (string, error) {
 	mediaName := ""
 	if len(args) > 0 {
 		mediaName = utils.InterfaceToString(args[0])

@@ -1,6 +1,6 @@
-// Package gallery is a default implementation of cms page related interfaces declared in
+// Package media is a default implementation of cms page related interfaces declared in
 // "github.com/ottemo/foundation/app/models/cms" package
-package gallery
+package media
 
 import (
 	"github.com/ottemo/foundation/env"
@@ -9,12 +9,12 @@ import (
 
 // Package global constants
 const (
-	ConstErrorModule = "cms/gallery"
+	ConstErrorModule = "cms/media"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstStorageModel  = "cms"
 	ConstStorageType   = "image"
-	ConstStorageObject = "gallery"
+	ConstStorageObject = "media"
 )
 
 var (

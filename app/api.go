@@ -152,14 +152,33 @@ func restRightsInfo(context api.InterfaceApplicationContext) (interface{}, error
 	return result, nil
 }
 
-// WEB REST API function to get info about current rights
+// WEB REST API function to get info about current application status
 func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 	result := make(map[string]interface{})
 
 	result["Ottemo"] = GetVerboseVersion()
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
-		result["Ottemo.DBEngine"] = dbEngine.GetName()
+		dbEngineName := dbEngine.GetName()
+		result["Ottemo.DBEngine"] = dbEngineName
+
+		if iniConfig := env.GetIniConfig(); iniConfig != nil {
+
+			iniConfigDBKey := "mongodb.db"
+			switch dbEngineName {
+			case "Sqlite3":
+				iniConfigDBKey = "db.sqlite3.uri"
+				break
+			case "MySQL":
+				iniConfigDBKey = "db.mysql.db"
+				break
+			}
+
+			if iniValue := iniConfig.GetValue(iniConfigDBKey, "ottemo"); iniValue != "" {
+				result["Ottemo.DBName"] = iniValue
+			}
+		}
 	}
+
 	result["Ottemo.VersionMajor"] = ConstVersionMajor
 	result["Ottemo.VersionMinor"] = ConstVersionMinor
 	result["Ottemo.BuildTags"] = buildTags

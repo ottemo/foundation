@@ -32,8 +32,9 @@ const (
 var (
 	updateSync sync.RWMutex
 
-	referrers = make(map[string]int)         // collects and counts refers from external sites
-	statistic = make(map[int64]*ActionsMade) // information about per hour site activity
+	referrers      = make(map[string]int)         // collects and counts refers from external sites
+	statistic      = make(map[int64]*ActionsMade) // information about per hour site activity
+	monthStatistic = new(ActionsMade)             // information total month activity
 
 	lastUpdate = time.Now()            // last update timer for day reset
 	visitState = make(map[string]bool) // reflects session state: 1) not present - new visit, 2) false - addToCart not happened, 3) true - addToCart happened

@@ -692,6 +692,10 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 
 	err = visitorModel.LoadByEmail(visitorEmail)
 	if err != nil {
+		if strings.Contains(err.Error(), "Unable to find") {
+			return "ok", nil
+		}
+
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -869,8 +873,9 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 	// facebook login operation
 	//-------------------------
 
-	// using access token to get user information
-	url := "https://graph.facebook.com/" + requestData["user_id"].(string) + "?access_token=" + requestData["access_token"].(string)
+	// using access token to get user information,
+	// NOTE: API Version supported at least until April 2018
+	url := "https://graph.facebook.com/v2.5/" + utils.InterfaceToString(requestData["user_id"]) + "?access_token=" + utils.InterfaceToString(requestData["access_token"]) + "&fields=id,email,first_name,last_name"
 	facebookResponse, err := http.Get(url)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -892,51 +897,51 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name", "verified") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name and verfied.")
+	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name.")
+	}
+
+	if responseError, present := jsonMap["error"]; present && responseError != nil {
+		errorMap := utils.InterfaceToMap(responseError)
+		if errorMessage, present := errorMap["message"]; present {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9f003c22-65e2-4c17-abb7-cd2a74b7eb44", utils.InterfaceToString(errorMessage))
+		}
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "df03de97-e779-4779-b6c9-e8d331bf590d", "Unexpected error during retrieving information from facebook service")
+	}
+
+	visitorFacebookAccount := map[string]string{
+		"id":         utils.InterfaceToString(jsonMap["id"]),
+		"email":      utils.InterfaceToString(jsonMap["email"]),
+		"first_name": utils.InterfaceToString(jsonMap["first_name"]),
+		"last_name":  utils.InterfaceToString(jsonMap["last_name"]),
 	}
 
 	// trying to load visitor from our DB
-	model, err := models.GetModel("Visitor")
+	visitorModel, err := visitor.GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorModel, ok := model.(visitor.InterfaceVisitor)
-	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "42144bb6-37a2-4dd0-87d8-542270e3c5b7", "Unable to create visitor using Facebook credentials using using specified fields.")
-	}
-
 	// trying to load visitor by facebook_id
-	err = visitorModel.LoadByFacebookID(requestData["user_id"].(string))
-	if err != nil && strings.Contains(err.Error(), "not found") {
+	err = visitorModel.LoadByFacebookID(visitorFacebookAccount["id"])
+	if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
 		// there is no such facebook_id in DB, trying to find by e-mail
-		err = visitorModel.LoadByEmail(jsonMap["email"].(string))
-		if err != nil && strings.Contains(err.Error(), "not found") {
-			// visitor not exists in out DB - reating new one
-			visitorModel.Set("email", jsonMap["email"])
-			visitorModel.Set("first_name", jsonMap["first_name"])
-			visitorModel.Set("last_name", jsonMap["last_name"])
-			visitorModel.Set("facebook_id", jsonMap["id"])
+		err = visitorModel.LoadByEmail(visitorFacebookAccount["email"])
+
+		// visitor not exists in out DB - creating new one
+		if err != nil && strings.Contains(err.Error(), "Unable to find") {
+			visitorModel.Set("email", visitorFacebookAccount["email"])
+			visitorModel.Set("first_name", visitorFacebookAccount["first_name"])
+			visitorModel.Set("last_name", visitorFacebookAccount["last_name"])
 			visitorModel.Set("created_at", time.Now())
+		}
 
-			err := visitorModel.Save()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-		} else {
-			// we have visitor with that e-mail just updating token, if it verified
-			if value, ok := jsonMap["verified"].(bool); !(ok && value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "904b3ad7-4350-4823-8f8c-6f278b032168", "Account has not been verfied.  Please check your email account: "+visitorModel.GetEmail()+", for an email with a verification link.")
-			}
+		visitorModel.Set("facebook_id", visitorFacebookAccount["id"])
 
-			visitorModel.Set("facebook_id", jsonMap["id"])
-
-			err := visitorModel.Save()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
+		err := visitorModel.Save()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
 	}
 
@@ -995,49 +1000,39 @@ func APIGoogleLogin(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d793e872-98b4-44c8-ac74-351a177dab68", "One of the following required key-pair fields are missing: id, email, verfified_email, given_name and family_name.")
 	}
 
+	visitorGoogleAccount := map[string]string{
+		"id":          utils.InterfaceToString(jsonMap["id"]),
+		"email":       utils.InterfaceToString(jsonMap["email"]),
+		"given_name":  utils.InterfaceToString(jsonMap["given_name"]),
+		"family_name": utils.InterfaceToString(jsonMap["family_name"]),
+	}
+
 	// trying to load visitor from our DB
-	model, err := models.GetModel("Visitor")
+	visitorModel, err := visitor.GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorModel, ok := model.(visitor.InterfaceVisitor)
-	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ec3f04a0-a9fb-4096-abcf-38062355e0a6", "Unable to create visitor using Google credentials using using specified fields.")
-	}
-
 	// trying to load visitor by google_id
-	err = visitorModel.LoadByGoogleID(jsonMap["email"].(string))
-	if err != nil && strings.Contains(err.Error(), "Unable to find the email address, "+jsonMap["email"].(string)+", associated with the provided Google ID.") {
+	err = visitorModel.LoadByGoogleID(visitorGoogleAccount["id"])
+	if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
 		// there is no such google_id in DB, trying to find by e-mail
-		err = visitorModel.LoadByEmail(jsonMap["email"].(string))
-		if err != nil && strings.Contains(err.Error(), "Unable to find the visitor account with the following email address: "+jsonMap["email"].(string)+".") {
+		err = visitorModel.LoadByEmail(visitorGoogleAccount["email"])
+		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
 			// As the visitor does not exist, create a new one
-			visitorModel.Set("email", jsonMap["email"])
-			visitorModel.Set("first_name", jsonMap["given_name"])
-			visitorModel.Set("last_name", jsonMap["family_name"])
-			visitorModel.Set("google_id", jsonMap["id"])
+			visitorModel.Set("email", visitorGoogleAccount["email"])
+			visitorModel.Set("first_name", visitorGoogleAccount["given_name"])
+			visitorModel.Set("last_name", visitorGoogleAccount["family_name"])
 			visitorModel.Set("created_at", time.Now())
+		}
 
-			err := visitorModel.Save()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
+		visitorModel.Set("google_id", visitorGoogleAccount["id"])
 
-		} else {
-			// we have visitor with that e-mail just updating token, if it verified
-			if value, ok := jsonMap["verified_email"].(bool); !(ok && value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b7b65d5c-0372-4c9f-816a-c5157110894d", "Account has not been verfied.  Please check your email account: "+visitorModel.GetEmail()+", for an email with a verification link.")
-			}
-
-			visitorModel.Set("google_id", jsonMap["id"])
-
-			err := visitorModel.Save()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
+		err := visitorModel.Save()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
 	}
 
@@ -1077,7 +1072,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	return result, nil
 }
 
-// APIGetOrders returns list of orders related to current vivitor
+// APIGetOrders returns list of orders related to current visitor
 func APIGetOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// list operation

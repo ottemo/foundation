@@ -281,6 +281,30 @@ func initStatistic() error {
 		statistic[timeIterator].Cart += utils.InterfaceToInt(item["cart"])
 	}
 
+	dateTo = time.Now()
+	// beginning of current month
+	dateFrom = time.Date(dateTo.Year(), dateTo.Month(), 0, 0, 0, 0, 0, time.UTC)
+
+	visitorInfoCollection.ClearFilters()
+	visitorInfoCollection.AddFilter("day", "<", dateTo)
+	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
+
+	dbRecords, err = visitorInfoCollection.Load()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	for _, item := range dbRecords {
+		monthStatistic.TotalVisits += utils.InterfaceToInt(item["total_visits"])
+		monthStatistic.SalesAmount += utils.InterfaceToFloat64(item["sales_amount"])
+		monthStatistic.Visit += utils.InterfaceToInt(item["visitors"])
+		monthStatistic.Sales += utils.InterfaceToInt(item["sales"])
+		monthStatistic.VisitCheckout += utils.InterfaceToInt(item["visit_checkout"])
+		monthStatistic.SetPayment += utils.InterfaceToInt(item["set_payment"])
+		monthStatistic.Cart += utils.InterfaceToInt(item["cart"])
+
+	}
+
 	return nil
 }
 
@@ -332,10 +356,25 @@ func SaveStatisticsData() error {
 // CheckHourUpdateForStatistic if it's a new hour action we need renew all session as a new in this hour
 // and remove old record from statistic
 func CheckHourUpdateForStatistic() {
-	currentHour := time.Now().Truncate(time.Hour).Unix()
+	currentTime := time.Now()
+	currentHour := currentTime.Truncate(time.Hour).Unix()
 	durationWeek := time.Hour * 168
 
 	lastHour := time.Now().Add(-durationWeek).Truncate(time.Hour).Unix()
+
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+	currentServerTime, _ := utils.MakeTZTime(currentTime, timeZone)
+	lastServerTime, _ := utils.MakeTZTime(lastUpdate, timeZone)
+
+	if currentServerTime.Month() > lastServerTime.Month() {
+		monthStatistic.Visit = 0
+		monthStatistic.Cart = 0
+		monthStatistic.Sales = 0
+		monthStatistic.TotalVisits = 0
+		monthStatistic.SalesAmount = 0
+		monthStatistic.VisitCheckout = 0
+		monthStatistic.SetPayment = 0
+	}
 
 	// if last our not present in statistic we need to update visitState
 	// if it's a new day so we make clear a visitor state stats

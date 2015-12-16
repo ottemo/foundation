@@ -56,12 +56,14 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 			CheckHourUpdateForStatistic()
 			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 				statistic[currentHour].TotalVisits++
+				monthStatistic.TotalVisits++
 			}
 
 			if _, present := visitState[sessionID]; !present {
 				visitState[sessionID] = false
 				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 					statistic[currentHour].Visit++
+					monthStatistic.Visit++
 				}
 
 				err := SaveStatisticsData()
@@ -90,6 +92,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
 					if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 						statistic[currentHour].Cart++
+						monthStatistic.Cart++
 					}
 
 					err := SaveStatisticsData()
@@ -126,6 +129,7 @@ func visitCheckoutHandler(event string, eventData map[string]interface{}) bool {
 
 	if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 		statistic[currentHour].VisitCheckout++
+		monthStatistic.VisitCheckout++
 	}
 
 	err := SaveStatisticsData()
@@ -143,6 +147,7 @@ func setPaymentHandler(event string, eventData map[string]interface{}) bool {
 
 	if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 		statistic[currentHour].SetPayment++
+		monthStatistic.SetPayment++
 	}
 
 	err := SaveStatisticsData()
@@ -173,6 +178,11 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 					statistic[currentHour].Cart++
 					statistic[currentHour].VisitCheckout++
 					statistic[currentHour].SetPayment++
+					monthStatistic.Visit++
+					monthStatistic.TotalVisits++
+					monthStatistic.Cart++
+					monthStatistic.VisitCheckout++
+					monthStatistic.SetPayment++
 				}
 			}
 
@@ -180,6 +190,8 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
 				statistic[currentHour].Sales++
 				statistic[currentHour].SalesAmount += saleAmount
+				monthStatistic.Sales++
+				monthStatistic.SalesAmount += saleAmount
 			}
 
 			err := SaveStatisticsData()
