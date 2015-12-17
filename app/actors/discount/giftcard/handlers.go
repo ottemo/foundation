@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models/checkout"
 	"strings"
 	"time"
 )
@@ -285,5 +286,41 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 		go SendTask(params)
 	}
 
+	return true
+}
+
+// taxableAmountHandler reduces taxable amount on selected gift cards total price
+func taxableAmountHandler(event string, eventData map[string]interface{}) bool {
+
+	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
+
+	var taxableAmount float64
+	if value, present := eventData["amount"]; present {
+		taxableAmount = utils.InterfaceToFloat64(value)
+	}
+
+	if currentCheckout, ok := utils.GetFirstMapValue(eventData, "checkout").(checkout.InterfaceCheckout); ok && currentCheckout != nil {
+		if cart := currentCheckout.GetCart(); cart != nil {
+			for _, cartItem := range cart.GetItems() {
+
+				if taxableAmount <= 0 {
+					taxableAmount = 0
+					break
+				}
+
+				cartProduct := cartItem.GetProduct()
+				if cartProduct == nil {
+					continue
+				}
+
+				cartProduct.ApplyOptions(cartItem.GetOptions())
+				if strings.Contains(cartProduct.GetSku(), giftCardSkuElement) {
+					taxableAmount -= cartProduct.GetPrice()
+				}
+			}
+		}
+	}
+
+	eventData["amount"] = taxableAmount
 	return true
 }
