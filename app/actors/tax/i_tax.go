@@ -49,7 +49,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 		// event which allows to change and/or track taxable cart amount before tax calculation
 		eventData := map[string]interface{}{"tax": it, "checkout": currentCheckout, "amount": taxableAmount}
 		env.Event("tax.amount", eventData)
-		if newAmount := utils.InterfaceToFloat64(eventData["amount"]); newAmount > 0 && taxableAmount != newAmount {
+		if newAmount := utils.InterfaceToFloat64(eventData["amount"]); newAmount >= 0 && taxableAmount != newAmount {
 			taxableAmount = newAmount
 		}
 
