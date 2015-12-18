@@ -2,6 +2,7 @@
 package subscription
 
 import (
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"time"
@@ -39,7 +40,8 @@ const (
 )
 
 var (
-	nextCreationDate time.Time
+	allowedSubscriptionPeriods = []int{10, 30, 55, 60}
+	nextCreationDate           time.Time
 )
 
 // DefaultSubscription struct to hold subscription information
@@ -53,16 +55,22 @@ type DefaultSubscription struct {
 	Email string
 	Name  string
 
-	Status string
-	State  string
-	Action string
+	Status     string
+	State      string
+	ActionDate time.Time
+	Period     int
 
-	Period int
+	ShippingAddress map[string]interface{}
+	BillingAddress  map[string]interface{}
 
-	Address map[string]interface{}
+	ShippingMethodCode string
+
+	ShippingRate checkout.StructShippingRate
+
+	// should be stored credit card info with payment method in it
+	PaymentInstrument map[string]interface{}
 
 	LastSubmit time.Time
-	ActionDate time.Time
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

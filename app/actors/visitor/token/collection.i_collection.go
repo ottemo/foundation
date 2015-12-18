@@ -30,7 +30,7 @@ func (it *DefaultVisitorCardCollection) List() ([]models.StructListItem, error) 
 		resultItem.ID = visitorCardModel.GetID()
 		resultItem.Name = visitorCardModel.GetType() + " (" + visitorCardModel.GetNumber() + ")"
 		resultItem.Image = ""
-		resultItem.Desc = visitorCardModel.GetPaymentMethod()
+		resultItem.Desc = visitorCardModel.GetPaymentMethodCode()
 
 		// if extra attributes were required
 		if len(it.listExtraAtributes) > 0 {

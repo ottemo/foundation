@@ -1,6 +1,11 @@
 package subscription
 
 import (
+	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 	"time"
 )
 
@@ -40,8 +45,8 @@ func (it *DefaultSubscription) GetState() string {
 }
 
 // GetAction returns the Subscription action
-func (it *DefaultSubscription) GetAction() string {
-	return it.Action
+func (it *DefaultSubscription) GetActionDate() time.Time {
+	return it.ActionDate
 }
 
 // GetPeriod returns the Subscription action
@@ -49,18 +54,163 @@ func (it *DefaultSubscription) GetPeriod() int {
 	return it.Period
 }
 
-// GetAddress returns the Subscription address
-func (it *DefaultSubscription) GetAddress() map[string]interface{} {
-	return it.Address
+// SetStatus set Subscription status
+func (it *DefaultSubscription) SetStatus(status string) error {
+	it.Status = status
+	return nil
+}
+
+// SetState set Subscription state
+func (it *DefaultSubscription) SetState(state string) error {
+	it.State = state
+	return nil
+}
+
+// SetActionDate set Subscription action date
+func (it *DefaultSubscription) SetActionDate(actionDate time.Time) error {
+	if err := validateSubscriptionDate(actionDate); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	it.ActionDate = actionDate
+	return nil
+}
+
+// SetPeriod set Subscription period
+func (it *DefaultSubscription) SetPeriod(days int) error {
+	if err := validateSubscriptionPeriod(days); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	it.Period = days
+	return nil
+}
+
+// SetShippingAddress sets shipping address for subscription
+func (it *DefaultSubscription) SetShippingAddress(address visitor.InterfaceVisitorAddress) error {
+	if address == nil {
+		it.ShippingAddress = nil
+		return nil
+	}
+
+	it.ShippingAddress = address.ToHashMap()
+	return nil
+}
+
+// GetShippingAddress returns subscription shipping address
+func (it *DefaultSubscription) GetShippingAddress() visitor.InterfaceVisitorAddress {
+	if it.ShippingAddress == nil {
+		return nil
+	}
+
+	shippingAddress, err := visitor.GetVisitorAddressModel()
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	err = shippingAddress.FromHashMap(it.ShippingAddress)
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	return shippingAddress
+}
+
+// SetBillingAddress sets billing address for subscription
+func (it *DefaultSubscription) SetBillingAddress(address visitor.InterfaceVisitorAddress) error {
+	if address == nil {
+		it.BillingAddress = nil
+		return nil
+	}
+
+	it.BillingAddress = address.ToHashMap()
+	return nil
+}
+
+// GetBillingAddress returns subscription billing address
+func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddress {
+	if it.BillingAddress == nil {
+		return nil
+	}
+
+	billingAddress, err := visitor.GetVisitorAddressModel()
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	err = billingAddress.FromHashMap(it.BillingAddress)
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	return billingAddress
+}
+
+// SetPaymentMethod sets payment method for subscription
+func (it *DefaultSubscription) SetCreditCard(creditCard visitor.InterfaceVisitorCard) error {
+	it.PaymentInstrument = creditCard.ToHashMap()
+	return nil
+}
+
+// GetCreditCard sets payment method for subscription
+func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
+	if it.PaymentInstrument == nil {
+		return nil
+	}
+
+	visitorCardModel, err := visitor.GetVisitorCardModel()
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	err = visitorCardModel.FromHashMap(it.PaymentInstrument)
+	if err != nil {
+		env.LogError(err)
+		return nil
+	}
+
+	return visitorCardModel
+}
+
+// GetPaymentMethod returns subscription payment method
+func (it *DefaultSubscription) GetPaymentMethod() checkout.InterfacePaymentMethod {
+	creditCard := it.GetCreditCard()
+	if creditCard == nil {
+		return nil
+	}
+
+	return checkout.GetPaymentMethodByCode(creditCard.GetPaymentMethodCode())
+}
+
+// SetShippingMethod sets payment method for subscription
+func (it *DefaultSubscription) SetShippingMethod(shippingMethod checkout.InterfaceShippingMethod) error {
+	it.ShippingMethodCode = shippingMethod.GetCode()
+	return nil
+}
+
+// GetShippingMethod returns a subscription shipping method
+func (it *DefaultSubscription) GetShippingMethod() checkout.InterfaceShippingMethod {
+	return checkout.GetShippingMethodByCode(it.ShippingMethodCode)
+}
+
+// SetShippingRate sets shipping rate for subscription
+func (it *DefaultSubscription) SetShippingRate(shippingRate checkout.StructShippingRate) error {
+	it.ShippingRate = shippingRate
+	return nil
+}
+
+// GetShippingRate returns a subscription shipping rate
+func (it *DefaultSubscription) GetShippingRate() checkout.StructShippingRate {
+	return it.ShippingRate
 }
 
 // GetLastSubmit returns the Subscription last submit date
 func (it *DefaultSubscription) GetLastSubmit() time.Time {
-	return it.CreatedAt
-}
-
-// GetActionDate returns the Subscription action date
-func (it *DefaultSubscription) GetActionDate() time.Time {
 	return it.CreatedAt
 }
 
@@ -74,8 +224,96 @@ func (it *DefaultSubscription) GetUpdatedAt() time.Time {
 	return it.CreatedAt
 }
 
-// SetPeriod allows to set new period for subscription
-func (it *DefaultSubscription) SetPeriod(days int) error {
-	it.Period = days
+// Validate allows to validate subscription object for data presence
+func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error) {
+
+	checkoutInstance, err := checkout.GetCheckoutModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// set visitor basic info
+	visitorID := it.GetVisitorID()
+	if visitorID != "" {
+		checkoutInstance.Set("VisitorID", visitorID)
+	}
+
+	checkoutInstance.SetInfo("customer_email", it.GetEmail())
+	checkoutInstance.SetInfo("customer_name", it.GetName())
+
+	// set billing and shipping address
+	shippingAddress := it.GetShippingAddress().ToHashMap()
+	checkoutInstance.Set("ShippingAddress", shippingAddress)
+
+	billingAddress := it.GetBillingAddress().ToHashMap()
+	checkoutInstance.Set("BillingAddress", billingAddress)
+
+	// check payment and shipping methods for availability
+	shippingMethod := it.GetShippingMethod()
+	if !shippingMethod.IsAllowed(checkoutInstance) {
+		env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "db2e8933-d0eb-4a16-a28b-78c169fe20c0", "shipping method not allowed")
+	}
+
+	paymentMethod := it.GetPaymentMethod()
+	if !paymentMethod.IsAllowed(checkoutInstance) {
+		env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "e7cfc56b-97d9-43f5-862e-fb370004c8cf", "payment method not allowed")
+	}
+
+	err = checkoutInstance.SetShippingMethod(shippingMethod)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = checkoutInstance.SetShippingRate(it.GetShippingRate())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = checkoutInstance.SetPaymentMethod(paymentMethod)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	checkoutInstance.SetInfo("cc", it.GetCreditCard())
+
+	// copy saved cart to a new one
+	currentCart, err := cart.LoadCartByID(it.GetCartID())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = currentCart.ValidateCart()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	currentCart.SetID("")
+
+	err = currentCart.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = checkoutInstance.SetCart(currentCart)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return checkoutInstance, nil
+}
+
+// Validate allows to validate subscription object for data presence
+func (it *DefaultSubscription) Validate() error {
+	if validateSubscriptionPeriod(it.Period) != nil || validateSubscriptionDate(it.ActionDate) != nil {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "b2b2a824-8723-4939-8d57-8f9a62951b6c", "Subscription invalid: wrong date or period value")
+	}
+	if !utils.ValidEmailAddress(it.Email) {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription invalid: email")
+	}
+
+	if it.CartID == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription missing: cart_id")
+	}
+
 	return nil
 }

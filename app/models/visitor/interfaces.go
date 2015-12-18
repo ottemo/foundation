@@ -110,7 +110,7 @@ type InterfaceVisitorCard interface {
 	GetVisitorID() string
 
 	GetHolderName() string
-	GetPaymentMethod() string
+	GetPaymentMethodCode() string
 
 	GetType() string
 	GetNumber() string

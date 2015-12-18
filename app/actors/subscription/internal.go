@@ -106,3 +106,31 @@ func nextAllowedCreationDate() time.Time {
 
 	return nextCreationDate
 }
+
+// isSubscriptionDateValid used for validation of new subscription date
+// TODO: put logic to handle requirements for it
+func validateSubscriptionDate(date time.Time) error {
+
+	if !date.Before(time.Now()) {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "d3754eb7-3679-4917-a0d9-ed33cb050081", "Subscription Date should be later then today.")
+	}
+
+	if date.Day() != 15 && date.Day() != 1 {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "schedule for either the 1st of the month or the 15th of the month")
+	}
+
+	return nil
+}
+
+// isSubscriptionPeriodValid used for validation of subscription period value
+// TODO: update this with additional requirements and block map by mutex if it's allowed to change from config
+func validateSubscriptionPeriod(days int) error {
+
+	for _, allowedValue := range allowedSubscriptionPeriods {
+		if days == allowedValue {
+			return nil
+		}
+	}
+
+	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Allowed period are: "+utils.InterfaceToString(allowedSubscriptionPeriods))
+}

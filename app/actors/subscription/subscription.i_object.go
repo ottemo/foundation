@@ -23,14 +23,14 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.Email
 	case "name", "full_name":
 		return it.Name
-	case "address":
-		return it.Address
+	case "shipping_address":
+		return it.ShippingAddress
+	case "billing_address":
+		return it.BillingAddress
 	case "status":
 		return it.Status
 	case "state":
 		return it.State
-	case "action":
-		return it.Action
 	case "period":
 		return it.Period
 	case "last_submit":
@@ -63,24 +63,14 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 		it.Email = utils.InterfaceToString(value)
 	case "name", "full_name":
 		it.Name = utils.InterfaceToString(value)
-	case "address":
-		it.Address = utils.InterfaceToMap(value)
+	case "shipping_address":
+		it.ShippingAddress = utils.InterfaceToMap(value)
+	case "billing_address":
+		it.BillingAddress = utils.InterfaceToMap(value)
 	case "status":
 		it.Status = utils.InterfaceToString(value)
 	case "state":
 		it.State = utils.InterfaceToString(value)
-	case "action":
-		it.Action = utils.InterfaceToString(value)
-	case "period":
-		it.Period = utils.InterfaceToInt(value)
-	case "last_submit":
-		it.LastSubmit = utils.InterfaceToTime(value)
-	case "action_date":
-		it.ActionDate = utils.InterfaceToTime(value)
-	case "created_at":
-		it.CreatedAt = utils.InterfaceToTime(value)
-	case "updated_at":
-		it.UpdatedAt = utils.InterfaceToTime(value)
 	}
 
 	return nil
@@ -114,10 +104,10 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 
 	result["status"] = it.Status
 	result["state"] = it.State
-	result["action"] = it.Action
 
 	result["period"] = it.Period
-	result["address"] = it.Address
+	result["shipping_address"] = it.ShippingAddress
+	result["billing_address"] = it.BillingAddress
 
 	result["action_date"] = it.ActionDate
 	result["last_submit"] = it.LastSubmit

@@ -11,8 +11,8 @@ func (it *DefaultVisitorCard) GetVisitorID() string { return it.visitorID }
 // GetHolderName returns the Holder of the Credit Card
 func (it *DefaultVisitorCard) GetHolderName() string { return it.Holder }
 
-// GetPaymentMethod returns the Payment method code of the Visitor Card
-func (it *DefaultVisitorCard) GetPaymentMethod() string { return it.Payment }
+// GetPaymentMethodCode returns the Payment method code of the Visitor Card
+func (it *DefaultVisitorCard) GetPaymentMethodCode() string { return it.Payment }
 
 // GetType will return the Type of the Visitor Card
 func (it *DefaultVisitorCard) GetType() string { return it.Type }

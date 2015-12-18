@@ -433,7 +433,7 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "279a645c-6a03-44de-95c0-2651a51440fa", "shipping method and/or rate were not found")
 }
 
-// checkoutObtainToken is an internal usage function used to create and validate payment details
+// checkoutObtainToken is an internal usage function used to create or load credit card for visitor
 func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardInfo map[string]interface{}) (visitor.InterfaceVisitorCard, error) {
 
 	currentVisitor := currentCheckout.GetVisitor()
@@ -692,7 +692,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
-	// Add handle for credit card post action in one request
+	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
 	if specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo"); specifiedCreditCard != nil {
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {

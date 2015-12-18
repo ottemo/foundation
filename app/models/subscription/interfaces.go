@@ -3,6 +3,8 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"time"
 )
@@ -25,20 +27,39 @@ type InterfaceSubscription interface {
 	GetCartID() string
 	GetVisitorID() string
 
-	GetPeriod() int
-	SetPeriod(days int) error
+	SetShippingAddress(address visitor.InterfaceVisitorAddress) error
+	GetShippingAddress() visitor.InterfaceVisitorAddress
+
+	SetBillingAddress(address visitor.InterfaceVisitorAddress) error
+	GetBillingAddress() visitor.InterfaceVisitorAddress
+
+	SetCreditCard(creditCard visitor.InterfaceVisitorCard) error
+	GetCreditCard() visitor.InterfaceVisitorCard
+
+	GetPaymentMethod() checkout.InterfacePaymentMethod
+
+	SetShippingMethod(shippingMethod checkout.InterfaceShippingMethod) error
+	GetShippingMethod() checkout.InterfaceShippingMethod
+
+	SetShippingRate(shippingRate checkout.StructShippingRate) error
+	GetShippingRate() checkout.StructShippingRate
 
 	GetStatus() string
 	GetState() string
-	GetAction() string
+	GetActionDate() time.Time
+	GetPeriod() int
 
-	GetAddress() map[string]interface{}
+	SetStatus(status string) error
+	SetState(state string) error
+	SetActionDate(actionDate time.Time) error
+	SetPeriod(days int) error
 
 	GetLastSubmit() time.Time
-	GetActionDate() time.Time
-
 	GetCreatedAt() time.Time
 	GetUpdatedAt() time.Time
+
+	Validate() error
+	GetCheckout() (checkout.InterfaceCheckout, error)
 
 	models.InterfaceModel
 	models.InterfaceObject
