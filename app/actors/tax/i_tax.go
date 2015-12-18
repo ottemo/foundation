@@ -18,14 +18,14 @@ func (it *DefaultTax) GetCode() string {
 }
 
 // processRecords processes records from database collection
-func processRecords(name string, records []map[string]interface{}, cartGrandTotal float64, result []checkout.StructTaxRate) []checkout.StructTaxRate {
+func processRecords(name string, records []map[string]interface{}, taxableAmount float64, result []checkout.StructTaxRate) []checkout.StructTaxRate {
 	priorityValue := ConstPriorityValue
 	for _, record := range records {
 		taxRate := checkout.StructTaxRate{
 			Name:      name,
 			Code:      utils.InterfaceToString(record["code"]),
-			Amount:    utils.InterfaceToFloat64(record["rate"]),
-			IsPercent: true,
+			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"])/100,
+			IsPercent: false,
 			Priority:  priorityValue,
 		}
 

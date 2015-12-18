@@ -315,7 +315,7 @@ func taxableAmountHandler(event string, eventData map[string]interface{}) bool {
 
 				cartProduct.ApplyOptions(cartItem.GetOptions())
 				if strings.Contains(cartProduct.GetSku(), giftCardSkuElement) {
-					taxableAmount -= cartProduct.GetPrice()
+					taxableAmount -= cartProduct.GetPrice() * utils.InterfaceToFloat64(cartItem.GetQty())
 				}
 			}
 		}
