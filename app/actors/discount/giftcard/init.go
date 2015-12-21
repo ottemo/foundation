@@ -12,7 +12,12 @@ import (
 func init() {
 	instance := new(DefaultGiftcard)
 	var _ checkout.InterfaceDiscount = instance
+
 	checkout.RegisterDiscount(instance)
+
+	giftCardFreeShipping := new(GiftcardShipping)
+	var _ checkout.InterfaceShippingMethod = giftCardFreeShipping
+	checkout.RegisterShippingMethod(giftCardFreeShipping)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	env.RegisterOnConfigStart(setupConfig)
