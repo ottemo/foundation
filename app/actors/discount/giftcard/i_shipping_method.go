@@ -1,10 +1,11 @@
 package giftcard
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // GetName returns name of shipping method
@@ -47,7 +48,7 @@ func (it *GiftcardShipping) GetRates(currentCheckout checkout.InterfaceCheckout)
 	result = []checkout.StructShippingRate{
 		checkout.StructShippingRate{
 			Code:  "freeshipping",
-			Name:  "Freeshipping",
+			Name:  "GiftCards",
 			Price: 0,
 		}}
 
