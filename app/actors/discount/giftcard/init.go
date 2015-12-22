@@ -12,7 +12,12 @@ import (
 func init() {
 	instance := new(DefaultGiftcard)
 	var _ checkout.InterfaceDiscount = instance
+
 	checkout.RegisterDiscount(instance)
+
+	giftCardFreeShipping := new(GiftcardShipping)
+	var _ checkout.InterfaceShippingMethod = giftCardFreeShipping
+	checkout.RegisterShippingMethod(giftCardFreeShipping)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	env.RegisterOnConfigStart(setupConfig)
@@ -54,6 +59,7 @@ func onAppStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 	env.EventRegisterListener("order.proceed", orderProceedHandler)
 	env.EventRegisterListener("order.rollback", orderRollbackHandler)
+	env.EventRegisterListener("tax.amount", taxableAmountHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
 		scheduler.RegisterTask("sendGiftCards", SendTask)
