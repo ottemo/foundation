@@ -26,7 +26,7 @@ func setupConfig() error {
 			Path:        ConstConfigPathFriendMailEmailSubject,
 			Value:       "Email friend",
 			Type:        env.ConstConfigTypeVarchar,
-			Editor:      "text",
+			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Email subject",
 			Description: "Email subject for the friend form",

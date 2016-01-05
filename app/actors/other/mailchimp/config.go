@@ -12,7 +12,7 @@ func setupConfig() error {
 	}
 
 	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        MailchimpConfigPath,
+		Path:        ConstConfigPathMailchimp,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
@@ -25,22 +25,9 @@ func setupConfig() error {
 	}
 
 	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        MailchimpEnabledConfig,
+		Path:        ConstConfigPathMailchimpEnabled,
 		Value:       false,
 		Type:        env.ConstConfigTypeBoolean,
-		Editor:      "boolean",
-		Options:     nil,
-		Label:       "Mailchimp",
-		Description: "Enable Mailchimp integration(defaults to false)",
-		Image:       "",
-	}, nil); err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        MailchimpAPIKeyConfig,
-		Value:       false,
-		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "boolean",
 		Options:     nil,
 		Label:       "Mailchimp Enabled",
@@ -51,7 +38,20 @@ func setupConfig() error {
 	}
 
 	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        MailchimpBaseURLConfig,
+		Path:        ConstConfigPathMailchimpAPIKey,
+		Value:       false,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Mailchimp API Key",
+		Description: "Enter your Mailchimp API Key",
+		Image:       "",
+	}, nil); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	if err := config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathMailchimpBaseURL,
 		Value:       nil,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
