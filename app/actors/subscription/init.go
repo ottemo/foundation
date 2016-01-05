@@ -49,6 +49,10 @@ func setupDB() error {
 
 	collection.AddColumn("action_date", db.ConstTypeDatetime, true)
 	collection.AddColumn("last_submit", db.ConstTypeDatetime, true)
+
+	collection.AddColumn("created_at", db.ConstTypeDatetime, true)
+	collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
+
 	collection.AddColumn("period", db.ConstTypeInteger, false)
 
 	collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)

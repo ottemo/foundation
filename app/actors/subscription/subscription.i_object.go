@@ -103,7 +103,6 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 	result["name"] = it.Name
 
 	result["status"] = it.Status
-	result["state"] = it.State
 
 	result["period"] = it.Period
 	result["shipping_address"] = it.ShippingAddress

@@ -131,6 +131,7 @@ func ValidateAddress(address interface{}) (visitor.InterfaceVisitorAddress, erro
 			return visitorAddressModel, err
 		}
 		visitorAddressModel.FromHashMap(typedValue)
+		visitorAddress = visitorAddressModel
 	default:
 		return visitorAddress, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f029c930-5f37-4999-9c76-3e739dd2f578", "Unknown address format")
 	}

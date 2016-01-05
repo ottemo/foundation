@@ -56,6 +56,14 @@ func (it *DefaultSubscription) GetPeriod() int {
 
 // SetStatus set Subscription status
 func (it *DefaultSubscription) SetStatus(status string) error {
+	if status != ConstSubscriptionStatusSuspended && status != ConstSubscriptionStatusConfirmed && status != ConstSubscriptionStatusCanceled {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3b7d17c3-c5fa-4369-a039-49bafec2fb9d", "new subscription status should be one of allowed")
+	}
+
+	if it.Status == status {
+		return nil
+	}
+
 	it.Status = status
 	return nil
 }
@@ -152,6 +160,11 @@ func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddre
 
 // SetPaymentMethod sets payment method for subscription
 func (it *DefaultSubscription) SetCreditCard(creditCard visitor.InterfaceVisitorCard) error {
+	if creditCard == nil {
+		it.PaymentInstrument = nil
+		return nil
+	}
+
 	it.PaymentInstrument = creditCard.ToHashMap()
 	return nil
 }
@@ -242,61 +255,69 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 	checkoutInstance.SetInfo("customer_name", it.GetName())
 
 	// set billing and shipping address
-	shippingAddress := it.GetShippingAddress().ToHashMap()
-	checkoutInstance.Set("ShippingAddress", shippingAddress)
+	shippingAddress := it.GetShippingAddress()
+	if shippingAddress != nil {
+		checkoutInstance.Set("ShippingAddress", shippingAddress.ToHashMap())
+	}
 
-	billingAddress := it.GetBillingAddress().ToHashMap()
-	checkoutInstance.Set("BillingAddress", billingAddress)
+	billingAddress := it.GetBillingAddress()
+	if billingAddress != nil {
+		checkoutInstance.Set("BillingAddress", billingAddress.ToHashMap())
+	}
 
 	// check payment and shipping methods for availability
 	shippingMethod := it.GetShippingMethod()
-	if !shippingMethod.IsAllowed(checkoutInstance) {
-		env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "db2e8933-d0eb-4a16-a28b-78c169fe20c0", "shipping method not allowed")
+	if shippingMethod != nil {
+		if !shippingMethod.IsAllowed(checkoutInstance) {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "db2e8933-d0eb-4a16-a28b-78c169fe20c0", "shipping method not allowed")
+		}
+
+		err = checkoutInstance.SetShippingMethod(shippingMethod)
+		if err != nil {
+			return checkoutInstance, env.ErrorDispatch(err)
+		}
+
+		err = checkoutInstance.SetShippingRate(it.GetShippingRate())
+		if err != nil {
+			return checkoutInstance, env.ErrorDispatch(err)
+		}
 	}
 
 	paymentMethod := it.GetPaymentMethod()
-	if !paymentMethod.IsAllowed(checkoutInstance) {
-		env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "e7cfc56b-97d9-43f5-862e-fb370004c8cf", "payment method not allowed")
-	}
+	if paymentMethod != nil {
+		if !paymentMethod.IsAllowed(checkoutInstance) {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "e7cfc56b-97d9-43f5-862e-fb370004c8cf", "payment method not allowed")
+		}
 
-	err = checkoutInstance.SetShippingMethod(shippingMethod)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	err = checkoutInstance.SetShippingRate(it.GetShippingRate())
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	err = checkoutInstance.SetPaymentMethod(paymentMethod)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		err = checkoutInstance.SetPaymentMethod(paymentMethod)
+		if err != nil {
+			return checkoutInstance, env.ErrorDispatch(err)
+		}
 	}
 
 	checkoutInstance.SetInfo("cc", it.GetCreditCard())
 
-	// copy saved cart to a new one
+	// handle cart
 	currentCart, err := cart.LoadCartByID(it.GetCartID())
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
 	err = currentCart.ValidateCart()
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
-	currentCart.SetID("")
-
-	err = currentCart.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
+	//	currentCart.SetID("")
+	//
+	//	err = currentCart.Save()
+	//	if err != nil {
+	//		return checkoutInstance, env.ErrorDispatch(err)
+	//	}
 
 	err = checkoutInstance.SetCart(currentCart)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
 	return checkoutInstance, nil
