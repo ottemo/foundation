@@ -71,5 +71,54 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path: ConstMailchimpEmailTemplate,
+		Value: `Warning  ....
+		<br />
+		<br />
+		The following email address could not be added to Mailchimp:
+		{{.email_address}}`,
+		Type:        env.ConstConfigTypeText,
+		Editor:      "multiline_text",
+		Options:     "",
+		Label:       "MailChimp Support Email Template",
+		Description: "Template for sending support emails",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimpSupportAddress,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "MailChimp Support Address",
+		Description: "Email address to send errors encountered when adding to lists",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimpSubjectLine,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "MailChimp Support Email Subject",
+		Description: "Subject Line for emails describing mailchimp list addition failures",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

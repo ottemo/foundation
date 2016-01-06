@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -31,6 +32,7 @@ func Subscribe(listID string, registration Registration) error {
 		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpBaseURL)); baseURL == "" {
 			return env.ErrorDispatch(errors.New("Base URL for MailChimp must be defined in the Dashboard or ottemo.ini file"))
 		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members/", listID), payload); err != nil {
+			sendEmail(payload)
 			return env.ErrorDispatch(err)
 		}
 
@@ -70,8 +72,6 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 			status = response.Status
 		}
 
-		// TODO: send email to specified email address set in Dashboard
-
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc1dc0ce-0918-4eff-a6ce-575985a1bc58", "Unable to subscribe to MailChimp, response code returned was "+status)
 	}
 
@@ -87,4 +87,41 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 	}
 
 	return jsonBody, nil
+}
+
+// sendEmail will send an email notification to the specificed user in the dashboard
+// -- if an addition to a mailchimp list fails for any reason
+func sendEmail(payload []byte) error {
+
+	// populate the email template
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpEmailTemplate))
+	if emailTemplate == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Email Template must be defined in the Dashboard or your ottemo.ini file")
+	}
+
+	// configure the email address to send errors when adding visitor email addresses to mailchimp
+	supportAddress := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSupportAddress))
+	if supportAddress == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "The Mailchimp Support Email address must be defined in the Dashboard or your ottemo.ini file")
+	}
+
+	// configure the subject of the email for mailchimp errrors
+	subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSubjectLine))
+	if subjectLine == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "The Mailchimp Support Email subject must be defined in the Dashboard or your ottemo.ini file")
+	}
+
+	var registration map[string]interface{}
+	if err := json.Unmarshal(payload, &registration); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if email, err := utils.TextTemplate(emailTemplate, registration); err == nil {
+		if err := app.SendMail(supportAddress, subjectLine, email); err != nil {
+			return env.ErrorDispatch(err)
+		}
+	} else {
+		return env.ErrorDispatch(err)
+	}
+
+	return nil
 }
