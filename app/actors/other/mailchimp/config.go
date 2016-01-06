@@ -11,55 +11,63 @@ func setupConfig() error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
 	}
 
-	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathMailchimp,
+	err := config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimp,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
-		Label:       "Mailchimp",
-		Description: "Mailchimp Settings",
+		Label:       "MailChimp",
+		Description: "MailChimp Settings",
 		Image:       "",
-	}, nil); err != nil {
+	}, nil)
+
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathMailchimpEnabled,
-		Value:       false,
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimpEnabled,
+		Value:       true,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Mailchimp Enabled",
-		Description: "Enable Mailchimp integration(defaults to false)",
+		Label:       "MailChimp Enabled",
+		Description: "Enable MailChimp integration(defaults to false)",
 		Image:       "",
-	}, nil); err != nil {
+	}, nil)
+
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathMailchimpAPIKey,
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimpAPIKey,
 		Value:       false,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Mailchimp API Key",
-		Description: "Enter your Mailchimp API Key",
+		Label:       "MailChimp API Key",
+		Description: "Enter your MailChimp API Key",
 		Image:       "",
-	}, nil); err != nil {
+	}, nil)
+
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	if err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathMailchimpBaseURL,
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstMailchimpBaseURL,
 		Value:       nil,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Mailchimp Base Url",
+		Label:       "MailChimp Base URL",
 		Description: "Defines the base url for this account",
 		Image:       "",
-	}, nil); err != nil {
+	}, nil)
+
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 

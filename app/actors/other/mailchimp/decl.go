@@ -7,9 +7,8 @@ const (
 	ConstErrorModule = "mailchimp"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
-	//CollectionNameMailchimp = "mailchimp_data"
-	ConstConfigPathMailchimp        = "general.mailchimp"
-	ConstConfigPathMailchimpEnabled = "general.mailchimp.enabled"
-	ConstConfigPathMailchimpAPIKey  = "general.mailchimp.api_key"
-	ConstConfigPathMailchimpBaseURL = "general.mailchimp.base_url"
+	ConstMailchimp        = "general.mailchimp"
+	ConstMailchimpEnabled = "general.mailchimp.enabled"
+	ConstMailchimpAPIKey  = "general.mailchimp.api_key"
+	ConstMailchimpBaseURL = "general.mailchimp.base_url"
 )

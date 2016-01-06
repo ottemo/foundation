@@ -22,14 +22,14 @@ type Registration struct {
 //Subscribe a user to a list
 func Subscribe(listID string, registration Registration) error {
 
-	if enabled := utils.InterfaceToBool(env.ConfigGetValue(MailchimpEnabledConfig)); !enabled {
+	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstMailchimpEnabled)); !enabled {
 		//If mailchimp is not enabled, ignore
 		return nil
 	}
 
 	if payload, err := json.Marshal(registration); err == nil {
-		if baseURL := utils.InterfaceToString(env.ConfigGetValue(MailchimpBaseURLConfig)); baseURL == "" {
-			return env.ErrorDispatch(errors.New("Base URL for MailChimp must be defined in your ottemo.ini file"))
+		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpBaseURL)); baseURL == "" {
+			return env.ErrorDispatch(errors.New("Base URL for MailChimp must be defined in the Dashboard or ottemo.ini file"))
 		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members/", listID), payload); err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -45,8 +45,8 @@ func Subscribe(listID string, registration Registration) error {
 func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	var apiKey string
-	if apiKey = utils.InterfaceToString(env.ConfigGetValue(MailchimpAPIKeyConfig)); apiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in your ottemo.ini file")
+	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpAPIKey)); apiKey == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in the Dashboard or your ottemo.ini file")
 	}
 
 	buf := bytes.NewBuffer([]byte(payload))
@@ -69,6 +69,8 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 		} else {
 			status = response.Status
 		}
+
+		// TODO: send email to specified email address set in Dashboard
 
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc1dc0ce-0918-4eff-a6ce-575985a1bc58", "Unable to subscribe to MailChimp, response code returned was "+status)
 	}
