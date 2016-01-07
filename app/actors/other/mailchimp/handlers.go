@@ -9,16 +9,10 @@ import (
 	"net/http"
 
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
-
-// Registration is a struct to hold a single registation for a Mailchimp mailing list.
-type Registration struct {
-	EmailAddress string            `json:"email_address"`
-	Status       string            `json:"status"`
-	MergeFields  map[string]string `json:"merge_fields"`
-}
 
 //Subscribe a user to a list
 func Subscribe(listID string, registration Registration) error {
@@ -41,6 +35,58 @@ func Subscribe(listID string, registration Registration) error {
 	}
 
 	return nil
+}
+
+func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
+
+	// grab the order off event map
+	var checkoutOrder order.InterfaceOrder
+	if eventItem, present := eventData["order"]; present {
+		if typedItem, ok := eventItem.(order.InterfaceOrder); ok {
+			checkoutOrder = typedItem
+		}
+	}
+
+	// inspect the order only if not nil
+	if checkoutOrder != nil {
+		go inspectOrder(checkoutOrder)
+	}
+
+	return true
+
+}
+
+// inxpectOrder will look for trigger sku in the order
+func inspectOrder(order order.InterfaceOrder) {
+
+	var triggerSKU string
+	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSKU)); triggerSKU == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Trigger SKU for MailChimp must be defined in the Dashboard")
+	}
+
+	// inpsect for sku
+	if orderContainsSku := containsItem(order, triggerSKU); orderContainsSku {
+
+		var listID string
+		if listID = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpList)); listID == "" {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "The Mailchimp List ID is not defined in Dashboard.")
+		}
+
+		// TODO: populate a Registration struct
+		var registration Registration
+
+		if ok, err := Subscribe(listID, registration); err != nil && !ok {
+		}
+	}
+}
+
+func containsItem(order order.InterfaceOrder, sku string) bool {
+	for _, item := range order.GetItems() {
+		if item.GetSku() == sku {
+			return true
+		}
+	}
+	return false
 }
 
 // handles the logic for making a json request to the mailchimp server
@@ -96,19 +142,19 @@ func sendEmail(payload []byte) error {
 	// populate the email template
 	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpEmailTemplate))
 	if emailTemplate == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Email Template must be defined in the Dashboard or your ottemo.ini file")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Email Template must be defined in the Dashboard")
 	}
 
 	// configure the email address to send errors when adding visitor email addresses to mailchimp
 	supportAddress := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSupportAddress))
 	if supportAddress == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "The Mailchimp Support Email address must be defined in the Dashboard or your ottemo.ini file")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "The Mailchimp Support Email address must be defined in the Dashboard")
 	}
 
 	// configure the subject of the email for mailchimp errrors
 	subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSubjectLine))
 	if subjectLine == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "The Mailchimp Support Email subject must be defined in the Dashboard or your ottemo.ini file")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "The Mailchimp Support Email subject must be defined in the Dashboard")
 	}
 
 	var registration map[string]interface{}

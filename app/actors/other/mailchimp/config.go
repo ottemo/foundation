@@ -12,7 +12,7 @@ func setupConfig() error {
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimp,
+		Path:        ConstConfigPathMailchimp,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
@@ -27,7 +27,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimpEnabled,
+		Path:        ConstConfigPathMailchimpEnabled,
 		Value:       true,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
@@ -42,7 +42,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimpAPIKey,
+		Path:        ConstConfigPathMailchimpAPIKey,
 		Value:       false,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -57,7 +57,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimpBaseURL,
+		Path:        ConstConfigPathMailchimpBaseURL,
 		Value:       nil,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -72,7 +72,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path: ConstMailchimpEmailTemplate,
+		Path: ConstConfigPathMailchimpEmailTemplate,
 		Value: `Warning  ....
 		<br />
 		<br />
@@ -91,7 +91,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimpSupportAddress,
+		Path:        ConstConfigPathMailchimpSupportAddress,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -106,7 +106,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstMailchimpSubjectLine,
+		Path:        ConstConfigPathMailchimpSubjectLine,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -120,5 +120,33 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err := config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathMailchimpList,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "MailChimp List ID",
+		Description: "Enter your MailChimp List ID",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err := config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathMailchimpSKU,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Trigger SKU",
+		Description: "Enter the SKU you want to use as a trigger",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 	return nil
 }

@@ -7,11 +7,20 @@ const (
 	ConstErrorModule = "mailchimp"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
-	ConstMailchimp               = "general.mailchimp"
-	ConstMailchimpEnabled        = "general.mailchimp.enabled"
-	ConstMailchimpAPIKey         = "general.mailchimp.api_key"
-	ConstMailchimpBaseURL        = "general.mailchimp.base_url"
-	ConstMailchimpSupportAddress = "general.mailchimp.support_addr"
-	ConstMailchimpEmailTemplate  = "general.mailchimp.template"
-	ConstMailchimpSubjectLine    = "general.mailchimp.subject_line"
+	ConstConfigPathMailchimp               = "general.mailchimp"
+	ConstConfigPathMailchimpEnabled        = "general.mailchimp.enabled"
+	ConstConfigPathMailchimpAPIKey         = "general.mailchimp.api_key"
+	ConstConfigPathMailchimpBaseURL        = "general.mailchimp.base_url"
+	ConstConfigPathMailchimpSupportAddress = "general.mailchimp.support_addr"
+	ConstConfigPathMailchimpEmailTemplate  = "general.mailchimp.template"
+	ConstConfigPathMailchimpSubjectLine    = "general.mailchimp.subject_line"
+	ConstConfigPathMailchimpList           = "general.mailchimp.subscribe_to_list"
+	ConstConfigPathMailchimpSKU            = "general.mailchimp.trigger_sku"
 )
+
+// Registration is a struct to hold a single registation for a Mailchimp mailing list.
+type Registration struct {
+	EmailAddress string            `json:"email_address"`
+	Status       string            `json:"status"`
+	MergeFields  map[string]string `json:"merge_fields"`
+}
