@@ -97,8 +97,8 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMKey,
 			Value:       "",
-			Type:        env.ConstConfigTypeSecret,
-			Editor:      "password",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Transaction Key",
 			Description: "account transaction key",

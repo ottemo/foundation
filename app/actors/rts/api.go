@@ -154,16 +154,16 @@ func APIGetVisits(context api.InterfaceApplicationContext) (interface{}, error) 
 	weekTotalVisits := yesterdayVisits + todayVisits + weekStats.TotalVisits
 
 	result["total"] = map[string]int{
-		"today":         todayTotalVisits,
-		"yesterday":     yesterdayTotalVisits,
-		"week":          weekTotalVisits,
-		"month to date": monthStatistic.TotalVisits,
+		"today":       todayTotalVisits,
+		"yesterday":   yesterdayTotalVisits,
+		"week":        weekTotalVisits,
+		"monthToDate": monthStatistic.TotalVisits,
 	}
 	result["unique"] = map[string]int{
-		"today":         todayVisits,
-		"yesterday":     yesterdayVisits,
-		"week":          weekVisits,
-		"month to date": monthStatistic.Visit,
+		"today":       todayVisits,
+		"yesterday":   yesterdayVisits,
+		"week":        weekVisits,
+		"monthToDate": monthStatistic.Visit,
 	}
 
 	return result, nil
@@ -351,17 +351,17 @@ func APIGetSales(context api.InterfaceApplicationContext) (interface{}, error) {
 	weekSalesAmount := todaySalesAmount + yesterdaySalesAmount + weekStats.SalesAmount
 
 	result["sales"] = map[string]float64{
-		"today":         todaySalesAmount,
-		"yesterday":     yesterdaySalesAmount,
-		"week":          weekSalesAmount,
-		"month to date": monthStatistic.SalesAmount,
+		"today":       todaySalesAmount,
+		"yesterday":   yesterdaySalesAmount,
+		"week":        weekSalesAmount,
+		"monthToDate": monthStatistic.SalesAmount,
 	}
 
 	result["orders"] = map[string]int{
-		"today":         todaySales,
-		"yesterday":     yesterdaySales,
-		"week":          weekSales,
-		"month to date": monthStatistic.Sales,
+		"today":       todaySales,
+		"yesterday":   yesterdaySales,
+		"week":        weekSales,
+		"monthToDate": monthStatistic.Sales,
 	}
 
 	return result, nil

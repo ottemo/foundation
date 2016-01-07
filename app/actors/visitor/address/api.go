@@ -3,6 +3,7 @@ package address
 import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 )
@@ -93,16 +94,9 @@ func APICreateVisitorAddress(context api.InterfaceApplicationContext) (interface
 
 	// create visitor address operation
 	//---------------------------------
-	visitorAddressModel, err := visitor.GetVisitorAddressModel()
+	visitorAddressModel, err := checkout.ValidateAddress(requestData)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
-	}
-
-	for attribute, value := range requestData {
-		err := visitorAddressModel.Set(attribute, value)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
 	}
 
 	err = visitorAddressModel.Save()
@@ -122,7 +116,7 @@ func APIUpdateVisitorAddress(context api.InterfaceApplicationContext) (interface
 	//---------------------
 	addressID := context.GetRequestArgument("addressID")
 	if addressID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c0-85fe-4d60-a134-415f7ac12075", "No Visitor ID found, unable to process update request.  Please log in first.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fe7814c0-85fe-4d60-a134-415f7ac12075", "No visitor Address ID found, unable to process update request.")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -140,6 +134,11 @@ func APIUpdateVisitorAddress(context api.InterfaceApplicationContext) (interface
 		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
 			return nil, env.ErrorDispatch(err)
 		}
+	}
+
+	_, err = checkout.ValidateAddress(requestData)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// update operation

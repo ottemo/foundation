@@ -33,6 +33,9 @@ func (it *ZeroAmountPayment) IsAllowed(checkoutInstance checkout.InterfaceChecko
 
 // Authorize makes payment method authorize operation
 func (it *ZeroAmountPayment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+	if orderInstance.GetGrandTotal() > 0 {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a1de8e4-94f8-4e8b-92fd-378b92d7d9fa", "Order amount above zero, please specify allowe payment method.")
+	}
 	return nil, nil
 }
 

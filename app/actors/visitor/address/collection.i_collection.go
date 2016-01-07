@@ -28,8 +28,13 @@ func (it *DefaultVisitorAddressCollection) List() ([]models.StructListItem, erro
 		resultItem := new(models.StructListItem)
 
 		resultItem.ID = visitorAddressModel.GetID()
-		resultItem.Name = visitorAddressModel.GetZipCode() + " " + visitorAddressModel.GetState() + ", " +
-			visitorAddressModel.GetCity() + ", " + visitorAddressModel.GetAddress()
+		resultItem.Name =
+			visitorAddressModel.GetAddress() + ", " +
+			visitorAddressModel.GetCity() + ", " +
+			visitorAddressModel.GetState() + ", " +
+			visitorAddressModel.GetZipCode() + ", " +
+			visitorAddressModel.GetCountry()
+
 		resultItem.Image = ""
 		resultItem.Desc = "Zip: " + visitorAddressModel.GetZipCode() + ", State: " + visitorAddressModel.GetState() +
 			", City: " + visitorAddressModel.GetCity() + ", Address: " + visitorAddressModel.GetAddress() +

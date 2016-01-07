@@ -596,30 +596,29 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	// trying to process payment
 	//--------------------------
-	if checkoutOrder.GetGrandTotal() > 0 {
-		paymentInfo := make(map[string]interface{})
-		if currentSession := it.GetSession(); currentSession != nil {
-			paymentInfo["sessionID"] = currentSession.GetID()
-		}
-		paymentInfo["cc"] = it.GetInfo("cc")
-
-		result, err := paymentMethod.Authorize(checkoutOrder, paymentInfo)
-		if err != nil {
-			checkoutOrder.SetStatus(order.ConstOrderStatusNew)
-			return nil, env.ErrorDispatch(err)
-		}
-
-		// Payment method require to return as a result:
-		// redirect (with completing of checkout after payment processing)
-		// or payment info for order
-		switch value := result.(type) {
-		case api.StructRestRedirect:
-			return result, nil
-
-		case map[string]interface{}:
-			return it.SubmitFinish(value)
-		}
+	paymentDetails := make(map[string]interface{})
+	if currentSession := it.GetSession(); currentSession != nil {
+		paymentDetails["sessionID"] = currentSession.GetID()
 	}
+	paymentDetails["cc"] = it.GetInfo("cc")
+
+	result, err := paymentMethod.Authorize(checkoutOrder, paymentDetails)
+	if err != nil {
+		checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// Payment method require to return as a result:
+	// redirect (with completing of checkout after payment processing)
+	// or payment info for order
+	switch value := result.(type) {
+	case api.StructRestRedirect:
+		return result, nil
+
+	case map[string]interface{}:
+		return it.SubmitFinish(value)
+	}
+
 
 	return it.SubmitFinish(nil)
 }

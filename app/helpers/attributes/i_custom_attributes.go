@@ -1,8 +1,6 @@
 package attributes
 
 import (
-	"strings"
-
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -209,20 +207,16 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0402b818-03e9-4c56-bee8-0c1471b8d2ba", "There is already atribute '"+newAttribute.Attribute+"' in collection '"+it.collection+"'")
 	}
 
-	// type verification
-	if !utils.IsAmongStr(strings.Trim(newAttribute.Type, "[]"),
-		db.ConstTypeID,
-		db.ConstTypeBoolean,
-		db.ConstTypeVarchar,
-		db.ConstTypeText,
-		db.ConstTypeInteger,
-		db.ConstTypeDecimal,
-		db.ConstTypeMoney,
-		db.ConstTypeFloat,
-		db.ConstTypeDatetime,
-		db.ConstTypeJSON) {
-
+	// Type verification
+	parsedType := utils.DataTypeParse(newAttribute.Type)
+	if !parsedType.IsKnown {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26f15efc-8490-41f0-82f7-b677ea427af7", "unknown attribute type '"+newAttribute.Type+"'")
+	}
+
+	// Assemble the cleaned type
+	newAttribute.Type = parsedType.Name;
+	if parsedType.IsArray {
+		newAttribute.Type = "[]" + newAttribute.Type
 	}
 
 	// inserting attribute information in custom_attributes collection
