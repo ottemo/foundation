@@ -3,7 +3,6 @@ package mailchimp
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +23,7 @@ func Subscribe(listID string, registration Registration) error {
 
 	if payload, err := json.Marshal(registration); err == nil {
 		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpBaseURL)); baseURL == "" {
-			return env.ErrorDispatch(errors.New("Base URL for MailChimp must be defined in the Dashboard or ottemo.ini file"))
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "Base URL for MailChimp must be defined in the Dashboard")
 		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members/", listID), payload); err != nil {
 			sendEmail(payload)
 			return env.ErrorDispatch(err)
