@@ -171,9 +171,6 @@ func (it *DefaultSubscription) SetCreditCard(creditCard visitor.InterfaceVisitor
 
 // GetCreditCard sets payment method for subscription
 func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
-	if it.PaymentInstrument == nil {
-		return nil
-	}
 
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
@@ -181,10 +178,14 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 		return nil
 	}
 
+	if it.PaymentInstrument == nil {
+		return visitorCardModel
+	}
+
 	err = visitorCardModel.FromHashMap(it.PaymentInstrument)
 	if err != nil {
 		env.LogError(err)
-		return nil
+		return visitorCardModel
 	}
 
 	return visitorCardModel
@@ -308,13 +309,6 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
-	//	currentCart.SetID("")
-	//
-	//	err = currentCart.Save()
-	//	if err != nil {
-	//		return checkoutInstance, env.ErrorDispatch(err)
-	//	}
-
 	err = checkoutInstance.SetCart(currentCart)
 	if err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
@@ -324,6 +318,7 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 }
 
 // Validate allows to validate subscription object for data presence
+// TODO: validate ALL values and there exisiting
 func (it *DefaultSubscription) Validate() error {
 	if validateSubscriptionPeriod(it.Period) != nil || validateSubscriptionDate(it.ActionDate) != nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "b2b2a824-8723-4939-8d57-8f9a62951b6c", "Subscription invalid: wrong date or period value")

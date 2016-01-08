@@ -55,8 +55,8 @@ func (it *DefaultSubscription) Save() error {
 	}
 
 	// checking required fields for creating new subscription
-	if it.OrderID == "" && it.CartID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "Order or Cart object should be provided for new subscription.")
+	if err := it.Validate(); err != nil {
+		return env.ErrorDispatch(err)
 	}
 
 	// update time depend values

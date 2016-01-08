@@ -27,6 +27,11 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = api.GetRestService().RegisterAPI("subscriptional/checkout", api.ConstRESTOperationCreate, APICheckCheckoutSubscription)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID", api.ConstRESTOperationGet, APIGetSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -161,6 +166,178 @@ func APIDeleteSubscription(context api.InterfaceApplicationContext) (interface{}
 	}
 
 	return "ok", nil
+}
+
+// APICheckCheckoutSubscription provide check is current checkout allows to create new subscription
+func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check visitor rights
+	// TODO: is there any + for admin?
+	visitorID := visitor.GetCurrentVisitorID(context)
+	if api.ValidateAdminRights(context) != nil && visitorID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e6109c04-e35a-4a90-9593-4cc1f141a358", "you are not logined in")
+	}
+
+	// check request context
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// validating basic input (name, email, addresses)
+	customer := currentCheckout.GetVisitor()
+	customerName := customer.GetFullName()
+	if customer == nil || customer.GetFullName() == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fcfd4ed9-13e7-443f-a2e0-a62d0aa47518", "Please specify customer name")
+	}
+
+	customerEmail := customer.GetEmail()
+	if !utils.ValidEmailAddress(customerEmail) {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7c78ba76-647f-4e16-abd3-5e2d5afeb8cf", "Customer email invalid")
+	}
+
+	shippingAddress := currentCheckout.GetShippingAddress()
+	if shippingAddress == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e8b6c4cd-123a-4ec4-b413-55e66def1652", "No shipping address")
+	}
+
+	billingAddress := currentCheckout.GetBillingAddress()
+	if billingAddress == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b5ecb475-cf90-4d56-99e9-2dcc5a772c54", "No billing address")
+	}
+
+	currentCart := currentCheckout.GetCart()
+	if currentCart.GetSubtotal() <= 0 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "054459d2-0b6b-4526-b0a7-92e7dfce43b4", "Cart with items should be provided")
+	}
+
+	cartID := currentCart.GetID()
+
+//	creditCard := currentCheckout.GetInfo("cc")
+//	if creditCard == nil {
+//		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "054459d2-0b6b-4526-b0a7-92e7dfce43b4", "NO Credit card")
+//	}
+
+//	var visitorCreditCard visitor.InterfaceVisitorCard
+//
+//	// try to obtain visitor token info
+//	if cc, present := paymentInfo["cc"]; present {
+//		if creditCard, ok := cc.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
+//			transactionID = creditCard.GetToken()
+//			visitorCreditCard = creditCard
+//		}
+//	}
+	currentCheckout.GetShippingMethod()
+
+	// retrieving and validating given subscription date
+	subscriptionDateValue := utils.GetFirstMapValue(requestData, "date", "action_date", "billing_date")
+	if subscriptionDateValue == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "43873ddc-a817-4216-aa3c-9b004d96a539", "Subscription Date can't be blank")
+	}
+
+	// retrieving and validating given subscription period
+	subscriptionPeriodValue := utils.GetFirstMapValue(requestData, "period", "recurrence_period")
+	if subscriptionPeriodValue == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cf33b877-97ab-4177-a529-3b1225c37fbd", "Subscription Period can't be blank")
+	}
+
+	subscriptionInstance, err := subscription.GetSubscriptionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = subscriptionInstance.SetPeriod(utils.InterfaceToInt(subscriptionPeriodValue))
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = subscriptionInstance.SetActionDate(utils.InterfaceToTime(subscriptionDateValue))
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	subscriptionInstance.Set("name", customerName)
+	subscriptionInstance.Set("email", customerEmail)
+	subscriptionInstance.Set("visitor_id", visitorID)
+	subscriptionInstance.SetShippingAddress(shippingAddress)
+	subscriptionInstance.SetBillingAddress(billingAddress)
+
+	// TODO: handle usage of transaction from order or use credit card provided by visitor
+//	creditCardInstance, err := visitor.LoadVisitorCardByID(creditCardID)
+//	if err != nil {
+//		return nil, env.ErrorDispatch(err)
+//	}
+//
+//	if creditCardInstance.GetVisitorID() != visitorID {
+//		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4ed389a7-a9d6-40d1-9ff7-6128a95f3979", "Credit Card not found")
+//	}
+//
+//	subscriptionInstance.SetCreditCard(creditCardInstance)
+
+	providedCart, err := cart.LoadCartByID(cartID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if providedCart.GetVisitorID() != visitorID {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7646b717-08e3-4c23-a713-b3ff204b1cf0", "Given Cart not found")
+	}
+
+	err = providedCart.ValidateCart()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// saving current active cart as a new and make inactive
+	if providedCart.IsActive() {
+
+		providedCart.SetID("")
+		err = providedCart.Deactivate()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		err = providedCart.Save()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	subscriptionInstance.Set("cart_id", providedCart.GetID())
+
+	// checking shipping method an shipping rates
+	shippingMethod := currentCheckout.GetShippingMethod()
+	if shippingMethod == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b847fd19-81e6-44fa-946b-fc4c7c45a38b", "Shipping method not set")
+	}
+	subscriptionInstance.SetShippingMethod(shippingMethod)
+
+
+	shippingRate := currentCheckout.GetShippingRate()
+	if shippingRate == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b847fd19-81e6-44fa-946b-fc4c7c45a38b", "Shipping rate not set")
+	}
+
+	subscriptionInstance.SetShippingRate(checkout.StructShippingRate{shippingRate.Name,shippingRate.Code,shippingRate.Price})
+
+	err = subscriptionInstance.Validate()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	result := subscriptionInstance.ToHashMap()
+	subscriptionCheckout, err := subscriptionInstance.GetCheckout()
+	if subscriptionCheckout != nil {
+		result["checkout"] = subscriptionCheckout.ToHashMap()
+	} else {
+		result["checkout_error"] = err
+	}
+
+	return result, nil
 }
 
 // APICreateSubscription provide mechanism to create new subscription

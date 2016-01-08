@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // Get returns object attribute value or nil for the requested Subscription attribute
@@ -27,6 +28,12 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.ShippingAddress
 	case "billing_address":
 		return it.BillingAddress
+	case "shipping_method":
+		return it.ShippingMethodCode
+	case "shipping_rate":
+		return it.ShippingRate
+	case "payment_instrument":
+		return it.PaymentInstrument
 	case "status":
 		return it.Status
 	case "state":
@@ -53,24 +60,68 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 	switch attribute {
 	case "_id", "id":
 		it.id = utils.InterfaceToString(value)
+
 	case "visitor_id":
 		it.VisitorID = utils.InterfaceToString(value)
+
 	case "cart_id":
 		it.CartID = utils.InterfaceToString(value)
+
 	case "order_id":
 		it.OrderID = utils.InterfaceToString(value)
+
 	case "email":
 		it.Email = utils.InterfaceToString(value)
+
 	case "name", "full_name":
 		it.Name = utils.InterfaceToString(value)
+
 	case "shipping_address":
-		it.ShippingAddress = utils.InterfaceToMap(value)
+		shippingAddress := utils.InterfaceToMap(value)
+		if len(shippingAddress) > 0 {
+			it.ShippingAddress = shippingAddress
+		}
+
 	case "billing_address":
-		it.BillingAddress = utils.InterfaceToMap(value)
+		billingAddress := utils.InterfaceToMap(value)
+		if len(billingAddress) > 0 {
+			it.BillingAddress = billingAddress
+		}
+
+	case "shipping_method":
+		shippingMethodCode := utils.InterfaceToString(value)
+		if checkout.GetShippingMethodByCode(shippingMethodCode) != nil {
+			it.ShippingMethodCode = shippingMethodCode
+		}
+
+	case "shipping_rate":
+		mapValue := utils.InterfaceToMap(value)
+		if utils.StrKeysInMap(mapValue, "Name", "Code", "Price") {
+			it.ShippingRate.Name = utils.InterfaceToString(mapValue["Name"])
+			it.ShippingRate.Code = utils.InterfaceToString(mapValue["Code"])
+			it.ShippingRate.Price = utils.InterfaceToFloat64(mapValue["Price"])
+		}
+
+	case "payment_instrument":
+		it.PaymentInstrument = utils.InterfaceToMap(value)
+
 	case "status":
 		it.Status = utils.InterfaceToString(value)
+
 	case "state":
 		it.State = utils.InterfaceToString(value)
+
+	case "last_submit":
+		it.LastSubmit = utils.InterfaceToTime(value)
+
+	case "action_date":
+		it.ActionDate = utils.InterfaceToTime(value)
+
+	case "created_at":
+		it.CreatedAt = utils.InterfaceToTime(value)
+
+	case "updated_at":
+		it.UpdatedAt = utils.InterfaceToTime(value)
 	}
 
 	return nil
@@ -107,6 +158,10 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 	result["period"] = it.Period
 	result["shipping_address"] = it.ShippingAddress
 	result["billing_address"] = it.BillingAddress
+
+	result["shipping_method"] = it.ShippingMethodCode
+	result["shipping_rate"] = it.ShippingRate
+	result["payment_instrument"] = it.PaymentInstrument
 
 	result["action_date"] = it.ActionDate
 	result["last_submit"] = it.LastSubmit
