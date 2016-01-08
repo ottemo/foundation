@@ -120,7 +120,7 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err := config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailchimpList,
 		Value:       nil,
 		Type:        env.ConstConfigTypeVarchar,
@@ -135,7 +135,7 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err := config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailchimpSKU,
 		Value:       nil,
 		Type:        env.ConstConfigTypeVarchar,

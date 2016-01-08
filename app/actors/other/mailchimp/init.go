@@ -10,6 +10,8 @@ func init() {
 	env.RegisterOnConfigStart(setupConfig)
 }
 
-func appStart() {
+func appStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
+
+	return nil
 }

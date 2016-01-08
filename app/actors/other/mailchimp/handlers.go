@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/order"
@@ -13,24 +14,26 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-//Subscribe a user to a list
+//Subscribe a user to a MailChimp list when passed:
+//    -- listID string - a MailChimp list id
+//    -- registration Registration - a struct to holded needed data to subscribe to a list
 func Subscribe(listID string, registration Registration) error {
 
-	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstMailchimpEnabled)); !enabled {
-		//If mailchimp is not enabled, ignore
+	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathMailchimpEnabled)); !enabled {
+		//If MailChimp is not enabled, ignore
 		return nil
 	}
 
 	if payload, err := json.Marshal(registration); err == nil {
-		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpBaseURL)); baseURL == "" {
-			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "Base URL for MailChimp must be defined in the Dashboard")
+		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpBaseURL)); baseURL == "" {
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "Base URL for MailChimp must be defined in the dashboard")
 		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members/", listID), payload); err != nil {
 			sendEmail(payload)
 			return env.ErrorDispatch(err)
 		}
 
 	} else {
-		return err
+		return env.ErrorDispatch(err)
 	}
 
 	return nil
@@ -48,37 +51,50 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// inspect the order only if not nil
 	if checkoutOrder != nil {
-		go inspectOrder(checkoutOrder)
+		go processOrder(checkoutOrder)
 	}
 
 	return true
 
 }
 
-// inxpectOrder will look for trigger sku in the order
-func inspectOrder(order order.InterfaceOrder) {
+// processOrder is called from the checkout handler to process the order and call Subscribe if the trigger sku is in the
+// order
+func processOrder(order order.InterfaceOrder) error {
 
+	// TODO: should we support a comma delimited list of trigger skus or maybe json definition which allows
+	// multiple lists and multple skus?
 	var triggerSKU string
-	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSKU)); triggerSKU == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Trigger SKU for MailChimp must be defined in the Dashboard")
+	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSKU)); triggerSKU == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Trigger SKU for MailChimp must be defined in the dashboard")
 	}
 
 	// inpsect for sku
 	if orderContainsSku := containsItem(order, triggerSKU); orderContainsSku {
 
 		var listID string
-		if listID = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpList)); listID == "" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "The Mailchimp List ID is not defined in Dashboard.")
+		if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpList)); listID == "" {
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "The Mailchimp List ID is not defined in dashboard.")
 		}
 
-		// TODO: populate a Registration struct
 		var registration Registration
-
-		if ok, err := Subscribe(listID, registration); err != nil && !ok {
+		registration.EmailAddress = utils.InterfaceToString(order.Get("customer_email"))
+		registration.Status = ConstMailchimpSubscribeStatus
+		// split Order.CustomerName into sub-parts
+		splitName := strings.Fields(utils.InterfaceToString(order.Get("CustomerName")))
+		registration.MergeFields = map[string]string{
+			"FNAME": splitName[0],
+			"LNAME": strings.Join(splitName[1:], ","),
+		}
+		// subscribe to specified list
+		if err := Subscribe(listID, registration); err != nil {
+			return env.ErrorDispatch(err)
 		}
 	}
+	return nil
 }
 
+// containsItem will inspect an order for a provided sku
 func containsItem(order order.InterfaceOrder, sku string) bool {
 	for _, item := range order.GetItems() {
 		if item.GetSku() == sku {
@@ -88,12 +104,12 @@ func containsItem(order order.InterfaceOrder, sku string) bool {
 	return false
 }
 
-// handles the logic for making a json request to the mailchimp server
+// sendRequest handles the logic for making a json request to the MailChimp server
 func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	var apiKey string
-	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpAPIKey)); apiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in the Dashboard or your ottemo.ini file")
+	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpAPIKey)); apiKey == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in the dashboard or your ottemo.ini file")
 	}
 
 	buf := bytes.NewBuffer([]byte(payload))
@@ -134,26 +150,26 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 	return jsonBody, nil
 }
 
-// sendEmail will send an email notification to the specificed user in the dashboard
-// -- if an addition to a mailchimp list fails for any reason
+// sendEmail will send an email notification to the specificed user in the dashboard,
+// if a subscribe to a MailChimp list fails for any reason
 func sendEmail(payload []byte) error {
 
 	// populate the email template
-	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpEmailTemplate))
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpEmailTemplate))
 	if emailTemplate == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Email Template must be defined in the Dashboard")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Email template must be defined in the dashboard")
 	}
 
-	// configure the email address to send errors when adding visitor email addresses to mailchimp
-	supportAddress := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSupportAddress))
+	// configure the email address to send errors when adding visitor email addresses to MailChimp
+	supportAddress := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSupportAddress))
 	if supportAddress == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "The Mailchimp Support Email address must be defined in the Dashboard")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "The MailChimp support email address must be defined in the dashboard")
 	}
 
-	// configure the subject of the email for mailchimp errrors
-	subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstMailchimpSubjectLine))
+	// configure the subject of the email for MailChimp errrors
+	subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSubjectLine))
 	if subjectLine == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "The Mailchimp Support Email subject must be defined in the Dashboard")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "The MailChimp support email subject must be defined in the dashboard")
 	}
 
 	var registration map[string]interface{}
