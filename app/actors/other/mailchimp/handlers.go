@@ -39,6 +39,8 @@ func Subscribe(listID string, registration Registration) error {
 	return nil
 }
 
+// checkoutSuccessHandler handles the checkout success event to begin the subscription process if an order meets the
+// requirements
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
 	// grab the order off event map
@@ -62,6 +64,10 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 // order
 func processOrder(order order.InterfaceOrder) error {
 
+	const givenNameSplit = 1
+	const givenName = 0
+	const surnameStart = 1
+
 	// TODO: should we support a comma delimited list of trigger skus or maybe json definition which allows
 	// multiple lists and multple skus?
 	var triggerSKU string
@@ -80,11 +86,12 @@ func processOrder(order order.InterfaceOrder) error {
 		var registration Registration
 		registration.EmailAddress = utils.InterfaceToString(order.Get("customer_email"))
 		registration.Status = ConstMailchimpSubscribeStatus
+
 		// split Order.CustomerName into sub-parts
-		splitName := strings.Fields(utils.InterfaceToString(order.Get("CustomerName")))
+		splitName := strings.SplitN(utils.InterfaceToString(order.Get("CustomerName")), " ", givenNameSplit)
 		registration.MergeFields = map[string]string{
-			"FNAME": splitName[0],
-			"LNAME": strings.Join(splitName[1:], ","),
+			"FNAME": splitName[givenName],
+			"LNAME": splitName[surnameStart],
 		}
 		// subscribe to specified list
 		if err := Subscribe(listID, registration); err != nil {
@@ -115,15 +122,15 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 	buf := bytes.NewBuffer([]byte(payload))
 	request, err := http.NewRequest("POST", url, buf)
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "806c965f-92d4-4f78-b47c-ecafa91b23c1", "Unable to create POST request for MailChimp")
+		return nil, env.ErrorDispatch(err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 	request.SetBasicAuth("key", apiKey)
 
-	var responseBody interface{}
 	client := &http.Client{}
 	response, err := client.Do(request)
+	// require http response code of 200 or error out
 	if err != nil || response.StatusCode != 200 {
 
 		var status string
@@ -135,19 +142,19 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc1dc0ce-0918-4eff-a6ce-575985a1bc58", "Unable to subscribe to MailChimp, response code returned was "+status)
 	}
+	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	responseBody = body
-
-	jsonBody, err := utils.DecodeJSONToStringKeyMap(responseBody)
+	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return jsonBody, nil
+	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return jsonResponse, nil
 }
 
 // sendEmail will send an email notification to the specificed user in the dashboard,
