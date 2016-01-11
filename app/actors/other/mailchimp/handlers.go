@@ -27,7 +27,7 @@ func Subscribe(listID string, registration Registration) error {
 	if payload, err := json.Marshal(registration); err == nil {
 		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpBaseURL)); baseURL == "" {
 			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "Base URL for MailChimp must be defined in the dashboard")
-		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members/", listID), payload); err != nil {
+		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members", listID), payload); err != nil {
 			sendEmail(payload)
 			return env.ErrorDispatch(err)
 		}
@@ -64,12 +64,12 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 // order
 func processOrder(order order.InterfaceOrder) error {
 
-	const givenNameSplit = 1
+	const givenNameSplit = 2
 	const givenName = 0
 	const surnameStart = 1
+	const noSurname = 1
 
-	// TODO: should we support a comma delimited list of trigger skus or maybe json definition which allows
-	// multiple lists and multple skus?
+	// TODO: we need to support a comma delimited list of trigger skus and list
 	var triggerSKU string
 	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSKU)); triggerSKU == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Trigger SKU for MailChimp must be defined in the dashboard")
@@ -88,11 +88,23 @@ func processOrder(order order.InterfaceOrder) error {
 		registration.Status = ConstMailchimpSubscribeStatus
 
 		// split Order.CustomerName into sub-parts
-		splitName := strings.SplitN(utils.InterfaceToString(order.Get("CustomerName")), " ", givenNameSplit)
-		registration.MergeFields = map[string]string{
-			"FNAME": splitName[givenName],
-			"LNAME": splitName[surnameStart],
+		splitName := strings.SplitN(utils.InterfaceToString(order.Get("customer_name")), " ", givenNameSplit)
+		var firstName, lastName string
+		if len(splitName) == givenNameSplit {
+			firstName = splitName[givenName]
+			lastName = splitName[surnameStart]
+		} else if len(splitName) == noSurname {
+			firstName = splitName[givenName]
+			lastName = ""
+		} else {
+			firstName = ""
+			lastName = ""
 		}
+		registration.MergeFields = map[string]string{
+			"FNAME": firstName,
+			"LNAME": lastName,
+		}
+
 		// subscribe to specified list
 		if err := Subscribe(listID, registration); err != nil {
 			return env.ErrorDispatch(err)
@@ -116,7 +128,7 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	var apiKey string
 	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpAPIKey)); apiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in the dashboard or your ottemo.ini file")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key must be defined in the dashboard")
 	}
 
 	buf := bytes.NewBuffer([]byte(payload))
@@ -130,8 +142,10 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	client := &http.Client{}
 	response, err := client.Do(request)
+	// TODO: remove when done debugging
+	fmt.Printf("Status code returned: %v\n", response.Status)
 	// require http response code of 200 or error out
-	if err != nil || response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 
 		var status string
 		if response == nil {
