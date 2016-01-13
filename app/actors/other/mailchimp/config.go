@@ -81,7 +81,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "MailChimp Support Email Template",
+		Label:       "Support Email Template",
 		Description: "Template for sending support emails",
 		Image:       "",
 	}, nil)
@@ -96,7 +96,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "MailChimp Support Address",
+		Label:       "Support Email Address",
 		Description: "Email address to send errors encountered when adding to lists",
 		Image:       "",
 	}, nil)
@@ -111,7 +111,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "MailChimp Support Email Subject",
+		Label:       "Support Email Subject",
 		Description: "Subject Line for emails describing mailchimp list addition failures",
 		Image:       "",
 	}, nil)
@@ -141,7 +141,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Trigger SKU",
+		Label:       "Trigger SKU (comma seperated list of SKUs)",
 		Description: "Enter the SKU you want to use as a trigger",
 	}, nil)
 
