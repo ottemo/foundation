@@ -111,13 +111,13 @@ func nextAllowedCreationDate() time.Time {
 // TODO: put logic to handle requirements for it
 func validateSubscriptionDate(date time.Time) error {
 
-	if !date.Before(time.Now()) {
+	if date.Before(time.Now()) {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "d3754eb7-3679-4917-a0d9-ed33cb050081", "Subscription Date should be later then today.")
 	}
-
-	if date.Day() != 15 && date.Day() != 1 {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "schedule for either the 1st of the month or the 15th of the month")
-	}
+	//
+	//	if date.Day() != 15 && date.Day() != 1 {
+	//		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "schedule for either the 1st of the month or the 15th of the month")
+	//	}
 
 	return nil
 }
@@ -132,5 +132,23 @@ func validateSubscriptionPeriod(days int) error {
 		}
 	}
 
+	if days < 0 {
+		return nil
+	}
+
 	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Allowed period are: "+utils.InterfaceToString(allowedSubscriptionPeriods))
+}
+
+// getPeriodValue used to obtain valid period value from option value
+func getPeriodValue(option string) int {
+
+	if value, present := optionValues[option]; present {
+		return value
+	}
+
+	if validateSubscriptionPeriod(utils.InterfaceToInt(option)) == nil {
+		return utils.InterfaceToInt(option)
+	}
+
+	return 30
 }

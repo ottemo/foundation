@@ -3,8 +3,6 @@ package subscription
 import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -18,11 +16,6 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 		}
 	}
 
-	subscriptionID := currentCheckout.GetInfo("subscription")
-	if subscriptionID == nil {
-		return true
-	}
-
 	var checkoutOrder order.InterfaceOrder
 	if eventItem, present := eventData["order"]; present {
 		if typedItem, ok := eventItem.(order.InterfaceOrder); ok {
@@ -31,53 +24,47 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	}
 
 	if checkoutOrder != nil && currentCheckout != nil {
-		go subscriptionUpdate(checkoutOrder, utils.InterfaceToString(subscriptionID))
+		go subscriptionCreate(currentCheckout, checkoutOrder)
 	}
 
 	return true
 }
 
-// subscriptionUpdate is a asynchronously update subscription with new state of the order
-func subscriptionUpdate(checkoutOrder order.InterfaceOrder, subscriptionID string) error {
+// subscriptionCreate is a asynchronously used to create subscription based on finished checkout
+func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrder order.InterfaceOrder) error {
 
-	subscriptionCollection, err := db.GetCollection(ConstCollectionNameSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
+	currentCart := currentCheckout.GetCart()
+	if currentCart == nil {
+		return nil
 	}
 
-	subscriptionCollection.AddFilter("_id", "=", subscriptionID)
-
-	dbRecords, err := subscriptionCollection.Load()
-
-	if len(dbRecords) == 0 {
-		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "5a4bd9ee-6ba7-4f7b-9e1a-24c254541582", "subscription not found"))
+	subscriptionItems := make(map[int]int)
+	for _, cartItem := range currentCart.GetItems() {
+		itemOptions := cartItem.GetOptions()
+		if optionValue, present := itemOptions[optionName]; present {
+			subscriptionItems[cartItem.GetIdx()] = getPeriodValue(utils.InterfaceToString(optionValue))
+		}
 	}
 
-	subscription := utils.InterfaceToMap(dbRecords[0])
-	subscriptionAction := utils.InterfaceToString(subscription["action"])
-	//	subscriptionDate := utils.InterfaceToTime(subscription["action_date"])
-	//	subscriptionPeriod := utils.InterfaceToInt(subscription["period"])
-
-	// update subscription with new order info (set new order id
-	if subscriptionAction != ConstSubscriptionActionSubmit {
-
-		//		subscriptionNextDate := subscriptionDate.AddDate(0, subscriptionPeriod, 0)
-		//		subscription["action_date"] = subscriptionNextDate
-		subscription["status"] = ConstSubscriptionStatusSuspended
-		subscription["order_id"] = checkoutOrder.GetID()
-		subscription["action"] = ConstSubscriptionActionUpdate
-
-		if paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info")); paymentInfo != nil {
-			if _, present := paymentInfo["transactionID"]; present {
-				subscription["action"] = ConstSubscriptionActionSubmit
-			}
-		}
-
-		_, err = subscriptionCollection.Save(subscription)
-		if err != nil {
-			env.LogError(err)
-		}
+	if len(subscriptionItems) == 0 {
+		return nil
 	}
 
 	return nil
+}
+
+// getOptionsExtend is a handler for product get options event which extend available product options
+func getOptionsExtend(event string, eventData map[string]interface{}) bool {
+	if value, present := eventData["options"]; present {
+		// "Subscription":{"type":"select","required":false,"order":1,"label":"Subscription","options":{"Every 5 days":{"order":1,"label":"Every 5 days"},"Every 15 days":{"order":2,"label":"Every 15 days"},"Every 30 days":{"order":3,"label":"Every 30 days"}}}
+		options := utils.InterfaceToMap(value)
+		options[optionName] = map[string]interface{}{
+			"type":     "select",
+			"required": false,
+			"order":    1,
+			"label":    "Subscription",
+			"options":  map[string]interface{}{"Every 5 days": map[string]interface{}{"order": 1, "label": "Every 5 days"}},
+		}
+	}
+	return true
 }

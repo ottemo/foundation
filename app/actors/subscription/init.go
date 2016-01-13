@@ -44,6 +44,7 @@ func setupDB() error {
 	collection.AddColumn("billing_address", db.ConstTypeJSON, false)
 
 	collection.AddColumn("shipping_method", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("shipping_rate", db.ConstTypeJSON, false)
 
 	collection.AddColumn("payment_instrument", db.ConstTypeJSON, false)
 
@@ -65,10 +66,12 @@ func setupDB() error {
 func onAppStart() error {
 
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
+	env.EventRegisterListener("product.getOptions", getOptionsExtend)
 
+	// process order creation every one hour
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("subscriptionProcess", schedulerFunc)
-		scheduler.ScheduleRepeat("*/2 * * * *", "subscriptionProcess", nil)
+		scheduler.RegisterTask("subscriptionProcess", placeOrders)
+		scheduler.ScheduleRepeat("* */1 * * *", "subscriptionProcess", nil)
 	}
 
 	return nil

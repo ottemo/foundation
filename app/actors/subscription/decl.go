@@ -40,6 +40,8 @@ const (
 )
 
 var (
+	optionName                 = "Subscription"
+	optionValues               = map[string]int{"": 10, "10": 10, "30": 30, "55": 55, "60": 60, "hour": -1, "2hours": -2, "day": 1}
 	allowedSubscriptionPeriods = []int{10, 30, 55, 60}
 	nextCreationDate           time.Time
 )
