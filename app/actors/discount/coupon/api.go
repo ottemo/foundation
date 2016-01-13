@@ -254,7 +254,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 //   * use a "*" as the coupon code to revert all discounts
 func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	couponCode := context.GetRequestArgument("coupon")
+	couponCode := context.GetRequestArgument("code")
 
 	if couponCode == "*" {
 		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
@@ -401,7 +401,7 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 }
 
 // GetByID returns a coupon with the specified ID
-// * coupon id should be specified in the "couponID" argument
+// * coupon id should be specified in the "id" argument
 func GetByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check rights
@@ -414,7 +414,7 @@ func GetByID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	id := context.GetRequestArgument("couponID")
+	id := context.GetRequestArgument("id")
 	records, err := collection.LoadByID(id)
 
 	return records, env.ErrorDispatch(err)
@@ -441,7 +441,7 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	couponID := context.GetRequestArgument("couponID")
+	couponID := context.GetRequestArgument("id")
 	record, err := collection.LoadByID(couponID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -511,7 +511,7 @@ func DeleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = collection.DeleteByID(context.GetRequestArgument("couponID"))
+	err = collection.DeleteByID(context.GetRequestArgument("id"))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
