@@ -185,11 +185,6 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 	var couponCode string
 	var present bool
 
-	// verify rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// check request context
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
