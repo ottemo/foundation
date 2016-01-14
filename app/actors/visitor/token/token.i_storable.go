@@ -62,7 +62,6 @@ func (it *DefaultVisitorCard) Save() error {
 	}
 
 	storableValues := it.ToHashMap()
-	storableValues["token_id"] = it.tokenID
 
 	newID, err := collection.Save(storableValues)
 	if err != nil {

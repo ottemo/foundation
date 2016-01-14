@@ -318,11 +318,16 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 }
 
 // Validate allows to validate subscription object for data presence
-// TODO: validate ALL values and there exisiting
+// TODO: validate ALL values and thre exisitng
 func (it *DefaultSubscription) Validate() error {
-	if validateSubscriptionPeriod(it.Period) != nil || validateSubscriptionDate(it.ActionDate) != nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "b2b2a824-8723-4939-8d57-8f9a62951b6c", "Subscription invalid: wrong date or period value")
+	if err := validateSubscriptionPeriod(it.Period); err != nil {
+		return env.ErrorDispatch(err)
 	}
+
+	if err := validateSubscriptionDate(it.ActionDate); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	if !utils.ValidEmailAddress(it.Email) {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription invalid: email")
 	}

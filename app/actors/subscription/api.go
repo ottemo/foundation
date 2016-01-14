@@ -182,50 +182,8 @@ func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (inte
 		return nil, env.ErrorDispatch(err)
 	}
 
-	customer := currentCheckout.GetVisitor()
-
-	customerEmail := customer.GetEmail()
-	if !utils.ValidEmailAddress(customerEmail) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7c78ba76-647f-4e16-abd3-5e2d5afeb8cf", "Customer email invalid")
-	}
-
-	shippingAddress := currentCheckout.GetShippingAddress()
-	if shippingAddress == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e8b6c4cd-123a-4ec4-b413-55e66def1652", "No shipping address")
-	}
-
-	billingAddress := currentCheckout.GetBillingAddress()
-	if billingAddress == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b5ecb475-cf90-4d56-99e9-2dcc5a772c54", "No billing address")
-	}
-
-	currentCart := currentCheckout.GetCart()
-	if currentCart.GetSubtotal() <= 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "054459d2-0b6b-4526-b0a7-92e7dfce43b4", "Cart with items should be provided")
-	}
-
-	paymentMethod := currentCheckout.GetPaymentMethod()
-	if paymentMethod == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2c50d7c5-9f14-4ca2-8c79-1a14f068fe75", "Payment method not set")
-	}
-
-	if !paymentMethod.IsAllowed(currentCheckout) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8d2a66d2-5d47-43e3-bfaa-17ea0e796667", "Payment method not allowed")
-	}
-
-	if !paymentMethod.IsTokenable(currentCheckout) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dd38d1d7-3921-4da1-8a2a-420067341511", "Payment method not support subsciptions")
-	}
-
-	// checking shipping method an shipping rates
-	shippingMethod := currentCheckout.GetShippingMethod()
-	if shippingMethod == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b847fd19-81e6-44fa-946b-fc4c7c45a38b", "Shipping method not set")
-	}
-
-	shippingRate := currentCheckout.GetShippingRate()
-	if shippingRate == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "962291f9-3673-4ec6-b95a-a92a80c11eb4", "Shipping rate not set")
+	if err := validateCheckoutToSubscribe(currentCheckout); err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return "ok", nil
@@ -303,13 +261,11 @@ func APICreateSubscription(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = subscriptionInstance.SetPeriod(utils.InterfaceToInt(subscriptionPeriodValue))
-	if err != nil {
+	if err = subscriptionInstance.SetPeriod(utils.InterfaceToInt(subscriptionPeriodValue)); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = subscriptionInstance.SetActionDate(utils.InterfaceToTime(subscriptionDateValue))
-	if err != nil {
+	if err = subscriptionInstance.SetActionDate(utils.InterfaceToTime(subscriptionDateValue)); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 

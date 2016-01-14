@@ -100,6 +100,7 @@ func (it *DefaultVisitorCard) ToHashMap() map[string]interface{} {
 	result["type"] = it.Type
 	result["number"] = it.Number
 	result["expiration_date"] = it.ExpirationDate
+	result["token_id"] = it.tokenID
 	result["created_at"] = it.CreatedAt
 	result["token_updated"] = it.TokenUpdated
 

@@ -163,7 +163,7 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	result["price"] = it.Price
 	result["weight"] = it.Weight
 
-	result["options"] = it.Options
+	result["options"] = it.GetOptions()
 
 	result["related_pids"] = it.Get("related_pids")
 

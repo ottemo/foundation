@@ -111,11 +111,14 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 	case "state":
 		it.State = utils.InterfaceToString(value)
 
+	case "period":
+		it.SetPeriod(utils.InterfaceToInt(value))
+
 	case "last_submit":
 		it.LastSubmit = utils.InterfaceToTime(value)
 
 	case "action_date":
-		it.ActionDate = utils.InterfaceToTime(value)
+		it.SetActionDate(utils.InterfaceToTime(value))
 
 	case "created_at":
 		it.CreatedAt = utils.InterfaceToTime(value)
