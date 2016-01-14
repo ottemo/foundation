@@ -182,19 +182,38 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 //   - coupon code should be specified in "coupon" argument
 func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	couponCode := context.GetRequestArgument("coupon")
+	var couponCode string
+	var present bool
+
+	// verify rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check request context
+	postValues, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// validate presence of code in post
+	if _, present = postValues["code"]; present {
+		couponCode = utils.InterfaceToString(postValues["code"])
+	} else {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "085b8e25-7939-4b94-93f1-1007ada357d4", "Required key 'code' cannot have a  blank value.")
+	}
 
 	currentSession := context.GetSession()
 
-	// getting applied coupons array for current session
+	// get applied coupons array for current session
 	appliedCoupons := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
 
-	// checking if coupon was already applied
+	// check if coupon has already been applied
 	if utils.IsInArray(couponCode, appliedCoupons) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "coupon code already applied")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied.")
 	}
 
-	// loading coupon for specified code
+	// load coupon for specified code
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -209,7 +228,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// checking and applying obtained coupon
+	// verify and apply obtained coupon
 	if len(records) > 0 {
 		discountCoupon := records[0]
 
@@ -219,14 +238,14 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
 		currentTime := time.Now()
 
-		// to be applicable coupon should satisfy following conditions:
+		// to be applicable, the coupon should satisfy following conditions:
 		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
 		if (applyTimes == -1 || applyTimes > 0) &&
 			(utils.IsZeroTime(workSince) || workSince.Unix() <= currentTime.Unix()) &&
 			(utils.IsZeroTime(workUntil) || workUntil.Unix() >= currentTime.Unix()) {
 
-			// TODO: coupon loosing with session clear, probably should be made on order creation, or have event on session
-			// times used decrease
+			// TODO: applied coupons are lost with session clear, probably should be made on order creation,
+			// or add an event handler to add to session # of times used
 			if applyTimes > 0 {
 				discountCoupon["times"] = applyTimes - 1
 				_, err := collection.Save(discountCoupon)
