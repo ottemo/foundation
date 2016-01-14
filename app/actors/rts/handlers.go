@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -163,8 +164,8 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
 		if sessionID := sessionInstance.GetID(); sessionID != "" {
 			saleAmount := float64(0)
-			if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
-				saleAmount = cartInstance.GetSubtotal()
+			if orderInstance, ok := eventData["order"].(order.InterfaceOrder); ok {
+				saleAmount = orderInstance.GetGrandTotal()
 			}
 
 			currentHour := time.Now().Truncate(time.Hour).Unix()
