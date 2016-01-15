@@ -42,10 +42,10 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID", api.ConstRESTOperationUpdate, APIUpdateSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	//	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID", api.ConstRESTOperationUpdate, APIUpdateSubscription)
+	//	if err != nil {
+	//		return env.ErrorDispatch(err)
+	//	}
 
 	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID/status/:status", api.ConstRESTOperationGet, APIUpdateSubscriptionStatus)
 	if err != nil {
@@ -356,7 +356,7 @@ func APICreateSubscription(context api.InterfaceApplicationContext) (interface{}
 
 // APIUpdateSubscription change status of subscription to suspended, and allow to change date and period
 //   - subscription id should be specified in "subscriptionID" argument
-// TODO: update actions
+// TODO: inactive, no requirements are currently in place
 func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context

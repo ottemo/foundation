@@ -575,7 +575,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// Handle custom information set in case of one request submit
-	if customInfo := utils.GetFirstMapValue(requestData, "customInfo"); customInfo != nil {
+	if customInfo := utils.GetFirstMapValue(requestData, "custom_info"); customInfo != nil {
 		for key, value := range utils.InterfaceToMap(customInfo) {
 			currentCheckout.SetInfo(key, value)
 		}

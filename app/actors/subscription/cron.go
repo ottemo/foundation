@@ -1,7 +1,6 @@
 package subscription
 
 import (
-	"fmt"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
@@ -19,7 +18,6 @@ func placeOrders(params map[string]interface{}) error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	fmt.Println(time.Now(), time.Now().Unix())
 
 	subscriptionCollection.AddFilter("action_date", ">=", currentHourBeginning)
 	subscriptionCollection.AddFilter("action_date", "<", currentHourBeginning.Add(time.Hour))
@@ -35,56 +33,41 @@ func placeOrders(params map[string]interface{}) error {
 
 		subscriptionInstance, err := subscription.GetSubscriptionModel()
 		if err != nil {
-			env.LogError(err)
+			handleSubscriptionError(subscriptionInstance, err)
 			continue
 		}
 
 		err = subscriptionInstance.FromHashMap(record)
 		if err != nil {
-			env.LogError(err)
+			handleSubscriptionError(subscriptionInstance, err)
 			continue
 		}
-		fmt.Println(subscriptionInstance.GetID())
 
 		checkoutInstance, err := subscriptionInstance.GetCheckout()
 		if err != nil {
-			fmt.Println(err)
-			env.LogError(err)
+			handleSubscriptionError(subscriptionInstance, err)
 			continue
 		}
 
 		checkoutInstance.SetInfo("subscription_id", subscriptionInstance.GetID())
+		subscriptionInstance.Set("last_submit", time.Now())
 
 		// need to check for unreached payment
 		// to send email to user in case of low balance on credit card
 		_, err = checkoutInstance.Submit()
 		if err != nil {
-			fmt.Println(err)
 			handleCheckoutError(subscriptionInstance, checkoutInstance, err)
 			continue
 		}
-		fmt.Println("sucess")
 
 		// save new action date for current subscription
-		subscriptionInstance.Set("last_submit", time.Now())
-
-		subscriptionPeriod := subscriptionInstance.GetPeriod()
-
-		actionDate := subscriptionInstance.GetActionDate()
-		if subscriptionPeriod < 0 {
-			actionDate = actionDate.Add(time.Hour * time.Duration(subscriptionPeriod*-1))
-		} else {
-			actionDate = actionDate.Add(ConstTimeDay * time.Duration(subscriptionPeriod))
-		}
-
-		if err = subscriptionInstance.SetActionDate(actionDate); err != nil {
-			fmt.Println(err)
-			env.LogError(err)
+		if err = subscriptionInstance.UpdateActionDate(); err != nil {
+			handleSubscriptionError(subscriptionInstance, err)
+			continue
 		}
 
 		if err = subscriptionInstance.Save(); err != nil {
-			fmt.Println(err)
-			env.LogError(err)
+			handleSubscriptionError(subscriptionInstance, err)
 		}
 	}
 
@@ -92,5 +75,16 @@ func placeOrders(params map[string]interface{}) error {
 }
 
 func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription, checkoutInstance checkout.InterfaceCheckout, err error) {
+	handleSubscriptionError(subscriptionInstance, err)
+
+}
+
+func handleSubscriptionError(subscriptionInstance subscription.InterfaceSubscription, err error) {
 	env.LogError(err)
+
+	if subscriptionInstance != nil {
+		env.Log(ConstSubscriptionLogStorage, "Error", subscriptionInstance.GetID()+": "+err.Error())
+	} else {
+		env.Log(ConstSubscriptionLogStorage, "Error", err.Error())
+	}
 }

@@ -82,7 +82,8 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		return env.ErrorDispatch(err)
 	}
 
-	if visitor := currentCheckout.GetVisitor(); visitor != nil {
+	visitor := currentCheckout.GetVisitor()
+	if visitor != nil {
 		subscriptionInstance.Set("visitor_id", visitor.GetID())
 		subscriptionInstance.Set("email", visitor.GetEmail())
 		subscriptionInstance.Set("name", visitor.GetFullName())
@@ -97,23 +98,23 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 	subscriptionInstance.SetStatus(ConstSubscriptionStatusConfirmed)
 	subscriptionInstance.Set("order_id", checkoutOrder.GetID())
 
-	currentActionDate := time.Now().Add(time.Hour).Truncate(time.Hour)
+	subscriptionTime := time.Now().Truncate(time.Hour)
 
-	// create different subscriptions for every subscriptional product
+	// create different subscriptions for every subscription product
 	for _, cartItem := range currentCart.GetItems() {
 		if subscriptionPeriodValue, present := subscriptionItems[cartItem.GetIdx()]; present && subscriptionPeriodValue != 0 {
+
+			if err = subscriptionInstance.SetActionDate(subscriptionTime); err != nil {
+				env.LogError(err)
+				continue
+			}
 
 			if err = subscriptionInstance.SetPeriod(subscriptionPeriodValue); err != nil {
 				env.LogError(err)
 				continue
 			}
 
-			actionDate := currentActionDate.Add(ConstTimeDay * time.Duration(subscriptionPeriodValue))
-			if subscriptionPeriodValue < 0 {
-				actionDate = currentActionDate.Add(time.Hour * time.Duration(subscriptionPeriodValue*-1))
-			}
-
-			if err = subscriptionInstance.SetActionDate(actionDate); err != nil {
+			if err = subscriptionInstance.UpdateActionDate(); err != nil {
 				env.LogError(err)
 				continue
 			}
@@ -127,6 +128,14 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			if _, err = productCart.AddItem(cartItem.GetProductID(), cartItem.GetQty(), cartItem.GetOptions()); err != nil {
 				env.LogError(err)
 				continue
+			}
+
+			if visitor != nil {
+				productCart.SetVisitorID(visitor.GetID())
+			}
+
+			if currentSession := currentCheckout.GetSession(); currentSession != nil {
+				productCart.SetSessionID(currentSession.GetID())
 			}
 
 			if err = productCart.Deactivate(); err != nil {
@@ -153,17 +162,34 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 }
 
 // getOptionsExtend is a handler for product get options event which extend available product options
+// TODO: create some defined object for options (should explain keys)
 func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 	if value, present := eventData["options"]; present {
-		// "Subscription":{"type":"select","required":false,"order":1,"label":"Subscription","options":{"Every 5 days":{"order":1,"label":"Every 5 days"},"Every 15 days":{"order":2,"label":"Every 15 days"},"Every 30 days":{"order":3,"label":"Every 30 days"}}}
 		options := utils.InterfaceToMap(value)
-		options[optionName] = map[string]interface{}{
+
+		storedOptions := map[string]interface{}{
 			"type":     "select",
 			"required": false,
 			"order":    1,
 			"label":    "Subscription",
-			"options":  map[string]interface{}{"Every 5 days": map[string]interface{}{"order": 1, "label": "Every 5 days"}},
+			"options": map[string]interface{}{
+				"None":           map[string]interface{}{"order": 1, "label": "None"},
+				"Every 30 days":  map[string]interface{}{"order": 2, "label": "Every 30 days"},
+				"Every 60 days":  map[string]interface{}{"order": 3, "label": "Every 60 days"},
+				"Every 90 days":  map[string]interface{}{"order": 4, "label": "Every 90 days"},
+				"Every 120 days": map[string]interface{}{"order": 5, "label": "Every 120 days"},
+			},
 		}
+
+		// when we are using getOptions for product after they was applied there add field Value, but is it all?
+		if subscriptionOption, present := options[optionName]; present {
+			subscriptionOptionMap := utils.InterfaceToMap(subscriptionOption)
+			if appliedValue, present := subscriptionOptionMap["value"]; present {
+				storedOptions["value"] = appliedValue
+			}
+		}
+
+		options[optionName] = storedOptions
 	}
 	return true
 }

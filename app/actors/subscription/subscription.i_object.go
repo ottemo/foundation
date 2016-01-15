@@ -23,11 +23,11 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 	case "email":
 		return it.Email
 	case "name", "full_name":
-		return it.Name
+		return it.GetName()
 	case "shipping_address":
-		return it.ShippingAddress
+		return it.GetShippingAddress()
 	case "billing_address":
-		return it.BillingAddress
+		return it.GetBillingAddress()
 	case "shipping_method":
 		return it.ShippingMethodCode
 	case "shipping_rate":
@@ -35,19 +35,19 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 	case "payment_instrument":
 		return it.PaymentInstrument
 	case "status":
-		return it.Status
+		return it.GetStatus()
 	case "state":
-		return it.State
+		return it.GetState()
 	case "period":
-		return it.Period
+		return it.GetPeriod()
 	case "last_submit":
-		return it.LastSubmit
+		return it.GetLastSubmit()
 	case "action_date":
-		return it.ActionDate
+		return it.GetActionDate()
 	case "created_at":
-		return it.CreatedAt
+		return it.GetCreatedAt()
 	case "updated_at":
-		return it.UpdatedAt
+		return it.GetUpdatedAt()
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"strings"
 	"time"
 )
 
@@ -89,24 +90,24 @@ func sendConfirmationEmail(subscriptionRecord map[string]interface{}, storefront
 // sendConfirmationEmail used to send confirmation and submit emails about subscription change status or to proceed checkout
 // current day - 30.07 -- + 30 = 29.08 if 29.08 > (15.08) - > new next date
 // if 01.09 !before 01.09 --> new date
-func nextAllowedCreationDate() time.Time {
-	currentDayWithOffset := time.Now().Truncate(ConstTimeDay).AddDate(0, 0, ConstCreationDaysDelay)
-	if !currentDayWithOffset.Before(nextCreationDate) {
-		nextCreationDate = currentDayWithOffset
-		nextDay := nextCreationDate.Day()
-
-		switch {
-		case nextDay > 15:
-			nextCreationDate = nextCreationDate.AddDate(0, 1, 1-nextDay)
-			break
-		case nextDay > 1:
-			nextCreationDate = nextCreationDate.AddDate(0, 0, 15-nextDay)
-			break
-		}
-	}
-
-	return nextCreationDate
-}
+//func nextAllowedCreationDate() time.Time {
+//	currentDayWithOffset := time.Now().Truncate(ConstTimeDay).AddDate(0, 0, ConstCreationDaysDelay)
+//	if !currentDayWithOffset.Before(nextCreationDate) {
+//		nextCreationDate = currentDayWithOffset
+//		nextDay := nextCreationDate.Day()
+//
+//		switch {
+//		case nextDay > 15:
+//			nextCreationDate = nextCreationDate.AddDate(0, 1, 1-nextDay)
+//			break
+//		case nextDay > 1:
+//			nextCreationDate = nextCreationDate.AddDate(0, 0, 15-nextDay)
+//			break
+//		}
+//	}
+//
+//	return nextCreationDate
+//}
 
 // isSubscriptionDateValid used for validation of new subscription date
 // TODO: put logic to handle requirements for it
@@ -127,7 +128,7 @@ func validateSubscriptionDate(date time.Time) error {
 // TODO: update this with additional requirements and block map by mutex if it's allowed to change from config
 func validateSubscriptionPeriod(period int) error {
 
-	for _, allowedValue := range allowedSubscriptionPeriods {
+	for _, allowedValue := range optionValues {
 		if period == allowedValue {
 			return nil
 		}
@@ -137,13 +138,17 @@ func validateSubscriptionPeriod(period int) error {
 		return nil
 	}
 
-	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Allowed period are: "+utils.InterfaceToString(allowedSubscriptionPeriods))
+	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Period value '"+utils.InterfaceToString(period)+"' is not allowed for subscription.")
 }
 
 // getPeriodValue used to obtain valid period value from option value
 func getPeriodValue(option string) int {
 
 	if value, present := optionValues[option]; present {
+		return value
+	}
+
+	if value, present := optionValues[strings.ToLower(option)]; present {
 		return value
 	}
 

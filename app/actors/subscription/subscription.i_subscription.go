@@ -84,6 +84,20 @@ func (it *DefaultSubscription) SetActionDate(actionDate time.Time) error {
 	return nil
 }
 
+// UpdateActionDate set Subscription action date
+func (it *DefaultSubscription) UpdateActionDate() error {
+
+	actionDate := it.GetActionDate()
+	periodValue := it.GetPeriod()
+	if periodValue > 0 {
+		actionDate = actionDate.Add(ConstTimeDay * time.Duration(periodValue))
+	} else {
+		actionDate = actionDate.Add(time.Hour * time.Duration(periodValue*-1))
+	}
+
+	return it.SetActionDate(actionDate)
+}
+
 // SetPeriod set Subscription period
 func (it *DefaultSubscription) SetPeriod(days int) error {
 	if err := validateSubscriptionPeriod(days); err != nil {

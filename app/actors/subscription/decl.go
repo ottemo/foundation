@@ -25,6 +25,7 @@ const (
 	ConstConfigPathSubscriptionSubmitEmailLink     = "general.subscription.SubmitLink"
 
 	ConstCollectionNameSubscription = "subscription"
+	ConstSubscriptionLogStorage     = "subscription.log"
 
 	ConstSubscriptionStatusSuspended = "suspended"
 	ConstSubscriptionStatusConfirmed = "confirmed"
@@ -40,10 +41,8 @@ const (
 )
 
 var (
-	optionName                 = "Subscription"
-	optionValues               = map[string]int{"": 0, "none": 0, "10": 10, "30": 30, "55": 55, "60": 60, "hour": -1, "2hours": -2, "day": 1, "Every 5 days": 5}
-	allowedSubscriptionPeriods = []int{5, 10, 30, 55, 60}
-	nextCreationDate           time.Time
+	optionName   = "Subscription"
+	optionValues = map[string]int{"Every 5 days": 5, "Every 30 days": 30, "Every 60 days": 60, "Every 90 days": 90, "Every 120 days": 120, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1}
 )
 
 // DefaultSubscription struct to hold subscription information

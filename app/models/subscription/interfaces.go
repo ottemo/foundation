@@ -51,7 +51,9 @@ type InterfaceSubscription interface {
 
 	SetStatus(status string) error
 	SetState(state string) error
+
 	SetActionDate(actionDate time.Time) error
+	UpdateActionDate() error
 	SetPeriod(days int) error
 
 	GetLastSubmit() time.Time
