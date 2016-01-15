@@ -42,7 +42,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "google_id":
 		return it.GoogleID
 	case "is_admin":
-		return it.IsAdmin
+		return it.IsAdmin()
 	case "created_at":
 		return it.CreatedAt
 	}
