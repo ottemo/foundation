@@ -18,6 +18,11 @@ import (
 // requirements
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
+	//If MailChimp is not enabled, ignore this handler and do nothing
+	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathMailchimpEnabled)); !enabled {
+		return true
+	}
+
 	// grab the order off event map
 	var checkoutOrder order.InterfaceOrder
 	if eventItem, present := eventData["order"]; present {
@@ -39,26 +44,26 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 // order
 func processOrder(order order.InterfaceOrder) error {
 
-	var listSKU string
-	if listSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSKU)); listSKU == "" {
+	var triggerSKU, listID string
+
+	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSKU)); triggerSKU == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Mailchimp Trigger SKU list may not be empty.")
 	}
 
-	// inspect for sku
-	if orderContainsSku := containsItem(order, listSKU); orderContainsSku {
+	if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpList)); listID == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "Mailchimp List ID may not be empty.")
+	}
 
-		var listID string
-		if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpList)); listID == "" {
-			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "Mailchimp List ID may not be empty.")
-		}
+	// inspect for sku
+	if orderHasSKU := containsItem(order, triggerSKU); orderHasSKU {
 
 		var registration Registration
 		registration.EmailAddress = utils.InterfaceToString(order.Get("customer_email"))
 		registration.Status = ConstMailchimpSubscribeStatus
 
 		// split Order.CustomerName into sub-parts
-		listName := strings.SplitN(utils.InterfaceToString(order.Get("customer_name")), " ", 2)
-		firstName, lastName := splitName(listName)
+		customerName := utils.InterfaceToString(order.Get("customer_name"))
+		firstName, lastName := splitName(customerName)
 		registration.MergeFields = map[string]string{
 			"FNAME": firstName,
 			"LNAME": lastName,
@@ -69,19 +74,22 @@ func processOrder(order order.InterfaceOrder) error {
 			return env.ErrorDispatch(err)
 		}
 	}
+
 	return nil
 }
 
-// splitName will take a string and split it into first name and last names
-func splitName(listName []string) (string, string) {
+// splitName will take a fullname as a string and split it into first name and last names
+func splitName(name string) (string, string) {
 
 	var firstName, lastName string
 
-	if len(listName) == 2 {
-		firstName = listName[0]
-		lastName = listName[1]
-	} else if len(listName) == 1 {
-		firstName = listName[0]
+	fullName := strings.SplitN(name, " ", 2)
+
+	if len(fullName) == 2 {
+		firstName = fullName[0]
+		lastName = fullName[1]
+	} else if len(fullName) == 1 {
+		firstName = fullName[0]
 		lastName = ""
 	} else {
 		firstName = ""
@@ -96,20 +104,23 @@ func splitName(listName []string) (string, string) {
 //    -- registration Registration - a struct to holded needed data to subscribe to a list
 func Subscribe(listID string, registration Registration) error {
 
-	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathMailchimpEnabled)); !enabled {
-		//If MailChimp is not enabled, ignore
-		return nil
+	var payload []byte
+	var baseURL string
+	var err error
+
+	// load the base url
+	if baseURL = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpBaseURL)); baseURL == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "MailChimp Base URL may not be empty.")
 	}
 
-	if payload, err := json.Marshal(registration); err == nil {
-		if baseURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpBaseURL)); baseURL == "" {
-			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "MailChimp Base URL may not be empty.")
-		} else if _, err := sendRequest(fmt.Sprintf(baseURL+"lists/%s/members", listID), payload); err != nil {
-			sendEmail(payload)
-			return env.ErrorDispatch(err)
-		}
+	// marshal the json payload
+	if payload, err = json.Marshal(registration); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	} else {
+	// subscribe to mailchimp
+	if _, err = sendRequest(fmt.Sprintf(baseURL+"lists/%s/members", listID), payload); err != nil {
+		sendEmail(payload)
 		return env.ErrorDispatch(err)
 	}
 
@@ -118,7 +129,14 @@ func Subscribe(listID string, registration Registration) error {
 
 // containsItem will inspect an order for a sku in the trigger list
 func containsItem(order order.InterfaceOrder, triggerList string) bool {
+
 	skuList := strings.Split(triggerList, ",")
+
+	// trim possible whitespace from user entry
+	for index, val := range skuList {
+		skuList[index] = strings.TrimSpace(val)
+	}
+
 	for _, item := range order.GetItems() {
 		if inList := utils.IsInListStr(item.GetSku(), skuList); inList {
 			return true
