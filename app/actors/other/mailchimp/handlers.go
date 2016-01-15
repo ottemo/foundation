@@ -18,7 +18,7 @@ import (
 // requirements
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
-	//If MailChimp is not enabled, ignore this handler and do nothing
+	//If mailchimp is not enabled, ignore this handler and do nothing
 	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathMailchimpEnabled)); !enabled {
 		return true
 	}
@@ -46,10 +46,12 @@ func processOrder(order order.InterfaceOrder) error {
 
 	var triggerSKU, listID string
 
+	// load the trigger SKUs
 	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSKU)); triggerSKU == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Mailchimp Trigger SKU list may not be empty.")
 	}
 
+	// load the mailchimp list id
 	if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpList)); listID == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "Mailchimp List ID may not be empty.")
 	}
@@ -149,6 +151,8 @@ func containsItem(order order.InterfaceOrder, triggerList string) bool {
 func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	var apiKey string
+
+	// load the api key
 	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpAPIKey)); apiKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key may not be empty.")
 	}
@@ -195,21 +199,20 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 // if a subscribe to a MailChimp list fails for any reason
 func sendEmail(payload []byte) error {
 
+	var emailTemplate, supportAddress, subjectLine string
+
 	// populate the email template
-	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpEmailTemplate))
-	if emailTemplate == "" {
+	if emailTemplate = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpEmailTemplate)); emailTemplate == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Mailchimp Email template may not be empty.")
 	}
 
 	// configure the email address to send errors when adding visitor email addresses to MailChimp
-	supportAddress := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSupportAddress))
-	if supportAddress == "" {
+	if supportAddress = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSupportAddress)); supportAddress == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "Mailchimp Support Email address may not be empty.")
 	}
 
 	// configure the subject of the email for MailChimp errrors
-	subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSubjectLine))
-	if subjectLine == "" {
+	if subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailchimpSubjectLine)); subjectLine == "" {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "MailChimp Support Email Subject may not be empty.")
 	}
 

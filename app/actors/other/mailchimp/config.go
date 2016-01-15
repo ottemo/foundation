@@ -28,7 +28,7 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailchimpEnabled,
-		Value:       true,
+		Value:       false,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
@@ -43,7 +43,7 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathMailchimpAPIKey,
-		Value:       false,
+		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
