@@ -3,6 +3,7 @@ package category
 import (
 	"io/ioutil"
 	"mime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -484,17 +485,20 @@ func APIRemoveProductFromCategory(context api.InterfaceApplicationContext) (inte
 //   - category id should be specified in "categoryID" argument
 func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	var categoryID string
+	var categoryModel category.InterfaceCategory
+	var mediaStorage media.InterfaceMediaStorage
+	var itemImages []map[string]string
+	var loadProducts bool
+	var err error
+
 	// check request context
-	//---------------------
-	categoryID := context.GetRequestArgument("categoryID")
-	if categoryID == "" {
+	if categoryID = context.GetRequestArgument("categoryID"); categoryID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3c336fd7-1a18-4aea-9eb0-460d746f8dfa", "category id was not specified")
 	}
 
 	// load product operation
-	//-----------------------
-	categoryModel, err := category.LoadCategoryByID(categoryID)
-	if err != nil {
+	if categoryModel, err = category.LoadCategoryByID(categoryID); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -502,35 +506,42 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04-f43d-42a4-9482-39a5e7f8ccb7", "category is not available")
 	}
 
-	mediaStorage, err := media.GetMediaStorage()
-	if err != nil {
+	// load products if sent super secret request param "withProducts=1" otherwise save some time and do not load
+	// products
+	if loadProducts, err = strconv.ParseBool(context.GetRequestArgument("withProducts")); err != nil || loadProducts {
+		loadProducts = false
+	}
+
+	if mediaStorage, err = media.GetMediaStorage(); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	result := categoryModel.ToHashMap()
 
-	// preparing product information
-	var productsResult []map[string]interface{}
-	products := utils.InterfaceToArray(result["products"])
+	// load products
+	if loadProducts {
 
-	for _, productMap := range products {
-		productInfo := utils.InterfaceToMap(productMap)
-		productID, present := productInfo["_id"]
-		if present && utils.InterfaceToString(productID) != "" {
+		// prepare product information
+		var productsResult []map[string]interface{}
+		products := utils.InterfaceToArray(result["products"])
 
-			defaultImage := utils.InterfaceToString(productInfo["default_image"])
-			productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage, defaultImage)
-			if err != nil {
-				env.LogError(err)
+		for _, productMap := range products {
+			productInfo := utils.InterfaceToMap(productMap)
+			productID, present := productInfo["_id"]
+			if present && utils.InterfaceToString(productID) != "" {
+
+				defaultImage := utils.InterfaceToString(productInfo["default_image"])
+				productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, utils.InterfaceToString(productID), ConstCategoryMediaTypeImage, defaultImage)
+				if err != nil {
+					env.LogError(err)
+				}
+				productsResult = append(productsResult, productInfo)
 			}
-			productsResult = append(productsResult, productInfo)
 		}
+		result["products"] = productsResult
 	}
 
-	result["products"] = productsResult
-
-	itemImages, err := mediaStorage.GetAllSizes(category.ConstModelNameCategory, categoryModel.GetID(), ConstCategoryMediaTypeImage)
-	if err != nil {
+	if itemImages, err = mediaStorage.GetAllSizes(category.ConstModelNameCategory, categoryModel.GetID(), ConstCategoryMediaTypeImage); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
