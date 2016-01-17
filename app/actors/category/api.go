@@ -354,14 +354,12 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
-	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12400cff-34fe-4cf5-ac6e-41625f9e3d5a", "category id was not specified")
 	}
 
 	// product list operation
-	//-----------------------
 	categoryModel, err := category.LoadCategoryByID(categoryID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -497,7 +495,7 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3c336fd7-1a18-4aea-9eb0-460d746f8dfa", "category id was not specified")
 	}
 
-	// load product operation
+	// load category
 	if categoryModel, err = category.LoadCategoryByID(categoryID); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -506,14 +504,14 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04-f43d-42a4-9482-39a5e7f8ccb7", "category is not available")
 	}
 
+	if mediaStorage, err = media.GetMediaStorage(); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	// load products if sent super secret request param "withProducts=1" otherwise save some time and do not load
 	// products
 	if loadProducts, err = strconv.ParseBool(context.GetRequestArgument("withProducts")); err != nil || loadProducts {
 		loadProducts = false
-	}
-
-	if mediaStorage, err = media.GetMediaStorage(); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	result := categoryModel.ToHashMap()
@@ -544,28 +542,6 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 	if itemImages, err = mediaStorage.GetAllSizes(category.ConstModelNameCategory, categoryModel.GetID(), ConstCategoryMediaTypeImage); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-
-	// move default image to first position in array
-	defaultImage := utils.InterfaceToString(result["image"])
-	if _, present := result["image"]; present && defaultImage != "" && len(itemImages) > 1 {
-		found := false
-		for index, images := range itemImages {
-			for sizeName, value := range images {
-				basicName := strings.Replace(value, "_"+sizeName, "", -1)
-				if strings.Contains(basicName, defaultImage) {
-					found = true
-					itemImages = append(itemImages[:index], itemImages[index+1:]...)
-					itemImages = append([]map[string]string{images}, itemImages...)
-				}
-				break
-			}
-			if found {
-				break
-			}
-		}
-	}
-
-	result["images"] = itemImages
 
 	return result, nil
 }
