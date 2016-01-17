@@ -669,23 +669,25 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 // APIListProducts returns a list of available products
 //   - if "action" parameter is set to "count" result value will be just a number of list items
-//   - for a not admins available products are limited to enabled ones
+//   - visitors can not see disabled products, but administrators can
 func APIListProducts(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	productCollectionModel, err := product.GetProductCollectionModel()
-	if err != nil {
+	var productCollectionModel product.InterfaceProductCollection
+	var err error
+
+	if productCollectionModel, err = product.GetProductCollectionModel(); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// filters handle
 	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
 
-	// excluding disabled products for a regular visitor
+	// exclude disabled products for visitors, but not Admins
 	if err := api.ValidateAdminRights(context); err != nil {
 		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
 	}
 
-	// checking for a "count" request
+	// check "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
 		return productCollectionModel.GetDBCollection().Count()
 	}
