@@ -15,35 +15,35 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("app/email", api.ConstRESTOperationCreate, restSendEmail)
+	err = api.GetRestService().RegisterAPI("app/email", api.POST, restSendEmail)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationGet, restLogin)
+	err = api.GetRestService().RegisterAPI("app/login", api.GET, restLogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationCreate, restLogin)
+	err = api.GetRestService().RegisterAPI("app/login", api.POST, restLogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/logout", api.ConstRESTOperationGet, restLogout)
+	err = api.GetRestService().RegisterAPI("app/logout", api.GET, restLogout)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/rights", api.ConstRESTOperationGet, restRightsInfo)
+	err = api.GetRestService().RegisterAPI("app/rights", api.GET, restRightsInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/status", api.ConstRESTOperationGet, restStatusInfo)
+	err = api.GetRestService().RegisterAPI("app/status", api.GET, restStatusInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationCreate, setSessionTimeZone)
+	err = api.GetRestService().RegisterAPI("app/location", api.POST, setSessionTimeZone)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationGet, getSessionTimeZone)
+	err = api.GetRestService().RegisterAPI("app/location", api.GET, getSessionTimeZone)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

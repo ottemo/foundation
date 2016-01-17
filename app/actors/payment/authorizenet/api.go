@@ -1,12 +1,13 @@
 package authorizenet
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -14,12 +15,12 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("authorizenet/receipt", api.ConstRESTOperationCreate, APIReceipt)
+	err = api.GetRestService().RegisterAPI("authorizenet/receipt", api.POST, APIReceipt)
 	if err != nil {
 		return err
 	}
 
-	err = api.GetRestService().RegisterAPI("authorizenet/relay", api.ConstRESTOperationCreate, APIRelay)
+	err = api.GetRestService().RegisterAPI("authorizenet/relay", api.POST, APIRelay)
 	if err != nil {
 		return err
 	}

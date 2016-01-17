@@ -16,17 +16,17 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationGet, APIListMediaImages)
+	err = api.GetRestService().RegisterAPI("cms/media", api.GET, APIListMediaImages)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationCreate, APIAddMediaImages)
+	err = api.GetRestService().RegisterAPI("cms/media", api.POST, APIAddMediaImages)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("cms/media/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaImage)
+	err = api.GetRestService().RegisterAPI("cms/media/:mediaName", api.DELETE, APIRemoveMediaImage)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

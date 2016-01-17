@@ -11,37 +11,37 @@ func setupAPI() error {
 
 	var err error
 	// GET - return a list of all currently scheduled tasks
-	err = api.GetRestService().RegisterAPI("cron/schedule", api.ConstRESTOperationGet, getSchedule)
+	err = api.GetRestService().RegisterAPI("cron/schedule", api.GET, getSchedule)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// POST - create a task to be run on a schedule
-	err = api.GetRestService().RegisterAPI("cron/task", api.ConstRESTOperationCreate, createTask)
+	err = api.GetRestService().RegisterAPI("cron/task", api.POST, createTask)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// GET - return the list of possible tasks which may be scheduled
-	err = api.GetRestService().RegisterAPI("cron/task", api.ConstRESTOperationGet, getTasks)
+	err = api.GetRestService().RegisterAPI("cron/task", api.GET, getTasks)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// GET - enables the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/enable/:taskIndex", api.ConstRESTOperationGet, enableTask)
+	err = api.GetRestService().RegisterAPI("cron/task/enable/:taskIndex", api.GET, enableTask)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// GET - disable the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/disable/:taskIndex", api.ConstRESTOperationGet, disableTask)
+	err = api.GetRestService().RegisterAPI("cron/task/disable/:taskIndex", api.GET, disableTask)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// PUT - update the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/:taskIndex", api.ConstRESTOperationUpdate, updateTask)
+	err = api.GetRestService().RegisterAPI("cron/task/:taskIndex", api.PUT, updateTask)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 	// GET - run the specified task now
-	err = api.GetRestService().RegisterAPI("cron/task/run/:taskIndex", api.ConstRESTOperationGet, runTask)
+	err = api.GetRestService().RegisterAPI("cron/task/run/:taskIndex", api.GET, runTask)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

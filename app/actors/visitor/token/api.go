@@ -15,16 +15,16 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("visit/token", api.ConstRESTOperationCreate, APICreateToken)
+	err = api.GetRestService().RegisterAPI("visit/token", api.POST, APICreateToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/tokens", api.ConstRESTOperationGet, APIListVisitorCards)
+	err = api.GetRestService().RegisterAPI("visit/tokens", api.GET, APIListVisitorCards)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	//	err = api.GetRestService().RegisterAPI("token/:tokenID", api.ConstRESTOperationUpdate, APIGetToken)
+	//	err = api.GetRestService().RegisterAPI("token/:tokenID", api.PUT, APIGetToken)
 	//	if err != nil {
 	//		return env.ErrorDispatch(err)
 	//	}

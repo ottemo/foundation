@@ -17,47 +17,47 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("rts/visit", api.ConstRESTOperationCreate, APIRegisterVisit)
+	err = api.GetRestService().RegisterAPI("rts/visit", api.POST, APIRegisterVisit)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/referrers", api.ConstRESTOperationGet, APIGetReferrers)
+	err = api.GetRestService().RegisterAPI("rts/referrers", api.GET, APIGetReferrers)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/visits", api.ConstRESTOperationGet, APIGetVisits)
+	err = api.GetRestService().RegisterAPI("rts/visits", api.GET, APIGetVisits)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/visits/detail/:from/:to", api.ConstRESTOperationGet, APIGetVisitsDetails)
+	err = api.GetRestService().RegisterAPI("rts/visits/detail/:from/:to", api.GET, APIGetVisitsDetails)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/conversion", api.ConstRESTOperationGet, APIGetConversion)
+	err = api.GetRestService().RegisterAPI("rts/conversion", api.GET, APIGetConversion)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/sales", api.ConstRESTOperationGet, APIGetSales)
+	err = api.GetRestService().RegisterAPI("rts/sales", api.GET, APIGetSales)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/sales/detail/:from/:to", api.ConstRESTOperationGet, APIGetSalesDetails)
+	err = api.GetRestService().RegisterAPI("rts/sales/detail/:from/:to", api.GET, APIGetSalesDetails)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/bestsellers", api.ConstRESTOperationGet, APIGetBestsellers)
+	err = api.GetRestService().RegisterAPI("rts/bestsellers", api.GET, APIGetBestsellers)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("rts/visits/realtime", api.ConstRESTOperationGet, APIGetVisitsRealtime)
+	err = api.GetRestService().RegisterAPI("rts/visits/realtime", api.GET, APIGetVisitsRealtime)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

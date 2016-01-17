@@ -14,12 +14,12 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationGet, APIDownloadTaxCSV)
+	err = api.GetRestService().RegisterAPI("taxes/csv", api.GET, APIDownloadTaxCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationCreate, APIUploadTaxCSV)
+	err = api.GetRestService().RegisterAPI("taxes/csv", api.POST, APIUploadTaxCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

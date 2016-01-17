@@ -19,40 +19,40 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("seo/items", api.ConstRESTOperationGet, APIListSEOItems)
+	err = api.GetRestService().RegisterAPI("seo/items", api.GET, APIListSEOItems)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/item", api.ConstRESTOperationCreate, APICreateSEOItem)
+	err = api.GetRestService().RegisterAPI("seo/item", api.POST, APICreateSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationUpdate, APIUpdateSEOItem)
+	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.PUT, APIUpdateSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
+	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.DELETE, APIDeleteSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOItem)
+	err = api.GetRestService().RegisterAPI("seo/url", api.GET, APIGetSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
+	err = api.GetRestService().RegisterAPI("seo/url/:url", api.GET, APIGetSEOItem)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
+	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.GET, APIGetSEOItemByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("seo/sitemap", api.ConstRESTOperationGet, APIGenerateSitemap)
+	err = api.GetRestService().RegisterAPI("seo/sitemap", api.GET, APIGenerateSitemap)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("seo/sitemap/sitemap.xml", api.ConstRESTOperationGet, APIGetSitemap)
+	err = api.GetRestService().RegisterAPI("seo/sitemap/sitemap.xml", api.GET, APIGetSitemap)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

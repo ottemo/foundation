@@ -16,7 +16,7 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("export/quickbooks", api.ConstRESTOperationCreate, APIExportOrders)
+	err = api.GetRestService().RegisterAPI("export/quickbooks", api.POST, APIExportOrders)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

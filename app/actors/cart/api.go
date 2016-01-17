@@ -13,19 +13,19 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("cart", api.ConstRESTOperationGet, APICartInfo)
+	err = api.GetRestService().RegisterAPI("cart", api.GET, APICartInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart/item", api.ConstRESTOperationCreate, APICartItemAdd)
+	err = api.GetRestService().RegisterAPI("cart/item", api.POST, APICartItemAdd)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.ConstRESTOperationUpdate, APICartItemUpdate)
+	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.PUT, APICartItemUpdate)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.ConstRESTOperationDelete, APICartItemDelete)
+	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.DELETE, APICartItemDelete)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

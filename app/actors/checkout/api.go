@@ -16,44 +16,44 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("checkout", api.ConstRESTOperationGet, APIGetCheckout)
+	err = api.GetRestService().RegisterAPI("checkout", api.GET, APIGetCheckout)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/payment/methods", api.ConstRESTOperationGet, APIGetPaymentMethods)
+	err = api.GetRestService().RegisterAPI("checkout/payment/methods", api.GET, APIGetPaymentMethods)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/methods", api.ConstRESTOperationGet, APIGetShippingMethods)
+	err = api.GetRestService().RegisterAPI("checkout/shipping/methods", api.GET, APIGetShippingMethods)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/address", api.ConstRESTOperationUpdate, APISetShippingAddress)
+	err = api.GetRestService().RegisterAPI("checkout/shipping/address", api.PUT, APISetShippingAddress)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/billing/address", api.ConstRESTOperationUpdate, APISetBillingAddress)
+	err = api.GetRestService().RegisterAPI("checkout/billing/address", api.PUT, APISetBillingAddress)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/payment/method/:method", api.ConstRESTOperationUpdate, APISetPaymentMethod)
+	err = api.GetRestService().RegisterAPI("checkout/payment/method/:method", api.PUT, APISetPaymentMethod)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/method/:method/:rate", api.ConstRESTOperationUpdate, APISetShippingMethod)
+	err = api.GetRestService().RegisterAPI("checkout/shipping/method/:method/:rate", api.PUT, APISetShippingMethod)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/paymentdetails", api.ConstRESTOperationUpdate, APISetPaymentDetails)
+	err = api.GetRestService().RegisterAPI("checkout/paymentdetails", api.PUT, APISetPaymentDetails)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("checkout", api.ConstRESTOperationUpdate, APISetCheckoutInfo)
+	err = api.GetRestService().RegisterAPI("checkout", api.PUT, APISetCheckoutInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("checkout/submit", api.ConstRESTOperationCreate, APISubmitCheckout)
+	err = api.GetRestService().RegisterAPI("checkout/submit", api.POST, APISubmitCheckout)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

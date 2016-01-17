@@ -13,28 +13,28 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("cms/blocks", api.ConstRESTOperationGet, APIListCMSBlocks)
+	err = api.GetRestService().RegisterAPI("cms/blocks", api.GET, APIListCMSBlocks)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cms/blocks/attributes", api.ConstRESTOperationGet, APIListCMSBlockAttributes)
+	err = api.GetRestService().RegisterAPI("cms/blocks/attributes", api.GET, APIListCMSBlockAttributes)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationGet, APIGetCMSBlock)
+	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.GET, APIGetCMSBlock)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cms/block", api.ConstRESTOperationCreate, APICreateCMSBlock)
+	err = api.GetRestService().RegisterAPI("cms/block", api.POST, APICreateCMSBlock)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationUpdate, APIUpdateCMSBlock)
+	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.PUT, APIUpdateCMSBlock)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationDelete, APIDeleteCMSBlock)
+	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.DELETE, APIDeleteCMSBlock)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
