@@ -717,7 +717,6 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		return it.SubmitFinish(value)
 	}
 
-
 	return it.SubmitFinish(nil)
 }
 

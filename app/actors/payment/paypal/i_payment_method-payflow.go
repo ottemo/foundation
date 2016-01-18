@@ -157,11 +157,17 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	orderPaymentInfo := map[string]interface{}{
 		"transactionID":     orderTransactionID,
 		"creditCardNumbers": responseValues.Get("ACCT"),
+		"creditCardExp":     responseValues.Get("EXPDATE"),
 		"creditCardType":    getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE"))),
 	}
 
+	// id presense in credit card means it was saved so we can update token for it
 	if visitorCreditCard != nil && visitorCreditCard.GetID() != "" {
 		orderPaymentInfo["creditCardID"] = visitorCreditCard.GetID()
+
+		visitorCreditCard.Set("token_id", orderTransactionID)
+		visitorCreditCard.Set("token_updated", time.Now())
+		visitorCreditCard.Save()
 	}
 
 	return orderPaymentInfo, nil

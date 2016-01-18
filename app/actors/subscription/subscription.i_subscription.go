@@ -39,12 +39,7 @@ func (it *DefaultSubscription) GetStatus() string {
 	return it.Status
 }
 
-// GetState returns the Subscription state
-func (it *DefaultSubscription) GetState() string {
-	return it.State
-}
-
-// GetAction returns the Subscription action
+// GetActionDate returns the date of next action
 func (it *DefaultSubscription) GetActionDate() time.Time {
 	return it.ActionDate
 }
@@ -65,12 +60,6 @@ func (it *DefaultSubscription) SetStatus(status string) error {
 	}
 
 	it.Status = status
-	return nil
-}
-
-// SetState set Subscription state
-func (it *DefaultSubscription) SetState(state string) error {
-	it.State = state
 	return nil
 }
 
@@ -172,7 +161,7 @@ func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddre
 	return billingAddress
 }
 
-// SetPaymentMethod sets payment method for subscription
+// SetCreditCard sets credit card for subscription
 func (it *DefaultSubscription) SetCreditCard(creditCard visitor.InterfaceVisitorCard) error {
 	if creditCard == nil {
 		it.PaymentInstrument = nil
@@ -252,7 +241,7 @@ func (it *DefaultSubscription) GetUpdatedAt() time.Time {
 	return it.CreatedAt
 }
 
-// Validate allows to validate subscription object for data presence
+// GetCheckout return checkout object created from subscription
 func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error) {
 
 	checkoutInstance, err := checkout.GetCheckoutModel()
@@ -332,7 +321,7 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 }
 
 // Validate allows to validate subscription object for data presence
-// TODO: validate ALL values and thre exisitng
+// TODO: validate ALL values and their existence
 func (it *DefaultSubscription) Validate() error {
 	if err := validateSubscriptionPeriod(it.Period); err != nil {
 		return env.ErrorDispatch(err)

@@ -223,6 +223,7 @@ func retrieveCreditCard(currentCheckout checkout.InterfaceCheckout, currentOrder
 		if creditCardValue := currentCheckout.GetInfo("cc"); paymentMethod != nil && creditCardValue != nil {
 			if checkoutCreditCard, ok := creditCardValue.(visitor.InterfaceVisitorCard); ok && checkoutCreditCard != nil {
 				if checkoutCreditCard.GetToken() != "" && checkoutCreditCard.GetPaymentMethodCode() == paymentMethod.GetCode() {
+					checkoutCreditCard.SetID("")
 					return checkoutCreditCard
 				}
 			}
@@ -240,6 +241,7 @@ func retrieveCreditCard(currentCheckout checkout.InterfaceCheckout, currentOrder
 		if creditCardID, present := cardInfoMap["creditCardID"]; present {
 			orderCreditCard, err := visitor.LoadVisitorCardByID(utils.InterfaceToString(creditCardID))
 			if err == nil {
+				orderCreditCard.SetID("")
 				return orderCreditCard
 			}
 		}
@@ -248,7 +250,7 @@ func retrieveCreditCard(currentCheckout checkout.InterfaceCheckout, currentOrder
 			tokenRecord := map[string]interface{}{
 				"payment":         currentOrder.GetPaymentMethod(),
 				"type":            cardInfoMap["creditCardType"],
-				"number":          cardInfoMap["creditCardLastFour"],
+				"number":          cardInfoMap["creditCardNumbers"],
 				"expiration_date": cardInfoMap["creditCardExp"],
 				"token_id":        cardInfoMap["transactionID"],
 			}

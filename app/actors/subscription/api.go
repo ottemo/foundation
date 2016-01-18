@@ -27,7 +27,7 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscriptional/checkout", api.ConstRESTOperationCreate, APICheckCheckoutSubscription)
+	err = api.GetRestService().RegisterAPI("subscriptional/checkout", api.ConstRESTOperationGet, APICheckCheckoutSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -128,6 +128,7 @@ func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, e
 
 	subscriptionCheckout, err := subscriptionModel.GetCheckout()
 	if subscriptionCheckout != nil {
+		subscriptionCheckout.GetGrandTotal()
 		result["checkout"] = subscriptionCheckout.ToHashMap()
 	} else {
 		result["checkout_error"] = err

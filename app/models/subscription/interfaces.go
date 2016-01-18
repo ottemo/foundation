@@ -45,16 +45,15 @@ type InterfaceSubscription interface {
 	GetShippingRate() checkout.StructShippingRate
 
 	GetStatus() string
-	GetState() string
-	GetActionDate() time.Time
-	GetPeriod() int
-
 	SetStatus(status string) error
-	SetState(state string) error
 
+	GetActionDate() time.Time
 	SetActionDate(actionDate time.Time) error
-	UpdateActionDate() error
+
+	GetPeriod() int
 	SetPeriod(days int) error
+
+	UpdateActionDate() error
 
 	GetLastSubmit() time.Time
 	GetCreatedAt() time.Time

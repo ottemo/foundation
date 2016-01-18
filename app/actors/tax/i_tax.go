@@ -24,7 +24,7 @@ func processRecords(name string, records []map[string]interface{}, taxableAmount
 		taxRate := checkout.StructTaxRate{
 			Name:      name,
 			Code:      utils.InterfaceToString(record["code"]),
-			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"])/100,
+			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"]) / 100,
 			IsPercent: false,
 			Priority:  priorityValue,
 		}

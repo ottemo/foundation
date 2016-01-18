@@ -36,8 +36,6 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.PaymentInstrument
 	case "status":
 		return it.GetStatus()
-	case "state":
-		return it.GetState()
 	case "period":
 		return it.GetPeriod()
 	case "last_submit":
@@ -106,10 +104,7 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 		it.PaymentInstrument = utils.InterfaceToMap(value)
 
 	case "status":
-		it.Status = utils.InterfaceToString(value)
-
-	case "state":
-		it.State = utils.InterfaceToString(value)
+		it.SetStatus(utils.InterfaceToString(value))
 
 	case "period":
 		it.SetPeriod(utils.InterfaceToInt(value))

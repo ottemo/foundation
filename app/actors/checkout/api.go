@@ -684,8 +684,13 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
+	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
+	if specifiedCreditCard == nil {
+		specifiedCreditCard = currentCheckout.GetInfo("cc")
+	}
+
 	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
-	if specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo"); specifiedCreditCard != nil {
+	if specifiedCreditCard != nil {
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
