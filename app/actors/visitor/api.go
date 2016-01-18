@@ -873,8 +873,9 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 	// facebook login operation
 	//-------------------------
 
-	// using access token to get user information
-	url := "https://graph.facebook.com/" + utils.InterfaceToString(requestData["user_id"]) + "?access_token=" + utils.InterfaceToString(requestData["access_token"])
+	// using access token to get user information,
+	// NOTE: API Version supported at least until April 2018
+	url := "https://graph.facebook.com/v2.5/" + utils.InterfaceToString(requestData["user_id"]) + "?access_token=" + utils.InterfaceToString(requestData["access_token"]) + "&fields=id,email,first_name,last_name"
 	facebookResponse, err := http.Get(url)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -896,8 +897,16 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name", "verified") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name and verfied.")
+	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name.")
+	}
+
+	if responseError, present := jsonMap["error"]; present && responseError != nil {
+		errorMap := utils.InterfaceToMap(responseError)
+		if errorMessage, present := errorMap["message"]; present {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9f003c22-65e2-4c17-abb7-cd2a74b7eb44", utils.InterfaceToString(errorMessage))
+		}
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "df03de97-e779-4779-b6c9-e8d331bf590d", "Unexpected error during retrieving information from facebook service")
 	}
 
 	visitorFacebookAccount := map[string]string{
@@ -919,9 +928,9 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 
 		// there is no such facebook_id in DB, trying to find by e-mail
 		err = visitorModel.LoadByEmail(visitorFacebookAccount["email"])
-		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
-			// visitor not exists in out DB - reating new one
+		// visitor not exists in out DB - creating new one
+		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 			visitorModel.Set("email", visitorFacebookAccount["email"])
 			visitorModel.Set("first_name", visitorFacebookAccount["first_name"])
 			visitorModel.Set("last_name", visitorFacebookAccount["last_name"])

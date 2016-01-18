@@ -84,6 +84,30 @@ app/actors/cms/images/api.go
 - [POST]     cms/images
 - [DELETE]   cms/images/:id
 
+# Group Discounts
+This refers to all capabilities to reduce the price of a product or cart at checkout.
+
+## Coupons
+app/actors/discount/coupon/api.go
+
+- [GET]      coupons
+- [POST]     coupons
+- [GET]      csv/coupons
+- [POST]     csv/coupons
+- [POST]     cart/coupons
+- [DELETE]   cart/coupons/:code
+- [GET]      coupons/:id
+- [PUT]      coupons/:id
+- [DELETE]   coupons/:id
+
+## Gift Cards
+app/actors/discount/giftcard/api.go
+
+- [GET]      giftcards
+- [GET]      giftcards/:giftcode
+- [GET]      giftcards/:giftcode/apply
+- [GET]      giftcards/:giftcode/neglect
+
 # Group Unsorted
 
 ## app/actors/payment/authorizenet/api.go
@@ -108,12 +132,6 @@ app/actors/cms/images/api.go
 - [PUT]      checkout
 - [POST]     checkout/submit
 
-## app/actors/discount/api.go
-
-- [GET]      discount/:coupon/apply
-- [GET]      discount/:coupon/neglect
-- [GET]      discounts/csv
-- [POST]     discounts/csv
 
 ## app/actors/order/api.go
 

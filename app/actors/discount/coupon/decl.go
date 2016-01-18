@@ -19,5 +19,8 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 )
 
-// DefaultDiscount is a default implementer of InterfaceDiscount
-type DefaultDiscount struct{}
+// Coupon is a default implementer of InterfaceDiscount
+type Coupon struct{}
+
+// usedCoupons contains used coupon codes with visitorsId's, initialize from orders and updated on checkout success
+var usedCoupons map[string][]string

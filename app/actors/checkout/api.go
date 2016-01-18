@@ -134,7 +134,7 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	result["taxes"] = currentCheckout.GetTaxes()
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
-	result["discounts"] = currentCheckout.GetDiscounts()
+	result["discounts"] = currentCheckout.GetAggregatedDiscounts()
 
 	// prevent from showing cc values in info
 	infoMap := make(map[string]interface{})
@@ -263,18 +263,9 @@ func checkoutObtainAddress(data interface{}) (visitor.InterfaceVisitorAddress, e
 		return visitorAddress, nil
 	}
 
-	// creating new address model instance
-	visitorAddressModel, err := visitor.GetVisitorAddressModel()
+	visitorAddressModel, err := checkout.ValidateAddress(addressData)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
-	}
-
-	// filling new instance with request provided data
-	for attribute, value := range addressData {
-		err := visitorAddressModel.Set(attribute, value)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
 	}
 
 	// setting address owner to current visitor (for sure)
@@ -640,8 +631,9 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
+	currentPaymentMethod := currentCheckout.GetPaymentMethod()
 	// set ZeroPayment method for checkout without payment method
-	if currentCheckout.GetPaymentMethod() == nil {
+	if currentPaymentMethod == nil || (currentCheckout.GetGrandTotal() == 0 && currentPaymentMethod.GetCode() != zeropay.ConstPaymentZeroPaymentCode) {
 		for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
 			if zeropay.ConstPaymentZeroPaymentCode == paymentMethod.GetCode() {
 				if paymentMethod.IsAllowed(currentCheckout) {

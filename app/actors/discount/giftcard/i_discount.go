@@ -67,6 +67,8 @@ func (it *DefaultGiftcard) CalculateDiscount(checkoutInstance checkout.Interface
 						Amount:    giftCardAmount,
 						IsPercent: false,
 						Priority:  priorityValue,
+						Object:    checkout.ConstDiscountObjectCart,
+						Type:      it.GetCode(),
 					})
 					priorityValue += float64(0.0001)
 
