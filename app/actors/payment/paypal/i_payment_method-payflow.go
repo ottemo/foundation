@@ -141,12 +141,16 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b18cdcad-8c21-4acf-a2e0-56e0541103de", "payment unexpected response")
 	}
 
-	// get info about transaction from response response
-	orderTransactionID := utils.InterfaceToString(responseValues.Get("PNREF"))
-
-	if responseValues.Get("RESPMSG") != "Approved" || orderTransactionID == "" {
+	if responseValues.Get("RESPMSG") != "Approved" {
 		env.Log("paypal.log", env.ConstLogPrefixInfo, "Redjected payment: "+fmt.Sprint(responseValues))
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e48403bb-c15d-4302-8894-da7146b93260", "payment error: "+responseValues.Get("RESPMSG")+", "+responseValues.Get("PREFPSMSG"))
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e48403bb-c15d-4302-8894-da7146b93260", checkout.ConstPaymentErrorDeclined+" Reason: "+responseValues.Get("RESPMSG")+", "+responseValues.Get("PREFPSMSG"))
+	}
+
+	// get info about transaction from payment response
+	orderTransactionID := utils.InterfaceToString(responseValues.Get("PNREF"))
+	if orderTransactionID == "" {
+		env.Log("paypal.log", env.ConstLogPrefixInfo, "Redjected payment: "+fmt.Sprint(responseValues))
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d1d0a2d6-786a-4a29-abb1-3eb7667fbc3e", checkout.ConstPaymentErrorTechnical+" Reason: "+responseValues.Get("RESPMSG")+". "+responseValues.Get("PREFPSMSG"))
 	}
 
 	env.Log("paypal.log", env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
@@ -231,12 +235,12 @@ func (it *PayFlowAPI) GetAccessToken(originRequestParams string) (string, error)
 
 	if responseValues.Get("RESPMSG") != "Approved" || responseValues.Get("SECURETOKEN") == "" {
 		env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "Can't obtain secure token: "+fmt.Sprint(responseValues))
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3608dfb-3c7a-4549-82c1-83d6e9d8b7cb", "payment error: "+responseValues.Get("RESPMSG"))
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3608dfb-3c7a-4549-82c1-83d6e9d8b7cb", checkout.ConstPaymentErrorTechnical+" "+responseValues.Get("RESPMSG"))
 	}
 
 	token := responseValues.Get("SECURETOKEN")
 	if responseValues.Get("SECURETOKENID") != secureTokenID {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b095f62-b371-4eaf-965f-98eb24206e53", "unexpected response, SECURETOKENID value changed")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b095f62-b371-4eaf-965f-98eb24206e53", checkout.ConstPaymentErrorTechnical+" Unexpected response, SECURETOKENID value changed")
 	}
 
 	return "SECURETOKEN=" + utils.InterfaceToString(token) + "&SECURETOKENID=" + utils.InterfaceToString(secureTokenID), nil
@@ -311,7 +315,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 
 	responseValues, err := url.ParseQuery(string(responseBody))
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "550c824b-86cf-4c8d-a13e-73f92da15bde", "payment unexpected response")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "550c824b-86cf-4c8d-a13e-73f92da15bde", checkout.ConstPaymentErrorTechnical+" Payment unexpected response")
 	}
 	responseResult := utils.InterfaceToString(responseValues.Get("RESULT"))
 	responseMessage := utils.InterfaceToString(responseValues.Get("RESPMSG"))
@@ -321,7 +325,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION NO RESPONSE: "+
 			"RESPONSE - "+fmt.Sprint(responseValues))
 
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4d941690-d981-4d20-9b4e-ab903d1ea526", "The payment server is not responding.")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4d941690-d981-4d20-9b4e-ab903d1ea526", checkout.ConstPaymentErrorTechnical+" The payment server is not responding.")
 	}
 
 	result := map[string]interface{}{
@@ -337,7 +341,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	if _, ccSecureCodePresent := ccInfo["cvv"]; ccSecureCodePresent {
 		if utils.InterfaceToString(responseValues.Get("CVV2MATCH")) == "N" {
 			// invalid CVV2
-			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51d1a2c9-2f0a-4eee-9aa2-527ca6d83f28", "Payment verification error: the CVV2 code is not valid.")
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51d1a2c9-2f0a-4eee-9aa2-527ca6d83f28", checkout.ConstPaymentErrorDeclined+" Reason: CVV code is not valid.")
 		}
 	}
 
@@ -362,7 +366,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		"MESSAGE - "+responseMessage+" "+
 		"RESULT - "+responseResult)
 
-	return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a050604a-b9e9-44cc-a4d1-e5c0bfab5c69", "Payment error: "+responseMessage)
+	return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a050604a-b9e9-44cc-a4d1-e5c0bfab5c69", checkout.ConstPaymentErrorDeclined+"Reason: "+responseMessage)
 }
 
 // CreateAuthorizeZeroAmountRequest will do Account Verification and return transaction ID for refer transaction if all info is valid

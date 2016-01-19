@@ -13,6 +13,10 @@ import (
 // checkoutSuccessHandler is a handler for checkout success event which sends order information to TrustPilot
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
+	if !subscriptionEnabled {
+		return true
+	}
+
 	var currentCheckout checkout.InterfaceCheckout
 	if eventItem, present := eventData["checkout"]; present {
 		if typedItem, ok := eventItem.(checkout.InterfaceCheckout); ok {
@@ -164,6 +168,11 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 // getOptionsExtend is a handler for product get options event which extend available product options
 // TODO: create some defined object for options (should explain keys)
 func getOptionsExtend(event string, eventData map[string]interface{}) bool {
+
+	if !subscriptionEnabled {
+		return true
+	}
+
 	if value, present := eventData["options"]; present {
 		options := utils.InterfaceToMap(value)
 

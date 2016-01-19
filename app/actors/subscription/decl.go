@@ -16,13 +16,11 @@ const (
 	ConstConfigPathSubscription        = "general.subscription"
 	ConstConfigPathSubscriptionEnabled = "general.subscription.enabled"
 
-	ConstConfigPathSubscriptionEmailSubject     = "general.subscription.emailSubject"
-	ConstConfigPathSubscriptionEmailTemplate    = "general.subscription.emailTemplate"
-	ConstConfigPathSubscriptionConfirmationLink = "general.subscription.confirmationLink"
+	ConstConfigPathSubscriptionEmailSubject  = "general.subscription.emailSubject"
+	ConstConfigPathSubscriptionEmailTemplate = "general.subscription.emailTemplate"
 
-	ConstConfigPathSubscriptionSubmitEmailSubject  = "general.subscription.emailSubmitSubject"
-	ConstConfigPathSubscriptionSubmitEmailTemplate = "general.subscription.emailSubmitTemplate"
-	ConstConfigPathSubscriptionSubmitEmailLink     = "general.subscription.SubmitLink"
+	ConstConfigPathSubscriptionStockEmailSubject  = "general.subscription.emailStockSubject"
+	ConstConfigPathSubscriptionStockEmailTemplate = "general.subscription.emailStockTemplate"
 
 	ConstCollectionNameSubscription = "subscription"
 	ConstSubscriptionLogStorage     = "subscription.log"
@@ -31,18 +29,13 @@ const (
 	ConstSubscriptionStatusConfirmed = "confirmed"
 	ConstSubscriptionStatusCanceled  = "canceled"
 
-	ConstSubscriptionActionSubmit = "submit"
-	ConstSubscriptionActionUpdate = "update"
-	ConstSubscriptionActionCreate = "create"
-
 	ConstTimeDay = time.Hour * 24
-
-	ConstCreationDaysDelay = 33
 )
 
 var (
-	optionName   = "Subscription"
-	optionValues = map[string]int{"Every 5 days": 5, "Every 30 days": 30, "Every 60 days": 60, "Every 90 days": 90, "Every 120 days": 120, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1}
+	subscriptionEnabled = false
+	optionName          = "Subscription"
+	optionValues        = map[string]int{"Every 5 days": 5, "Every 30 days": 30, "Every 60 days": 60, "Every 90 days": 90, "Every 120 days": 120, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1}
 )
 
 // DefaultSubscription struct to hold subscription information

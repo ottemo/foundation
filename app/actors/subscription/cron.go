@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,13 @@ func placeOrders(params map[string]interface{}) error {
 		return env.ErrorDispatch(err)
 	}
 
+	if !subscriptionEnabled {
+		if len(subscriptionsOnSubmit) > 0 {
+			env.Log(ConstSubscriptionLogStorage, "Warn", "Subscription is turned off, some records are not processed for this hour "+currentHourBeginning.String())
+		}
+		return nil
+	}
+
 	for _, record := range subscriptionsOnSubmit {
 
 		subscriptionInstance, err := subscription.GetSubscriptionModel()
@@ -50,7 +58,6 @@ func placeOrders(params map[string]interface{}) error {
 		}
 
 		checkoutInstance.SetInfo("subscription_id", subscriptionInstance.GetID())
-		subscriptionInstance.Set("last_submit", time.Now())
 
 		// need to check for unreached payment
 		// to send email to user in case of low balance on credit card
@@ -59,6 +66,8 @@ func placeOrders(params map[string]interface{}) error {
 			handleCheckoutError(subscriptionInstance, checkoutInstance, err)
 			continue
 		}
+
+		subscriptionInstance.Set("last_submit", time.Now())
 
 		// save new action date for current subscription
 		if err = subscriptionInstance.UpdateActionDate(); err != nil {
@@ -74,13 +83,34 @@ func placeOrders(params map[string]interface{}) error {
 	return nil
 }
 
+// handleCheckoutError will do the required actions with subscription
 func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription, checkoutInstance checkout.InterfaceCheckout, err error) {
-	handleSubscriptionError(subscriptionInstance, err)
 
+	errorMessage := err.Error()
+
+	// handle notification of customers
+	if strings.Contains(errorMessage, checkout.ConstPaymentErrorDeclined) {
+		if emailError := sendNotificationEmail(subscriptionInstance); emailError != nil {
+			env.ErrorDispatch(emailError)
+			env.Log(ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
+		}
+
+		if internalError := subscriptionInstance.SetStatus(ConstSubscriptionStatusCanceled); internalError != nil {
+			env.ErrorDispatch(internalError)
+		}
+
+		if internalError := subscriptionInstance.Save(); internalError != nil {
+			env.ErrorDispatch(internalError)
+		}
+
+		return
+	}
+
+	handleSubscriptionError(subscriptionInstance, err)
 }
 
 func handleSubscriptionError(subscriptionInstance subscription.InterfaceSubscription, err error) {
-	env.LogError(err)
+	env.LogError(env.ErrorDispatch(err))
 
 	if subscriptionInstance != nil {
 		env.Log(ConstSubscriptionLogStorage, "Error", subscriptionInstance.GetID()+": "+err.Error())

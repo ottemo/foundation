@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupConfig setups package configuration values for a system
@@ -38,7 +39,10 @@ func setupConfig() error {
 		Label:       "Subscription",
 		Description: `Enabled Subscription`,
 		Image:       "",
-	}, nil)
+	}, env.FuncConfigValueValidator(func(newValue interface{}) (interface{}, error) {
+		subscriptionEnabled = utils.InterfaceToBool(newValue)
+		return newValue, nil
+	}))
 
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -46,27 +50,12 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathSubscriptionEmailSubject,
-		Value:       "Subscription confirm!",
+		Value:       "Subscription",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
-		Label:       "Confirmation subject",
-		Description: `Email subject for confirmation emails`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionConfirmationLink,
-		Value:       "subscription?confirm={{subscriptionID}}",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Confirmation link",
-		Description: `Part of confirmation link to storefront to procced subscription confirmation {{subscriptionID}} - will cahnged by it's real id`,
+		Label:       "On fail subject",
+		Description: `Email subject for emails`,
 		Image:       "",
 	}, nil)
 
@@ -77,23 +66,13 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path: ConstConfigPathSubscriptionEmailTemplate,
 		Value: `Dear {{.Visitor.name}},
-		Yours subscription order is can be subbmitted, confirm processing of subscription order
-		<br />
-		<br />
-<h3>Duplicated order #{{.Order.increment_id}}: </h3><br />
-Order summary<br />
-Subtotal: ${{.Order.subtotal}}<br />
-Tax: ${{.Order.tax_amount}}<br />
-Shipping: ${{.Order.shipping_amount}}<br />
-Discount: -${{ .Order.discount | printf "%.2f" }}<br />
-Total: ${{.Order.grand_total}}<br />
-<br />
-<a href={{.Info.link}}>Confirm</a><br />`,
+		Yours subscription can't be processed couse you have insufficient funds on Credit Card
+		please create new subscription using valid credit card`,
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "Confirmation template",
-		Description: "contents of confirmation email, it will be sented to cutomers one week before subscription date",
+		Label:       "On fail template",
+		Description: "Email constent to send to customers in case of failing on submit (insufficient funds on Credit Card, or some technical error)",
 		Image:       "",
 	}, nil)
 
@@ -102,55 +81,13 @@ Total: ${{.Order.grand_total}}<br />
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionSubmitEmailSubject,
-		Value:       "Subscription proceed!",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Submit subject",
-		Description: `Email subject for checkout proceed emails`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionSubmitEmailLink,
-		Value:       "subscription?submit={{subscriptionID}}",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Submit link",
-		Description: `Part of confirmation link to storefront to proceed checkout for subscription {{subscriptionID}} - will cahnged by it's real id`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path: ConstConfigPathSubscriptionSubmitEmailTemplate,
-		Value: `Dear {{.Visitor.name}},
-		Yours subscription date is comming soon please confirm processing of subscription order
-		<br />
-		<br />
-<h3>Duplicated order #{{.Order.increment_id}}: </h3><br />
-Order summary<br />
-Subtotal: ${{.Order.subtotal}}<br />
-Tax: ${{.Order.tax_amount}}<br />
-Shipping: ${{.Order.shipping_amount}}<br />
-Discount: -${{ .Order.discount | printf "%.2f" }}<br />
-Total: ${{.Order.grand_total}}<br />
-<br />
-<a href={{.Info.link}}>Confirm</a><br />`,
+		Path:        ConstConfigPathSubscriptionStockEmailTemplate,
+		Value:       `Items out of stock`,
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Submit template",
-		Description: "contents of confirmation email, it will be sented to cutomers one week before subscription date",
+		Description: "contents of email that sented on out of stock error",
 		Image:       "",
 	}, nil)
 
