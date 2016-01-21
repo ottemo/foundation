@@ -32,12 +32,12 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID", api.ConstRESTOperationGet, APIGetSubscription)
+	err = api.GetRestService().RegisterAPI("subscriptions/:subscriptionID", api.ConstRESTOperationGet, APIGetSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID", api.ConstRESTOperationDelete, APIDeleteSubscription)
+	err = api.GetRestService().RegisterAPI("subscriptions/:subscriptionID", api.ConstRESTOperationDelete, APIDeleteSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -57,7 +57,7 @@ func setupAPI() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("visit/subscription/:subscriptionID", api.ConstRESTOperationDelete, APICancelSubscription)
+	err = api.GetRestService().RegisterAPI("visit/subscriptions/:subscriptionID", api.ConstRESTOperationDelete, APICancelSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
