@@ -86,7 +86,7 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 	models.ApplyFilters(context, dbCollection)
 
 	// checking for a "count" request
-	if context.GetRequestArgument("count") != "" {
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
 		return dbCollection.Count()
 	}
 
