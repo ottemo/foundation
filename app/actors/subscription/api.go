@@ -47,7 +47,17 @@ func setupAPI() error {
 	//		return env.ErrorDispatch(err)
 	//	}
 
-	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID/status/:status", api.ConstRESTOperationGet, APIUpdateSubscriptionStatus)
+	err = api.GetRestService().RegisterAPI("subscription/:subscriptionID/:status", api.ConstRESTOperationUpdate, APIUpdateSubscriptionStatus)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = api.GetRestService().RegisterAPI("visit/subscriptions", api.ConstRESTOperationGet, APIGetVisitorSubscriptions)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = api.GetRestService().RegisterAPI("visit/subscription/:subscriptionID", api.ConstRESTOperationDelete, APICancelSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -99,6 +109,75 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 	models.ApplyExtraAttributes(context, subscriptionCollectionModel)
 
 	return subscriptionCollectionModel.List()
+}
+
+// APIGetVisitorSubscriptions returns a list of subscriptions for visitor
+//   - if "action" parameter is set to "count" result value will be just a number of list items
+func APIGetVisitorSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	visitorID := visitor.GetCurrentVisitorID(context)
+	if visitorID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c73e39c9-dc23-463b-9792-a5d3f7e4d9dd", "You should log in first")
+	}
+
+	//subscriptionCollection =
+	// list operation
+	//---------------
+	subscriptionCollectionModel, err := subscription.GetSubscriptionCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	dbCollection := subscriptionCollectionModel.GetDBCollection()
+	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
+	dbCollection.AddStaticFilter("status", "=", ConstSubscriptionStatusConfirmed)
+	models.ApplyFilters(context, dbCollection)
+
+	// checking for a "count" request
+	if context.GetRequestArgument("count") != "" {
+		return dbCollection.Count()
+	}
+
+	// limit parameter handle
+	dbCollection.SetLimit(models.GetListLimit(context))
+
+	dbCollection.SetResultColumns("_id", "period", "action_date", "cart_id")
+	// extra parameter handle
+	extra := context.GetRequestArgument("extra")
+	extraAttributes := utils.Explode(extra, ",")
+	for _, attributeName := range extraAttributes {
+		dbCollection.SetResultColumns(attributeName)
+	}
+
+	records, err := dbCollection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, record := range records {
+		storedCart, err := cart.LoadCartByID(utils.InterfaceToString(record["cart_id"]))
+		if err != nil {
+			continue
+		}
+
+		var items []interface{}
+
+		for _, cartItem := range storedCart.GetItems() {
+
+			item := make(map[string]interface{})
+
+			item["_id"] = cartItem.GetID()
+			item["idx"] = cartItem.GetIdx()
+			item["qty"] = cartItem.GetQty()
+			item["pid"] = cartItem.GetProductID()
+			item["options"] = cartItem.GetOptions()
+			items = append(items, item)
+		}
+
+		record["items"] = items
+	}
+
+	return records, nil
 }
 
 // APIGetSubscription return specified subscription information
@@ -155,9 +234,8 @@ func APIDeleteSubscription(context api.InterfaceApplicationContext) (interface{}
 
 	// check rights
 	if err := api.ValidateAdminRights(context); err != nil {
-		if subscriptionInstance.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
-		}
+		//if subscriptionInstance.GetVisitorID() != visitor.GetCurrentVisitorID(context) {}
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// delete operation
@@ -191,7 +269,6 @@ func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (inte
 }
 
 // APICreateSubscription provide mechanism to create new subscription
-// products are getted from specified cart or order or current cart
 func APICreateSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check visitor rights
@@ -465,7 +542,10 @@ func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}
 //   - subscription id and new status should be specified in "subscription_id" and "status" arguments
 func APIUpdateSubscriptionStatus(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	visitorID := visitor.GetCurrentVisitorID(context)
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	// check request context
 	//---------------------
@@ -480,16 +560,43 @@ func APIUpdateSubscriptionStatus(context api.InterfaceApplicationContext) (inter
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check is current visitor was a creator of subscription or it's admin
-	if api.ValidateAdminRights(context) != nil && visitorID != subscriptionInstance.GetVisitorID() {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5d438cbd-60a3-44af-838f-bddf4e19364e", "subscription not found")
-	}
-
 	requestedStatus := context.GetRequestArgument("status")
 	err = subscriptionInstance.SetStatus(requestedStatus)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return "ok", nil
+	return "ok", subscriptionInstance.Save()
+}
+
+// APICancelSubscription change status of subscription to canceled
+//   - subscription id should be specified in "subscription_id"
+func APICancelSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check request context
+	//---------------------
+	subscriptionID := context.GetRequestArgument("subscriptionID")
+	if subscriptionID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4e8f9873-9144-42ae-b119-d1e95bb1bbfd", "subscription id should be specified")
+	}
+
+	// load subscription by id
+	subscriptionInstance, err := subscription.LoadSubscriptionByID(subscriptionID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		if subscriptionInstance.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	err = subscriptionInstance.SetStatus(ConstSubscriptionStatusCanceled)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return "ok", subscriptionInstance.Save()
 }
