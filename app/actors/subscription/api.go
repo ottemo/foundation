@@ -69,17 +69,8 @@ func setupAPI() error {
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	sessionVisitorID := visitor.GetCurrentVisitorID(context)
-	if sessionVisitorID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c73e39c9-dc23-463b-9792-a5d3f7e4d9dd", "You should log in first")
-	}
-
-	// if visitorID was specified - using this otherwise, taking current visitor
-	visitorID := context.GetRequestArgument("visitorID")
-
-	// check rights if it user we will search only for his subscriptions
 	if err := api.ValidateAdminRights(context); err != nil {
-		visitorID = sessionVisitorID
+	    return nil, env.ErrorDispatch(err)
 	}
 
 	// list operation
@@ -90,9 +81,6 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	dbCollection := subscriptionCollectionModel.GetDBCollection()
-	if visitorID != "" {
-		dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
-	}
 
 	// filters handle
 	models.ApplyFilters(context, dbCollection)
