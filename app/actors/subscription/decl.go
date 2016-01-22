@@ -46,8 +46,8 @@ type DefaultSubscription struct {
 	CartID    string
 	OrderID   string
 
-	Email string
-	Name  string
+	CustomerEmail string
+	CustomerName  string
 
 	Status     string
 	State      string

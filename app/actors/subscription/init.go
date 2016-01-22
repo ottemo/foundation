@@ -37,8 +37,8 @@ func setupDB() error {
 	collection.AddColumn("order_id", db.ConstTypeID, true)
 	collection.AddColumn("cart_id", db.ConstTypeID, true)
 
-	collection.AddColumn("email", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
-	collection.AddColumn("name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	collection.AddColumn("customer_email", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
+	collection.AddColumn("customer_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 
 	collection.AddColumn("shipping_address", db.ConstTypeJSON, false)
 	collection.AddColumn("billing_address", db.ConstTypeJSON, false)

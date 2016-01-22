@@ -20,8 +20,8 @@ const (
 
 // InterfaceSubscription represents interface to access business layer implementation of purchase subscription object
 type InterfaceSubscription interface {
-	GetEmail() string
-	GetName() string
+	GetCustomerEmail() string
+	GetCustomerName() string
 
 	GetOrderID() string
 	GetCartID() string

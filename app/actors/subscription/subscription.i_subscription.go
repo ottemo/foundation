@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-// GetEmail returns subscriber e-mail
-func (it *DefaultSubscription) GetEmail() string {
-	return it.Email
+// GetCustomerEmail returns subscriber e-mail
+func (it *DefaultSubscription) GetCustomerEmail() string {
+	return it.CustomerEmail
 }
 
-// GetName returns name of subscriber
-func (it *DefaultSubscription) GetName() string {
-	return it.Name
+// GetCustomerName returns name of subscriber
+func (it *DefaultSubscription) GetCustomerName() string {
+	return it.CustomerName
 }
 
 // GetVisitorID returns the Subscription's Visitor ID
@@ -255,8 +255,8 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 		checkoutInstance.Set("VisitorID", visitorID)
 	}
 
-	checkoutInstance.SetInfo("customer_email", it.GetEmail())
-	checkoutInstance.SetInfo("customer_name", it.GetName())
+	checkoutInstance.SetInfo("customer_email", it.GetCustomerEmail())
+	checkoutInstance.SetInfo("customer_name", it.GetCustomerName())
 
 	// set billing and shipping address
 	shippingAddress := it.GetShippingAddress()
@@ -331,7 +331,7 @@ func (it *DefaultSubscription) Validate() error {
 		return env.ErrorDispatch(err)
 	}
 
-	if !utils.ValidEmailAddress(it.Email) {
+	if !utils.ValidEmailAddress(it.CustomerEmail) {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription invalid: email")
 	}
 

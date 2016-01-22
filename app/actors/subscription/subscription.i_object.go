@@ -20,10 +20,10 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.CartID
 	case "order_id":
 		return it.OrderID
-	case "email":
-		return it.Email
-	case "name", "full_name":
-		return it.GetName()
+	case "customer_email":
+		return it.CustomerEmail
+	case "customer_name", "full_name":
+		return it.CustomerName
 	case "shipping_address":
 		return it.GetShippingAddress()
 	case "billing_address":
@@ -68,11 +68,11 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 	case "order_id":
 		it.OrderID = utils.InterfaceToString(value)
 
-	case "email":
-		it.Email = utils.InterfaceToString(value)
+	case "customer_email":
+		it.CustomerEmail = utils.InterfaceToString(value)
 
-	case "name", "full_name":
-		it.Name = utils.InterfaceToString(value)
+	case "customer_name", "full_name":
+		it.CustomerName = utils.InterfaceToString(value)
 
 	case "shipping_address":
 		shippingAddress := utils.InterfaceToMap(value)
@@ -148,8 +148,8 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 	result["cart_id"] = it.CartID
 	result["order_id"] = it.OrderID
 
-	result["email"] = it.Email
-	result["name"] = it.Name
+	result["customer_email"] = it.CustomerEmail
+	result["customer_name"] = it.CustomerName
 
 	result["status"] = it.Status
 

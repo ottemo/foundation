@@ -28,9 +28,9 @@ func (it *DefaultSubscriptionCollection) List() ([]models.StructListItem, error)
 		resultItem := new(models.StructListItem)
 
 		resultItem.ID = subscriptionModel.GetID()
-		resultItem.Name = subscriptionModel.GetEmail()
+		resultItem.Name = subscriptionModel.GetCustomerEmail()
 		resultItem.Image = ""
-		resultItem.Desc = subscriptionModel.GetName()
+		resultItem.Desc = subscriptionModel.GetCustomerName()
 
 		// if extra attributes were required
 		if len(it.listExtraAtributes) > 0 {

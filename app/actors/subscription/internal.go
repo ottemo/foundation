@@ -15,7 +15,7 @@ import (
 // sendNotificationEmail used to send emails in case when payment declined
 func sendNotificationEmail(subscriptionInstance subscription.InterfaceSubscription) error {
 
-	email := subscriptionInstance.GetEmail()
+	email := subscriptionInstance.GetCustomerEmail()
 	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathSubscriptionEmailTemplate))
 	emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathSubscriptionEmailSubject))
 
@@ -30,7 +30,7 @@ func sendNotificationEmail(subscriptionInstance subscription.InterfaceSubscripti
 	}
 
 	templateMap := map[string]interface{}{
-		"Visitor":      map[string]interface{}{"name": subscriptionInstance.GetName()},
+		"Visitor":      map[string]interface{}{"name": subscriptionInstance.GetCustomerName()},
 		"Subscription": subscriptionInstance.ToHashMap(),
 		"Site":         map[string]interface{}{"url": app.GetStorefrontURL("")},
 	}
