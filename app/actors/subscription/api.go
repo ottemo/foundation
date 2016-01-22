@@ -58,7 +58,7 @@ func setupAPI() error {
 func AdminList(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	if err := api.ValidateAdminRights(context); err != nil {
-	    return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// list operation
@@ -175,14 +175,12 @@ func AdminOne(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	result := subscriptionModel.ToHashMap()
 
-	// subscriptionCheckout, err := subscriptionModel.GetCheckout()
-	// if subscriptionCheckout != nil {
-	// 	subscriptionCheckout.GetGrandTotal()
-	// 	result["checkout"] = subscriptionCheckout.ToHashMap()
-	// }
-
+	// Attach the order items
 	orderModel, err := order.LoadOrderByID(subscriptionModel.GetOrderID())
 	result["order_items"] = orderModel.GetItems()
+
+	result["payment_method_name"] = subscriptionModel.GetPaymentMethod().GetName()
+	result["shipping_method_name"] = subscriptionModel.GetShippingMethod().GetName()
 
 	return result, nil
 }
