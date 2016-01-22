@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
@@ -174,13 +175,14 @@ func AdminOne(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	result := subscriptionModel.ToHashMap()
 
-	subscriptionCheckout, err := subscriptionModel.GetCheckout()
-	if subscriptionCheckout != nil {
-		subscriptionCheckout.GetGrandTotal()
-		result["checkout"] = subscriptionCheckout.ToHashMap()
-	} else {
-		result["checkout_error"] = err
-	}
+	// subscriptionCheckout, err := subscriptionModel.GetCheckout()
+	// if subscriptionCheckout != nil {
+	// 	subscriptionCheckout.GetGrandTotal()
+	// 	result["checkout"] = subscriptionCheckout.ToHashMap()
+	// }
+
+	orderModel, err := order.LoadOrderByID(subscriptionModel.GetOrderID())
+	result["order_items"] = orderModel.GetItems()
 
 	return result, nil
 }
@@ -206,30 +208,20 @@ func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (inte
 	return "ok", nil
 }
 
-
 func Update(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// validate ownership
-	isAdmin := api.ValidateAdminRights(context) == nil
-	isOwner := subscriptionInstance.GetVisitorID() == visitor.GetCurrentVisitorID(context)
-
-	if !isAdmin && !isOwner {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bae87bfa-0fa2-4256-ab11-2fffa20bfa00", "Subscription ownership could not be verified")
-	}
-
-	// check request context
+	// validate params
 	subscriptionID := context.GetRequestArgument("id")
 	if subscriptionID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4e8f9873-9144-42ae-b119-d1e95bb1bbfd", "subscription id should be specified")
 	}
 
-	// check request context
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	requestedStatus := requestData["status"];
+	requestedStatus := utils.InterfaceToString(requestData["status"])
 	if requestedStatus == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "71fc926c-d2a0-4c8a-9462-b5274346ed23", "status should be specified")
 	}
@@ -239,10 +231,18 @@ func Update(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// validate ownership
+	isAdmin := api.ValidateAdminRights(context) == nil
+	isOwner := subscriptionInstance.GetVisitorID() == visitor.GetCurrentVisitorID(context)
+
+	if !isAdmin && !isOwner {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bae87bfa-0fa2-4256-ab11-2fffa20bfa00", "Subscription ownership could not be verified")
+	}
+
 	err = subscriptionInstance.SetStatus(requestedStatus)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return subscription, subscriptionInstance.Save()
+	return "ok", subscriptionInstance.Save()
 }
