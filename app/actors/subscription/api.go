@@ -5,7 +5,6 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
@@ -18,28 +17,28 @@ func setupAPI() error {
 	var err error
 
 	// Administrative
-	err = api.GetRestService().RegisterAPI("subscriptions", api.ConstRESTOperationGet, AdminList)
+	err = api.GetRestService().RegisterAPI("subscriptions", api.ConstRESTOperationGet, APIListSubscriptions)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationGet, AdminOne)
+	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationGet, APIGetSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationUpdate, Update)
+	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationUpdate, APIUpdateSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	// Public
-	err = api.GetRestService().RegisterAPI("visit/subscriptions", api.ConstRESTOperationGet, List)
+	err = api.GetRestService().RegisterAPI("visit/subscriptions", api.ConstRESTOperationGet, APIListVisitorSubscriptions)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("visit/subscriptions/:id", api.ConstRESTOperationUpdate, Update)
+	err = api.GetRestService().RegisterAPI("visit/subscriptions/:id", api.ConstRESTOperationUpdate, APIUpdateSubscription)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -53,9 +52,9 @@ func setupAPI() error {
 	return nil
 }
 
-// AdminList returns a list of subscriptions for visitor
+// APIListSubscriptions returns a list of subscriptions for visitor
 //   - if "action" parameter is set to "count" result value will be just a number of list items
-func AdminList(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -67,14 +66,9 @@ func AdminList(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	dbCollection := subscriptionCollectionModel.GetDBCollection()
-
-	// filters handle
-	models.ApplyFilters(context, dbCollection)
-
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
-		return dbCollection.Count()
+		return subscriptionCollectionModel.GetDBCollection().Count()
 	}
 
 	// limit parameter handle
@@ -86,17 +80,16 @@ func AdminList(context api.InterfaceApplicationContext) (interface{}, error) {
 	return subscriptionCollectionModel.List()
 }
 
-// List returns a list of subscriptions for visitor
+// APIListVisitorSubscriptions returns a list of subscriptions for visitor
 //   - if "action" parameter is set to "count" result value will be just a number of list items
-func List(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c73e39c9-dc23-463b-9792-a5d3f7e4d9dd", "You should log in first")
 	}
 
-	//subscriptionCollection =
-	// list operation
+	// for showing subscriptions to a visitor, request is specific so handle it in different way from default List
 	subscriptionCollectionModel, err := subscription.GetSubscriptionCollectionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -108,7 +101,7 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 	models.ApplyFilters(context, dbCollection)
 
 	// checking for a "count" request
-	if context.GetRequestArgument("count") != "" {
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
 		return dbCollection.Count()
 	}
 
@@ -154,9 +147,9 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 	return records, nil
 }
 
-// AdminOne return specified subscription information
+// APIGetSubscription return specified subscription information
 //   - subscription id should be specified in "id" argument
-func AdminOne(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	subscriptionID := context.GetRequestArgument("id")
@@ -175,12 +168,30 @@ func AdminOne(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	result := subscriptionModel.ToHashMap()
 
-	// Attach the order items
-	orderModel, err := order.LoadOrderByID(subscriptionModel.GetOrderID())
-	result["order_items"] = orderModel.GetItems()
-
 	result["payment_method_name"] = subscriptionModel.GetPaymentMethod().GetName()
 	result["shipping_method_name"] = subscriptionModel.GetShippingMethod().GetName()
+
+	// Attach the subscription items
+	storedCart, err := cart.LoadCartByID(subscriptionModel.GetCartID())
+	if err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+
+	var items []interface{}
+
+	for _, cartItem := range storedCart.GetItems() {
+
+		item := make(map[string]interface{})
+
+		item["_id"] = cartItem.GetID()
+		item["idx"] = cartItem.GetIdx()
+		item["qty"] = cartItem.GetQty()
+		item["pid"] = cartItem.GetProductID()
+		item["options"] = cartItem.GetOptions()
+		items = append(items, item)
+	}
+
+	result["items"] = items
 
 	return result, nil
 }
@@ -190,7 +201,7 @@ func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (inte
 
 	// check visitor to be registered
 	visitorID := visitor.GetCurrentVisitorID(context)
-	if api.ValidateAdminRights(context) != nil && visitorID == "" {
+	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e6109c04-e35a-4a90-9593-4cc1f141a358", "you are not logged in")
 	}
 
@@ -206,7 +217,8 @@ func APICheckCheckoutSubscription(context api.InterfaceApplicationContext) (inte
 	return "ok", nil
 }
 
-func Update(context api.InterfaceApplicationContext) (interface{}, error) {
+// APIUpdateSubscription allows to change status of subscription for visitor and for administrator
+func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// validate params
 	subscriptionID := context.GetRequestArgument("id")

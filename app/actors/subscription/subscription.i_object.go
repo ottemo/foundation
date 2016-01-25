@@ -39,13 +39,13 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 	case "period":
 		return it.GetPeriod()
 	case "last_submit":
-		return it.GetLastSubmit()
+		return it.LastSubmit
 	case "action_date":
 		return it.GetActionDate()
 	case "created_at":
-		return it.GetCreatedAt()
+		return it.CreatedAt
 	case "updated_at":
-		return it.GetUpdatedAt()
+		return it.UpdatedAt
 	}
 
 	return nil

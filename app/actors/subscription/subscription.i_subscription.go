@@ -226,21 +226,6 @@ func (it *DefaultSubscription) GetShippingRate() checkout.StructShippingRate {
 	return it.ShippingRate
 }
 
-// GetLastSubmit returns the Subscription last submit date
-func (it *DefaultSubscription) GetLastSubmit() time.Time {
-	return it.CreatedAt
-}
-
-// GetCreatedAt returns the Subscription creation date
-func (it *DefaultSubscription) GetCreatedAt() time.Time {
-	return it.CreatedAt
-}
-
-// GetUpdatedAt returns the Subscription update date
-func (it *DefaultSubscription) GetUpdatedAt() time.Time {
-	return it.CreatedAt
-}
-
 // GetCheckout return checkout object created from subscription
 func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error) {
 

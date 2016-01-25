@@ -55,10 +55,6 @@ type InterfaceSubscription interface {
 
 	UpdateActionDate() error
 
-	GetLastSubmit() time.Time
-	GetCreatedAt() time.Time
-	GetUpdatedAt() time.Time
-
 	Validate() error
 	GetCheckout() (checkout.InterfaceCheckout, error)
 

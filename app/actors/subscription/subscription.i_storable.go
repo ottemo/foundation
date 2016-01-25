@@ -55,9 +55,9 @@ func (it *DefaultSubscription) Save() error {
 	}
 
 	// checking required fields for creating new subscription
-	if err := it.Validate(); err != nil {
-		return env.ErrorDispatch(err)
-	}
+	//	if err := it.Validate(); err != nil {
+	//		return env.ErrorDispatch(err)
+	//	}
 
 	// update time depend values
 	currentTime := time.Now()

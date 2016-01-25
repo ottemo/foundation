@@ -89,11 +89,11 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 	visitor := currentCheckout.GetVisitor()
 	if visitor != nil {
 		subscriptionInstance.Set("visitor_id", visitor.GetID())
-		subscriptionInstance.Set("email", visitor.GetEmail())
-		subscriptionInstance.Set("name", visitor.GetFullName())
+		subscriptionInstance.Set("customer_email", visitor.GetEmail())
+		subscriptionInstance.Set("customer_name", visitor.GetFullName())
 	} else {
-		subscriptionInstance.Set("email", currentCheckout.GetInfo("customer_email"))
-		subscriptionInstance.Set("name", currentCheckout.GetInfo("customer_name"))
+		subscriptionInstance.Set("customer_email", currentCheckout.GetInfo("customer_email"))
+		subscriptionInstance.Set("customer_name", currentCheckout.GetInfo("customer_name"))
 	}
 
 	subscriptionInstance.SetShippingAddress(currentCheckout.GetShippingAddress())
