@@ -137,6 +137,7 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 
 			item["_id"] = cartItem.GetID()
 			item["idx"] = cartItem.GetIdx()
+			item["name"] = cartItem.GetProduct().GetName()
 			item["qty"] = cartItem.GetQty()
 			item["pid"] = cartItem.GetProductID()
 			item["options"] = cartItem.GetOptions()
