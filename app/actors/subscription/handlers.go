@@ -178,15 +178,15 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 
 		storedOptions := map[string]interface{}{
 			"type":     "select",
-			"required": false,
+			"required": true,
 			"order":    1,
 			"label":    "Subscription",
 			"options": map[string]interface{}{
-				"None":           map[string]interface{}{"order": 1, "label": "None"},
-				"Every 30 days":  map[string]interface{}{"order": 2, "label": "Every 30 days"},
-				"Every 60 days":  map[string]interface{}{"order": 3, "label": "Every 60 days"},
-				"Every 90 days":  map[string]interface{}{"order": 4, "label": "Every 90 days"},
-				"Every 120 days": map[string]interface{}{"order": 5, "label": "Every 120 days"},
+				"Just Once": map[string]interface{}{"order": 1, "label": "Just Once"},
+				"30 days":   map[string]interface{}{"order": 2, "label": "30 days"},
+				"60 days":   map[string]interface{}{"order": 3, "label": "60 days"},
+				"90 days":   map[string]interface{}{"order": 4, "label": "90 days"},
+				"120 days":  map[string]interface{}{"order": 5, "label": "120 days"},
 			},
 		}
 
