@@ -23,104 +23,104 @@ import (
 func setupAPI() error {
 
 	// Dashboard API
-	err := api.GetRestService().RegisterAPI("visitor", api.ConstRESTOperationCreate, APICreateVisitor)
+	err := api.GetRestService().RegisterAPI("visitor", api.POST, APICreateVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationUpdate, APIUpdateVisitor)
+	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.PUT, APIUpdateVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationDelete, APIDeleteVisitor)
+	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.DELETE, APIDeleteVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationGet, APIGetVisitor)
+	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.GET, APIGetVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("visitors", api.ConstRESTOperationGet, APIListVisitors)
+	err = api.GetRestService().RegisterAPI("visitors", api.GET, APIListVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/attributes", api.ConstRESTOperationGet, APIListVisitorAttributes)
+	err = api.GetRestService().RegisterAPI("visitors/attributes", api.GET, APIListVisitorAttributes)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.ConstRESTOperationDelete, APIDeleteVisitorAttribute)
+	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.DELETE, APIDeleteVisitorAttribute)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.ConstRESTOperationUpdate, APIUpdateVisitorAttribute)
+	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.PUT, APIUpdateVisitorAttribute)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute", api.ConstRESTOperationCreate, APICreateVisitorAttribute)
+	err = api.GetRestService().RegisterAPI("visitors/attribute", api.POST, APICreateVisitorAttribute)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	// Storefront API
-	err = api.GetRestService().RegisterAPI("visitors/register", api.ConstRESTOperationCreate, APIRegisterVisitor)
+	err = api.GetRestService().RegisterAPI("visitors/register", api.POST, APIRegisterVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/available", api.ConstRESTOperationCreate, APIVisitorEmailAvailable)
+	err = api.GetRestService().RegisterAPI("visitors/available", api.POST, APIVisitorEmailAvailable)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/validate/:key", api.ConstRESTOperationGet, APIValidateVisitors)
+	err = api.GetRestService().RegisterAPI("visitors/validate/:key", api.GET, APIValidateVisitors)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/invalidate/:email", api.ConstRESTOperationGet, APIInvalidateVisitor)
+	err = api.GetRestService().RegisterAPI("visitors/invalidate/:email", api.GET, APIInvalidateVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/forgot-password/:email", api.ConstRESTOperationGet, APIForgotPassword)
+	err = api.GetRestService().RegisterAPI("visitors/forgot-password/:email", api.GET, APIForgotPassword)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visitors/mail", api.ConstRESTOperationCreate, APIMailToVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("visitors/reset-password", api.ConstRESTOperationCreate, APIResetPassword)
+	err = api.GetRestService().RegisterAPI("visitors/mail", api.POST, APIMailToVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("visit", api.ConstRESTOperationGet, APIGetVisit)
+	err = api.GetRestService().RegisterAPI("visitors/reset-password", api.POST, APIResetPassword)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit", api.ConstRESTOperationUpdate, APIUpdateVisitor)
+
+	err = api.GetRestService().RegisterAPI("visit", api.GET, APIGetVisit)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/logout", api.ConstRESTOperationGet, APILogout)
+	err = api.GetRestService().RegisterAPI("visit", api.PUT, APIUpdateVisitor)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/login", api.ConstRESTOperationCreate, APILogin)
+	err = api.GetRestService().RegisterAPI("visit/logout", api.GET, APILogout)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/login-facebook", api.ConstRESTOperationCreate, APIFacebookLogin)
+	err = api.GetRestService().RegisterAPI("visit/login", api.POST, APILogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/login-google", api.ConstRESTOperationCreate, APIGoogleLogin)
+	err = api.GetRestService().RegisterAPI("visit/login-facebook", api.POST, APIFacebookLogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/orders", api.ConstRESTOperationGet, APIGetOrders)
+	err = api.GetRestService().RegisterAPI("visit/login-google", api.POST, APIGoogleLogin)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("visit/order/:orderID", api.ConstRESTOperationGet, APIGetOrder)
+	err = api.GetRestService().RegisterAPI("visit/orders", api.GET, APIGetOrders)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("visit/order/:orderID", api.GET, APIGetOrder)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

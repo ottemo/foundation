@@ -11,51 +11,28 @@ import (
 	"time"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	err = api.GetRestService().RegisterAPI("checkout", api.ConstRESTOperationGet, APIGetCheckout)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/payment/methods", api.ConstRESTOperationGet, APIGetPaymentMethods)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/methods", api.ConstRESTOperationGet, APIGetShippingMethods)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/address", api.ConstRESTOperationUpdate, APISetShippingAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/billing/address", api.ConstRESTOperationUpdate, APISetBillingAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/payment/method/:method", api.ConstRESTOperationUpdate, APISetPaymentMethod)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/shipping/method/:method/:rate", api.ConstRESTOperationUpdate, APISetShippingMethod)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/paymentdetails", api.ConstRESTOperationUpdate, APISetPaymentDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("checkout", api.ConstRESTOperationUpdate, APISetCheckoutInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("checkout/submit", api.ConstRESTOperationCreate, APISubmitCheckout)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package checkout endpoints
+		handleError(service.RegisterAPI("checkout", api.GET, APIGetCheckout))
+		handleError(service.RegisterAPI("checkout/payment/methods", api.GET, APIGetPaymentMethods))
+		handleError(service.RegisterAPI("checkout/shipping/methods", api.GET, APIGetShippingMethods))
+		handleError(service.RegisterAPI("checkout/shipping/address", api.PUT, APISetShippingAddress))
+		handleError(service.RegisterAPI("checkout/billing/address", api.PUT, APISetBillingAddress))
+		handleError(service.RegisterAPI("checkout/payment/method/:method", api.PUT, APISetPaymentMethod))
+		handleError(service.RegisterAPI("checkout/shipping/method/:method/:rate", api.PUT, APISetShippingMethod))
+		handleError(service.RegisterAPI("checkout/paymentdetails", api.PUT, APISetPaymentDetails))
+		handleError(service.RegisterAPI("checkout", api.PUT, APISetCheckoutInfo))
+		handleError(service.RegisterAPI("checkout/submit", api.POST, APISubmitCheckout))
 	}
 
 	return nil

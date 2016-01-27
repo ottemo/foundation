@@ -12,7 +12,7 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("media", api.ConstRESTOperationGet, APIGetMediaInfo)
+	err = api.GetRestService().RegisterAPI("media", api.GET, APIGetMediaInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

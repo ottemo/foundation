@@ -13,35 +13,35 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("config/groups", api.ConstRESTOperationGet, restConfigGroups)
+	err = api.GetRestService().RegisterAPI("config/groups", api.GET, restConfigGroups)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/item/:path", api.ConstRESTOperationGet, restConfigInfo)
+	err = api.GetRestService().RegisterAPI("config/item/:path", api.GET, restConfigInfo)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/values", api.ConstRESTOperationGet, restConfigList)
+	err = api.GetRestService().RegisterAPI("config/values", api.GET, restConfigList)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/values/refresh", api.ConstRESTOperationGet, restConfigReload)
+	err = api.GetRestService().RegisterAPI("config/values/refresh", api.GET, restConfigReload)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationGet, restConfigGet)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.GET, restConfigGet)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationCreate, restConfigRegister)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.POST, restConfigRegister)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationUpdate, restConfigSet)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.PUT, restConfigSet)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationDelete, restConfigUnRegister)
+	err = api.GetRestService().RegisterAPI("config/value/:path", api.DELETE, restConfigUnRegister)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

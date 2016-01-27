@@ -20,78 +20,78 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationGet, APIGetProduct)
+	err = api.GetRestService().RegisterAPI("product/:productID", api.GET, APIGetProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("product", api.ConstRESTOperationCreate, APICreateProduct)
+	err = api.GetRestService().RegisterAPI("product", api.POST, APICreateProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationUpdate, APIUpdateProduct)
+	err = api.GetRestService().RegisterAPI("product/:productID", api.PUT, APIUpdateProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationDelete, APIDeleteProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationGet, APIGetMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType", api.ConstRESTOperationGet, APIListMedia)
+	err = api.GetRestService().RegisterAPI("product/:productID", api.DELETE, APIDeleteProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationCreate, APIAddMediaForProduct)
+	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.GET, APIGetMedia)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaForProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("product/:productID/mediapath/:mediaType", api.ConstRESTOperationGet, APIGetMediaPath)
+	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType", api.GET, APIListMedia)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("product/:productID/related", api.ConstRESTOperationGet, APIListRelatedProducts)
+	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.POST, APIAddMediaForProduct)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.DELETE, APIRemoveMediaForProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("products", api.ConstRESTOperationGet, APIListProducts)
+	err = api.GetRestService().RegisterAPI("product/:productID/mediapath/:mediaType", api.GET, APIGetMediaPath)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("products/attributes", api.ConstRESTOperationGet, APIListProductAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute", api.ConstRESTOperationCreate, APICreateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationUpdate, APIUpdateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationDelete, APIDeleteProductsAttribute)
+	err = api.GetRestService().RegisterAPI("product/:productID/related", api.GET, APIListRelatedProducts)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("products/shop", api.ConstRESTOperationGet, APIListShopProducts)
+	err = api.GetRestService().RegisterAPI("products", api.GET, APIListProducts)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	err = api.GetRestService().RegisterAPI("products/shop/layers", api.ConstRESTOperationGet, APIGetShopLayers)
+
+	err = api.GetRestService().RegisterAPI("products/attributes", api.GET, APIListProductAttributes)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("products/attribute", api.POST, APICreateProductAttribute)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.PUT, APIUpdateProductAttribute)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.DELETE, APIDeleteProductsAttribute)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = api.GetRestService().RegisterAPI("products/shop", api.GET, APIListShopProducts)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+	err = api.GetRestService().RegisterAPI("products/shop/layers", api.GET, APIGetShopLayers)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

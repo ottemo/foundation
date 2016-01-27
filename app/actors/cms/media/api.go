@@ -11,24 +11,21 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationGet, APIListMediaImages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationCreate, APIAddMediaImages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/media/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaImage)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package media endpoints
+		handleError(service.RegisterAPI("cms/media", api.GET, APIListMediaImages))
+		handleError(service.RegisterAPI("cms/media", api.POST, APIAddMediaImages))
+		handleError(service.RegisterAPI("cms/media/:mediaName", api.DELETE, APIRemoveMediaImage))
 	}
 
 	return nil

@@ -21,12 +21,12 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("paypal/success", api.ConstRESTOperationGet, APIReceipt)
+	err = api.GetRestService().RegisterAPI("paypal/success", api.GET, APIReceipt)
 	if err != nil {
 		return err
 	}
 
-	err = api.GetRestService().RegisterAPI("paypal/cancel", api.ConstRESTOperationGet, APIDecline)
+	err = api.GetRestService().RegisterAPI("paypal/cancel", api.GET, APIDecline)
 	if err != nil {
 		return err
 	}

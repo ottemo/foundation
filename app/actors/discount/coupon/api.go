@@ -17,47 +17,47 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("coupons", api.ConstRESTOperationGet, List)
+	err = api.GetRestService().RegisterAPI("coupons", api.GET, List)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("coupons", api.ConstRESTOperationCreate, Create)
+	err = api.GetRestService().RegisterAPI("coupons", api.POST, Create)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("csv/coupons", api.ConstRESTOperationGet, DownloadCSV)
+	err = api.GetRestService().RegisterAPI("csv/coupons", api.GET, DownloadCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("csv/coupons", api.ConstRESTOperationCreate, UploadCSV)
+	err = api.GetRestService().RegisterAPI("csv/coupons", api.POST, UploadCSV)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("cart/coupons", api.ConstRESTOperationCreate, Apply)
+	err = api.GetRestService().RegisterAPI("cart/coupons", api.POST, Apply)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("cart/coupons/:code", api.ConstRESTOperationDelete, Revert)
+	err = api.GetRestService().RegisterAPI("cart/coupons/:code", api.DELETE, Revert)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationGet, GetByID)
+	err = api.GetRestService().RegisterAPI("coupons/:id", api.GET, GetByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationUpdate, UpdateByID)
+	err = api.GetRestService().RegisterAPI("coupons/:id", api.PUT, UpdateByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationDelete, DeleteByID)
+	err = api.GetRestService().RegisterAPI("coupons/:id", api.DELETE, DeleteByID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

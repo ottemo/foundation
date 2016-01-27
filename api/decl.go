@@ -6,13 +6,13 @@ import (
 
 // Package global constants
 const (
-	ConstRESTOperationGet    = "GET"
-	ConstRESTOperationUpdate = "PUT"
-	ConstRESTOperationCreate = "POST"
-	ConstRESTOperationDelete = "DELETE"
+	GET                      = "GET"
+	PUT                      = "PUT"
+	POST                     = "POST"
+	DELETE                   = "DELETE"
 	ConstRESTActionParameter = "action"
 
-	ConstSessionKeyAdminRights = "adminRights"   // session key used to flag that user have admin rights
+	ConstSessionKeyAdminRights = "adminRights"   // session key used to flag visitor with admin rights
 	ConstSessionCookieName     = "OTTEMOSESSION" // cookie name which should contain sessionID
 	ConstSessionKeyTimeZone    = "timeZone"      // session key for setting time zone
 

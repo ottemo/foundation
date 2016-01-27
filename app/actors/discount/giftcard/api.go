@@ -12,22 +12,22 @@ import (
 func setupAPI() error {
 	var err error
 
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode", api.ConstRESTOperationGet, APIGetGiftCard)
+	err = api.GetRestService().RegisterAPI("giftcards/:giftcode", api.GET, APIGetGiftCard)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("giftcards", api.ConstRESTOperationGet, APIGetGiftCardList)
+	err = api.GetRestService().RegisterAPI("giftcards", api.GET, APIGetGiftCardList)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/apply", api.ConstRESTOperationGet, APIApplyGiftCard)
+	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/apply", api.GET, APIApplyGiftCard)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/neglect", api.ConstRESTOperationGet, APINeglectGiftCard)
+	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/neglect", api.GET, APINeglectGiftCard)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

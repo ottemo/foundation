@@ -18,12 +18,12 @@ func setupAPI() error {
 
 	var err error
 
-	err = api.GetRestService().RegisterAPI("friend/email", api.ConstRESTOperationCreate, APIFriendEmail)
+	err = api.GetRestService().RegisterAPI("friend/email", api.POST, APIFriendEmail)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = api.GetRestService().RegisterAPI("friend/captcha", api.ConstRESTOperationGet, APIFriendCaptcha)
+	err = api.GetRestService().RegisterAPI("friend/captcha", api.GET, APIFriendCaptcha)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

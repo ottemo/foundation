@@ -10,24 +10,19 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	var err error
-
-	err = api.GetRestService().RegisterAPI("cart", api.ConstRESTOperationGet, APICartInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item", api.ConstRESTOperationCreate, APICartItemAdd)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.ConstRESTOperationUpdate, APICartItemUpdate)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.ConstRESTOperationDelete, APICartItemDelete)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package cart endpoints
+		handleError(service.RegisterAPI("cart", api.GET, APICartInfo))
+		handleError(service.RegisterAPI("cart/item", api.POST, APICartItemAdd))
+		handleError(service.RegisterAPI("cart/item/:itemIdx/:qty", api.PUT, APICartItemUpdate))
+		handleError(service.RegisterAPI("cart/item/:itemIdx", api.DELETE, APICartItemDelete))
 	}
 
 	return nil
