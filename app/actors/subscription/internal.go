@@ -8,7 +8,6 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 	"time"
 )
 
@@ -16,8 +15,8 @@ import (
 func sendNotificationEmail(subscriptionInstance subscription.InterfaceSubscription) error {
 
 	email := subscriptionInstance.GetCustomerEmail()
-	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathSubscriptionEmailTemplate))
-	emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathSubscriptionEmailSubject))
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionEmailTemplate))
+	emailSubject := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionEmailSubject))
 
 	if emailTemplate == "" {
 		emailTemplate = `Dear {{.Visitor.name}},
@@ -87,7 +86,7 @@ func validateSubscriptionDate(date time.Time) error {
 // TODO: update this with additional requirements and block map by mutex if it's allowed to change from config
 func validateSubscriptionPeriod(period int) error {
 
-	for _, allowedValue := range optionValues {
+	for _, allowedValue := range subscription.GetSubscriptionOptionValues() {
 		if period == allowedValue {
 			return nil
 		}
@@ -100,24 +99,7 @@ func validateSubscriptionPeriod(period int) error {
 	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Period value '"+utils.InterfaceToString(period)+"' is not allowed for subscription.")
 }
 
-// getPeriodValue used to obtain valid period value from option value
-func getPeriodValue(option string) int {
-
-	if value, present := optionValues[option]; present {
-		return value
-	}
-
-	if value, present := optionValues[strings.ToLower(option)]; present {
-		return value
-	}
-
-	if validateSubscriptionPeriod(utils.InterfaceToInt(option)) == nil {
-		return utils.InterfaceToInt(option)
-	}
-
-	return 0
-}
-
+// validateCheckoutToSubscribe check values related to checkout to be valid from checkout submit (cart not checked)
 func validateCheckoutToSubscribe(currentCheckout checkout.InterfaceCheckout) error {
 
 	if currentCheckout == nil {

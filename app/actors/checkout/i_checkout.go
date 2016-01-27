@@ -11,6 +11,7 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
@@ -530,6 +531,11 @@ func (it *DefaultCheckout) GetOrder() order.InterfaceOrder {
 		}
 	}
 	return nil
+}
+
+// IsSubscription provide a flag if there subscription items in it
+func (it *DefaultCheckout) IsSubscription() bool {
+	return subscription.ContainsSubscriptionItems(it)
 }
 
 // Submit creates the order with provided information

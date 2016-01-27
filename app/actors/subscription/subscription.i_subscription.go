@@ -3,6 +3,7 @@ package subscription
 import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -51,7 +52,7 @@ func (it *DefaultSubscription) GetPeriod() int {
 
 // SetStatus set Subscription status
 func (it *DefaultSubscription) SetStatus(status string) error {
-	if status != ConstSubscriptionStatusSuspended && status != ConstSubscriptionStatusConfirmed && status != ConstSubscriptionStatusCanceled {
+	if status != subscription.ConstSubscriptionStatusSuspended && status != subscription.ConstSubscriptionStatusConfirmed && status != subscription.ConstSubscriptionStatusCanceled {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3b7d17c3-c5fa-4369-a039-49bafec2fb9d", "new subscription status should be one of allowed")
 	}
 

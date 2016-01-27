@@ -58,6 +58,8 @@ type InterfaceCheckout interface {
 	CheckoutSuccess(checkoutOrder order.InterfaceOrder, session api.InterfaceSession) error
 	SendOrderConfirmationMail() error
 
+	IsSubscription() bool
+
 	Submit() (interface{}, error)
 
 	SubmitFinish(map[string]interface{}) (interface{}, error)

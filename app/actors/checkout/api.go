@@ -165,8 +165,11 @@ func APIGetPaymentMethods(context api.InterfaceApplicationContext) (interface{},
 	}
 	var result []ResultValue
 
+	// for checkout that contain subscription items we will show only payment methods that allows to save token
+	isSubscription := currentCheckout.IsSubscription()
+
 	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
-		if paymentMethod.IsAllowed(currentCheckout) {
+		if paymentMethod.IsAllowed(currentCheckout) && (!isSubscription || paymentMethod.IsTokenable(currentCheckout)) {
 			result = append(result, ResultValue{Name: paymentMethod.GetName(), Code: paymentMethod.GetCode(), Type: paymentMethod.GetType(), Tokenable: paymentMethod.IsTokenable(currentCheckout)})
 		}
 	}

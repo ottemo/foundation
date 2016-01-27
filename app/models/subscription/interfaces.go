@@ -5,17 +5,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"github.com/ottemo/foundation/env"
 	"time"
-)
-
-// Package global constants
-const (
-	ConstModelNameSubscription           = "Subscription"
-	ConstModelNameSubscriptionCollection = "SubscriptionCollection"
-
-	ConstErrorModule = "subscription"
-	ConstErrorLevel  = env.ConstErrorLevelModel
 )
 
 // InterfaceSubscription represents interface to access business layer implementation of purchase subscription object

@@ -1,6 +1,7 @@
 package subscription
 
 import (
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -16,7 +17,7 @@ func setupConfig() error {
 	//----------------------------
 
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscription,
+		Path:        subscription.ConstConfigPathSubscription,
 		Value:       nil,
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
@@ -31,7 +32,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionEnabled,
+		Path:        subscription.ConstConfigPathSubscriptionEnabled,
 		Value:       false,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
@@ -49,7 +50,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionEmailSubject,
+		Path:        subscription.ConstConfigPathSubscriptionEmailSubject,
 		Value:       "Subscription",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -64,7 +65,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path: ConstConfigPathSubscriptionEmailTemplate,
+		Path: subscription.ConstConfigPathSubscriptionEmailTemplate,
 		Value: `Dear {{.Visitor.name}},
 		Yours subscription can't be processed couse you have insufficient funds on Credit Card
 		please create new subscription using valid credit card`,
@@ -72,7 +73,7 @@ func setupConfig() error {
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "On fail template",
-		Description: "Email constent to send to customers in case of failing on submit (insufficient funds on Credit Card, or some technical error)",
+		Description: "Email content to send to customers in case of failing on submit (insufficient funds on Credit Card, or some technical error)",
 		Image:       "",
 	}, nil)
 
@@ -81,7 +82,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathSubscriptionStockEmailTemplate,
+		Path:        subscription.ConstConfigPathSubscriptionStockEmailTemplate,
 		Value:       `Items out of stock`,
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",

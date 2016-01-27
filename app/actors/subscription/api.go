@@ -99,7 +99,7 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 
 	dbCollection := subscriptionCollectionModel.GetDBCollection()
 	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
-	dbCollection.AddStaticFilter("status", "=", ConstSubscriptionStatusConfirmed)
+	dbCollection.AddStaticFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed)
 	models.ApplyFilters(context, dbCollection)
 
 	// checking for a "count" request

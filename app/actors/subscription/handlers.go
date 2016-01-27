@@ -25,7 +25,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	}
 
 	// means current order is placed by subscription handler
-	if currentCheckout == nil || currentCheckout.GetInfo("subscription_id") != nil {
+	if currentCheckout == nil || !currentCheckout.IsSubscription() || currentCheckout.GetInfo("subscription_id") != nil {
 		return true
 	}
 
@@ -59,8 +59,8 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 	subscriptionItems := make(map[int]int)
 	for _, cartItem := range currentCart.GetItems() {
 		itemOptions := cartItem.GetOptions()
-		if optionValue, present := itemOptions[optionName]; present {
-			subscriptionItems[cartItem.GetIdx()] = getPeriodValue(utils.InterfaceToString(optionValue))
+		if optionValue, present := itemOptions[subscription.ConstSubscriptionOptionName]; present {
+			subscriptionItems[cartItem.GetIdx()] = subscription.GetSubscriptionPeriodValue(utils.InterfaceToString(optionValue))
 		}
 	}
 
@@ -99,7 +99,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 	subscriptionInstance.SetShippingAddress(currentCheckout.GetShippingAddress())
 	subscriptionInstance.SetBillingAddress(currentCheckout.GetBillingAddress())
 	subscriptionInstance.SetShippingMethod(currentCheckout.GetShippingMethod())
-	subscriptionInstance.SetStatus(ConstSubscriptionStatusConfirmed)
+	subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusConfirmed)
 	subscriptionInstance.Set("order_id", checkoutOrder.GetID())
 
 	subscriptionTime := time.Now().Truncate(time.Hour)
@@ -191,14 +191,14 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 		}
 
 		// when we are using getOptions for product after they was applied there add field Value, but is it all?
-		if subscriptionOption, present := options[optionName]; present {
+		if subscriptionOption, present := options[subscription.ConstSubscriptionOptionName]; present {
 			subscriptionOptionMap := utils.InterfaceToMap(subscriptionOption)
 			if appliedValue, present := subscriptionOptionMap["value"]; present {
 				storedOptions["value"] = appliedValue
 			}
 		}
 
-		options[optionName] = storedOptions
+		options[subscription.ConstSubscriptionOptionName] = storedOptions
 	}
 	return true
 }

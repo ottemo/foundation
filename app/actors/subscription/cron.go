@@ -22,7 +22,7 @@ func placeOrders(params map[string]interface{}) error {
 
 	subscriptionCollection.AddFilter("action_date", ">=", currentHourBeginning)
 	subscriptionCollection.AddFilter("action_date", "<", currentHourBeginning.Add(time.Hour))
-	subscriptionCollection.AddFilter("status", "=", ConstSubscriptionStatusConfirmed)
+	subscriptionCollection.AddFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed)
 
 	//	get subscriptions with current day date and do action
 	subscriptionsOnSubmit, err := subscriptionCollection.Load()
@@ -32,7 +32,7 @@ func placeOrders(params map[string]interface{}) error {
 
 	if !subscriptionEnabled {
 		if len(subscriptionsOnSubmit) > 0 {
-			env.Log(ConstSubscriptionLogStorage, "Warn", "Subscription is turned off, some records are not processed for this hour "+currentHourBeginning.String())
+			env.Log(subscription.ConstSubscriptionLogStorage, "Warn", "Subscription is turned off, some records are not processed for this hour "+currentHourBeginning.String())
 		}
 		return nil
 	}
@@ -92,10 +92,10 @@ func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription
 	if strings.Contains(errorMessage, checkout.ConstPaymentErrorDeclined) {
 		if emailError := sendNotificationEmail(subscriptionInstance); emailError != nil {
 			env.ErrorDispatch(emailError)
-			env.Log(ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
+			env.Log(subscription.ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
 		}
 
-		if internalError := subscriptionInstance.SetStatus(ConstSubscriptionStatusCanceled); internalError != nil {
+		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusCanceled); internalError != nil {
 			env.ErrorDispatch(internalError)
 		}
 
@@ -113,8 +113,8 @@ func handleSubscriptionError(subscriptionInstance subscription.InterfaceSubscrip
 	env.LogError(env.ErrorDispatch(err))
 
 	if subscriptionInstance != nil {
-		env.Log(ConstSubscriptionLogStorage, "Error", subscriptionInstance.GetID()+": "+err.Error())
+		env.Log(subscription.ConstSubscriptionLogStorage, "Error", subscriptionInstance.GetID()+": "+err.Error())
 	} else {
-		env.Log(ConstSubscriptionLogStorage, "Error", err.Error())
+		env.Log(subscription.ConstSubscriptionLogStorage, "Error", err.Error())
 	}
 }

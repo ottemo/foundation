@@ -2,7 +2,10 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+	"strings"
 )
 
 // GetSubscriptionCollectionModel retrieves current InterfaceSubscriptionCollection model implementation
@@ -49,4 +52,47 @@ func LoadSubscriptionByID(subscriptionID string) (InterfaceSubscription, error) 
 	}
 
 	return subscriptionModel, nil
+}
+
+// IsSubscriptionEnabled return status of subscription
+func IsSubscriptionEnabled() bool {
+	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathSubscriptionEnabled))
+}
+
+// ContainsSubscriptionItems used to check checkout for subscription items
+func ContainsSubscriptionItems(checkoutInstance checkout.InterfaceCheckout) bool {
+	currentCart := checkoutInstance.GetCart()
+	if currentCart == nil {
+		return false
+	}
+
+	for _, cartItem := range currentCart.GetItems() {
+		itemOptions := cartItem.GetOptions()
+		if optionValue, present := itemOptions[ConstSubscriptionOptionName]; present {
+			if GetSubscriptionPeriodValue(utils.InterfaceToString(optionValue)) != 0 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// GetSubscriptionPeriodValue used to obtain valid period value from option value
+func GetSubscriptionPeriodValue(option string) int {
+
+	if value, present := optionValues[option]; present {
+		return value
+	}
+
+	if value, present := optionValues[strings.ToLower(option)]; present {
+		return value
+	}
+
+	return 0
+}
+
+// GetSubscriptionPeriodValue used to obtain valid period value from option value
+func GetSubscriptionOptionValues() map[string]int {
+	return optionValues
 }
