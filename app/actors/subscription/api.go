@@ -126,6 +126,7 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 	for _, record := range records {
 		storedCart, err := cart.LoadCartByID(utils.InterfaceToString(record["cart_id"]))
 		if err != nil {
+			record["items_error"] = env.ErrorDispatch(err)
 			continue
 		}
 
