@@ -11,40 +11,16 @@ import (
 // setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("config/groups", api.ConstRESTOperationGet, restConfigGroups)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/item/:path", api.ConstRESTOperationGet, restConfigInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/values", api.ConstRESTOperationGet, restConfigList)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/values/refresh", api.ConstRESTOperationGet, restConfigReload)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationGet, restConfigGet)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationCreate, restConfigRegister)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationUpdate, restConfigSet)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("config/value/:path", api.ConstRESTOperationDelete, restConfigUnRegister)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("config/groups", restConfigGroups)
+	service.GET("config/item/:path", restConfigInfo)
+	service.GET("config/values", restConfigList)
+	service.GET("config/values/refresh", restConfigReload)
+	service.GET("config/value/:path", restConfigGet)
+	service.POST("config/value/:path", restConfigRegister)
+	service.PUT("config/value/:path", restConfigSet)
+	service.DELETE("config/value/:path", restConfigUnRegister)
 
 	return nil
 }

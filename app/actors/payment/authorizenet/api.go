@@ -12,17 +12,9 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
-
-	err = api.GetRestService().RegisterAPI("authorizenet/receipt", api.ConstRESTOperationCreate, APIReceipt)
-	if err != nil {
-		return err
-	}
-
-	err = api.GetRestService().RegisterAPI("authorizenet/relay", api.ConstRESTOperationCreate, APIRelay)
-	if err != nil {
-		return err
-	}
+	service := api.GetRestService()
+	service.POST("authorizenet/receipt", APIReceipt)
+	service.POST("authorizenet/relay", APIRelay)
 
 	return nil
 }

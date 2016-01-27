@@ -17,45 +17,18 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("seo/items", api.ConstRESTOperationGet, APIListSEOItems)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item", api.ConstRESTOperationCreate, APICreateSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationUpdate, APIUpdateSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("seo/items", APIListSEOItems)
+	service.POST("seo/item", APICreateSEOItem)
+	service.PUT("seo/item/:itemID", APIUpdateSEOItem)
+	service.DELETE("seo/item/:itemID", APIDeleteSEOItem)
+	service.GET("seo/url", APIGetSEOItem)
+	service.GET("seo/url/:url", APIGetSEOItem)
+	service.GET("seo/canonical/:id", APIGetSEOItemByID)
 
-	err = api.GetRestService().RegisterAPI("seo/sitemap", api.ConstRESTOperationGet, APIGenerateSitemap)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/sitemap/sitemap.xml", api.ConstRESTOperationGet, APIGetSitemap)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("seo/sitemap", APIGenerateSitemap)
+	service.GET("seo/sitemap/sitemap.xml", APIGetSitemap)
 
 	return nil
 }

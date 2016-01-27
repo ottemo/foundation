@@ -11,33 +11,15 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("cms/blocks", api.ConstRESTOperationGet, APIListCMSBlocks)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/blocks/attributes", api.ConstRESTOperationGet, APIListCMSBlockAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cms/blocks", APIListCMSBlocks)
+	service.GET("cms/blocks/attributes", APIListCMSBlockAttributes)
 
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationGet, APIGetCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block", api.ConstRESTOperationCreate, APICreateCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationUpdate, APIUpdateCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationDelete, APIDeleteCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cms/block/:blockID", APIGetCMSBlock)
+	service.POST("cms/block", APICreateCMSBlock)
+	service.PUT("cms/block/:blockID", APIUpdateCMSBlock)
+	service.DELETE("cms/block/:blockID", APIDeleteCMSBlock)
 
 	return nil
 }

@@ -19,17 +19,10 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("paypal/success", api.ConstRESTOperationGet, APIReceipt)
-	if err != nil {
-		return err
-	}
-
-	err = api.GetRestService().RegisterAPI("paypal/cancel", api.ConstRESTOperationGet, APIDecline)
-	if err != nil {
-		return err
-	}
+	service.GET("paypal/success", APIReceipt)
+	service.GET("paypal/cancel", APIDecline)
 
 	return nil
 }

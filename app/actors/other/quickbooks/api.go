@@ -14,12 +14,8 @@ import (
 
 // setupAPI configures the package related API endpoints
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("export/quickbooks", api.ConstRESTOperationCreate, APIExportOrders)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	api.GetRestService().POST("export/quickbooks", APIExportOrders)
 
 	return nil
 }

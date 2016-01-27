@@ -15,52 +15,18 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("rts/visit", api.ConstRESTOperationCreate, APIRegisterVisit)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("rts/referrers", api.ConstRESTOperationGet, APIGetReferrers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/visits", api.ConstRESTOperationGet, APIGetVisits)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/visits/detail/:from/:to", api.ConstRESTOperationGet, APIGetVisitsDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/conversion", api.ConstRESTOperationGet, APIGetConversion)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales", api.ConstRESTOperationGet, APIGetSales)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales/detail/:from/:to", api.ConstRESTOperationGet, APIGetSalesDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/bestsellers", api.ConstRESTOperationGet, APIGetBestsellers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/visits/realtime", api.ConstRESTOperationGet, APIGetVisitsRealtime)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("rts/visit", APIRegisterVisit)
+	service.GET("rts/referrers", APIGetReferrers)
+	service.GET("rts/visits", APIGetVisits)
+	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
+	service.GET("rts/conversion", APIGetConversion)
+	service.GET("rts/sales", APIGetSales)
+	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
+	service.GET("rts/bestsellers", APIGetBestsellers)
+	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
 
 	return nil
 }

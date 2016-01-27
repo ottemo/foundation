@@ -9,42 +9,15 @@ import (
 // setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
-	// GET - return a list of all currently scheduled tasks
-	err = api.GetRestService().RegisterAPI("cron/schedule", api.ConstRESTOperationGet, getSchedule)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// POST - create a task to be run on a schedule
-	err = api.GetRestService().RegisterAPI("cron/task", api.ConstRESTOperationCreate, createTask)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// GET - return the list of possible tasks which may be scheduled
-	err = api.GetRestService().RegisterAPI("cron/task", api.ConstRESTOperationGet, getTasks)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// GET - enables the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/enable/:taskIndex", api.ConstRESTOperationGet, enableTask)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// GET - disable the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/disable/:taskIndex", api.ConstRESTOperationGet, disableTask)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// PUT - update the specified task
-	err = api.GetRestService().RegisterAPI("cron/task/:taskIndex", api.ConstRESTOperationUpdate, updateTask)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// GET - run the specified task now
-	err = api.GetRestService().RegisterAPI("cron/task/run/:taskIndex", api.ConstRESTOperationGet, runTask)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+
+	service.GET("cron/schedule", getSchedule)
+	service.POST("cron/task", createTask)
+	service.GET("cron/task", getTasks)
+	service.GET("cron/task/enable/:taskIndex", enableTask)
+	service.GET("cron/task/disable/:taskIndex", disableTask)
+	service.PUT("cron/task/:taskIndex", updateTask)
+	service.GET("cron/task/run/:taskIndex", runTask)
 
 	return nil
 }
