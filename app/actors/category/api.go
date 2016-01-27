@@ -19,75 +19,33 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	err = api.GetRestService().RegisterAPI("categories", api.GET, APIListCategories)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("categories/tree", api.GET, APIGetCategoriesTree)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("categories/attributes", api.GET, APIGetCategoryAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("category", api.POST, APICreateCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID", api.PUT, APIUpdateCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID", api.DELETE, APIDeleteCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID", api.GET, APIGetCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/layers", api.GET, APIGetCategoryLayers)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package category endpoints
+		handleError(service.RegisterAPI("categories", api.GET, APIListCategories))
+		handleError(service.RegisterAPI("categories/tree", api.GET, APIGetCategoriesTree))
+		handleError(service.RegisterAPI("categories/attributes", api.GET, APIGetCategoryAttributes))
+		handleError(service.RegisterAPI("category", api.POST, APICreateCategory))
+		handleError(service.RegisterAPI("category/:categoryID", api.PUT, APIUpdateCategory))
+		handleError(service.RegisterAPI("category/:categoryID", api.DELETE, APIDeleteCategory))
+		handleError(service.RegisterAPI("category/:categoryID", api.GET, APIGetCategory))
+		handleError(service.RegisterAPI("category/:categoryID/layers", api.GET, APIGetCategoryLayers))
+		handleError(service.RegisterAPI("category/:categoryID/products", api.GET, APIGetCategoryProducts))
+		handleError(service.RegisterAPI("category/:categoryID/product/:productID", api.POST, APIAddProductToCategory))
+		handleError(service.RegisterAPI("category/:categoryID/product/:productID", api.DELETE, APIRemoveProductFromCategory))
+		handleError(service.RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.GET, APIGetMedia))
+		handleError(service.RegisterAPI("category/:categoryID/media/:mediaType", api.GET, APIListMedia))
+		handleError(service.RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.POST, APIAddMediaForCategory))
+		handleError(service.RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.DELETE, APIRemoveMediaForCategory))
+		handleError(service.RegisterAPI("category/:categoryID/mediapath/:mediaType", api.GET, APIGetMediaPath))
 	}
 
-	err = api.GetRestService().RegisterAPI("category/:categoryID/products", api.GET, APIGetCategoryProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/product/:productID", api.POST, APIAddProductToCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/product/:productID", api.DELETE, APIRemoveProductFromCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.GET, APIGetMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/media/:mediaType", api.GET, APIListMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.POST, APIAddMediaForCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/media/:mediaType/:mediaName", api.DELETE, APIRemoveMediaForCategory)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("category/:categoryID/mediapath/:mediaType", api.GET, APIGetMediaPath)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
 	return nil
 }
 

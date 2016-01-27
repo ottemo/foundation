@@ -7,35 +7,24 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	err = api.GetRestService().RegisterAPI("cms/pages", api.GET, APIListCMSPages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/pages/attributes", api.GET, APIListCMSPageAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.GET, APIGetCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page", api.POST, APICreateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.PUT, APIUpdateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.DELETE, APIDeleteCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package page endpoints
+		handleError(service.RegisterAPI("cms/pages", api.GET, APIListCMSPages))
+		handleError(service.RegisterAPI("cms/pages/attributes", api.GET, APIListCMSPageAttributes))
+		handleError(service.RegisterAPI("cms/page/:pageID", api.GET, APIGetCMSPage))
+		handleError(service.RegisterAPI("cms/page", api.POST, APICreateCMSPage))
+		handleError(service.RegisterAPI("cms/page/:pageID", api.PUT, APIUpdateCMSPage))
+		handleError(service.RegisterAPI("cms/page/:pageID", api.DELETE, APIDeleteCMSPage))
 	}
 
 	return nil

@@ -13,39 +13,23 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
+	if service := api.GetRestService(); service != nil {
+		// print a stack trace to the logs if an error occurs
+		handleError := func(err error) {
+			if err != nil {
+				env.ErrorDispatch(err)
+			}
+		}
 
-	err = api.GetRestService().RegisterAPI("app/email", api.POST, restSendEmail)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.GET, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.POST, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/logout", api.GET, restLogout)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/rights", api.GET, restRightsInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/status", api.GET, restStatusInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.POST, setSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.GET, getSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
+		// package app endpoints
+		handleError(service.RegisterAPI("app/email", api.POST, restSendEmail))
+		handleError(service.RegisterAPI("app/login", api.GET, restLogin))
+		handleError(service.RegisterAPI("app/login", api.POST, restLogin))
+		handleError(service.RegisterAPI("app/logout", api.GET, restLogout))
+		handleError(service.RegisterAPI("app/rights", api.GET, restRightsInfo))
+		handleError(service.RegisterAPI("app/status", api.GET, restStatusInfo))
+		handleError(service.RegisterAPI("app/location", api.POST, setSessionTimeZone))
+		handleError(service.RegisterAPI("app/location", api.GET, getSessionTimeZone))
 	}
 
 	return nil
