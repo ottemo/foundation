@@ -37,35 +37,29 @@ func (it *DefaultRestService) startup() error {
 		resp.Write([]byte("page not found"))
 	}
 
-	rootPageHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		newline := []byte("\n")
-
-		resp.Header().Add("Content-Type", "text/plain")
-
-		resp.Write([]byte("Ottemo REST API:"))
-		resp.Write(newline)
-		resp.Write([]byte("----"))
-		resp.Write(newline)
-
-		// sorting handlers before output
-		handlers := make([]string, 0, len(it.Handlers))
-		for handlerPath := range it.Handlers {
-			handlers = append(handlers, handlerPath)
-		}
-		sort.Strings(handlers)
-
-		for _, handlerPath := range handlers {
-			resp.Write([]byte(handlerPath))
-			resp.Write(newline)
-		}
-	}
-
 	// our homepage - shows all registered API in text representation
-	it.Router.GET("/", rootPageHandler)
-
-	it.Handlers = make(map[string]httprouter.Handle)
+	it.Router.GET("/", it.rootPageHandler)
 
 	api.OnRestServiceStart()
 
 	return nil
+}
+
+func (it *DefaultRestService) rootPageHandler(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	newline := []byte("\n")
+
+	resp.Header().Add("Content-Type", "text/plain")
+
+	resp.Write([]byte("Ottemo REST API:"))
+	resp.Write(newline)
+	resp.Write([]byte("----"))
+	resp.Write(newline)
+
+	// sorting handlers before output
+	sort.Strings(it.Handlers)
+
+	for _, handlerPath := range it.Handlers {
+		resp.Write([]byte(handlerPath))
+		resp.Write(newline)
+	}
 }

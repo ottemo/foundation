@@ -6,10 +6,6 @@ import (
 
 // Package global constants
 const (
-	ConstRESTOperationGet    = "GET"
-	ConstRESTOperationUpdate = "PUT"
-	ConstRESTOperationCreate = "POST"
-	ConstRESTOperationDelete = "DELETE"
 	ConstRESTActionParameter = "action"
 
 	ConstSessionKeyAdminRights = "adminRights"   // session key used to flag that user have admin rights

@@ -22,33 +22,14 @@ func (it *DefaultRestService) GetName() string {
 	return "httprouter"
 }
 
-// RegisterAPI is available for modules to call in order to provide their own REST API functionality
-// @DEPRECATED
-func (it *DefaultRestService) RegisterAPI(resource string, operation string, handler api.FuncAPIHandler) error {
-
-	path := "/" + resource
-	// registration of handler within httprouter
-	//-------------------------------------------
-	switch operation {
-	case "GET":
-		it.Router.GET(path, it.wrappedHandler(handler))
-	case "PUT":
-		it.Router.PUT(path, it.wrappedHandler(handler))
-	case "POST":
-		it.Router.POST(path, it.wrappedHandler(handler))
-	case "DELETE":
-		it.Router.DELETE(path, it.wrappedHandler(handler))
-	default:
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dcc-f5e4-4aae-b6df-9dd55041a21e", "unsupported method '"+operation+"'")
-	}
-
-	key := path + " {" + operation + "}"
-	it.Handlers[key] = it.wrappedHandler(handler)
-
-	return nil
-}
-
-// TODO: this response type might not be right
+// wrappedHandler Middleware around the handler you registered
+// 1. Debug timers
+// 1. Parses the request
+// 1. Sets the ApplicationContext
+// 1. Starts the Session
+// 1. Handles the Referrer cookie
+// 1. Calls handler on context
+// 1. Handle redirects and response encoding (json/xml)
 func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprouter.Handle {
 	// httprouter supposes other format of handler than we use, so we need wrapper
 	wrappedHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -293,32 +274,28 @@ func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.GET(path, it.wrappedHandler(handler))
 
-	key := path + " {GET}" // replace with const
-	it.Handlers[key] = it.wrappedHandler(handler)
+	it.Handlers = append(it.Handlers, path+" {GET}")
 }
 
 func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.PUT(path, it.wrappedHandler(handler))
 
-	key := path + " {PUT}"
-	it.Handlers[key] = it.wrappedHandler(handler)
+	it.Handlers = append(it.Handlers, path+" {PUT}")
 }
 
 func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.POST(path, it.wrappedHandler(handler))
 
-	key := path + " {POST}"
-	it.Handlers[key] = it.wrappedHandler(handler)
+	it.Handlers = append(it.Handlers, path+" {POST}")
 }
 
 func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.DELETE(path, it.wrappedHandler(handler))
 
-	key := path + " {DELETE}"
-	it.Handlers[key] = it.wrappedHandler(handler)
+	it.Handlers = append(it.Handlers, path+" {DELETE}")
 }
 
 // ServeHTTP is an entry point for HTTP request, it takes control before request handled

@@ -41,7 +41,6 @@ type InterfaceRestService interface {
 	GetName() string
 
 	Run() error
-	RegisterAPI(resource string, operation string, handler FuncAPIHandler) error
 	GET(resource string, handler FuncAPIHandler)
 	PUT(resource string, handler FuncAPIHandler)
 	POST(resource string, handler FuncAPIHandler)
