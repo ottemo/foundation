@@ -24,9 +24,13 @@ func init() {
 func (it *DefaultRestService) startup() error {
 
 	it.ListenOn = ":3000"
+	useXDomain := ""
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("rest.listenOn", it.ListenOn); iniValue != "" {
 			it.ListenOn = iniValue
+		}
+		if iniValue := iniConfig.GetValue("xdomain.master", useXDomain); iniValue != "" {
+			useXDomain = iniValue
 		}
 	}
 
@@ -37,6 +41,7 @@ func (it *DefaultRestService) startup() error {
 		resp.Write([]byte("page not found"))
 	}
 
+	// handler for printing out all endpoints from active packages
 	rootPageHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		newline := []byte("\n")
 
@@ -59,9 +64,24 @@ func (it *DefaultRestService) startup() error {
 			resp.Write(newline)
 		}
 	}
-
-	// our homepage - shows all registered API in text representation
+	// show all registered API in text representation
 	it.Router.GET("/", rootPageHandler)
+
+	// support the use xdomain  - https://github.com/jpillora/xdomain
+	if useXDomain != "" {
+		xdomainHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+			newline := []byte("\n")
+
+			resp.Header().Add("Content-Type", "text/html")
+
+			resp.Write([]byte("<!DOCTYPE HTML>"))
+			resp.Write(newline)
+			resp.Write([]byte("<script src=\"//cdn.rawgit.com/jpillora/xdomain/0.7.4/dist/xdomain.min.js\" master=\"" + useXDomain + "\"></script>"))
+			resp.Write(newline)
+
+		}
+		it.Router.GET("/proxy.html", xdomainHandler)
+	}
 
 	it.Handlers = make(map[string]httprouter.Handle)
 
