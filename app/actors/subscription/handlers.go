@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"strings"
 	"time"
 )
 
@@ -97,7 +98,43 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 	subscriptionInstance.SetShippingAddress(currentCheckout.GetShippingAddress())
 	subscriptionInstance.SetBillingAddress(currentCheckout.GetBillingAddress())
-	subscriptionInstance.SetShippingMethod(currentCheckout.GetShippingMethod())
+
+	shippingMethod := currentCheckout.GetShippingMethod()
+	var shippingRate checkout.StructShippingRate
+
+	if checkoutShippingRate := currentCheckout.GetShippingRate(); checkoutShippingRate != nil {
+		shippingRate.Code = checkoutShippingRate.Code
+		shippingRate.Name = checkoutShippingRate.Name
+		shippingRate.Price = checkoutShippingRate.Price
+	}
+
+	// obtaining values of shipping method and rate from order if they wasn't provided in checkout
+	if shippingMethod == nil || shippingRate.Code == "" {
+
+		shippingParts := strings.Split(checkoutOrder.GetShippingMethod(), "/")
+		orderShippingMethod := checkout.GetShippingMethodByCode(shippingParts[0])
+
+		for _, orderShippingRate := range orderShippingMethod.GetRates(currentCheckout) {
+			if shippingParts[1] == orderShippingRate.Code {
+				shippingRate = checkout.StructShippingRate{
+					Name:  orderShippingRate.Name,
+					Code:  orderShippingRate.Code,
+					Price: orderShippingRate.Price,
+				}
+				shippingMethod = orderShippingMethod
+
+				break
+			}
+		}
+	}
+
+	subscriptionInstance.SetShippingMethod(shippingMethod)
+	subscriptionInstance.SetShippingRate(checkout.StructShippingRate{
+		Name:  shippingRate.Name,
+		Code:  shippingRate.Code,
+		Price: shippingRate.Price,
+	})
+
 	subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusConfirmed)
 	subscriptionInstance.Set("order_id", checkoutOrder.GetID())
 

@@ -311,6 +311,8 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
+	checkoutInstance.GetGrandTotal()
+
 	return checkoutInstance, nil
 }
 
