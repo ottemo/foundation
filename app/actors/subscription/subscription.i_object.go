@@ -5,6 +5,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -16,8 +17,8 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.id
 	case "visitor_id":
 		return it.VisitorID
-	case "cart_id":
-		return it.CartID
+	case "items":
+		return it.items
 	case "order_id":
 		return it.OrderID
 	case "customer_email":
@@ -62,11 +63,50 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 	case "visitor_id":
 		it.VisitorID = utils.InterfaceToString(value)
 
-	case "cart_id":
-		it.CartID = utils.InterfaceToString(value)
-
 	case "order_id":
 		it.OrderID = utils.InterfaceToString(value)
+
+	case "items":
+		arrayValue := utils.InterfaceToArray(value)
+
+		it.items = make([]subscription.StructSubscriptionItem, 0)
+
+		for _, arrayItem := range arrayValue {
+
+			if subscriptionItem, ok := arrayItem.(subscription.StructSubscriptionItem); ok {
+				it.items = append(it.items, subscriptionItem)
+				continue
+			}
+
+			mapValue := utils.InterfaceToMap(arrayItem)
+			if utils.StrKeysInMap(mapValue, "product_id", "qty", "options") {
+				subscriptionItem := subscription.StructSubscriptionItem{
+					Name:      utils.InterfaceToString(mapValue["name"]),
+					ProductID: utils.InterfaceToString(mapValue["product_id"]),
+					Qty:       utils.InterfaceToInt(mapValue["qty"]),
+					Options:   utils.InterfaceToMap(mapValue["options"]),
+				}
+
+				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
+					it.items = append(it.items, subscriptionItem)
+				}
+
+				continue
+			}
+
+			if utils.StrKeysInMap(mapValue, "ProductID", "Qty", "Options") {
+				subscriptionItem := subscription.StructSubscriptionItem{
+					Name:      utils.InterfaceToString(mapValue["Name"]),
+					ProductID: utils.InterfaceToString(mapValue["ProductID"]),
+					Qty:       utils.InterfaceToInt(mapValue["Qty"]),
+					Options:   utils.InterfaceToMap(mapValue["Options"]),
+				}
+
+				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
+					it.items = append(it.items, subscriptionItem)
+				}
+			}
+		}
 
 	case "customer_email":
 		it.CustomerEmail = utils.InterfaceToString(value)
@@ -145,8 +185,9 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 	result["_id"] = it.id
 
 	result["visitor_id"] = it.VisitorID
-	result["cart_id"] = it.CartID
 	result["order_id"] = it.OrderID
+
+	result["items"] = it.items
 
 	result["customer_email"] = it.CustomerEmail
 	result["customer_name"] = it.CustomerName

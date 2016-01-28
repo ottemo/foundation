@@ -3,7 +3,6 @@ package subscription
 import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
@@ -110,45 +109,14 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 	// limit parameter handle
 	dbCollection.SetLimit(models.GetListLimit(context))
 
-	dbCollection.SetResultColumns("_id", "period", "action_date", "cart_id")
-	// extra parameter handle
-	extra := context.GetRequestArgument("extra")
-	extraAttributes := utils.Explode(extra, ",")
-	for _, attributeName := range extraAttributes {
-		dbCollection.SetResultColumns(attributeName)
+	subscriptions := subscriptionCollectionModel.ListSubscriptions()
+	var result []map[string]interface{}
+
+	for _, subscriptionItem := range subscriptions {
+		result = append(result, subscriptionItem.ToHashMap())
 	}
 
-	records, err := dbCollection.Load()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	for _, record := range records {
-		storedCart, err := cart.LoadCartByID(utils.InterfaceToString(record["cart_id"]))
-		if err != nil {
-			record["items_error"] = env.ErrorDispatch(err)
-			continue
-		}
-
-		var items []interface{}
-
-		for _, cartItem := range storedCart.GetItems() {
-
-			item := make(map[string]interface{})
-
-			item["_id"] = cartItem.GetID()
-			item["idx"] = cartItem.GetIdx()
-			item["name"] = cartItem.GetProduct().GetName()
-			item["qty"] = cartItem.GetQty()
-			item["pid"] = cartItem.GetProductID()
-			item["options"] = cartItem.GetOptions()
-			items = append(items, item)
-		}
-
-		record["items"] = items
-	}
-
-	return records, nil
+	return result, nil
 }
 
 // APIGetSubscription return specified subscription information
@@ -174,28 +142,6 @@ func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, e
 
 	result["payment_method_name"] = subscriptionModel.GetPaymentMethod().GetName()
 	result["shipping_method_name"] = subscriptionModel.GetShippingMethod().GetName()
-
-	// Attach the subscription items
-	storedCart, err := cart.LoadCartByID(subscriptionModel.GetCartID())
-	if err != nil {
-		return result, env.ErrorDispatch(err)
-	}
-
-	var items []interface{}
-
-	for _, cartItem := range storedCart.GetItems() {
-
-		item := make(map[string]interface{})
-
-		item["_id"] = cartItem.GetID()
-		item["idx"] = cartItem.GetIdx()
-		item["qty"] = cartItem.GetQty()
-		item["pid"] = cartItem.GetProductID()
-		item["options"] = cartItem.GetOptions()
-		items = append(items, item)
-	}
-
-	result["items"] = items
 
 	return result, nil
 }

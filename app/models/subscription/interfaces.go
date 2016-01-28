@@ -14,8 +14,9 @@ type InterfaceSubscription interface {
 	GetCustomerName() string
 
 	GetOrderID() string
-	GetCartID() string
 	GetVisitorID() string
+
+	GetItems() []StructSubscriptionItem
 
 	SetShippingAddress(address visitor.InterfaceVisitorAddress) error
 	GetShippingAddress() visitor.InterfaceVisitorAddress
@@ -52,6 +53,14 @@ type InterfaceSubscription interface {
 	models.InterfaceObject
 	models.InterfaceStorable
 	models.InterfaceListable
+}
+
+// StructSubscriptionItem hold data related to subscription item
+type StructSubscriptionItem struct {
+	ProductID string                 `json:"product_id"`
+	Options   map[string]interface{} `json:"options"`
+	Qty       int                    `json:"qty"`
+	Name      string                 `json:"name"`
 }
 
 // InterfaceSubscriptionCollection represents interface to access business layer implementation of purchase subscription collection

@@ -3,6 +3,7 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"time"
@@ -20,13 +21,15 @@ const (
 
 var subscriptionEnabled = false
 
-// DefaultSubscription struct to hold subscription information
+// DefaultSubscription struct to hold subscription information and represent
+// default implementer of InterfaceSubscription
 type DefaultSubscription struct {
 	id string
 
 	VisitorID string
-	CartID    string
 	OrderID   string
+
+	items []subscription.StructSubscriptionItem
 
 	CustomerEmail string
 	CustomerName  string

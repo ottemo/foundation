@@ -25,11 +25,6 @@ func (it *DefaultSubscription) GetVisitorID() string {
 	return it.VisitorID
 }
 
-// GetCartID returns the Subscription's Cart ID
-func (it *DefaultSubscription) GetCartID() string {
-	return it.CartID
-}
-
 // GetOrderID returns the Subscription's Order ID
 func (it *DefaultSubscription) GetOrderID() string {
 	return it.OrderID
@@ -96,6 +91,11 @@ func (it *DefaultSubscription) SetPeriod(days int) error {
 
 	it.Period = days
 	return nil
+}
+
+// GetItems return items of subscription
+func (it *DefaultSubscription) GetItems() []subscription.StructSubscriptionItem {
+	return it.items
 }
 
 // SetShippingAddress sets shipping address for subscription
@@ -288,18 +288,26 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 	checkoutInstance.SetInfo("cc", it.GetCreditCard())
 
 	// handle cart
-	currentCart, err := cart.LoadCartByID(it.GetCartID())
+	currentCart, err := cart.GetCartModel()
 	if err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
-	err = currentCart.ValidateCart()
-	if err != nil {
+	for _, item := range it.GetItems() {
+		if _, err = currentCart.AddItem(item.ProductID, item.Qty, item.Options); err != nil {
+			return checkoutInstance, env.ErrorDispatch(err)
+		}
+	}
+
+	if err = currentCart.ValidateCart(); err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
-	err = checkoutInstance.SetCart(currentCart)
-	if err != nil {
+	if err = currentCart.Save(); err != nil {
+		return checkoutInstance, env.ErrorDispatch(err)
+	}
+
+	if err = checkoutInstance.SetCart(currentCart); err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
 
@@ -321,8 +329,8 @@ func (it *DefaultSubscription) Validate() error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription invalid: email")
 	}
 
-	if it.CartID == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "Subscription missing: cart_id")
+	if len(it.items) == 0 {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "no items in subscription")
 	}
 
 	return nil

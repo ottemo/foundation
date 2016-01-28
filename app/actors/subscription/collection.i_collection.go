@@ -50,7 +50,7 @@ func (it *DefaultSubscriptionCollection) List() ([]models.StructListItem, error)
 // ListAddExtraAttribute provides the ability to add additional attributes if the attribute does not already exist
 func (it *DefaultSubscriptionCollection) ListAddExtraAttribute(attribute string) error {
 
-	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "order_id", "cart_id", "customer_email", "customer_name", "address", "status", "action", "last_submit", "created_at", "created_at") {
+	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "order_id", "items", "customer_email", "customer_name", "address", "status", "action", "last_submit", "created_at", "created_at") {
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
 		} else {

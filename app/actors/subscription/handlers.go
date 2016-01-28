@@ -1,7 +1,6 @@
 package subscription
 
 import (
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
@@ -123,36 +122,22 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 				continue
 			}
 
-			productCart, err := cart.GetCartModel()
-			if err != nil {
-				env.LogError(err)
-				continue
+			var items []subscription.StructSubscriptionItem
+
+			subscriptionItem := subscription.StructSubscriptionItem{
+				Name:      "",
+				ProductID: cartItem.GetProductID(),
+				Qty:       cartItem.GetQty(),
+				Options:   cartItem.GetOptions(),
 			}
 
-			if _, err = productCart.AddItem(cartItem.GetProductID(), cartItem.GetQty(), cartItem.GetOptions()); err != nil {
-				env.LogError(err)
-				continue
+			if product := cartItem.GetProduct(); product != nil {
+				subscriptionItem.Name = product.GetName()
 			}
 
-			if visitor != nil {
-				productCart.SetVisitorID(visitor.GetID())
-			}
+			items = append(items, subscriptionItem)
 
-			if currentSession := currentCheckout.GetSession(); currentSession != nil {
-				productCart.SetSessionID(currentSession.GetID())
-			}
-
-			if err = productCart.Deactivate(); err != nil {
-				env.LogError(err)
-				continue
-			}
-
-			if err = productCart.Save(); err != nil {
-				env.LogError(err)
-				continue
-			}
-
-			subscriptionInstance.Set("cart_id", productCart.GetID())
+			subscriptionInstance.Set("items", items)
 			subscriptionInstance.SetID("")
 
 			if err = subscriptionInstance.Save(); err != nil {

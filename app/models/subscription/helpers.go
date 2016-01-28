@@ -92,7 +92,7 @@ func GetSubscriptionPeriodValue(option string) int {
 	return 0
 }
 
-// GetSubscriptionPeriodValue used to obtain valid period value from option value
+// GetSubscriptionOptionValues return map of known options for subscription
 func GetSubscriptionOptionValues() map[string]int {
 	return optionValues
 }
