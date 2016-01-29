@@ -15,7 +15,8 @@ import (
 // setupAPI configures the package related API endpoints
 func setupAPI() error {
 
-	api.GetRestService().POST("export/quickbooks", APIExportOrders)
+	service := api.GetRestService()
+	service.POST("export/quickbooks", APIExportOrders)
 
 	return nil
 }
