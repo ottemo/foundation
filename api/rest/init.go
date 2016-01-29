@@ -45,6 +45,7 @@ func (it *DefaultRestService) startup() error {
 	return nil
 }
 
+// rootPageHandler Display a list of the registered endpoints
 func (it *DefaultRestService) rootPageHandler(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	newline := []byte("\n")
 
