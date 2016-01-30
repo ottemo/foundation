@@ -11,34 +11,16 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("orders/attributes", api.ConstRESTOperationGet, APIListOrderAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("orders", api.ConstRESTOperationGet, APIListOrders)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("orders/attributes", APIListOrderAttributes)
+	service.GET("orders", APIListOrders)
 
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationGet, APIGetOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// err = api.GetRestService().RegisterAPI("order", api.ConstRESTOperationCreate, APICreateOrder)
-	// if err != nil {
-	// 	return env.ErrorDispatch(err)
-	// }
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationUpdate, APIUpdateOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationDelete, APIDeleteOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("order/:orderID", APIGetOrder)
+	service.PUT("order/:orderID", APIUpdateOrder)
+	service.DELETE("order/:orderID", APIDeleteOrder)
 
+	// service.POST("order", APICreateOrder)
 	return nil
 }
 

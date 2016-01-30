@@ -10,33 +10,14 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
+	service.GET("cms/pages", APIListCMSPages)
+	service.GET("cms/pages/attributes", APIListCMSPageAttributes)
 
-	err = api.GetRestService().RegisterAPI("cms/pages", api.ConstRESTOperationGet, APIListCMSPages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/pages/attributes", api.ConstRESTOperationGet, APIListCMSPageAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationGet, APIGetCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page", api.ConstRESTOperationCreate, APICreateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationUpdate, APIUpdateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationDelete, APIDeleteCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cms/page/:pageID", APIGetCMSPage)
+	service.POST("cms/page", APICreateCMSPage)
+	service.PUT("cms/page/:pageID", APIUpdateCMSPage)
+	service.DELETE("cms/page/:pageID", APIDeleteCMSPage)
 
 	return nil
 }

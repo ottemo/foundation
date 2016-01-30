@@ -45,51 +45,30 @@ func (it *DefaultRestService) startup() error {
 		resp.Write([]byte("page not found"))
 	}
 
-	// handler for printing out all endpoints from active packages
-	rootPageHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		newline := []byte("\n")
-
-		resp.Header().Add("Content-Type", "text/plain")
-
-		resp.Write([]byte("Ottemo REST API:"))
-		resp.Write(newline)
-		resp.Write([]byte("----"))
-		resp.Write(newline)
-
-		// sorting handlers before output
-		handlers := make([]string, 0, len(it.Handlers))
-		for handlerPath := range it.Handlers {
-			handlers = append(handlers, handlerPath)
-		}
-		sort.Strings(handlers)
-
-		for _, handlerPath := range handlers {
-			resp.Write([]byte(handlerPath))
-			resp.Write(newline)
-		}
-	}
-	// show all registered API in text representation
-	it.Router.GET("/", rootPageHandler)
-
-	// support the use xdomain  - https://github.com/jpillora/xdomain
-	if useXDomain != "" && urlXDomain != "" {
-		xdomainHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-			newline := []byte("\n")
-
-			resp.Header().Add("Content-Type", "text/html")
-
-			resp.Write([]byte("<!DOCTYPE HTML>"))
-			resp.Write(newline)
-			resp.Write([]byte("<script src=\"" + urlXDomain + "\" master=\"" + useXDomain + "\"></script>"))
-			resp.Write(newline)
-
-		}
-		it.Router.GET("/proxy.html", xdomainHandler)
-	}
-
-	it.Handlers = make(map[string]httprouter.Handle)
+	// our homepage - shows all registered API in text representation
+	it.Router.GET("/", it.rootPageHandler)
 
 	api.OnRestServiceStart()
 
 	return nil
+}
+
+// rootPageHandler Display a list of the registered endpoints
+func (it *DefaultRestService) rootPageHandler(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	newline := []byte("\n")
+
+	resp.Header().Add("Content-Type", "text/plain")
+
+	resp.Write([]byte("Ottemo REST API:"))
+	resp.Write(newline)
+	resp.Write([]byte("----"))
+	resp.Write(newline)
+
+	// sorting handlers before output
+	sort.Strings(it.Handlers)
+
+	for _, handlerPath := range it.Handlers {
+		resp.Write([]byte(handlerPath))
+		resp.Write(newline)
+	}
 }

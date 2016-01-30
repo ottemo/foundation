@@ -10,61 +10,25 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	err := api.GetRestService().RegisterAPI("visitor/:visitorID/address", api.ConstRESTOperationCreate, APICreateVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID/address/:addressID", api.ConstRESTOperationUpdate, APIUpdateVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID/address/:addressID", api.ConstRESTOperationDelete, APIDeleteVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
 
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID/addresses", api.ConstRESTOperationGet, APIListVisitorAddresses)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("visitors/addresses/attributes", api.ConstRESTOperationGet, APIListVisitorAddressAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/address/:addressID", api.ConstRESTOperationDelete, APIDeleteVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/address/:addressID", api.ConstRESTOperationUpdate, APIUpdateVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/address/:addressID", api.ConstRESTOperationGet, APIGetVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("visitor/:visitorID/address", APICreateVisitorAddress)
+	service.PUT("visitor/:visitorID/address/:addressID", APIUpdateVisitorAddress)
+	service.DELETE("visitor/:visitorID/address/:addressID", APIDeleteVisitorAddress)
 
-	err = api.GetRestService().RegisterAPI("visit/address", api.ConstRESTOperationCreate, APICreateVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/address/:addressID", api.ConstRESTOperationUpdate, APIUpdateVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/address/:addressID", api.ConstRESTOperationDelete, APIDeleteVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/addresses", api.ConstRESTOperationGet, APIListVisitorAddresses)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/address/:addressID", api.ConstRESTOperationGet, APIGetVisitorAddress)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("visitor/:visitorID/addresses", APIListVisitorAddresses)
+
+	service.GET("visitors/addresses/attributes", APIListVisitorAddressAttributes)
+	service.DELETE("visitors/address/:addressID", APIDeleteVisitorAddress)
+	service.PUT("visitors/address/:addressID", APIUpdateVisitorAddress)
+	service.GET("visitors/address/:addressID", APIGetVisitorAddress)
+
+	service.POST("visit/address", APICreateVisitorAddress)
+	service.PUT("visit/address/:addressID", APIUpdateVisitorAddress)
+	service.DELETE("visit/address/:addressID", APIDeleteVisitorAddress)
+	service.GET("visit/addresses", APIListVisitorAddresses)
+	service.GET("visit/address/:addressID", APIGetVisitorAddress)
 
 	return nil
 }

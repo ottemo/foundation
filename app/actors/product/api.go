@@ -18,83 +18,35 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationGet, APIGetProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product", api.ConstRESTOperationCreate, APICreateProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationUpdate, APIUpdateProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationDelete, APIDeleteProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Products
+	service.GET("products", APIListProducts)
+	service.GET("product/:productID", APIGetProduct)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationGet, APIGetMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType", api.ConstRESTOperationGet, APIListMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("product", APICreateProduct)
+	service.PUT("product/:productID", APIUpdateProduct)
+	service.DELETE("product/:productID", APIDeleteProduct)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationCreate, APIAddMediaForProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaForProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Attributes
+	service.GET("products/attributes", APIListProductAttributes)
+	service.POST("products/attribute", APICreateProductAttribute)
+	service.PUT("products/attribute/:attribute", APIUpdateProductAttribute)
+	service.DELETE("products/attribute/:attribute", APIDeleteProductsAttribute)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/mediapath/:mediaType", api.ConstRESTOperationGet, APIGetMediaPath)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Media
+	service.POST("product/:productID/media/:mediaType/:mediaName", APIAddMediaForProduct)
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", APIRemoveMediaForProduct)
+	service.GET("product/:productID/media/:mediaType/:mediaName", APIGetMedia) // @DEPRECATED
+	service.GET("product/:productID/media/:mediaType", APIListMedia)           // @DEPRECATED
+	service.GET("product/:productID/mediapath/:mediaType", APIGetMediaPath)    // @DEPRECATED
 
-	err = api.GetRestService().RegisterAPI("product/:productID/related", api.ConstRESTOperationGet, APIListRelatedProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Related
+	service.GET("product/:productID/related", APIListRelatedProducts)
 
-	err = api.GetRestService().RegisterAPI("products", api.ConstRESTOperationGet, APIListProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("products/attributes", api.ConstRESTOperationGet, APIListProductAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute", api.ConstRESTOperationCreate, APICreateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationUpdate, APIUpdateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationDelete, APIDeleteProductsAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("products/shop", api.ConstRESTOperationGet, APIListShopProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/shop/layers", api.ConstRESTOperationGet, APIGetShopLayers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// @DEPRECATED
+	service.GET("products/shop", APIListShopProducts)
+	service.GET("products/shop/layers", APIGetShopLayers)
 
 	return nil
 }

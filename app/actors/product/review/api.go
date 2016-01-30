@@ -14,29 +14,14 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("product/:productID/reviews", api.ConstRESTOperationGet, APIListProductReviews)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/review", api.ConstRESTOperationCreate, APICreateProductReview)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/ratedreview/:stars", api.ConstRESTOperationCreate, APICreateProductReview)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/review/:reviewID", api.ConstRESTOperationDelete, APIDeleteProductReview)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("product/:productID/reviews", APIListProductReviews)
+	service.POST("product/:productID/review", APICreateProductReview)
+	service.POST("product/:productID/ratedreview/:stars", APICreateProductReview)
+	service.DELETE("product/:productID/review/:reviewID", APIDeleteProductReview)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/rating", api.ConstRESTOperationGet, APIGetProductRating)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("product/:productID/rating", APIGetProductRating)
 
 	return nil
 }
