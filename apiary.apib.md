@@ -1,13 +1,13 @@
 FORMAT: 1A
-HOST: http://dev.ottemo.io:3000
+HOST: http://api.dev.ottemo.io
 
 # Ottemo Foundation API
-Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/),
-a ridiculously fast eCommerce solution.
+Foundation is the api that powers the [Ottemo Store](http://www.ottemo.io/),
+a ridiculously fast Online Commerce solution.
 
 
 # Group Products
-app/actors/product/api.go
+All endpoints defined in the `products` package.
 
 - [GET]      product/:productID
 - [POST]     product
@@ -27,7 +27,9 @@ app/actors/product/api.go
 - [GET]      products/shop
 - [GET]      products/shop/layers
 
-app/actors/product/review/api.go
+- [GET]      category/:id/products
+
+Review endpoints defined under the `product` resource.
 
 - [GET]      product/:productID/reviews
 - [POST]     product/:productID/review
@@ -36,29 +38,28 @@ app/actors/product/review/api.go
 - [GET]      product/:productID/rating
 
 # Group Categories
-app/actors/category/api.go
+All endpoints defined in the `category` package.
 
 - [GET]      categories
 - [GET]      categories/tree
 - [GET]      categories/attributes
 - [POST]     category
-- [PUT]      category/:categoryID
-- [DELETE]   category/:categoryID
-- [GET]      category/:categoryID
-- [GET]      category/:categoryID/layers
-- [GET]      category/:categoryID/products
-- [POST]     category/:categoryID/product/:productID
-- [DELETE]   category/:categoryID/product/:productID
-- [GET]      category/:categoryID/media/:mediaType/:mediaName
-- [GET]      category/:categoryID/media/:mediaType
-- [POST]     category/:categoryID/media/:mediaType/:mediaName
-- [DELETE]   category/:categoryID/media/:mediaType/:mediaName
-- [GET]      category/:categoryID/mediapath/:mediaType
+- [PUT]      category/:id
+- [DELETE]   category/:id
+- [GET]      category/:id
+- [GET]      category/:id/layers
+- [POST]     category/:id/product/:productID
+- [DELETE]   category/:id/product/:productID
+- [GET]      category/:id/media/:mediaType/:mediaName
+- [GET]      category/:id/media/:mediaType
+- [POST]     category/:id/media/:mediaType/:mediaName
+- [DELETE]   category/:id/media/:mediaType/:mediaName
+- [GET]      category/:id/mediapath/:mediaType
 
 # Group CMS
 
 ## Blocks
-app/actors/cms/block/api.go
+All endpoints related to the `cms/block`
 
 - [GET]      cms/blocks
 - [GET]      cms/block/:id
@@ -68,7 +69,7 @@ app/actors/cms/block/api.go
 - [GET]      cms/blocks/attributes
 
 ## Pages
-app/actors/cms/page/api.go
+All endpoints related to `cms/page`
 
 - [GET]      cms/pages
 - [GET]      cms/page/:id
@@ -78,17 +79,17 @@ app/actors/cms/page/api.go
 - [GET]      cms/pages/attributes
 
 ## Images
-app/actors/cms/images/api.go
+All endpoints related to `cms/media`
 
 - [GET]      cms/images
 - [POST]     cms/images
 - [DELETE]   cms/images/:id
 
 # Group Discounts
-This refers to all capabilities to reduce the price of a product or cart at checkout.
+This refers to all the capabilities available to reduce the price of a product or cart at checkout.
 
 ## Coupons
-app/actors/discount/coupon/api.go
+All endpoints related to `discount/coupon`
 
 - [GET]      coupons
 - [POST]     coupons
@@ -101,26 +102,15 @@ app/actors/discount/coupon/api.go
 - [DELETE]   coupons/:id
 
 ## Gift Cards
-app/actors/discount/giftcard/api.go
+All endpoints related to `discount/giftcard`
 
 - [GET]      giftcards
 - [GET]      giftcards/:giftcode
 - [GET]      giftcards/:giftcode/apply
 - [GET]      giftcards/:giftcode/neglect
 
-# Group Unsorted
-
-## app/actors/payment/authorizenet/api.go
-
-- [POST]     authorizenet/receipt
-- [POST]     authorizenet/relay
-
-## app/actors/payment/paypal/api.go
-
-- [GET]      paypal/success
-- [GET]      paypal/cancel
-
-## app/actors/checkout/api.go
+# Group Checkout
+All endpoints related to `checkout`
 
 - [GET]      checkout
 - [GET]      checkout/payment/methods
@@ -132,8 +122,22 @@ app/actors/discount/giftcard/api.go
 - [PUT]      checkout
 - [POST]     checkout/submit
 
+## Taxes
 
-## app/actors/order/api.go
+- [GET]      taxes/csv
+- [POST]     taxes/csv
+
+## Authorize
+
+- [POST]     authorizenet/receipt
+- [POST]     authorizenet/relay
+
+## PayPal
+
+- [GET]      paypal/success
+- [GET]      paypal/cancel
+
+# Group Orders
 
 - [GET]      orders/attributes
 - [GET]      orders
@@ -141,12 +145,6 @@ app/actors/discount/giftcard/api.go
 - [POST]     order
 - [PUT]      order/:orderID
 - [DELETE]   order/:orderID
-
-## app/actors/tax/api.go
-
-- [GET]      taxes/csv
-- [POST]     taxes/csv
-
 
 ## app/actors/stock/api.go
 
@@ -165,6 +163,9 @@ app/actors/discount/giftcard/api.go
 - [GET]      seo/url/:url
 - [GET]      seo/sitemap
 - [GET]      seo/sitemap/sitemap.xml
+
+# Group Events
+All endpoints related to Events
 
 ## app/actors/rts/api.go
 
@@ -275,30 +276,16 @@ app/actors/discount/giftcard/api.go
 - [GET]      rts/conversion
 - [GET]      rts/visits/realtime
 
-## app/actors/cart/api.go
+# Group Cart
 
 - [GET]      cart
 - [POST]     cart/item
 - [PUT]      cart/item/:itemIdx/:qty
 - [DELETE]   cart/item/:itemIdx
 
-## app/actors/visitor/address/api.go
+# Group Visitor
 
-- [POST]     visitor/:visitorID/address
-- [PUT]      visitor/:visitorID/address/:addressID
-- [DELETE]   visitor/:visitorID/address/:addressID
-- [GET]      visitor/:visitorID/addresses
-- [GET]      visitors/addresses/attributes
-- [DELETE]   visitors/address/:addressID
-- [PUT]      visitors/address/:addressID
-- [GET]      visitors/address/:addressID
-- [POST]     visit/address
-- [PUT]      visit/address/:addressID
-- [DELETE]   visit/address/:addressID
-- [GET]      visit/addresses
-- [GET]      visit/address/:addressID
-
-## app/actors/visitor/api.go
+## Visitor
 
 - [POST]     visitor
 - [PUT]      visitor/:visitorID
@@ -323,7 +310,24 @@ app/actors/discount/giftcard/api.go
 - [GET]      visit/orders
 - [GET]      visit/order/:orderID
 
-## app/api.go
+## Address
+
+- [POST]     visitor/:visitorID/address
+- [PUT]      visitor/:visitorID/address/:addressID
+- [DELETE]   visitor/:visitorID/address/:addressID
+- [GET]      visitor/:visitorID/addresses
+- [GET]      visitors/addresses/attributes
+- [DELETE]   visitors/address/:addressID
+- [PUT]      visitors/address/:addressID
+- [GET]      visitors/address/:addressID
+- [POST]     visit/address
+- [PUT]      visit/address/:addressID
+- [DELETE]   visit/address/:addressID
+- [GET]      visit/addresses
+- [GET]      visit/address/:addressID
+
+
+# Group Application
 
 - [GET]      app/login
 - [POST]     app/login
@@ -331,7 +335,7 @@ app/actors/discount/giftcard/api.go
 - [GET]      app/rights
 - [GET]      app/status
 
-## impex/api.go
+## IMPEX
 
 - [GET]      impex/models
 - [GET]      impex/import/status
@@ -341,7 +345,7 @@ app/actors/discount/giftcard/api.go
 - [POST]     impex/test/import
 - [POST]     impex/test/mapping
 
-## env/config/api.go
+## Application Configuration
 
 - [GET]      config/groups
 - [GET]      config/item/:path
@@ -352,7 +356,7 @@ app/actors/discount/giftcard/api.go
 - [PUT]      config/value/:path
 - [DELETE]   config/value/:path
 
-# Group Cron
+## Cron
 Cron is a utility to schedule tasks.  These tasks maybe scheduled for
 a specific time, they may be repeatable or intended to be run immediately.
 
@@ -369,8 +373,6 @@ The API allows you to:
         * Disable a task
         * Update the specified task
         * Run the specified task now
-
-## env/cron/api.go
 
 - [GET]     cron/schedule
 - [POST]    cron/task
