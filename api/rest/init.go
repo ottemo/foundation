@@ -76,7 +76,7 @@ func (it *DefaultRestService) xdomainHandler(w http.ResponseWriter, r *http.Requ
 		if iniValue := iniConfig.GetValue("xdomain.master", useXDomain); iniValue != "" {
 			useXDomain = iniValue
 		}
-		if iniValue := iniConfig.GetValue("xdomain.min.js", useXDomain); iniValue != "" {
+		if iniValue := iniConfig.GetValue("xdomain.min.js", urlXDomain); iniValue != "" {
 			urlXDomain = iniValue
 		}
 	}
