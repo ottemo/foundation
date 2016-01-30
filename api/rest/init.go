@@ -25,12 +25,16 @@ func (it *DefaultRestService) startup() error {
 
 	it.ListenOn = ":3000"
 	useXDomain := ""
+	urlXDomain := ""
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("rest.listenOn", it.ListenOn); iniValue != "" {
 			it.ListenOn = iniValue
 		}
 		if iniValue := iniConfig.GetValue("xdomain.master", useXDomain); iniValue != "" {
 			useXDomain = iniValue
+		}
+		if iniValue := iniConfig.GetValue("xdomain.min.js", useXDomain); iniValue != "" {
+			urlXDomain = iniValue
 		}
 	}
 
@@ -68,7 +72,7 @@ func (it *DefaultRestService) startup() error {
 	it.Router.GET("/", rootPageHandler)
 
 	// support the use xdomain  - https://github.com/jpillora/xdomain
-	if useXDomain != "" {
+	if useXDomain != "" && urlXDomain != "" {
 		xdomainHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 			newline := []byte("\n")
 
@@ -76,7 +80,7 @@ func (it *DefaultRestService) startup() error {
 
 			resp.Write([]byte("<!DOCTYPE HTML>"))
 			resp.Write(newline)
-			resp.Write([]byte("<script src=\"//cdn.rawgit.com/jpillora/xdomain/0.7.4/dist/xdomain.min.js\" master=\"" + useXDomain + "\"></script>"))
+			resp.Write([]byte("<script src=\"" + urlXDomain + "\" master=\"" + useXDomain + "\"></script>"))
 			resp.Write(newline)
 
 		}
