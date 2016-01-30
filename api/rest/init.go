@@ -10,7 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// init makes package self-initialization routine
+// init performs the package self-initialization routine
 func init() {
 	var _ api.InterfaceApplicationContext = new(DefaultRestApplicationContext)
 
@@ -24,12 +24,55 @@ func init() {
 func (it *DefaultRestService) startup() error {
 
 	it.ListenOn = ":3000"
-	useXDomain := ""
-	urlXDomain := ""
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("rest.listenOn", it.ListenOn); iniValue != "" {
 			it.ListenOn = iniValue
 		}
+	}
+
+	it.Router = httprouter.New()
+
+	it.Router.PanicHandler = func(w http.ResponseWriter, r *http.Request, params interface{}) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("page not found"))
+	}
+
+	it.Router.GET("/", it.rootPageHandler)
+	it.Router.GET("/proxy.html", it.xdomainHandler)
+
+	api.OnRestServiceStart()
+
+	return nil
+}
+
+// rootPageHandler Display a list of the registered endpoints
+func (it *DefaultRestService) rootPageHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	newline := []byte("\n")
+
+	w.Header().Add("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+
+	w.Write([]byte("Ottemo REST API:"))
+	w.Write(newline)
+	w.Write([]byte("----"))
+	w.Write(newline)
+
+	// sorting handlers before output
+	sort.Strings(it.Handlers)
+
+	for _, handlerPath := range it.Handlers {
+		w.Write([]byte(handlerPath))
+		w.Write(newline)
+	}
+}
+
+// xdomainHandler will enale the usage of xdomain instead of CORS for legacy browsers
+func (it *DefaultRestService) xdomainHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+
+	useXDomain := ""
+	urlXDomain := ""
+
+	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("xdomain.master", useXDomain); iniValue != "" {
 			useXDomain = iniValue
 		}
@@ -38,37 +81,18 @@ func (it *DefaultRestService) startup() error {
 		}
 	}
 
-	it.Router = httprouter.New()
+	if useXDomain != "" && urlXDomain != "" {
+		newline := []byte("\n")
 
-	it.Router.PanicHandler = func(resp http.ResponseWriter, req *http.Request, params interface{}) {
-		resp.WriteHeader(404)
-		resp.Write([]byte("page not found"))
-	}
+		w.Header().Add("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
 
-	// our homepage - shows all registered API in text representation
-	it.Router.GET("/", it.rootPageHandler)
-
-	api.OnRestServiceStart()
-
-	return nil
-}
-
-// rootPageHandler Display a list of the registered endpoints
-func (it *DefaultRestService) rootPageHandler(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	newline := []byte("\n")
-
-	resp.Header().Add("Content-Type", "text/plain")
-
-	resp.Write([]byte("Ottemo REST API:"))
-	resp.Write(newline)
-	resp.Write([]byte("----"))
-	resp.Write(newline)
-
-	// sorting handlers before output
-	sort.Strings(it.Handlers)
-
-	for _, handlerPath := range it.Handlers {
-		resp.Write([]byte(handlerPath))
-		resp.Write(newline)
+		w.Write([]byte("<!DOCTYPE HTML>"))
+		w.Write(newline)
+		w.Write([]byte("<script src=\"" + urlXDomain + "\" master=\"" + useXDomain + "\"></script>"))
+		w.Write(newline)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("page not found"))
 	}
 }
