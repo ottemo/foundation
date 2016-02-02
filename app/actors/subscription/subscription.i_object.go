@@ -105,6 +105,21 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
 					it.items = append(it.items, subscriptionItem)
 				}
+
+				continue
+			}
+
+			if utils.StrKeysInMap(mapValue, "productid", "qty", "options") {
+				subscriptionItem := subscription.StructSubscriptionItem{
+					Name:      utils.InterfaceToString(mapValue["name"]),
+					ProductID: utils.InterfaceToString(mapValue["productid"]),
+					Qty:       utils.InterfaceToInt(mapValue["qty"]),
+					Options:   utils.InterfaceToMap(mapValue["options"]),
+				}
+
+				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
+					it.items = append(it.items, subscriptionItem)
+				}
 			}
 		}
 
@@ -138,6 +153,10 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 			it.ShippingRate.Name = utils.InterfaceToString(mapValue["Name"])
 			it.ShippingRate.Code = utils.InterfaceToString(mapValue["Code"])
 			it.ShippingRate.Price = utils.InterfaceToFloat64(mapValue["Price"])
+		} else if utils.StrKeysInMap(mapValue, "name", "code", "price") {
+			it.ShippingRate.Name = utils.InterfaceToString(mapValue["name"])
+			it.ShippingRate.Code = utils.InterfaceToString(mapValue["code"])
+			it.ShippingRate.Price = utils.InterfaceToFloat64(mapValue["price"])
 		}
 
 	case "payment_instrument":
