@@ -24,8 +24,6 @@ app/actors/product/api.go
 - [POST]     products/attribute
 - [PUT]      products/attribute/:attribute
 - [DELETE]   products/attribute/:attribute
-- [GET]      products/shop
-- [GET]      products/shop/layers
 
 app/actors/product/review/api.go
 

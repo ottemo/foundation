@@ -44,10 +44,6 @@ func setupAPI() error {
 	// Related
 	service.GET("product/:productID/related", APIListRelatedProducts)
 
-	// @DEPRECATED
-	service.GET("products/shop", APIListShopProducts)
-	service.GET("products/shop/layers", APIGetShopLayers)
-
 	return nil
 }
 
@@ -824,83 +820,6 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 
 				result = append(result, *resultItem)
 			}
-		}
-	}
-
-	return result, nil
-}
-
-// APIListShopProducts returns a list of available products for a shop
-//   - for a not admins available products are limited to enabled ones
-func APIListShopProducts(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	productsCollection, err := product.GetProductCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	dbCollection := productsCollection.GetDBCollection()
-
-	// filters handle
-	models.ApplyFilters(context, dbCollection)
-
-	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
-	}
-
-	mediaStorage, err := media.GetMediaStorage()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// preparing product information
-	var result []map[string]interface{}
-
-	for _, productModel := range productsCollection.ListProducts() {
-		productInfo := productModel.ToHashMap()
-
-		defaultImage := utils.InterfaceToString(productInfo["default_image"])
-		itemImages, err := mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage, defaultImage)
-		if err != nil {
-			env.LogError(err)
-		}
-
-		productInfo["image"] = itemImages
-		result = append(result, productInfo)
-	}
-
-	return result, nil
-}
-
-// APIGetShopLayers returns layered navigation options for a shop products list
-//   - for a not admins available products are limited to enabled ones
-func APIGetShopLayers(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	productsCollection, err := product.GetProductCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	productsDBCollection := productsCollection.GetDBCollection()
-
-	productModel, err := product.GetProductModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	productAttributesInfo := productModel.GetAttributesInfo()
-
-	result := make(map[string]interface{})
-
-	models.ApplyFilters(context, productsDBCollection)
-
-	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsDBCollection.AddFilter("enabled", "=", true)
-	}
-
-	for _, productAttribute := range productAttributesInfo {
-		if productAttribute.IsLayered {
-			distinctValues, _ := productsDBCollection.Distinct(productAttribute.Attribute)
-			result[productAttribute.Attribute] = distinctValues
 		}
 	}
 
