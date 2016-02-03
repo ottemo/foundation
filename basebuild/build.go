@@ -25,6 +25,7 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/checkout" // Checkout module
 	_ "github.com/ottemo/foundation/app/actors/order"    // Purchase Order module
 	_ "github.com/ottemo/foundation/app/actors/stock"    // Stock Management module
+	_ "github.com/ottemo/foundation/app/actors/xdomain"  // XDomain support module
 
 	_ "github.com/ottemo/foundation/app/actors/payment/authorizenet" // Authorize.Net payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/checkmo"      // "Check Money Order" payment method

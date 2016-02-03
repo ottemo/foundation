@@ -38,7 +38,6 @@ func (it *DefaultRestService) startup() error {
 	}
 
 	it.Router.GET("/", it.rootPageHandler)
-	it.Router.GET("/proxy.html", it.xdomainHandler)
 
 	api.OnRestServiceStart()
 
@@ -63,36 +62,5 @@ func (it *DefaultRestService) rootPageHandler(w http.ResponseWriter, r *http.Req
 	for _, handlerPath := range it.Handlers {
 		w.Write([]byte(handlerPath))
 		w.Write(newline)
-	}
-}
-
-// xdomainHandler will enale the usage of xdomain instead of CORS for legacy browsers
-func (it *DefaultRestService) xdomainHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-
-	useXDomain := ""
-	urlXDomain := ""
-
-	if iniConfig := env.GetIniConfig(); iniConfig != nil {
-		if iniValue := iniConfig.GetValue("xdomain.master", useXDomain); iniValue != "" {
-			useXDomain = iniValue
-		}
-		if iniValue := iniConfig.GetValue("xdomain.min.js", urlXDomain); iniValue != "" {
-			urlXDomain = iniValue
-		}
-	}
-
-	if useXDomain != "" && urlXDomain != "" {
-		newline := []byte("\n")
-
-		w.Header().Add("Content-Type", "text/html")
-		w.WriteHeader(http.StatusOK)
-
-		w.Write([]byte("<!DOCTYPE HTML>"))
-		w.Write(newline)
-		w.Write([]byte("<script src=\"" + urlXDomain + "\" master=\"" + useXDomain + "\"></script>"))
-		w.Write(newline)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("page not found"))
 	}
 }
