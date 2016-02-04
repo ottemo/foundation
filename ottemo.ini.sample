@@ -62,4 +62,3 @@ secure_cookie=false
 ; in depth documentation on XDomain: https://github.com/jpillora/xdomain
 ;
 xdomain.master=http://*.ottemo.io/
-xdomain.min.js=//cdn.rawgit.com/jpillora/xdomain/0.7.4/dist/xdomain.min.js
