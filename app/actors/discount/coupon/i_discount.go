@@ -74,8 +74,10 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 					currentTime := time.Now()
 
 					// to be applicable coupon should satisfy following conditions:
-					//   [applyTimes] should be -1 or >0 and [begin] >= currentTime <= [end] if set
-					if (applyTimes == -1 || applyTimes >= 0) &&
+					//   [applyTimes] should be >= -1 and [begin] >= currentTime <= [end] if set
+					//    ** note applyTimes has already been decremented by the Apply endpoint by
+					//    this point.
+					if (applyTimes >= -1) &&
 						(utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix()) &&
 						(utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix()) {
 
