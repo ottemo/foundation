@@ -47,9 +47,6 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				return result
 			}
 
-			currentVisitor := checkoutInstance.GetVisitor()
-			visitorID := currentVisitor.GetID()
-
 			// making coupon code map for right apply order ignoring used coupons and limited
 			discountCodes := make(map[string]map[string]interface{})
 			for _, record := range records {
@@ -57,12 +54,8 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				discountsUsageQty := discountsUsage(checkoutInstance, record)
 				discountCode := utils.InterfaceToString(record["code"])
 
-				couponUsed := false
-				if usedByVisitors, present := usedCoupons[discountCode]; present && utils.IsInListStr(visitorID, usedByVisitors) {
-					couponUsed = true
-				}
-
-				if discountCode != "" && !couponUsed && discountsUsageQty > 0 {
+				//if discountCode != "" && !couponUsed && discountsUsageQty > 0 {
+				if discountCode != "" && discountsUsageQty > 0 {
 					record["usage_qty"] = discountsUsageQty
 					discountCodes[discountCode] = record
 				}
@@ -75,16 +68,16 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				if discountCoupon, ok := discountCodes[discountCode]; ok {
 
 					applyTimes := utils.InterfaceToInt(discountCoupon["times"])
-					workSince := utils.InterfaceToTime(discountCoupon["since"])
-					workUntil := utils.InterfaceToTime(discountCoupon["until"])
+					couponStart := utils.InterfaceToTime(discountCoupon["since"])
+					couponEnd := utils.InterfaceToTime(discountCoupon["until"])
 
 					currentTime := time.Now()
 
 					// to be applicable coupon should satisfy following conditions:
-					//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
-					if (applyTimes == -1 || applyTimes > 0) &&
-						(utils.IsZeroTime(workSince) || workSince.Unix() <= currentTime.Unix()) &&
-						(utils.IsZeroTime(workUntil) || workUntil.Unix() >= currentTime.Unix()) {
+					//   [applyTimes] should be -1 or >0 and [begin] >= currentTime <= [end] if set
+					if (applyTimes == -1 || applyTimes >= 0) &&
+						(utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix()) &&
+						(utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix()) {
 
 						// calculating coupon discount amount
 						discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
