@@ -2,10 +2,11 @@
 package subscription
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"time"
 )
 
 // InterfaceSubscription represents interface to access business layer implementation of purchase subscription object
@@ -61,6 +62,8 @@ type StructSubscriptionItem struct {
 	Options   map[string]interface{} `json:"options"`
 	Qty       int                    `json:"qty"`
 	Name      string                 `json:"name"`
+	Sku       string                 `json:"sku"`
+	Price     float64                `json:"price"`
 }
 
 // InterfaceSubscriptionCollection represents interface to access business layer implementation of purchase subscription collection

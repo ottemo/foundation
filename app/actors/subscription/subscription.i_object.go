@@ -79,12 +79,14 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 			}
 
 			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "product_id", "qty", "options") {
+			if utils.StrKeysInMap(mapValue, "product_id", "qty", "options", "sku", "price") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["name"]),
 					ProductID: utils.InterfaceToString(mapValue["product_id"]),
 					Qty:       utils.InterfaceToInt(mapValue["qty"]),
 					Options:   utils.InterfaceToMap(mapValue["options"]),
+					Sku:       utils.InterfaceToString(mapValue["sku"]),
+					Price:     utils.InterfaceToFloat64(mapValue["price"]),
 				}
 
 				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
@@ -94,12 +96,14 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 				continue
 			}
 
-			if utils.StrKeysInMap(mapValue, "ProductID", "Qty", "Options") {
+			if utils.StrKeysInMap(mapValue, "ProductID", "Qty", "Options", "Sku", "Price") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["Name"]),
 					ProductID: utils.InterfaceToString(mapValue["ProductID"]),
 					Qty:       utils.InterfaceToInt(mapValue["Qty"]),
 					Options:   utils.InterfaceToMap(mapValue["Options"]),
+					Sku:       utils.InterfaceToString(mapValue["Sku"]),
+					Price:     utils.InterfaceToFloat64(mapValue["Price"]),
 				}
 
 				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {
@@ -109,12 +113,14 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 				continue
 			}
 
-			if utils.StrKeysInMap(mapValue, "productid", "qty", "options") {
+			if utils.StrKeysInMap(mapValue, "productid", "qty", "options", "sku", "price") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["name"]),
 					ProductID: utils.InterfaceToString(mapValue["productid"]),
 					Qty:       utils.InterfaceToInt(mapValue["qty"]),
 					Options:   utils.InterfaceToMap(mapValue["options"]),
+					Sku:       utils.InterfaceToString(mapValue["sku"]),
+					Price:     utils.InterfaceToFloat64(mapValue["price"]),
 				}
 
 				if subscriptionItem.Qty > 0 && subscriptionItem.ProductID != "" {

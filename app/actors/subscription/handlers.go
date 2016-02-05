@@ -1,16 +1,17 @@
 package subscription
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
-	"time"
 )
 
-// checkoutSuccessHandler is a handler for checkout success event which sends order information to TrustPilot
+// checkoutSuccessHandler is a handler for checkout success event which creates the subscriptions
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
 	if !subscriptionEnabled {
@@ -48,7 +49,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	return true
 }
 
-// subscriptionCreate is a asynchronously used to create subscription based on finished checkout
+// subscriptionCreate is invoked via a go routine to create subscription based on finished checkout
 func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrder order.InterfaceOrder) error {
 
 	currentCart := currentCheckout.GetCart()
@@ -108,7 +109,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		shippingRate.Price = checkoutShippingRate.Price
 	}
 
-	// obtaining values of shipping method and rate from order if they wasn't provided in checkout
+	// obtaining values of shipping method and rate from order if they weren't provided in checkout
 	if shippingMethod == nil || shippingRate.Code == "" {
 
 		shippingParts := strings.Split(checkoutOrder.GetShippingMethod(), "/")
@@ -140,7 +141,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 	subscriptionTime := time.Now().Truncate(time.Hour)
 
-	// create different subscriptions for every subscription product
+	// create unique subscriptions for every subscription product
 	for _, cartItem := range currentCart.GetItems() {
 		if subscriptionPeriodValue, present := subscriptionItems[cartItem.GetIdx()]; present && subscriptionPeriodValue != 0 {
 
@@ -161,6 +162,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 			var items []subscription.StructSubscriptionItem
 
+			// populate the subscription object
 			subscriptionItem := subscription.StructSubscriptionItem{
 				Name:      "",
 				ProductID: cartItem.GetProductID(),
@@ -170,6 +172,8 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 			if product := cartItem.GetProduct(); product != nil {
 				subscriptionItem.Name = product.GetName()
+				subscriptionItem.Sku = product.GetSku()
+				subscriptionItem.Price = product.GetPrice()
 			}
 
 			items = append(items, subscriptionItem)
