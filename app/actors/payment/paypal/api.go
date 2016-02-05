@@ -192,7 +192,7 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	checkoutOrder := currentCheckout.GetOrder()
 
-	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+	checkoutOrder.SetStatus(order.ConstOrderStatusDeclined)
 
 	err = checkoutOrder.Save()
 	if err != nil {
