@@ -593,20 +593,22 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
 
+	// If the visitor is logged in that should dictate the email and name
 	if currentVisitor != nil {
 		checkoutOrder.Set("visitor_id", currentVisitor.GetID())
 
 		checkoutOrder.Set("customer_email", currentVisitor.GetEmail())
 		checkoutOrder.Set("customer_name", currentVisitor.GetFullName())
-	}
-
-	if it.GetInfo("customer_email") != nil {
-		orderCustomerEmail := utils.InterfaceToString(it.GetInfo("customer_email"))
-		checkoutOrder.Set("customer_email", orderCustomerEmail)
-	}
-	if it.GetInfo("customer_name") != nil {
-		orderCustomerName := utils.InterfaceToString(it.GetInfo("customer_name"))
-		checkoutOrder.Set("customer_name", orderCustomerName)
+	} else {
+		// Visitor is not logged in, maybe we were passed some extra data
+		if it.GetInfo("customer_email") != nil {
+			orderCustomerEmail := utils.InterfaceToString(it.GetInfo("customer_email"))
+			checkoutOrder.Set("customer_email", orderCustomerEmail)
+		}
+		if it.GetInfo("customer_name") != nil {
+			orderCustomerName := utils.InterfaceToString(it.GetInfo("customer_name"))
+			checkoutOrder.Set("customer_name", orderCustomerName)
+		}
 	}
 
 	billingAddress := it.GetBillingAddress().ToHashMap()
@@ -716,7 +718,6 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	case map[string]interface{}:
 		return it.SubmitFinish(value)
 	}
-
 
 	return it.SubmitFinish(nil)
 }
