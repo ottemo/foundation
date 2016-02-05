@@ -54,7 +54,6 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				discountsUsageQty := discountsUsage(checkoutInstance, record)
 				discountCode := utils.InterfaceToString(record["code"])
 
-				//if discountCode != "" && !couponUsed && discountsUsageQty > 0 {
 				if discountCode != "" && discountsUsageQty > 0 {
 					record["usage_qty"] = discountsUsageQty
 					discountCodes[discountCode] = record
@@ -75,8 +74,9 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 
 					// to be applicable coupon should satisfy following conditions:
 					//   [applyTimes] should be >= -1 and [begin] >= currentTime <= [end] if set
-					//    ** note applyTimes has already been decremented by the Apply endpoint by
-					//    this point.
+					//
+					//    ** note **
+					//    applyTimes has already been decremented by the Apply endpoint by this point.
 					if (applyTimes >= -1) &&
 						(utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix()) &&
 						(utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix()) {
