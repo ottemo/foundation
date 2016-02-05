@@ -19,7 +19,10 @@ const (
 	ConstTimeDay = time.Hour * 24
 )
 
-var subscriptionEnabled = false
+var (
+	subscriptionProducts = make([]string, 0) // stores id's of products that should be subscriptional
+	subscriptionEnabled = false
+)
 
 // DefaultSubscription struct to hold subscription information and represent
 // default implementer of InterfaceSubscription

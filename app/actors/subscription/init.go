@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // init makes package self-initialization routine before app start
@@ -63,6 +64,17 @@ func setupDB() error {
 
 // onAppStart makes module initialization on application startup
 func onAppStart() error {
+
+	products := make([]string, 0)
+	productsValue := utils.InterfaceToArray(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionProducts))
+
+	for _, value := range productsValue {
+		if productID := utils.InterfaceToString(value); productID != "" {
+			products = append(products, productID)
+		}
+	}
+
+	subscriptionProducts = products
 
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 	env.EventRegisterListener("product.getOptions", getOptionsExtend)

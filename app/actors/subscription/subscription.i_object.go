@@ -79,7 +79,7 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 			}
 
 			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "product_id", "qty", "options", "sku", "price") {
+			if utils.StrKeysInMap(mapValue, "product_id", "qty", "options") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["name"]),
 					ProductID: utils.InterfaceToString(mapValue["product_id"]),
@@ -96,7 +96,7 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 				continue
 			}
 
-			if utils.StrKeysInMap(mapValue, "ProductID", "Qty", "Options", "Sku", "Price") {
+			if utils.StrKeysInMap(mapValue, "ProductID", "Qty", "Options") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["Name"]),
 					ProductID: utils.InterfaceToString(mapValue["ProductID"]),
@@ -113,7 +113,7 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 				continue
 			}
 
-			if utils.StrKeysInMap(mapValue, "productid", "qty", "options", "sku", "price") {
+			if utils.StrKeysInMap(mapValue, "productid", "qty", "options") {
 				subscriptionItem := subscription.StructSubscriptionItem{
 					Name:      utils.InterfaceToString(mapValue["name"]),
 					ProductID: utils.InterfaceToString(mapValue["productid"]),

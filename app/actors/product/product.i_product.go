@@ -53,7 +53,7 @@ func (it *DefaultProduct) GetWeight() float64 {
 // GetOptions returns current products possible options as a map[string]interface{}
 func (it *DefaultProduct) GetOptions() map[string]interface{} {
 	options := it.Options
-	eventData := map[string]interface{}{"product": it, "options": options}
+	eventData := map[string]interface{}{"id": it.GetID(), "product": it, "options": options}
 	env.Event("product.getOptions", eventData)
 	return options
 }

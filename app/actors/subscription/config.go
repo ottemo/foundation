@@ -49,6 +49,37 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	productsUpdate := func(newProductsValues interface{}) (interface{}, error) {
+
+		// taking an array of product ids
+		productsValue := utils.InterfaceToArray(newProductsValues)
+
+		newProducts := make([]string, 0)
+		for _, value := range productsValue {
+			if productID := utils.InterfaceToString(value); productID != "" {
+				newProducts = append(newProducts, productID)
+			}
+		}
+
+		subscriptionProducts = newProducts
+		return newProductsValues, nil
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        subscription.ConstConfigPathSubscriptionProducts,
+		Value:       ``,
+		Type:        env.ConstConfigTypeText,
+		Editor:      "product_selector",
+		Options:     nil,
+		Label:       "Products",
+		Description: `list of products that will be subscription`,
+		Image:       "",
+	}, env.FuncConfigValueValidator(productsUpdate))
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionEmailSubject,
 		Value:       "Subscription",

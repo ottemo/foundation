@@ -171,6 +171,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			}
 
 			if product := cartItem.GetProduct(); product != nil {
+				product.ApplyOptions(subscriptionItem.Options)
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
@@ -202,6 +203,14 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 	if value, present := eventData["options"]; present {
 		options := utils.InterfaceToMap(value)
 
+		// removing subscription option for products that are not in the list
+		if len(subscriptionProducts) > 0 {
+			if productID, present := eventData["id"]; !present || !utils.IsInListStr(utils.InterfaceToString(productID), subscriptionProducts) {
+				delete(options, subscription.ConstSubscriptionOptionName)
+				return true
+			}
+		}
+
 		storedOptions := map[string]interface{}{
 			"type":     "select",
 			"required": true,
@@ -216,7 +225,7 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 			},
 		}
 
-		// when we are using getOptions for product after they was applied there add field Value, but is it all?
+		// when we are using getOptions for product after they was applied there add field Value
 		if subscriptionOption, present := options[subscription.ConstSubscriptionOptionName]; present {
 			subscriptionOptionMap := utils.InterfaceToMap(subscriptionOption)
 			if appliedValue, present := subscriptionOptionMap["value"]; present {

@@ -17,6 +17,8 @@ const (
 	ConstConfigPathSubscription        = "general.subscription"
 	ConstConfigPathSubscriptionEnabled = "general.subscription.enabled"
 
+	ConstConfigPathSubscriptionProducts = "general.subscription.products"
+
 	ConstConfigPathSubscriptionEmailSubject  = "general.subscription.emailSubject"
 	ConstConfigPathSubscriptionEmailTemplate = "general.subscription.emailTemplate"
 
