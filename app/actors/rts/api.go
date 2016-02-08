@@ -18,25 +18,35 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
+	//TODO: We should consider changing this to GET so that it doesn't have an OPTIONS
+	// preflight, it isn't "restfull" but we are firing this off on every page view
 	service.POST("rts/visit", APIRegisterVisit)
-	service.GET("rts/referrers", APIGetReferrers)
+
 	service.GET("rts/visits", APIGetVisits)
 	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
-	service.GET("rts/conversion", APIGetConversion)
+	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
+
 	service.GET("rts/sales", APIGetSales)
 	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
+
+	service.GET("rts/conversion", APIGetConversion)
 	service.GET("rts/bestsellers", APIGetBestsellers)
-	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
+	service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
 }
 
 // APIRegisterVisit registers request for a statistics
 func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	//NOTE: We aren't expecting any POST data
+	// I'm sending up "path" now so that we could track what page is viewed
+
 	if httpRequest, ok := context.GetRequest().(*http.Request); ok && httpRequest != nil {
 		if httpResponseWriter, ok := context.GetResponseWriter().(http.ResponseWriter); ok && httpResponseWriter != nil {
-			xReferrer := utils.InterfaceToString(httpRequest.Header.Get("X-Referer"))
 
+			//TODO: This seems like trash, why would be do this
+			xReferrer := utils.InterfaceToString(httpRequest.Header.Get("X-Referer"))
 			http.SetCookie(httpResponseWriter, &http.Cookie{Name: "X_Referrer", Value: xReferrer, Path: "/"})
 
 			eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
