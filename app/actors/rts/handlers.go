@@ -280,12 +280,6 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 			}
 		}
 
-		if event == "api.request" {
-			if referrerValue, present := eventData["referrer"]; present {
-				referrer = utils.InterfaceToString(referrerValue)
-			}
-		}
-
 		if referrer != "" {
 			referrer, err := GetReferrer(referrer)
 			if err != nil {
