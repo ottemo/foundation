@@ -194,16 +194,16 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		discountCoupon := records[0]
 
 		applyTimes := utils.InterfaceToInt(discountCoupon["times"])
-		couponStart := utils.InterfaceToTime(discountCoupon["since"])
-		couponEnd := utils.InterfaceToTime(discountCoupon["until"])
+		workSince := utils.InterfaceToTime(discountCoupon["since"])
+		workUntil := utils.InterfaceToTime(discountCoupon["until"])
 
 		currentTime := time.Now()
 
 		// to be applicable, the coupon should satisfy following conditions:
-		//   [applyTimes] should be -1 or >0 and [couponStart] >= currentTime <= [couponEnd] if set
+		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
 		if (applyTimes == -1 || applyTimes > 0) &&
-			(utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix()) &&
-			(utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix()) {
+			(utils.IsZeroTime(workSince) || workSince.Unix() <= currentTime.Unix()) &&
+			(utils.IsZeroTime(workUntil) || workUntil.Unix() >= currentTime.Unix()) {
 
 			// TODO: applied coupons are lost with session clear, probably should be made on order creation,
 			// or add an event handler to add to session # of times used

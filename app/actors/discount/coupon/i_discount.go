@@ -66,20 +66,17 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 			for appliedCodesIdx, discountCode := range appliedCodes {
 				if discountCoupon, ok := discountCodes[discountCode]; ok {
 
-					applyTimes := utils.InterfaceToInt(discountCoupon["times"])
 					couponStart := utils.InterfaceToTime(discountCoupon["since"])
 					couponEnd := utils.InterfaceToTime(discountCoupon["until"])
 
 					currentTime := time.Now()
 
 					// to be applicable coupon should satisfy following conditions:
-					//   [applyTimes] should be >= -1 and [begin] >= currentTime <= [end] if set
-					//
-					//    ** note **
-					//    applyTimes has already been decremented by the Apply endpoint by this point.
-					if (applyTimes >= -1) &&
-						(utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix()) &&
-						(utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix()) {
+					//   [begin] >= currentTime <= [end] if set
+					isValidStart := (utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix())
+					isValidEnd := (utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix())
+
+					if isValidStart && isValidEnd {
 
 						// calculating coupon discount amount
 						discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
