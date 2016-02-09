@@ -183,12 +183,6 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 		// event for request
 		eventData := map[string]interface{}{"session": currentSession, "context": applicationContext}
-		cookieReferrer, err := req.Cookie("X_Referrer")
-		if err != nil {
-			eventData["referrer"] = ""
-		} else {
-			eventData["referrer"] = cookieReferrer.Value
-		}
 		env.Event("api.request", eventData)
 
 		// API handler processing

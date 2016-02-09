@@ -18,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := utils.InterfaceToString(context.GetRequestSetting("X-Referer"))
+			xReferrer := context.GetRequestArgument("referrer")
 			if xReferrer == "" {
 				return true
 			}
@@ -57,26 +57,18 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 			CheckHourUpdateForStatistic()
 
 			// Total page views
-			// `statistic` is a map that is loaded up with all of the rts data in the db...
-			// TODO: Why don't we do any setting if currentHour is nil? or is that just some superfulous
-			// error checking
-			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
-				statistic[currentHour].TotalVisits++
-				monthStatistic.TotalVisits++
-			}
+			statistic[currentHour].TotalVisits++
+			monthStatistic.TotalVisits++
 
 			// Super flakey implementation for telling if the visitor has been tracked today
 			// by reusing an 'add to bag' tracking mechanism
-			// foundation/app/actors/rts/decl.go:40
+			// foundation/app/actors/rts/decl.go :45
 			if _, present := visitState[sessionID]; !present {
 				visitState[sessionID] = false
 
 				// Unique page views
-				// TODO: extra error checking?
-				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
-					statistic[currentHour].Visit++
-					monthStatistic.Visit++
-				}
+				statistic[currentHour].Visit++
+				monthStatistic.Visit++
 
 				// TODO: Why do we only save out statistics here, should this be moved out
 				err := SaveStatisticsData()
@@ -284,8 +276,7 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 		if event == "api.rts.visit" {
 			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				xRreferrer := context.GetResponseSetting("X-Referer")
-				referrer = utils.InterfaceToString(xRreferrer)
+				referrer = utils.InterfaceToString(context.GetRequestArgument("referrer"))
 			}
 		}
 

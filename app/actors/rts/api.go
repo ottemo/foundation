@@ -2,7 +2,6 @@ package rts
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -18,9 +17,7 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	//TODO: We should consider changing this to GET so that it doesn't have an OPTIONS
-	// preflight, it isn't "restfull" but we are firing this off on every page view
-	service.POST("rts/visit", APIRegisterVisit)
+	service.GET("rts/visit", APIRegisterVisit)
 
 	service.GET("rts/visits", APIGetVisits)
 	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
@@ -38,23 +35,10 @@ func setupAPI() error {
 
 // APIRegisterVisit registers request for a statistics
 func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, error) {
+	// Variables in GET; path, referrer
+	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
+	env.Event("api.rts.visit", eventData)
 
-	//NOTE: We aren't expecting any POST data
-	// I'm sending up "path" now so that we could track what page is viewed
-
-	if httpRequest, ok := context.GetRequest().(*http.Request); ok && httpRequest != nil {
-		if httpResponseWriter, ok := context.GetResponseWriter().(http.ResponseWriter); ok && httpResponseWriter != nil {
-
-			//TODO: This seems like trash, why would be do this
-			xReferrer := utils.InterfaceToString(httpRequest.Header.Get("X-Referer"))
-			http.SetCookie(httpResponseWriter, &http.Cookie{Name: "X_Referrer", Value: xReferrer, Path: "/"})
-
-			eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
-			env.Event("api.rts.visit", eventData)
-
-			return nil, nil
-		}
-	}
 	return nil, nil
 }
 
