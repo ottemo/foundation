@@ -167,10 +167,10 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 	currentSession := context.GetSession()
 
 	// get applied coupons array for current session
-	appliedCoupons := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
+	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedemptions))
 
 	// check if coupon has already been applied
-	if utils.IsInArray(couponCode, appliedCoupons) {
+	if utils.IsInArray(couponCode, previousRedemptions) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied.")
 	}
 
@@ -216,8 +216,8 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 			}
 
 			// coupon is working - applying it
-			appliedCoupons = append(appliedCoupons, couponCode)
-			currentSession.Set(ConstSessionKeyAppliedDiscountCodes, appliedCoupons)
+			previousRedemptions = append(previousRedemptions, couponCode)
+			currentSession.Set(ConstSessionKeyCurrentRedemptions, previousRedemptions)
 
 		} else {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
@@ -237,19 +237,19 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 	couponCode := context.GetRequestArgument("code")
 
 	if couponCode == "*" {
-		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+		context.GetSession().Set(ConstSessionKeyCurrentRedemptions, make([]string, 0))
 		return "ok", nil
 	}
 
-	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes))
-	if len(appliedCoupons) > 0 {
+	previousRedemptions := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyPreviousRedemptions))
+	if len(previousRedemptions) > 0 {
 		var newAppliedCoupons []string
-		for _, value := range appliedCoupons {
+		for _, value := range previousRedemptions {
 			if value != couponCode {
 				newAppliedCoupons = append(newAppliedCoupons, value)
 			}
 		}
-		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, newAppliedCoupons)
+		context.GetSession().Set(ConstSessionKeyCurrentRedemptions, newAppliedCoupons)
 
 		// times used increase
 		collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)

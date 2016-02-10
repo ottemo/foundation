@@ -28,16 +28,16 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 	// check session for applied coupon codes
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
 
-		appliedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
+		redeemedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyCurrentRedemptions))
 
-		if len(appliedCodes) > 0 {
+		if len(redeemedCodes) > 0 {
 
 			// loading information about applied discounts
 			collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 			if err != nil {
 				return result
 			}
-			err = collection.AddFilter("code", "in", appliedCodes)
+			err = collection.AddFilter("code", "in", redeemedCodes)
 			if err != nil {
 				return result
 			}
@@ -63,7 +63,7 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 			discountPriorityValue := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))
 
 			// accumulation of coupon discounts to result
-			for appliedCodesIdx, discountCode := range appliedCodes {
+			for appliedCodesIdx, discountCode := range redeemedCodes {
 				if discountCoupon, ok := discountCodes[discountCode]; ok {
 
 					couponStart := utils.InterfaceToTime(discountCoupon["since"])
@@ -147,13 +147,13 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 
 					} else {
 						// we have not applicable coupon - removing it from applied coupons list
-						newAppliedCodes := make([]string, 0, len(appliedCodes)-1)
-						for idx, value := range appliedCodes {
+						newRedemptions := make([]string, 0, len(redeemedCodes)-1)
+						for idx, value := range redeemedCodes {
 							if idx != appliedCodesIdx {
-								newAppliedCodes = append(newAppliedCodes, value)
+								newRedemptions = append(newRedemptions, value)
 							}
 						}
-						currentSession.Set(ConstSessionKeyAppliedDiscountCodes, newAppliedCodes)
+						currentSession.Set(ConstSessionKeyCurrentRedemptions, newRedemptions)
 					}
 				}
 			}

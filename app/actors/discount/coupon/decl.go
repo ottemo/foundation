@@ -8,9 +8,9 @@ import (
 
 // Package global constants
 const (
-	ConstSessionKeyAppliedDiscountCodes = "applied_discount_codes"
-	ConstSessionKeyUsedDiscountCodes    = "used_discount_codes"
-	ConstCollectionNameCouponDiscounts  = "coupon_discounts"
+	ConstSessionKeyCurrentRedemptions  = "current_redemption_codes"
+	ConstSessionKeyPreviousRedemptions = "previous_redemption_codes"
+	ConstCollectionNameCouponDiscounts = "coupon_discounts"
 
 	ConstConfigPathDiscounts             = "general.discounts"
 	ConstConfigPathDiscountApplyPriority = "general.discounts.discount_apply_priority"
