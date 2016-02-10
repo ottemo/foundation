@@ -18,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := context.GetRequestArgument("referrer")
+			xReferrer := api.GetContentValue(context, "referrer").(string)
 			if xReferrer == "" {
 				return true
 			}
@@ -70,7 +70,6 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 				statistic[currentHour].Visit++
 				monthStatistic.Visit++
 
-				// TODO: Why do we only save out statistics here, should this be moved out
 				err := SaveStatisticsData()
 				if err != nil {
 					env.LogError(err)
@@ -276,7 +275,7 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 		if event == "api.rts.visit" {
 			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				referrer = utils.InterfaceToString(context.GetRequestArgument("referrer"))
+				referrer = api.GetContentValue(context, "referrer").(string)
 			}
 		}
 
