@@ -32,7 +32,7 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 
 		if len(redeemedCodes) > 0 {
 
-			// loading information about applied discounts
+			// loading information about applied coupons
 			collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 			if err != nil {
 				return result
@@ -47,7 +47,7 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				return result
 			}
 
-			// making coupon code map for right apply order ignoring used coupons and limited
+			// use coupon map to hold the correct application order and ignore previously used coupons
 			discountCodes := make(map[string]map[string]interface{})
 			for _, record := range records {
 

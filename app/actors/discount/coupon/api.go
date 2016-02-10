@@ -2,6 +2,7 @@ package coupon
 
 import (
 	"encoding/csv"
+	"net/http"
 	"strings"
 	"time"
 
@@ -34,18 +35,23 @@ func setupAPI() error {
 // List returns a list registered coupons
 func List(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	// check rights
 	if err := api.ValidateAdminRights(context); err != nil {
+		responseWriter.WriteHeader(http.StatusForbidden)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	records, err := collection.Load()
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return records, env.ErrorDispatch(err)
 }
 
