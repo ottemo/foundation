@@ -17,7 +17,7 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("rts/visit", APIRegisterVisit)
+	service.POST("rts/visit", APIRegisterVisit)
 
 	service.GET("rts/visits", APIGetVisits)
 	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
@@ -35,7 +35,8 @@ func setupAPI() error {
 
 // APIRegisterVisit registers request for a statistics
 func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, error) {
-	// Variables in GET; path, referrer
+	// Variables in post; path=/shop/cleaning-products, referrer=http://google.com
+	// In headers; Referrer=http://karigran.com/shop/cleaning-products
 	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
 	env.Event("api.rts.visit", eventData)
 
