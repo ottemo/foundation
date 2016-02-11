@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/app/models/subscription"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -13,7 +14,7 @@ func setupConfig() error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1f7ecfb8-b5e3-4361-b066-42c088f6b350", "can't obtain config")
 	}
 
-	// Trust pilot config elements
+	// Subscription config elements
 	//----------------------------
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -37,8 +38,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Subscription",
-		Description: `Enabled Subscription`,
+		Label:       "Enable Subscriptions",
+		Description: "",
 		Image:       "",
 	}, env.FuncConfigValueValidator(func(newValue interface{}) (interface{}, error) {
 		subscriptionEnabled = utils.InterfaceToBool(newValue)
@@ -68,11 +69,11 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionProducts,
 		Value:       ``,
-		Type:        env.ConstConfigTypeText,
+		Type:        db.TypeArrayOf(db.ConstTypeID),
 		Editor:      "product_selector",
 		Options:     nil,
-		Label:       "Products",
-		Description: `list of products that will be subscription`,
+		Label:       "Applicable Products",
+		Description: "",
 		Image:       "",
 	}, env.FuncConfigValueValidator(productsUpdate))
 
@@ -86,8 +87,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
-		Label:       "On fail subject",
-		Description: `Email subject for emails`,
+		Label:       "Insufficient Funds Email: Subject",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -98,13 +99,13 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path: subscription.ConstConfigPathSubscriptionEmailTemplate,
 		Value: `Dear {{.Visitor.name}},
-		Yours subscription can't be processed couse you have insufficient funds on Credit Card
-		please create new subscription using valid credit card`,
+Yours subscription can't be processed because of an insufficient funds error from your credit card
+provider, please create new subscription using valid credit card.`,
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "On fail template",
-		Description: "Email content to send to customers in case of failing on submit (insufficient funds on Credit Card, or some technical error)",
+		Label:       "Insufficient Funds Email: Body",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -114,12 +115,12 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionStockEmailTemplate,
-		Value:       `Items out of stock`,
+		Value:       "Subscription failure due to out of stock items.",
 		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "Submit template",
-		Description: "contents of email that sented on out of stock error",
+		Label:       "Admin - Stock Warning Email: Body",
+		Description: "",
 		Image:       "",
 	}, nil)
 
