@@ -109,7 +109,7 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})
 
-	if currentVisitor := currentCheckout.GetVisitor(); currentVisitor == nil {
+	if currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID)); currentVisitorID == "" {
 		for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
 			// prevent from showing cc values in info
 			if key != "cc" {
