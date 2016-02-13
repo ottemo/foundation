@@ -121,7 +121,7 @@ func Subscribe(listID string, registration Registration) error {
 	}
 
 	// subscribe to mailchimp
-	if _, err = sendRequest(fmt.Sprintf(baseURL+"lists/%s/members", listID), payload); err != nil {
+	if _, err = sendRequest(fmt.Sprintf(baseURL+"/lists/%s/members", listID), payload); err != nil {
 		sendEmail(payload)
 		return env.ErrorDispatch(err)
 	}
