@@ -18,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := api.GetContentValue(context, "referrer").(string)
+			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
 			if xReferrer == "" {
 				return true
 			}

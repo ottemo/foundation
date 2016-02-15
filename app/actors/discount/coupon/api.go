@@ -174,6 +174,12 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied.")
 	}
 
+	usedDiscounts := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyUsedDiscountCodes))
+	// check if coupon has already been used
+	if utils.IsInArray(couponCode, usedDiscounts) {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce50c9d3-5541-4235-bcb9-c1c8f7f7338e", "Coupon code, "+couponCode+" was already used.")
+	}
+
 	// load coupon for specified code
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
@@ -236,12 +242,11 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	couponCode := context.GetRequestArgument("code")
 
-	if couponCode == "*" {
-		context.GetSession().Set(ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes))
+	if !utils.IsInArray(couponCode, appliedCoupons) {
 		return "ok", nil
 	}
 
-	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedDiscountCodes))
 	if len(appliedCoupons) > 0 {
 		var newAppliedCoupons []string
 		for _, value := range appliedCoupons {
