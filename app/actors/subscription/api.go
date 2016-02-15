@@ -13,40 +13,19 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
 	// Administrative
-	err = api.GetRestService().RegisterAPI("subscriptions", api.ConstRESTOperationGet, APIListSubscriptions)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationGet, APIGetSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("subscriptions/:id", api.ConstRESTOperationUpdate, APIUpdateSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("subscriptions", APIListSubscriptions)
+	service.GET("subscriptions/:id", APIGetSubscription)
+	service.PUT("subscriptions/:id", APIUpdateSubscription)
 
 	// Public
-	err = api.GetRestService().RegisterAPI("visit/subscriptions", api.ConstRESTOperationGet, APIListVisitorSubscriptions)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("visit/subscriptions/:id", api.ConstRESTOperationUpdate, APIUpdateSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("visit/subscriptions", APIListVisitorSubscriptions)
+	service.PUT("visit/subscriptions/:id", APIUpdateSubscription)
 
 	// Other thing
-	err = api.GetRestService().RegisterAPI("subscriptional/checkout", api.ConstRESTOperationGet, APICheckCheckoutSubscription)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("subscriptional/checkout", APICheckCheckoutSubscription)
 
 	return nil
 }
