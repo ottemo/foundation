@@ -13,40 +13,17 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("app/email", api.ConstRESTOperationCreate, restSendEmail)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationGet, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationCreate, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/logout", api.ConstRESTOperationGet, restLogout)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/rights", api.ConstRESTOperationGet, restRightsInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/status", api.ConstRESTOperationGet, restStatusInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationCreate, setSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationGet, getSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+
+	service.POST("app/email", restSendEmail)
+	service.GET("app/login", restLogin)
+	service.POST("app/login", restLogin)
+	service.GET("app/logout", restLogout)
+	service.GET("app/rights", restRightsInfo)
+	service.GET("app/status", restStatusInfo)
+	service.POST("app/location", setSessionTimeZone)
+	service.GET("app/location", getSessionTimeZone)
 
 	return nil
 }

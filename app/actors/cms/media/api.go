@@ -14,22 +14,11 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationGet, APIListMediaImages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/media", api.ConstRESTOperationCreate, APIAddMediaImages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/media/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaImage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cms/media", APIListMediaImages)
+	service.POST("cms/media", APIAddMediaImages)
+	service.DELETE("cms/media/:mediaName", APIRemoveMediaImage)
 
 	return nil
 }

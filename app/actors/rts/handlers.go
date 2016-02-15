@@ -7,6 +7,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -17,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := utils.InterfaceToString(context.GetRequestSetting("X-Referer"))
+			xReferrer := api.GetContentValue(context, "referrer").(string)
 			if xReferrer == "" {
 				return true
 			}
@@ -54,17 +55,20 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 		if sessionID := sessionInstance.GetID(); sessionID != "" {
 			currentHour := time.Now().Truncate(time.Hour).Unix()
 			CheckHourUpdateForStatistic()
-			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
-				statistic[currentHour].TotalVisits++
-				monthStatistic.TotalVisits++
-			}
 
+			// Total page views
+			statistic[currentHour].TotalVisits++
+			monthStatistic.TotalVisits++
+
+			// Super flakey implementation for telling if the visitor has been tracked today
+			// by reusing an 'add to bag' tracking mechanism
+			// foundation/app/actors/rts/decl.go :45
 			if _, present := visitState[sessionID]; !present {
 				visitState[sessionID] = false
-				if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
-					statistic[currentHour].Visit++
-					monthStatistic.Visit++
-				}
+
+				// Unique page views
+				statistic[currentHour].Visit++
+				monthStatistic.Visit++
 
 				err := SaveStatisticsData()
 				if err != nil {
@@ -163,8 +167,8 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
 		if sessionID := sessionInstance.GetID(); sessionID != "" {
 			saleAmount := float64(0)
-			if cartInstance, ok := eventData["cart"].(cart.InterfaceCart); ok {
-				saleAmount = cartInstance.GetSubtotal()
+			if orderInstance, ok := eventData["order"].(order.InterfaceOrder); ok {
+				saleAmount = orderInstance.GetGrandTotal()
 			}
 
 			currentHour := time.Now().Truncate(time.Hour).Unix()
@@ -271,14 +275,7 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 		if event == "api.rts.visit" {
 			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				xRreferrer := context.GetResponseSetting("X-Referer")
-				referrer = utils.InterfaceToString(xRreferrer)
-			}
-		}
-
-		if event == "api.request" {
-			if referrerValue, present := eventData["referrer"]; present {
-				referrer = utils.InterfaceToString(referrerValue)
+				referrer = api.GetContentValue(context, "referrer").(string)
 			}
 		}
 

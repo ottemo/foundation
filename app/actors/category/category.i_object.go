@@ -58,14 +58,8 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "description":
 		return it.GetDescription()
 
-	case "products":
-		var result []map[string]interface{}
-
-		for _, categoryProduct := range it.GetProducts() {
-			result = append(result, categoryProduct.ToHashMap())
-		}
-
-		return result
+	case "product_ids":
+		return it.GetProductIds()
 	}
 
 	return nil
@@ -195,7 +189,7 @@ func (it *DefaultCategory) ToHashMap() map[string]interface{} {
 
 	result["parent_id"] = it.Get("parent_id")
 	result["name"] = it.Get("name")
-	result["products"] = it.Get("products")
+	result["product_ids"] = it.Get("product_ids")
 	result["path"] = it.Get("path")
 
 	return result

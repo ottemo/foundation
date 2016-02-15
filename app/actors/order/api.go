@@ -4,6 +4,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -11,33 +12,21 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("orders/attributes", api.ConstRESTOperationGet, APIListOrderAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("orders", api.ConstRESTOperationGet, APIListOrders)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Admin
+	service.GET("orders/attributes", APIListOrderAttributes)
+	service.GET("orders", APIListOrders)
 
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationGet, APIGetOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	// err = api.GetRestService().RegisterAPI("order", api.ConstRESTOperationCreate, APICreateOrder)
-	// if err != nil {
-	// 	return env.ErrorDispatch(err)
-	// }
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationUpdate, APIUpdateOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("order/:orderID", api.ConstRESTOperationDelete, APIDeleteOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("order/:orderID", APIGetOrder)
+	service.PUT("order/:orderID", APIUpdateOrder)
+	service.DELETE("order/:orderID", APIDeleteOrder)
+
+	// service.POST("order", APICreateOrder)
+
+	// Public
+	service.GET("visit/orders", APIGetVisitOrders)
+	service.GET("visit/order/:orderID", APIGetVisitOrder)
 
 	return nil
 }
@@ -181,4 +170,65 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 	orderModel.Delete()
 
 	return "ok", nil
+}
+
+// APIGetOrder returns current visitor order details for specified order
+//   - orderID should be specified in arguments
+func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
+	if err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc719b01-c1e4-4b69-9c89-5735f5c0d339", "Unable to retrieve an order associated with OrderID: "+context.GetRequestArgument("orderID")+".")
+	}
+
+	// allow anonymous visitors through if the session id matches
+	if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
+		// force anonymous visitors to log in if their session id does not match the one on the order
+		visitorID := visitor.GetCurrentVisitorID(context)
+		if visitorID == "" {
+			return "No Visitor ID found, unable to process order request. Please log in first.", nil
+		} else if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
+		}
+	}
+
+	result := orderModel.ToHashMap()
+	result["items"] = orderModel.GetItems()
+
+	return result, nil
+}
+
+// APIGetOrders returns list of orders related to current visitor
+func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// list operation
+	//---------------
+	visitorID := visitor.GetCurrentVisitorID(context)
+	if visitorID == "" {
+		return "No Visitor ID found, unable to process request.  Please log in first.", nil
+	}
+
+	orderCollection, err := order.GetOrderCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// We only return orders that are in these two states
+	statusFilter := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
+	orderCollection.GetDBCollection().AddFilter("status", "in", statusFilter)
+
+	// filters handle
+	models.ApplyFilters(context, orderCollection.GetDBCollection())
+
+	// extra parameter handle
+	models.ApplyExtraAttributes(context, orderCollection)
+
+	result, err := orderCollection.List()
+
+	return result, env.ErrorDispatch(err)
 }

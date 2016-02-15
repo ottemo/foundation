@@ -16,17 +16,9 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
-
-	err = api.GetRestService().RegisterAPI("friend/email", api.ConstRESTOperationCreate, APIFriendEmail)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("friend/captcha", api.ConstRESTOperationGet, APIFriendCaptcha)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+	service.POST("friend/email", APIFriendEmail)
+	service.GET("friend/captcha", APIFriendCaptcha)
 
 	return nil
 }

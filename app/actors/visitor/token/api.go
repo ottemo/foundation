@@ -13,21 +13,12 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("visit/token", api.ConstRESTOperationCreate, APICreateToken)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/tokens", api.ConstRESTOperationGet, APIListVisitorCards)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+	service.POST("visit/token", APICreateToken)
+	service.GET("visit/tokens", APIListVisitorCards)
 
-	//	err = api.GetRestService().RegisterAPI("token/:tokenID", api.ConstRESTOperationUpdate, APIGetToken)
-	//	if err != nil {
-	//		return env.ErrorDispatch(err)
-	//	}
+	//	service.PUT("token/:tokenID", APIGetToken)
 
 	return nil
 }

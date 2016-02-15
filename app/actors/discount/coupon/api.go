@@ -15,52 +15,18 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("coupons", api.ConstRESTOperationGet, List)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("coupons", api.ConstRESTOperationCreate, Create)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("csv/coupons", api.ConstRESTOperationGet, DownloadCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("csv/coupons", api.ConstRESTOperationCreate, UploadCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cart/coupons", api.ConstRESTOperationCreate, Apply)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cart/coupons/:code", api.ConstRESTOperationDelete, Revert)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationGet, GetByID)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationUpdate, UpdateByID)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("coupons/:id", api.ConstRESTOperationDelete, DeleteByID)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("coupons", List)
+	service.POST("coupons", Create)
+	service.GET("csv/coupons", DownloadCSV)
+	service.POST("csv/coupons", UploadCSV)
+	service.POST("cart/coupons", Apply)
+	service.DELETE("cart/coupons/:code", Revert)
+	service.GET("coupons/:id", GetByID)
+	service.PUT("coupons/:id", UpdateByID)
+	service.DELETE("coupons/:id", DeleteByID)
 
 	return nil
 }

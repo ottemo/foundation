@@ -18,83 +18,31 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationGet, APIGetProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product", api.ConstRESTOperationCreate, APICreateProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationUpdate, APIUpdateProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID", api.ConstRESTOperationDelete, APIDeleteProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Products
+	service.GET("products", APIListProducts)
+	service.GET("product/:productID", APIGetProduct)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationGet, APIGetMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType", api.ConstRESTOperationGet, APIListMedia)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("product", APICreateProduct)
+	service.PUT("product/:productID", APIUpdateProduct)
+	service.DELETE("product/:productID", APIDeleteProduct)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationCreate, APIAddMediaForProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("product/:productID/media/:mediaType/:mediaName", api.ConstRESTOperationDelete, APIRemoveMediaForProduct)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Attributes
+	service.GET("products/attributes", APIListProductAttributes)
+	service.POST("products/attribute", APICreateProductAttribute)
+	service.PUT("products/attribute/:attribute", APIUpdateProductAttribute)
+	service.DELETE("products/attribute/:attribute", APIDeleteProductsAttribute)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/mediapath/:mediaType", api.ConstRESTOperationGet, APIGetMediaPath)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Media
+	service.POST("product/:productID/media/:mediaType/:mediaName", APIAddMediaForProduct)
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", APIRemoveMediaForProduct)
+	service.GET("product/:productID/media/:mediaType/:mediaName", APIGetMedia) // @DEPRECATED
+	service.GET("product/:productID/media/:mediaType", APIListMedia)           // @DEPRECATED
+	service.GET("product/:productID/mediapath/:mediaType", APIGetMediaPath)    // @DEPRECATED
 
-	err = api.GetRestService().RegisterAPI("product/:productID/related", api.ConstRESTOperationGet, APIListRelatedProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("products", api.ConstRESTOperationGet, APIListProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("products/attributes", api.ConstRESTOperationGet, APIListProductAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute", api.ConstRESTOperationCreate, APICreateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationUpdate, APIUpdateProductAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/attribute/:attribute", api.ConstRESTOperationDelete, APIDeleteProductsAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("products/shop", api.ConstRESTOperationGet, APIListShopProducts)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("products/shop/layers", api.ConstRESTOperationGet, APIGetShopLayers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Related
+	service.GET("product/:productID/related", APIListRelatedProducts)
 
 	return nil
 }
@@ -669,23 +617,25 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 // APIListProducts returns a list of available products
 //   - if "action" parameter is set to "count" result value will be just a number of list items
-//   - for a not admins available products are limited to enabled ones
+//   - visitors can not see disabled products, but administrators can
 func APIListProducts(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	productCollectionModel, err := product.GetProductCollectionModel()
-	if err != nil {
+	var productCollectionModel product.InterfaceProductCollection
+	var err error
+
+	if productCollectionModel, err = product.GetProductCollectionModel(); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// filters handle
 	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
 
-	// excluding disabled products for a regular visitor
+	// exclude disabled products for visitors, but not Admins
 	if err := api.ValidateAdminRights(context); err != nil {
 		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
 	}
 
-	// checking for a "count" request
+	// check "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
 		return productCollectionModel.GetDBCollection().Count()
 	}
@@ -870,83 +820,6 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 
 				result = append(result, *resultItem)
 			}
-		}
-	}
-
-	return result, nil
-}
-
-// APIListShopProducts returns a list of available products for a shop
-//   - for a not admins available products are limited to enabled ones
-func APIListShopProducts(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	productsCollection, err := product.GetProductCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	dbCollection := productsCollection.GetDBCollection()
-
-	// filters handle
-	models.ApplyFilters(context, dbCollection)
-
-	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
-	}
-
-	mediaStorage, err := media.GetMediaStorage()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// preparing product information
-	var result []map[string]interface{}
-
-	for _, productModel := range productsCollection.ListProducts() {
-		productInfo := productModel.ToHashMap()
-
-		defaultImage := utils.InterfaceToString(productInfo["default_image"])
-		itemImages, err := mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage, defaultImage)
-		if err != nil {
-			env.LogError(err)
-		}
-
-		productInfo["image"] = itemImages
-		result = append(result, productInfo)
-	}
-
-	return result, nil
-}
-
-// APIGetShopLayers returns layered navigation options for a shop products list
-//   - for a not admins available products are limited to enabled ones
-func APIGetShopLayers(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	productsCollection, err := product.GetProductCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	productsDBCollection := productsCollection.GetDBCollection()
-
-	productModel, err := product.GetProductModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	productAttributesInfo := productModel.GetAttributesInfo()
-
-	result := make(map[string]interface{})
-
-	models.ApplyFilters(context, productsDBCollection)
-
-	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsDBCollection.AddFilter("enabled", "=", true)
-	}
-
-	for _, productAttribute := range productAttributesInfo {
-		if productAttribute.IsLayered {
-			distinctValues, _ := productsDBCollection.Distinct(productAttribute.Attribute)
-			result[productAttribute.Attribute] = distinctValues
 		}
 	}
 

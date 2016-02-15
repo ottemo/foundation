@@ -25,7 +25,7 @@ func (it *FedEx) GetCode() string {
 
 // IsAllowed checks for method applicability
 func (it *FedEx) IsAllowed(checkout checkout.InterfaceCheckout) bool {
-	return true
+	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
 }
 
 // GetRates returns rates allowed by shipping method for a given checkout

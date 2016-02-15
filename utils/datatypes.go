@@ -143,34 +143,30 @@ func DataTypeParse(typeName string) DataType {
 		result.Scale, _ = StringToInteger(regexpGroups[4])
 	}
 
-	if !IsAmongStr(result.Name, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+	switch {
+	case IsAmongStr(result.Name, "b", "bool", "boolean"):
+		result.Name = ConstDataTypeBoolean
+		result.IsKnown = true
 
-		switch {
-		case IsAmongStr(result.Name, "b", "boolean"):
-			result.Name = ConstDataTypeBoolean
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "i", "int", "integer", "single"):
+		result.Name = ConstDataTypeInteger
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "i", "integer", "single"):
-			result.Name = ConstDataTypeInteger
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double"):
+		result.Name = ConstDataTypeFloat
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double"):
-			result.Name = ConstDataTypeFloat
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "str", "string", "text"):
+		result.Name = ConstDataTypeText
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "str", "string"):
-			result.Name = ConstDataTypeText
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "time", "date", "calendar", "datetime"):
+		result.Name = ConstDataTypeDatetime
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "time", "date", "calendar"):
-			result.Name = ConstDataTypeDatetime
-			result.IsKnown = true
-
-		case IsAmongStr(result.Name, "struct"):
-			result.Name = ConstDataTypeJSON
-			result.IsKnown = true
-		}
+	case IsAmongStr(result.Name, "struct", "json"):
+		result.Name = ConstDataTypeJSON
+		result.IsKnown = true
 	}
 
 	return result
