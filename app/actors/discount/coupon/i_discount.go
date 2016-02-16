@@ -66,12 +66,12 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 			for appliedCodesIdx, discountCode := range redeemedCodes {
 				if discountCoupon, ok := discountCodes[discountCode]; ok {
 
-					isValidStart := validStart(discountCoupon["since"])
-					isValidEnd := validEnd(discountCoupon["until"])
+					validStart := isValidStart(discountCoupon["since"])
+					validEnd := isValidEnd(discountCoupon["until"])
 
 					// to be applicable coupon should satisfy following conditions:
 					//   [begin] >= currentTime <= [end] if set
-					if isValidStart && isValidEnd {
+					if validStart && validEnd {
 
 						// calculating coupon discount amount
 						discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
@@ -240,7 +240,7 @@ func discountsUsage(checkoutInstance checkout.InterfaceCheckout, couponDiscount 
 }
 
 // validStart returns a boolean value of the datetame passed is valid
-func validStart(start interface{}) bool {
+func isValidStart(start interface{}) bool {
 
 	couponStart := utils.InterfaceToTime(start)
 	currentTime := time.Now()
@@ -251,7 +251,7 @@ func validStart(start interface{}) bool {
 }
 
 // validEnd returns a boolean value of the datetame passed is valid
-func validEnd(end interface{}) bool {
+func isValidEnd(end interface{}) bool {
 
 	couponEnd := utils.InterfaceToTime(end)
 	currentTime := time.Now()
