@@ -1,13 +1,14 @@
 package subscription
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // GetCustomerEmail returns subscriber e-mail
@@ -51,11 +52,22 @@ func (it *DefaultSubscription) SetStatus(status string) error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3b7d17c3-c5fa-4369-a039-49bafec2fb9d", "new subscription status should be one of allowed")
 	}
 
+	// Same state, don't bother setting
 	if it.Status == status {
 		return nil
 	}
 
+	// The initial status can be empty if we are setting for the first time since
+	// loading it from the db, if we are actually changing the status fire an event
+	isChanging := it.Status != ""
 	it.Status = status
+
+	// Make sure to fire the event after updating it
+	if isChanging {
+		eventData := map[string]interface{}{"subscription": it}
+		env.Event(subscription.ConstEventSetStatus, eventData)
+	}
+
 	return nil
 }
 
