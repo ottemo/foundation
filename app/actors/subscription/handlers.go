@@ -241,7 +241,7 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 
 // setStatusHandler Fired when the subscription's status has been updated
 func setStatusHandler(event string, eventData map[string]interface{}) bool {
-	subscriptionItem, _ := getSubscriptionFromEvent(eventData)
+	subscriptionItem := getSubscriptionFromEvent(eventData)
 	isCancelled := subscriptionItem.GetStatus() == subscription.ConstSubscriptionStatusCanceled
 
 	if isCancelled {
@@ -257,17 +257,15 @@ func sendCancellationEmail(subscriptionItem subscription.InterfaceSubscription) 
 	app.SendMail(email, subject, body)
 }
 
-func getSubscriptionFromEvent(event map[string]interface{}) (subscription.InterfaceSubscription, bool) {
+func getSubscriptionFromEvent(event map[string]interface{}) subscription.InterfaceSubscription {
 	var subscriptionItem subscription.InterfaceSubscription
-
-	ok := false
 	eventItem := event["subscription"]
 
 	if typedItem, ok := eventItem.(subscription.InterfaceSubscription); ok {
 		subscriptionItem = typedItem
 	}
 
-	return subscriptionItem, ok
+	return subscriptionItem
 }
 
 func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, string) {
