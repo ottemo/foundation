@@ -181,18 +181,26 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		couponCode = utils.InterfaceToString(postValues["code"])
 	} else {
 		responseWriter.WriteHeader(http.StatusBadRequest)
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "085b8e25-7939-4b94-93f1-1007ada357d4", "Required key 'code' cannot have a  blank value.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "085b8e25-7939-4b94-93f1-1007ada357d4", "Required key 'code' cannot have a blank value.")
 	}
 
 	currentSession := context.GetSession()
 
-	// get applied coupons array for current session
-	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedemptions))
+	// get applied coupons array for current cart
+	currentRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyCurrentRedemptions))
 
 	// check if coupon has already been applied
+	if utils.IsInArray(couponCode, currentRedemptions) {
+		responseWriter.WriteHeader(http.StatusBadRequest)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied in this cart.")
+	}
+
+	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedmptions))
+
+	// check if coupon has already been used
 	if utils.IsInArray(couponCode, previousRedemptions) {
 		responseWriter.WriteHeader(http.StatusBadRequest)
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce50c9d3-5541-4235-bcb9-c1c8f7f7338e", "Coupon code, "+couponCode+" has already been applied in previous session.")
 	}
 
 	// load coupon for specified code
@@ -238,8 +246,8 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 			}
 
 			// coupon is working - applying it
-			previousRedemptions = append(previousRedemptions, couponCode)
-			currentSession.Set(ConstSessionKeyCurrentRedemptions, previousRedemptions)
+			currentRedemptions = append(currentRedemptions, couponCode)
+			currentSession.Set(ConstSessionKeyCurrentRedemptions, currentRedemptions)
 
 		} else {
 			responseWriter.WriteHeader(http.StatusBadRequest)
@@ -267,16 +275,14 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 	couponCode := context.GetRequestArgument("code")
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
-	if couponCode == "*" {
-		context.GetSession().Set(ConstSessionKeyCurrentRedemptions, make([]string, 0))
-		responseWriter.WriteHeader(http.StatusOK)
+	currentRedemptions := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyCurrentRedemptions))
+	if !utils.IsInArray(couponCode, currentRedemptions) {
 		return "ok", nil
 	}
 
-	previousRedemptions := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyPreviousRedemptions))
-	if len(previousRedemptions) > 0 {
+	if len(currentRedemptions) > 0 {
 		var newAppliedCoupons []string
-		for _, value := range previousRedemptions {
+		for _, value := range currentRedemptions {
 			if value != couponCode {
 				newAppliedCoupons = append(newAppliedCoupons, value)
 			}
