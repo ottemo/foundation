@@ -218,16 +218,13 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		discountCoupon := records[0]
 
 		applyTimes := utils.InterfaceToInt(discountCoupon["times"])
-		workSince := utils.InterfaceToTime(discountCoupon["since"])
-		workUntil := utils.InterfaceToTime(discountCoupon["until"])
 
-		currentTime := time.Now()
+		isValidStart := validStart(discountCoupon["since"])
+		isValidEnd := validEnd(discountCoupon["until"])
 
 		// to be applicable, the coupon should satisfy following conditions:
 		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
-		if (applyTimes == -1 || applyTimes > 0) &&
-			(utils.IsZeroTime(workSince) || workSince.Unix() <= currentTime.Unix()) &&
-			(utils.IsZeroTime(workUntil) || workUntil.Unix() >= currentTime.Unix()) {
+		if (applyTimes == -1 || applyTimes > 0) && isValidStart && isValidEnd {
 
 			// TODO: applied coupons are lost with session clear, probably should be made on order creation,
 			// or add an event handler to add to session # of times used
@@ -246,6 +243,11 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
 		} else {
 			responseWriter.WriteHeader(http.StatusBadRequest)
+			if !isValidStart {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an start time outside valid time constraints.")
+			} else if !isValidEnd {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an end time outside valid time constraints.")
+			}
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
 		}
 	} else {
