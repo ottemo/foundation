@@ -195,7 +195,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied in this cart.")
 	}
 
-	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedmptions))
+	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedemptions))
 
 	// check if coupon has already been used
 	if utils.IsInArray(couponCode, previousRedemptions) {
