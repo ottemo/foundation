@@ -24,7 +24,7 @@ func processRecords(name string, records []map[string]interface{}, taxableAmount
 		taxRate := checkout.StructTaxRate{
 			Name:      name,
 			Code:      utils.InterfaceToString(record["code"]),
-			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"])/100,
+			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"]) / 100,
 			IsPercent: false,
 			Priority:  priorityValue,
 		}
@@ -44,7 +44,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 		state := shippingAddress.GetState()
 		zip := shippingAddress.GetZipCode()
 
-		taxableAmount := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount()
+		taxableAmount := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount() - currentCheckout.GetDiscountAmount()
 
 		// event which allows to change and/or track taxable cart amount before tax calculation
 		eventData := map[string]interface{}{"tax": it, "checkout": currentCheckout, "amount": taxableAmount}
