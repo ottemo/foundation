@@ -95,7 +95,7 @@ func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription
 			env.Log(subscription.ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
 		}
 
-		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusCanceled); internalError != nil {
+		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusSuspended); internalError != nil {
 			env.ErrorDispatch(internalError)
 		}
 
