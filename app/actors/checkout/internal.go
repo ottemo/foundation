@@ -140,7 +140,7 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 	if session != nil {
 		session.Set(cart.ConstSessionKeyCurrentCart, nil)
 		session.Set(checkout.ConstSessionKeyCurrentCheckout, nil)
-		session.Set(coupon.ConstSessionKeyAppliedDiscountCodes, make([]string, 0))
+		session.Set(coupon.ConstSessionKeyCurrentRedemptions, make([]string, 0))
 		session.Set(giftcard.ConstSessionKeyAppliedGiftCardCodes, make([]string, 0))
 	}
 

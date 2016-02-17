@@ -28,16 +28,16 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 	// check session for applied coupon codes
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
 
-		appliedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyAppliedDiscountCodes))
+		redeemedCodes := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyCurrentRedemptions))
 
-		if len(appliedCodes) > 0 {
+		if len(redeemedCodes) > 0 {
 
-			// loading information about applied discounts
+			// loading information about applied coupons
 			collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 			if err != nil {
 				return result
 			}
-			err = collection.AddFilter("code", "in", appliedCodes)
+			err = collection.AddFilter("code", "in", redeemedCodes)
 			if err != nil {
 				return result
 			}
@@ -47,22 +47,14 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 				return result
 			}
 
-			currentVisitor := checkoutInstance.GetVisitor()
-			visitorID := currentVisitor.GetID()
-
-			// making coupon code map for right apply order ignoring used coupons and limited
+			// use coupon map to hold the correct application order and ignore previously used coupons
 			discountCodes := make(map[string]map[string]interface{})
 			for _, record := range records {
 
 				discountsUsageQty := discountsUsage(checkoutInstance, record)
 				discountCode := utils.InterfaceToString(record["code"])
 
-				couponUsed := false
-				if usedByVisitors, present := usedCoupons[discountCode]; present && utils.IsInListStr(visitorID, usedByVisitors) {
-					couponUsed = true
-				}
-
-				if discountCode != "" && !couponUsed && discountsUsageQty > 0 {
+				if discountCode != "" && discountsUsageQty > 0 {
 					record["usage_qty"] = discountsUsageQty
 					discountCodes[discountCode] = record
 				}
@@ -71,20 +63,15 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 			discountPriorityValue := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))
 
 			// accumulation of coupon discounts to result
-			for appliedCodesIdx, discountCode := range appliedCodes {
+			for appliedCodesIdx, discountCode := range redeemedCodes {
 				if discountCoupon, ok := discountCodes[discountCode]; ok {
 
-					applyTimes := utils.InterfaceToInt(discountCoupon["times"])
-					workSince := utils.InterfaceToTime(discountCoupon["since"])
-					workUntil := utils.InterfaceToTime(discountCoupon["until"])
-
-					currentTime := time.Now()
+					validStart := isValidStart(discountCoupon["since"])
+					validEnd := isValidEnd(discountCoupon["until"])
 
 					// to be applicable coupon should satisfy following conditions:
-					//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
-					if (applyTimes == -1 || applyTimes > 0) &&
-						(utils.IsZeroTime(workSince) || workSince.Unix() <= currentTime.Unix()) &&
-						(utils.IsZeroTime(workUntil) || workUntil.Unix() >= currentTime.Unix()) {
+					//   [begin] >= currentTime <= [end] if set
+					if validStart && validEnd {
 
 						// calculating coupon discount amount
 						discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
@@ -155,13 +142,13 @@ func (it *Coupon) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout)
 
 					} else {
 						// we have not applicable coupon - removing it from applied coupons list
-						newAppliedCodes := make([]string, 0, len(appliedCodes)-1)
-						for idx, value := range appliedCodes {
+						newRedemptions := make([]string, 0, len(redeemedCodes)-1)
+						for idx, value := range redeemedCodes {
 							if idx != appliedCodesIdx {
-								newAppliedCodes = append(newAppliedCodes, value)
+								newRedemptions = append(newRedemptions, value)
 							}
 						}
-						currentSession.Set(ConstSessionKeyAppliedDiscountCodes, newAppliedCodes)
+						currentSession.Set(ConstSessionKeyCurrentRedemptions, newRedemptions)
 					}
 				}
 			}
@@ -250,4 +237,27 @@ func discountsUsage(checkoutInstance checkout.InterfaceCheckout, couponDiscount 
 	}
 
 	return result
+}
+
+// validStart returns a boolean value of the datetame passed is valid
+func isValidStart(start interface{}) bool {
+
+	couponStart := utils.InterfaceToTime(start)
+	currentTime := time.Now()
+
+	isValidStart := (utils.IsZeroTime(couponStart) || couponStart.Unix() <= currentTime.Unix())
+
+	return isValidStart
+}
+
+// validEnd returns a boolean value of the datetame passed is valid
+func isValidEnd(end interface{}) bool {
+
+	couponEnd := utils.InterfaceToTime(end)
+	currentTime := time.Now()
+
+	// to be applicable coupon should satisfy following conditions:
+	isValidEnd := (utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix())
+
+	return isValidEnd
 }

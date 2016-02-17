@@ -49,7 +49,7 @@ func initListeners() error {
 
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 
-	return initUsedCoupons()
+	return nil
 }
 
 // initUsedCoupons adding from orders currently available coupon codes to usedCoupons variable with visitors ID's
