@@ -4,7 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
@@ -237,54 +236,4 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 		options[subscription.ConstSubscriptionOptionName] = storedOptions
 	}
 	return true
-}
-
-// setStatusHandler Fired when the subscription's status has been updated
-func setStatusHandler(event string, eventData map[string]interface{}) bool {
-	subscriptionItem := getSubscriptionFromEvent(eventData)
-	isCancelled := subscriptionItem.GetStatus() == subscription.ConstSubscriptionStatusCanceled
-
-	if isCancelled {
-		go sendCancellationEmail(subscriptionItem)
-	}
-
-	return true
-}
-
-func sendCancellationEmail(subscriptionItem subscription.InterfaceSubscription) {
-	email := utils.InterfaceToString(subscriptionItem.GetCustomerEmail())
-	subject, body := getEmailInfo(subscriptionItem)
-	app.SendMail(email, subject, body)
-}
-
-func getSubscriptionFromEvent(event map[string]interface{}) subscription.InterfaceSubscription {
-	var subscriptionItem subscription.InterfaceSubscription
-	eventItem := event["subscription"]
-
-	if typedItem, ok := eventItem.(subscription.InterfaceSubscription); ok {
-		subscriptionItem = typedItem
-	}
-
-	return subscriptionItem
-}
-
-func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, string) {
-	subject := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionCancelEmailSubject))
-
-	siteVariables := map[string]interface{}{
-		"Url": app.GetStorefrontURL(""),
-	}
-
-	templateVariables := map[string]interface{}{
-		"Subscription": subscriptionItem.ToHashMap(),
-		"Site":         siteVariables,
-	}
-
-	body := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionCancelEmailTemplate))
-	body, err := utils.TextTemplate(body, templateVariables)
-	if err != nil {
-		env.ErrorDispatch(err)
-	}
-
-	return subject, body
 }

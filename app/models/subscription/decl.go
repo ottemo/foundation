@@ -36,8 +36,6 @@ const (
 	ConstSubscriptionStatusSuspended = "suspended"
 	ConstSubscriptionStatusConfirmed = "confirmed"
 	ConstSubscriptionStatusCanceled  = "canceled"
-
-	ConstEventSetStatus = "subscription.setStatus"
 )
 
 var (

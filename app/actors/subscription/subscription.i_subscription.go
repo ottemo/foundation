@@ -57,17 +57,7 @@ func (it *DefaultSubscription) SetStatus(status string) error {
 		return nil
 	}
 
-	// The initial status can be empty if we are setting for the first time since
-	// loading it from the db, if we are actually changing the status fire an event
-	isChanging := it.Status != ""
 	it.Status = status
-
-	// Make sure to fire the event after updating it
-	if isChanging {
-		eventData := map[string]interface{}{"subscription": it}
-		env.Event(subscription.ConstEventSetStatus, eventData)
-	}
-
 	return nil
 }
 
