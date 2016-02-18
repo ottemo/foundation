@@ -3,6 +3,7 @@
 package checkout
 
 import (
+	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 )
@@ -29,12 +30,20 @@ type DefaultCheckout struct {
 
 	ShippingRate checkout.StructShippingRate
 
+	PriceAdjustments []checkout.StructPriceAdjustment
+
+	// should store details about applied adjustments for specific keys
+	// 0 - cart, 1,2,3, .. n - index of cart item
+	calculationDetailTotals map[int]map[string]float64
+	cart                    cart.InterfaceCart
+
 	Taxes     []checkout.StructTaxRate
 	Discounts []checkout.StructDiscount
 
 	Info map[string]interface{}
 
 	// amounts used to have static values during calculation
+	// out of date?
 	subtotalAmount  float64
 	shippingAmount  float64
 	taxesAmount     float64

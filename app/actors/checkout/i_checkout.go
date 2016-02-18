@@ -130,6 +130,7 @@ func (it *DefaultCheckout) GetShippingRate() *checkout.StructShippingRate {
 func (it *DefaultCheckout) SetCart(checkoutCart cart.InterfaceCart) error {
 	if checkoutCart != nil {
 		it.CartID = checkoutCart.GetID()
+		it.cart = checkoutCart
 	} else {
 		it.CartID = ""
 	}
@@ -139,12 +140,18 @@ func (it *DefaultCheckout) SetCart(checkoutCart cart.InterfaceCart) error {
 
 // GetCart returns a shopping cart
 func (it *DefaultCheckout) GetCart() cart.InterfaceCart {
-	if it.CartID == "" {
-		return nil
+	if it.cart != nil {
+		return it.cart
 	}
 
-	cartInstance, _ := cart.LoadCartByID(it.CartID)
-	return cartInstance
+	if it.CartID != "" {
+		if cartInstance, err := cart.LoadCartByID(it.CartID); err == nil {
+			it.cart = cartInstance
+			return it.cart
+		}
+	}
+
+	return nil
 }
 
 // SetVisitor sets visitor for checkout
@@ -198,6 +205,18 @@ func (it *DefaultCheckout) GetTaxAmount() float64 {
 func (it *DefaultCheckout) GetDiscountAmount() float64 {
 
 	return it.discountsAmount
+}
+
+// GetPriceAdjustments collects price adjustments applied for current checkout
+func (it *DefaultCheckout) GetPriceAdjustments() []checkout.StructPriceAdjustment {
+
+	for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
+		for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
+			it.PriceAdjustments = append(it.PriceAdjustments, priceAdjustmentElement)
+		}
+	}
+
+	return it.PriceAdjustments
 }
 
 // GetTaxes collects taxes applied for current checkout
@@ -338,12 +357,34 @@ func (it *DefaultCheckout) GetAggregatedDiscounts() []checkout.StructAggregatedD
 
 // GetSubtotal returns subtotal total for current checkout
 func (it *DefaultCheckout) GetSubtotal() float64 {
-	currentCart := it.GetCart()
-	if currentCart != nil {
-		return currentCart.GetSubtotal()
+
+	result := 0
+	for _, cartItem := range it.GetItems() {
+		if cartProduct := cartItem.GetProduct(); cartProduct != nil {
+			cartProduct.ApplyOptions(cartItem.GetOptions())
+			result += cartProduct.GetPrice() * float64(cartItem.GetQty())
+		}
+	}
+	return result
+
+}
+
+// GetItems returns current cart items
+func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
+	if currentCart := it.GetCart(); currentCart != nil {
+		return currentCart.GetItems()
 	}
 
-	return 0
+	return nil
+}
+
+// GetItemTotals return details about totals per item (0 is a cart)
+func (it *DefaultCheckout) GetItemTotals(idx int) map[string]float64 {
+	if itemTotals, present := it.calculationDetailTotals[idx]; present {
+		return itemTotals
+	}
+
+	return nil
 }
 
 // GetShippingAmount returns shipping price for current checkout

@@ -11,6 +11,8 @@ var (
 
 	registeredTaxes     = make([]InterfaceTax, 0)
 	registeredDiscounts = make([]InterfaceDiscount, 0)
+
+	registeredPriceAdjustments = make([]InterfacePriceAdjustment, 0)
 )
 
 // RegisterShippingMethod registers given shipping method in system
@@ -65,6 +67,19 @@ func RegisterDiscount(discount InterfaceDiscount) error {
 	return nil
 }
 
+// RegisterPriceAdjustment registers given discount calculator in system
+func RegisterPriceAdjustment(priceAdjustment InterfacePriceAdjustment) error {
+	for _, registeredDiscount := range registeredPriceAdjustments {
+		if registeredDiscount == priceAdjustment {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "23665533-10f0-43db-a243-729aac842c85", "price adjustment already registered")
+		}
+	}
+
+	registeredPriceAdjustments = append(registeredPriceAdjustments, priceAdjustment)
+
+	return nil
+}
+
 // GetRegisteredShippingMethods returns list of registered shipping methods
 func GetRegisteredShippingMethods() []InterfaceShippingMethod {
 	return registeredShippingMethods
@@ -80,7 +95,12 @@ func GetRegisteredTaxes() []InterfaceTax {
 	return registeredTaxes
 }
 
-// GetRegisteredDiscounts returns list of registered tax calculators
+// GetRegisteredDiscounts returns list of registered discounts calculators
 func GetRegisteredDiscounts() []InterfaceDiscount {
+	return registeredDiscounts
+}
+
+// GetRegisteredPriceAdjustments returns list of registered price adjustments
+func GetRegisteredPriceAdjustments() []InterfacePriceAdjustment {
 	return registeredDiscounts
 }

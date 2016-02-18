@@ -47,6 +47,10 @@ const (
 	ConstCalculateTargetShipping   = 2.0
 	ConstCalculateTargetGrandTotal = 3.0
 
+	ConstLabelSubtotal   = "subtotal"
+	ConstLabelShipping   = "shipping"
+	ConstLabelGrandTotal = "GT"
+
 	ConstDiscountObjectCart = "cart"
 
 	ConstSessionKeyCurrentCheckout = "Checkout"
