@@ -1,12 +1,13 @@
 package subscription
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"strings"
-	"time"
 )
 
 // Function for every hour check subscriptions to place an order
@@ -95,7 +96,7 @@ func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription
 			env.Log(subscription.ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
 		}
 
-		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusSuspended); internalError != nil {
+		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusCanceled); internalError != nil {
 			env.ErrorDispatch(internalError)
 		}
 
