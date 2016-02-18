@@ -2,7 +2,6 @@ package product
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"mime"
 	"strings"
 	"time"
@@ -702,125 +701,45 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 // APIListRelatedProducts returns related products list for a given product
 func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
+	var result []map[string]interface{}
+
 	productID := context.GetRequestArgument("productID")
 	if productID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "55aa2eee-0407-4094-a90a-5d69d8c1efcc", "product id was not specified")
 	}
 
-	count := 5
-	if countValue := utils.InterfaceToInt(api.GetArgumentOrContentValue(context, "count")); countValue > 0 {
-		count = countValue
-	}
-
-	// load product operation
-	//-----------------------
 	productModel, err := product.LoadProductByID(productID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-
-	// result := make([]models.StructListItem, 0)
-	var result []models.StructListItem
-
 	relatedPids := utils.InterfaceToArray(productModel.Get("related_pids"))
 
-	if len(relatedPids) > count {
-		// indexes := make([]int, 0)
-		var indexes []int
-		for len(indexes) < count {
+	productsCollection, _ := product.GetProductCollectionModel()
+	productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids)
 
-			new := rand.Intn(len(relatedPids))
+	// if you aren't an admin the product must be enabled
+	if err := api.ValidateAdminRights(context); err != nil {
+		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+	}
 
-			inArray := false
-			for _, b := range indexes {
-				if utils.InterfaceToInt(b) == new {
-					inArray = true
-				}
-			}
-			if !inArray {
-				indexes = append(indexes, new)
-			}
+	// add a limit
+	productsCollection.ListLimit(models.GetListLimit(context))
+
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, relatedProduct := range productsCollection.ListProducts() {
+		productInfo := relatedProduct.ToHashMap()
+
+		defaultImage := utils.InterfaceToString(productInfo["default_image"])
+		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
+		if err != nil {
+			env.LogError(err)
 		}
-		for _, index := range indexes {
-			if productID := utils.InterfaceToString(relatedPids[index]); productID != "" {
-				if productModel, err := product.LoadProductByID(productID); err == nil {
 
-					// not allowing to see disabled products if not admin
-					if err := api.ValidateAdminRights(context); err != nil {
-						if productModel.GetEnabled() == false {
-							continue
-						}
-					}
-
-					if err == nil {
-						resultItem := new(models.StructListItem)
-
-						mediaPath, err := productModel.GetMediaPath("image")
-						if err != nil {
-							return result, env.ErrorDispatch(err)
-						}
-
-						resultItem.ID = productModel.GetID()
-						resultItem.Name = "[" + productModel.GetSku() + "] " + productModel.GetName()
-						resultItem.Image = ""
-						resultItem.Desc = productModel.GetShortDescription()
-
-						if productModel.GetDefaultImage() != "" {
-							resultItem.Image = mediaPath + productModel.GetDefaultImage()
-						}
-
-						extra := utils.InterfaceToString(api.GetArgumentOrContentValue(context, "extra"))
-						if extra != "" {
-							resultItem.Extra = make(map[string]interface{})
-							extra := utils.Explode(utils.InterfaceToString(extra), ",")
-							for _, value := range extra {
-								resultItem.Extra[value] = productModel.Get(value)
-							}
-						}
-
-						result = append(result, *resultItem)
-					}
-				}
-			}
-		}
-	} else {
-		for _, productID := range relatedPids {
-			if productID == "" {
-				continue
-			}
-
-			productModel, err := product.LoadProductByID(utils.InterfaceToString(productID))
-			if err == nil {
-				resultItem := new(models.StructListItem)
-
-				mediaPath, err := productModel.GetMediaPath("image")
-				if err != nil {
-					return result, env.ErrorDispatch(err)
-				}
-
-				resultItem.ID = productModel.GetID()
-				resultItem.Name = "[" + productModel.GetSku() + "] " + productModel.GetName()
-				resultItem.Image = ""
-				resultItem.Desc = productModel.GetShortDescription()
-
-				if productModel.GetDefaultImage() != "" {
-					resultItem.Image = mediaPath + productModel.GetDefaultImage()
-				}
-
-				extra := utils.InterfaceToString(api.GetArgumentOrContentValue(context, "extra"))
-				if extra != "" {
-					resultItem.Extra = make(map[string]interface{})
-					extra := utils.Explode(utils.InterfaceToString(extra), ",")
-					for _, value := range extra {
-						resultItem.Extra[value] = productModel.Get(value)
-					}
-				}
-
-				result = append(result, *resultItem)
-			}
-		}
+		result = append(result, productInfo)
 	}
 
 	return result, nil
