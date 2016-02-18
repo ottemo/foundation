@@ -4,6 +4,7 @@ package cart
 
 import (
 	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 	"time"
 )
@@ -45,6 +46,7 @@ type DefaultCartItem struct {
 	ProductID string
 	Qty       int
 	Options   map[string]interface{}
+	product   product.InterfaceProduct
 
 	Cart *DefaultCart
 }
