@@ -31,6 +31,11 @@ func (it *ZeroAmountPayment) IsAllowed(checkoutInstance checkout.InterfaceChecko
 	return true
 }
 
+// IsTokenable checks for method applicability
+func (it *ZeroAmountPayment) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
+}
+
 // Authorize makes payment method authorize operation
 func (it *ZeroAmountPayment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	if orderInstance.GetGrandTotal() > 0 {

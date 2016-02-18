@@ -30,15 +30,24 @@ const (
 	ConstConfigPathPaymentOriginAddressline2 = "payment.origin.addressline2"
 	ConstConfigPathPaymentOriginZip          = "payment.origin.zip"
 
+	ConstPaymentActionTypeKey         = "actionType"
+	ConstPaymentActionTypeCreateToken = "createToken"
+	ConstPaymentActionTypeUseToken    = "useToken"
+
 	ConstPaymentTypeSimple     = "simple"
 	ConstPaymentTypeCreditCard = "cc"
 	ConstPaymentTypeRemote     = "remote"
 	ConstPaymentTypePost       = "post"
 	ConstPaymentTypePostCC     = "post_cc"
 
+	ConstPaymentErrorDeclined  = "Payment declined."
+	ConstPaymentErrorTechnical = "Technical error."
+
 	ConstCalculateTargetSubtotal   = 1.0
 	ConstCalculateTargetShipping   = 2.0
 	ConstCalculateTargetGrandTotal = 3.0
+
+	ConstDiscountObjectCart = "cart"
 
 	ConstSessionKeyCurrentCheckout = "Checkout"
 

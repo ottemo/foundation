@@ -19,11 +19,14 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/product/review"  // Product Reviews module
 	_ "github.com/ottemo/foundation/app/actors/visitor"         // Visitor module
 	_ "github.com/ottemo/foundation/app/actors/visitor/address" // Visitor Address module
+	_ "github.com/ottemo/foundation/app/actors/visitor/token"   // Visitor Token module
 
-	_ "github.com/ottemo/foundation/app/actors/cart"     // Shopping Cart module
-	_ "github.com/ottemo/foundation/app/actors/checkout" // Checkout module
-	_ "github.com/ottemo/foundation/app/actors/order"    // Purchase Order module
-	_ "github.com/ottemo/foundation/app/actors/stock"    // Stock Management module
+	_ "github.com/ottemo/foundation/app/actors/cart"         // Shopping Cart module
+	_ "github.com/ottemo/foundation/app/actors/checkout"     // Checkout module
+	_ "github.com/ottemo/foundation/app/actors/order"        // Purchase Order module
+	_ "github.com/ottemo/foundation/app/actors/stock"        // Stock Management module
+	_ "github.com/ottemo/foundation/app/actors/subscription" // subscription extension
+	_ "github.com/ottemo/foundation/app/actors/xdomain"      // XDomain support module
 
 	_ "github.com/ottemo/foundation/app/actors/payment/authorizenet" // Authorize.Net payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/checkmo"      // "Check Money Order" payment method
@@ -42,6 +45,7 @@ import (
 
 	_ "github.com/ottemo/foundation/app/actors/other/friendmail" // email friend extension
 	_ "github.com/ottemo/foundation/app/actors/other/grouping"   // products grouping extension
+	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"  // MailChimp integration
 	_ "github.com/ottemo/foundation/app/actors/other/quickbooks" // QuickBooks exporting extension
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot" // TrustPilot integration
 )

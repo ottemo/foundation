@@ -8,9 +8,9 @@ import (
 
 // Package global constants
 const (
-	ConstSessionKeyAppliedDiscountCodes = "applied_discount_codes"
-	ConstSessionKeyUsedDiscountCodes    = "used_discount_codes"
-	ConstCollectionNameCouponDiscounts  = "coupon_discounts"
+	ConstSessionKeyCurrentRedemptions  = "current_redemption_codes"
+	ConstSessionKeyPreviousRedemptions = "previous_redemption_codes"
+	ConstCollectionNameCouponDiscounts = "coupon_discounts"
 
 	ConstConfigPathDiscounts             = "general.discounts"
 	ConstConfigPathDiscountApplyPriority = "general.discounts.discount_apply_priority"
@@ -19,5 +19,8 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 )
 
-// DefaultDiscount is a default implementer of InterfaceDiscount
-type DefaultDiscount struct{}
+// Coupon is a default implementer of InterfaceDiscount
+type Coupon struct{}
+
+// usedCoupons contains used coupon codes with visitorsId's, initialize from orders and updated on checkout success
+var usedCoupons map[string][]string

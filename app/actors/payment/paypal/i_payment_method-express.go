@@ -32,6 +32,11 @@ func (it *Express) GetType() string {
 	return checkout.ConstPaymentTypeRemote
 }
 
+// IsTokenable checks for method applicability
+func (it *Express) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
+}
+
 // IsAllowed checks for method applicability
 func (it *Express) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))

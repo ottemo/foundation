@@ -30,10 +30,10 @@ func (it *DefaultVisitorAddressCollection) List() ([]models.StructListItem, erro
 		resultItem.ID = visitorAddressModel.GetID()
 		resultItem.Name =
 			visitorAddressModel.GetAddress() + ", " +
-			visitorAddressModel.GetCity() + ", " +
-			visitorAddressModel.GetState() + ", " +
-			visitorAddressModel.GetZipCode() + ", " +
-			visitorAddressModel.GetCountry()
+				visitorAddressModel.GetCity() + ", " +
+				visitorAddressModel.GetState() + ", " +
+				visitorAddressModel.GetZipCode() + ", " +
+				visitorAddressModel.GetCountry()
 
 		resultItem.Image = ""
 		resultItem.Desc = "Zip: " + visitorAddressModel.GetZipCode() + ", State: " + visitorAddressModel.GetState() +

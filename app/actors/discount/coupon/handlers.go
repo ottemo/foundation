@@ -7,7 +7,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// checkoutSuccessHandler find applied coupons for this session and add them to session used coupons values
+// checkoutSuccessHandler will add visitorID to usedCoupons by code of discount
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
 	orderPlaced, ok := eventData["order"].(order.InterfaceOrder)
@@ -26,14 +26,14 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 			return false
 		}
 
-		usedDiscounts := utils.InterfaceToStringArray(session.Get(ConstSessionKeyUsedDiscountCodes))
+		usedDiscounts := utils.InterfaceToStringArray(session.Get(ConstSessionKeyPreviousRedemptions))
 
 		for _, discount := range orderAppliedDiscounts {
 			// TODO: do we apply the discount code if it is multi-use??
 			usedDiscounts = append(usedDiscounts, discount.Code)
 		}
 
-		session.Set(ConstSessionKeyUsedDiscountCodes, usedDiscounts)
+		session.Set(ConstSessionKeyPreviousRedemptions, usedDiscounts)
 	}
 
 	return true

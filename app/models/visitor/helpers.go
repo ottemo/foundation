@@ -160,3 +160,65 @@ func GetCurrentVisitor(context api.InterfaceApplicationContext) (InterfaceVisito
 
 	return visitorInstance, env.ErrorDispatch(err)
 }
+
+// GetVisitorCardModel retrieves current InterfaceVisitorCard model implementation
+func GetVisitorCardModel() (InterfaceVisitorCard, error) {
+	model, err := models.GetModel(ConstModelNameVisitorCard)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	visitorCardModel, ok := model.(InterfaceVisitorCard)
+	if !ok {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f1d8b09e-0936-46c6-a5e5-6a6df4e462f1", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorCard' capable")
+	}
+
+	return visitorCardModel, nil
+}
+
+// LoadVisitorCardByID loads visitor address data into current InterfaceVisitorCard model implementation
+func LoadVisitorCardByID(visitorCardID string) (InterfaceVisitorCard, error) {
+
+	visitorCardModel, err := GetVisitorCardModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = visitorCardModel.Load(visitorCardID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return visitorCardModel, nil
+}
+
+// GetVisitorCardModelAndSetID retrieves current InterfaceVisitorCard model implementation and sets its ID
+func GetVisitorCardModelAndSetID(visitorCardID string) (InterfaceVisitorCard, error) {
+
+	visitorCardModel, err := GetVisitorCardModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = visitorCardModel.SetID(visitorCardID)
+	if err != nil {
+		return visitorCardModel, env.ErrorDispatch(err)
+	}
+
+	return visitorCardModel, nil
+}
+
+// GetVisitorCardCollectionModel retrieves current InterfaceVisitorAddressCollection model implementation
+func GetVisitorCardCollectionModel() (InterfaceVisitorCardCollection, error) {
+	model, err := models.GetModel(ConstModelNameVisitorCardCollection)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	visitorCardCollectionModel, ok := model.(InterfaceVisitorCardCollection)
+	if !ok {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d978df3c-b908-41a4-b72c-da012ea93bad", "model "+model.GetImplementationName()+" is not 'InterfaceVisitorCardCollection' capable")
+	}
+
+	return visitorCardCollectionModel, nil
+}

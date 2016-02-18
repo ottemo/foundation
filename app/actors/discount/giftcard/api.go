@@ -10,27 +10,13 @@ import (
 
 // setupAPI configures the API endpoints for the giftcard package
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode", api.ConstRESTOperationGet, APIGetGiftCard)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("giftcards", api.ConstRESTOperationGet, APIGetGiftCardList)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/apply", api.ConstRESTOperationGet, APIApplyGiftCard)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("giftcards/:giftcode/neglect", api.ConstRESTOperationGet, APINeglectGiftCard)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("giftcards/:giftcode", APIGetGiftCard)
+	service.GET("giftcards", APIGetGiftCardList)
+	service.GET("giftcards/:giftcode/apply", APIApplyGiftCard)
+	service.GET("giftcards/:giftcode/neglect", APINeglectGiftCard)
 
 	return nil
 }

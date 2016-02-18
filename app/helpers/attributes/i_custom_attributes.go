@@ -214,7 +214,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	}
 
 	// Assemble the cleaned type
-	newAttribute.Type = parsedType.Name;
+	newAttribute.Type = parsedType.Name
 	if parsedType.IsArray {
 		newAttribute.Type = "[]" + newAttribute.Type
 	}

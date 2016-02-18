@@ -2,7 +2,6 @@ package rts
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -15,70 +14,32 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("rts/visit", api.ConstRESTOperationCreate, APIRegisterVisit)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("rts/referrers", api.ConstRESTOperationGet, APIGetReferrers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("rts/visit", APIRegisterVisit)
 
-	err = api.GetRestService().RegisterAPI("rts/visits", api.ConstRESTOperationGet, APIGetVisits)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/visits", APIGetVisits)
+	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
+	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
 
-	err = api.GetRestService().RegisterAPI("rts/visits/detail/:from/:to", api.ConstRESTOperationGet, APIGetVisitsDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/sales", APIGetSales)
+	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
 
-	err = api.GetRestService().RegisterAPI("rts/conversion", api.ConstRESTOperationGet, APIGetConversion)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales", api.ConstRESTOperationGet, APIGetSales)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales/detail/:from/:to", api.ConstRESTOperationGet, APIGetSalesDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/bestsellers", api.ConstRESTOperationGet, APIGetBestsellers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/visits/realtime", api.ConstRESTOperationGet, APIGetVisitsRealtime)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/conversion", APIGetConversion)
+	service.GET("rts/bestsellers", APIGetBestsellers)
+	service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
 }
 
 // APIRegisterVisit registers request for a statistics
 func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, error) {
-	if httpRequest, ok := context.GetRequest().(*http.Request); ok && httpRequest != nil {
-		if httpResponseWriter, ok := context.GetResponseWriter().(http.ResponseWriter); ok && httpResponseWriter != nil {
-			xReferrer := utils.InterfaceToString(httpRequest.Header.Get("X-Referer"))
+	// Variables in post; path=/shop/cleaning-products, referrer=http://google.com
+	// In headers; Referrer=http://karigran.com/shop/cleaning-products
+	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
+	env.Event("api.rts.visit", eventData)
 
-			http.SetCookie(httpResponseWriter, &http.Cookie{Name: "X_Referrer", Value: xReferrer, Path: "/"})
-
-			eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
-			env.Event("api.rts.visit", eventData)
-
-			return nil, nil
-		}
-	}
 	return nil, nil
 }
 

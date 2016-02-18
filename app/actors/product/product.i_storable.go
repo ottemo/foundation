@@ -28,7 +28,7 @@ func (it *DefaultProduct) Load(loadID string) error {
 
 	dbRecord, err := collection.LoadByID(loadID)
 	if err != nil {
-		return env.ErrorDispatch(err)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a671dee4-b95b-11e5-a86b-28cfe917b6c7", "Unable to find product by id; "+loadID)
 	}
 
 	err = it.FromHashMap(dbRecord)

@@ -10,12 +10,7 @@ import (
 // configures package related API endpoint routines
 func setupAPI() error {
 
-	var err error
-
-	err = api.GetRestService().RegisterAPI("media", api.ConstRESTOperationGet, APIGetMediaInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	api.GetRestService().GET("media", APIGetMediaInfo)
 
 	return nil
 }

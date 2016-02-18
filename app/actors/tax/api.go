@@ -12,17 +12,11 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationGet, APIDownloadTaxCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationCreate, APIUploadTaxCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("taxes/csv", APIDownloadTaxCSV)
+	service.POST("taxes/csv", APIUploadTaxCSV)
 
 	return nil
 }

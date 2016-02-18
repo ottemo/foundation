@@ -8,9 +8,12 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"strings"
 )
 
 // GetItems returns order items for current order
@@ -349,4 +352,125 @@ func (it *DefaultOrder) Rollback() error {
 	env.Event("order.rollback", eventData)
 
 	return nil
+}
+
+// DuplicateOrder used to create checkout from order with changing params
+// main params for duplication: sessionID, paymentMethod, shippingMethod
+func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface{}, error) {
+
+	duplicateCheckout, err := checkout.GetCheckoutModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// set visitor basic info
+	visitorID := it.Get("visitor_id")
+	if visitorID != "" {
+		duplicateCheckout.Set("VisitorID", visitorID)
+	}
+
+	duplicateCheckout.SetInfo("customer_email", it.Get("customer_email"))
+	duplicateCheckout.SetInfo("customer_name", it.Get("customer_name"))
+
+	// set billing and shipping address
+	shippingAddress := it.GetShippingAddress().ToHashMap()
+	duplicateCheckout.Set("ShippingAddress", shippingAddress)
+
+	billingAddress := it.GetBillingAddress().ToHashMap()
+	duplicateCheckout.Set("BillingAddress", billingAddress)
+
+	// convert order Item object to cart
+	currentCart, err := cart.GetCartModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, orderItem := range it.GetItems() {
+		itemOptions := make(map[string]interface{})
+
+		for option, value := range orderItem.GetOptions() {
+			optionMap := utils.InterfaceToMap(value)
+			if optionValue, present := optionMap["value"]; present {
+				itemOptions[option] = optionValue
+			}
+		}
+
+		_, err = currentCart.AddItem(orderItem.GetProductID(), orderItem.GetQty(), itemOptions)
+		if err != nil {
+			env.ErrorDispatch(err)
+		}
+	}
+
+	err = currentCart.ValidateCart()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = currentCart.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = duplicateCheckout.SetCart(currentCart)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check shipping method for availability
+	var methodFind, rateFind bool
+
+	orderShipping := strings.Split(it.GetShippingMethod(), "/")
+	for _, shippingMethod := range checkout.GetRegisteredShippingMethods() {
+		if orderShipping[0] == shippingMethod.GetCode() {
+			if shippingMethod.IsAllowed(duplicateCheckout) {
+				methodFind = true
+
+				for _, shippingRates := range shippingMethod.GetRates(duplicateCheckout) {
+					if orderShipping[1] == shippingRates.Code {
+						err := duplicateCheckout.SetShippingRate(shippingRates)
+						if err != nil {
+							env.ErrorDispatch(err)
+							continue
+						}
+
+						err = duplicateCheckout.SetShippingMethod(shippingMethod)
+						if err != nil {
+							env.ErrorDispatch(err)
+							methodFind = false
+							continue
+						}
+
+						rateFind = true
+						break
+					}
+				}
+			}
+		}
+		if methodFind && rateFind {
+			break
+		}
+	}
+
+	// check payment method for availability
+	orderPayment := it.GetPaymentMethod()
+	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
+		if orderPayment == paymentMethod.GetCode() {
+			if paymentMethod.IsAllowed(duplicateCheckout) {
+				err := duplicateCheckout.SetPaymentMethod(paymentMethod)
+				if err != nil {
+					env.ErrorDispatch(err)
+					continue
+				}
+
+				break
+			}
+		}
+	}
+
+	err = duplicateCheckout.SetInfo("cc", it.Get("payment_info"))
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	return duplicateCheckout, nil
 }
