@@ -52,7 +52,6 @@ func (it *DefaultSubscription) SetStatus(status string) error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3b7d17c3-c5fa-4369-a039-49bafec2fb9d", "new subscription status should be one of allowed")
 	}
 
-	// Same state, don't bother setting
 	if it.Status == status {
 		return nil
 	}

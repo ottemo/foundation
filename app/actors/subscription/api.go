@@ -184,6 +184,7 @@ func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// Send cancellation emails
 	isCancelled := requestedStatus == subscription.ConstSubscriptionStatusCanceled
 	if isCancelled {
 		sendCancellationEmail(subscriptionInstance)
