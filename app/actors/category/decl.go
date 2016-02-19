@@ -78,6 +78,53 @@ func (it *DefaultCategoryCollection) New() (models.InterfaceModel, error) {
 	return &DefaultCategoryCollection{listCollection: dbCollection, listExtraAtributes: make([]string, 0)}, nil
 }
 
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+//////// Getters and Setters
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+
+// GetID returns database storage id of current object
+func (it *DefaultCategory) GetID() string {
+	return it.id
+}
+
+// SetID sets database storage id for current object
+func (it *DefaultCategory) SetID(NewID string) error {
+	it.id = NewID
+	return nil
+}
+
+// GetEnabled returns enabled flag for the current category
+func (it *DefaultCategory) GetEnabled() bool {
+	return it.Enabled
+}
+
+// GetName returns current category name
+func (it *DefaultCategory) GetName() string {
+	return it.Name
+}
+
+// GetImage returns the image of the requested category
+func (it *DefaultCategory) GetImage() string {
+	return it.Image
+}
+
+// GetProductIds returns product ids associated to category
+func (it *DefaultCategory) GetProductIds() []string {
+	return it.ProductIds
+}
+
+// GetParent returns parent category of nil
+func (it *DefaultCategory) GetParent() category.InterfaceCategory {
+	return it.Parent
+}
+
+// GetDescription returns the description of the requested category
+func (it *DefaultCategory) GetDescription() string {
+	return it.Description
+}
+
 // GetAttributesInfo returns information about object attributes
 func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
 
@@ -176,53 +223,6 @@ func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
 	}
 
 	return info
-}
-
-////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
-//////// Getters and Setters
-////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
-
-// GetID returns database storage id of current object
-func (it *DefaultCategory) GetID() string {
-	return it.id
-}
-
-// SetID sets database storage id for current object
-func (it *DefaultCategory) SetID(NewID string) error {
-	it.id = NewID
-	return nil
-}
-
-// GetEnabled returns enabled flag for the current category
-func (it *DefaultCategory) GetEnabled() bool {
-	return it.Enabled
-}
-
-// GetName returns current category name
-func (it *DefaultCategory) GetName() string {
-	return it.Name
-}
-
-// GetImage returns the image of the requested category
-func (it *DefaultCategory) GetImage() string {
-	return it.Image
-}
-
-// GetProductIds returns product ids associated to category
-func (it *DefaultCategory) GetProductIds() []string {
-	return it.ProductIds
-}
-
-// GetParent returns parent category of nil
-func (it *DefaultCategory) GetParent() category.InterfaceCategory {
-	return it.Parent
-}
-
-// GetDescription returns the description of the requested category
-func (it *DefaultCategory) GetDescription() string {
-	return it.Description
 }
 
 // Get returns object attribute value or nil
