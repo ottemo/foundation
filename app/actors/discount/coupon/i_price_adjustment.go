@@ -20,6 +20,12 @@ func (it *Coupon) GetCode() string {
 	return "coupon"
 }
 
+// GetPriority returns the code of the current coupon implementation
+func (it *Coupon) GetPriority() []float64 {
+
+	return []float64{utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))}
+}
+
 // CalculateDiscount calculates and returns a set of coupons applied to the provided checkout
 // flow:
 // add new variable above the loop for coupons - hold items - amount of discount to prevent from staking
@@ -81,12 +87,6 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 				}
 			}
 
-			var discountableCartTotal float64
-			cartTotal := checkoutInstance.GetItemTotals(0)
-			if value, present := cartTotal[checkout.ConstLabelSubtotal]; present {
-				discountableCartTotal = value
-			}
-
 			couponPriorityValue := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))
 
 			// accumulation of coupon discounts for cart to result and for products to applicableProductDiscounts
@@ -112,55 +112,59 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 					currentSession.Set(ConstSessionKeyCurrentRedemptions, newRedemptions)
 				}
 
-				// calculating coupon discount amount
-				discountAmount := utils.InterfaceToFloat64(discountCoupon["amount"])
-				discountPercent := utils.InterfaceToFloat64(discountCoupon["percent"])
-
 				discountTarget := utils.InterfaceToString(discountCoupon["target"])
-				discountUsageQty := utils.InterfaceToInt(discountCoupon["usage_qty"])
 
-				// make some change to name to show values that where used
-				discountLabel := getLabel(utils.InterfaceToString(discountCoupon["name"]), discountAmount, discountPercent)
-				discountCode := utils.InterfaceToString(discountCoupon["code"])
+				// add discount object for every product id that it can affect
+				applicableDiscount := discount{
+					Code:     utils.InterfaceToString(discountCoupon["code"]),
+					Label:    utils.InterfaceToString(discountCoupon["name"]),
+					Amount:   utils.InterfaceToFloat64(discountCoupon["amount"]),
+					Percents: utils.InterfaceToFloat64(discountCoupon["percent"]),
+					Qty:      utils.InterfaceToInt(discountCoupon["usage_qty"]),
+				}
 
 				// case it's a cart discount we just add them to result with calculating amount based on current totals
 				if strings.Contains(discountTarget, checkout.ConstDiscountObjectCart) || discountTarget == "" {
-					couponPriorityValue += float64(0.0001)
-					priceAdjustmentAmount := discountAmount + discountPercent*discountableCartTotal
+					couponPriorityValue += float64(0.000001)
 
 					// build price adjustment for cart coupon discount,
 					currentPriceAdjustment := checkout.StructPriceAdjustment{
-						Code:      discountCode,
-						Label:     discountLabel,
-						Amount:    priceAdjustmentAmount * -1,
-						IsPercent: false,
-						Priority:  couponPriorityValue,
+						Code:      applicableDiscount.Code,
+						Label:     getLabel(applicableDiscount),
+						Amount:    applicableDiscount.Percents,
+						IsPercent: true,
+						Priority:  couponPriorityValue + float64(0.001),
 						Types:     []string{checkout.ConstLabelSubtotal},
 						PerItem:   make(map[int]float64),
 					}
 
-					result = append(result, currentPriceAdjustment)
+					if applicableDiscount.Percents > 0 {
+						currentPriceAdjustment.Priority += float64(0.00001)
+
+						result = append(result, currentPriceAdjustment)
+					}
+
+					if applicableDiscount.Amount > 0 {
+						currentPriceAdjustment.Amount = applicableDiscount.Amount
+						currentPriceAdjustment.IsPercent = false
+						currentPriceAdjustment.Priority += float64(0.0001)
+
+						result = append(result, currentPriceAdjustment)
+					}
 
 					continue
 				}
 
-				// add discount object for every product id that it can affect
-				applicableProductDiscount := discount{
-					Code:     discountCode,
-					Label:    discountLabel,
-					Amount:   discountAmount,
-					Percents: discountPercent,
-					Qty:      discountUsageQty,
-				}
-
 				// collect only discounts for productIDs that are in cart
-				// applicableProductDiscounts already have all pids keys that are exist
-				for _, productID := range utils.InterfaceToArray(discountTarget) {
+				for _, productID := range utils.InterfaceToStringArray(discountTarget) {
 					if discounts, present := applicableProductDiscounts[productID]; present {
-						applicableProductDiscounts[productID] = append(discounts, applicableProductDiscount)
+						applicableProductDiscounts[productID] = append(discounts, applicableDiscount)
 					}
 				}
 			}
+
+			// hold price adjustment for every coupon code ( to make total details with right description)
+			priceAdjustments := make(map[string]checkout.StructPriceAdjustment)
 
 			// adding to discounts the biggest applicable discount per product
 			for _, cartItem := range checkoutInstance.GetItems() {
@@ -173,48 +177,82 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 
 					// discount will be applied for every single product and grouped per item
 					for i := 0; i < productQty; i++ {
-						if productDiscounts, present := applicableProductDiscounts[productID]; present && len(productDiscounts) > 0 {
-							var biggestAppliedDiscount discount
-							var biggestAppliedDiscountIndex int
+						productDiscounts, present := applicableProductDiscounts[productID]
+						if !present || len(productDiscounts) <= 0 {
+							break
+						}
 
-							for index, productDiscount := range productDiscounts {
+						var biggestAppliedDiscount discount
+						var biggestAppliedDiscountIndex int
+
+						// looking for biggest applicable discount for current item
+						for index, productDiscount := range productDiscounts {
+							if (productDiscount.Qty) > 0 {
 								productDiscountableAmount := productDiscount.Amount + productPrice*productDiscount.Percents/100
 
-								if biggestAppliedDiscount.Amount < productDiscountableAmount {
+								// if we have discount that is bigger then a price we will apply it
+								if productDiscountableAmount > productPrice {
 									biggestAppliedDiscount = productDiscount
-									biggestAppliedDiscount.Amount = productDiscountableAmount
+									biggestAppliedDiscount.Total = productPrice
+									biggestAppliedDiscountIndex = index
+									break
+								}
+
+								if biggestAppliedDiscount.Total < productDiscountableAmount {
+									biggestAppliedDiscount = productDiscount
+									biggestAppliedDiscount.Total = productDiscountableAmount
 									biggestAppliedDiscountIndex = index
 								}
 							}
+						}
 
-							var newProductDiscounts []discount
-							// remove biggest discount from the list
-							for index, productDiscount := range productDiscounts {
-								if index != biggestAppliedDiscountIndex {
-									newProductDiscounts = append(newProductDiscounts, productDiscount)
-								}
+						// update used discount and change qty of chosen discount to number of usage
+						if productDiscount := productDiscounts[biggestAppliedDiscountIndex]; productDiscount.Qty > 0 {
+							discountUsed := 1
+							for i < productQty && productDiscount.Qty > 0 {
+								i++
+								productDiscount.Qty--
+								discountUsed++
+							}
+							biggestAppliedDiscount.Qty = discountUsed
+						} else {
+							// something go wrong and our discount isn't in map
+							continue
+						}
+
+						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total
+
+						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
+
+							if value, present := priceAdjustment.PerItem[cartItem.GetIdx()]; present {
+								amount += value
 							}
 
-							applicableProductDiscounts[productID] = newProductDiscounts
+							priceAdjustment.PerItem[cartItem.GetIdx()] = amount
+							priceAdjustment.Label = updateLabel(priceAdjustment.Label, biggestAppliedDiscount)
 
-							// TODO: place logic to add discount to Price adjustment using
+						} else {
+							couponPriorityValue += float64(0.000001)
+							priceAdjustments[biggestAppliedDiscount.Code] = checkout.StructPriceAdjustment{
+								Code:      biggestAppliedDiscount.Code,
+								Label:     getLabel(biggestAppliedDiscount),
+								Amount:    0,
+								IsPercent: false,
+								Priority:  couponPriorityValue,
+								Types:     []string{checkout.ConstLabelSubtotal},
+								PerItem: map[int]float64{
+									cartItem.GetIdx(): amount,
+								},
+							}
 						}
-					}
 
-					currentPriceAdjustment := checkout.StructPriceAdjustment{
-						Code:      discountCode,
-						Label:     discountLabel,
-						Amount:    priceAdjustmentAmount * -1,
-						IsPercent: false,
-						Priority:  couponPriorityValue,
-						Types:     []string{checkout.ConstLabelSubtotal},
-						PerItem:   make(map[int]float64),
 					}
-
-					result = append(result, currentPriceAdjustment)
 				}
+			}
 
-				// attach price adjustment value to result
+			// attach price adjustments on products to result
+			for _, priceAdjustment := range priceAdjustments {
+				result = append(result, priceAdjustment)
 			}
 		}
 	}
@@ -309,7 +347,101 @@ func isValidEnd(end interface{}) bool {
 	return isValidEnd
 }
 
-func getLabel(code string, dollarAmount float64, percentAmount float64) string {
+// getLabel should be used to make good description for label
+// example 'name |20%x3&15$x3|'
+func getLabel(discount discount) string {
 
-	return ""
+	result := discount.Label
+	qty := utils.InterfaceToString(discount.Qty)
+	flag := false
+
+	if discount.Percents != 0 {
+		flag = true
+		result += " |" + utils.InterfaceToString(discount.Percents) + "%x" + qty
+	}
+
+	if discount.Amount != 0 {
+		if flag {
+			result += "&"
+		} else {
+			result += " |"
+		}
+
+		result += utils.InterfaceToString(discount.Amount) + "$x" + qty
+		flag = true
+	}
+
+	if flag {
+		result += "|"
+	}
+
+	return result
+}
+
+// updateLabel should update label and attach details of discount
+func updateLabel(existingLabel string, discount discount) string {
+
+	if len(existingLabel) == 0 || !strings.Contains(existingLabel, "|") {
+		return getLabel(discount)
+	}
+
+	labelParts := strings.Split(existingLabel, "|")
+
+	if len(labelParts) >= 3 {
+		valuePart := labelParts[len(labelParts)-2]
+
+		if multiplier := strings.Index(valuePart, "x"); multiplier < 0 {
+			return getLabel(discount)
+		}
+
+		dollarAmount := ""
+		percentAmount := ""
+		dollarQty := 0
+		percentQty := 0
+
+		separator := strings.Index(valuePart, "&")
+
+		if index := strings.Index(valuePart, "$x"); index > 0 {
+			dollarQty += utils.InterfaceToInt(valuePart[index:])
+			dollarAmount = valuePart[0 : index+2]
+			if separator > 0 {
+				dollarAmount = valuePart[separator+1 : index+2]
+			}
+		}
+
+		if index := strings.Index(valuePart, "%x"); index > 0 {
+			percentAmount = valuePart[0 : index+2]
+			if separator > index {
+				percentQty += utils.InterfaceToInt(valuePart[index+2 : separator])
+			} else {
+				percentQty += utils.InterfaceToInt(valuePart[index:])
+			}
+		}
+
+		if discount.Percents != 0 {
+			percentQty += discount.Qty
+			if percentAmount == "" {
+				percentAmount = utils.InterfaceToString(discount.Percents) + "%x"
+			}
+		}
+
+		if discount.Amount != 0 {
+			dollarQty += discount.Qty
+			if dollarAmount == "" {
+				dollarAmount = utils.InterfaceToString(discount.Amount) + "$x"
+			}
+		}
+
+		if percentAmount != "" && dollarAmount != "" {
+			labelParts[len(labelParts)-2] = percentAmount + utils.InterfaceToString(percentQty) + "&" + dollarAmount + utils.InterfaceToString(dollarQty)
+		} else if percentAmount != "" {
+			labelParts[len(labelParts)-2] = percentAmount + utils.InterfaceToString(percentQty)
+		} else if dollarAmount != "" {
+			labelParts[len(labelParts)-2] = dollarAmount + utils.InterfaceToString(dollarQty)
+		}
+
+		return strings.Join(labelParts, "|")
+	}
+
+	return getLabel(discount)
 }

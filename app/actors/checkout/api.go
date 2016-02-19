@@ -104,7 +104,7 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	result["taxes"] = currentCheckout.GetTaxes()
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
-	result["discounts"] = currentCheckout.GetAggregatedDiscounts()
+	result["priceAdjustments"] = currentCheckout.GetPriceAdjustments()
 
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})

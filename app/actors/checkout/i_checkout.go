@@ -210,13 +210,17 @@ func (it *DefaultCheckout) GetDiscountAmount() float64 {
 // GetPriceAdjustments collects price adjustments applied for current checkout
 func (it *DefaultCheckout) GetPriceAdjustments() []checkout.StructPriceAdjustment {
 
-	for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
-		for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
-			it.PriceAdjustments = append(it.PriceAdjustments, priceAdjustmentElement)
+	if it.calculateFlag {
+		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
+			fmt.Println(priceAdjustment.GetName())
+			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
+				it.priceAdjustments = append(it.priceAdjustments, priceAdjustmentElement)
+			}
+			fmt.Println(priceAdjustment.GetName())
 		}
 	}
-
-	return it.PriceAdjustments
+	fmt.Println(it.priceAdjustments)
+	return it.priceAdjustments
 }
 
 // GetTaxes collects taxes applied for current checkout
@@ -358,7 +362,7 @@ func (it *DefaultCheckout) GetAggregatedDiscounts() []checkout.StructAggregatedD
 // GetSubtotal returns subtotal total for current checkout
 func (it *DefaultCheckout) GetSubtotal() float64 {
 
-	result := 0
+	var result float64
 	for _, cartItem := range it.GetItems() {
 		if cartProduct := cartItem.GetProduct(); cartProduct != nil {
 			cartProduct.ApplyOptions(cartItem.GetOptions())

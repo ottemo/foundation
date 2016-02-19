@@ -102,5 +102,5 @@ func GetRegisteredDiscounts() []InterfaceDiscount {
 
 // GetRegisteredPriceAdjustments returns list of registered price adjustments
 func GetRegisteredPriceAdjustments() []InterfacePriceAdjustment {
-	return registeredDiscounts
+	return registeredPriceAdjustments
 }

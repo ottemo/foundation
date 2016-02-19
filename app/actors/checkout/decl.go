@@ -30,7 +30,7 @@ type DefaultCheckout struct {
 
 	ShippingRate checkout.StructShippingRate
 
-	PriceAdjustments []checkout.StructPriceAdjustment
+	priceAdjustments []checkout.StructPriceAdjustment
 
 	// should store details about applied adjustments for specific keys
 	// 0 - cart, 1,2,3, .. n - index of cart item

@@ -99,7 +99,7 @@ type InterfacePaymentMethod interface {
 type InterfacePriceAdjustment interface {
 	GetName() string
 	GetCode() string
-	GetPriority() float64
+	GetPriority() []float64
 
 	Calculate(checkoutInstance InterfaceCheckout) []StructPriceAdjustment
 }
