@@ -46,3 +46,103 @@ func (it *DefaultCategory) setupDB() error {
 
 	return nil
 }
+
+// GetAttributesInfo returns information about object attributes
+func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
+
+	info := []models.StructAttributeInfo{
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "ID",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "enabled",
+			Type:       db.ConstTypeBoolean,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Enabled",
+			Group:      "General",
+			Editors:    "boolean",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "name",
+			Type:       db.ConstTypeText,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Name",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "parent_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Parent",
+			Group:      "General",
+			Editors:    "category_selector",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "description",
+			Type:       db.ConstTypeText,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Description",
+			Group:      "General",
+			Editors:    "multiline_text",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "image",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Image",
+			Group:      "General",
+			Editors:    "image_selector",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      category.ConstModelNameCategory,
+			Collection: ConstCollectionNameCategory,
+			Attribute:  "products",
+			Type:       db.TypeArrayOf(db.ConstTypeID),
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Products",
+			Group:      "General",
+			Editors:    "product_selector",
+			Options:    "",
+			Default:    "",
+		},
+	}
+
+	return info
+}
