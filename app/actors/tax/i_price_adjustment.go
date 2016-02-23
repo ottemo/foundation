@@ -3,7 +3,6 @@ package tax
 import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -17,19 +16,26 @@ func (it *DefaultTax) GetCode() string {
 	return "tax"
 }
 
+// GetPriority returns the code of the current coupon implementation
+func (it *DefaultTax) GetPriority() []float64 {
+
+	return []float64{ConstPriorityValue}
+}
+
 // processRecords processes records from database collection
-func processRecords(name string, records []map[string]interface{}, taxableAmount float64, result []checkout.StructTaxRate) []checkout.StructTaxRate {
-	priorityValue := ConstPriorityValue
+func processRecords(name string, records []map[string]interface{}, result []checkout.StructPriceAdjustment) []checkout.StructPriceAdjustment {
 	for _, record := range records {
-		taxRate := checkout.StructTaxRate{
-			Name:      name,
+		taxRate := checkout.StructPriceAdjustment{
 			Code:      utils.InterfaceToString(record["code"]),
-			Amount:    taxableAmount * utils.InterfaceToFloat64(record["rate"]) / 100,
-			IsPercent: false,
-			Priority:  priorityValue,
+			Label:     name,
+			Amount:    utils.InterfaceToFloat64(record["rate"]),
+			IsPercent: true,
+			Priority:  priority,
+			Types:     []string{checkout.ConstLabelSubtotal},
+			PerItem:   make(map[int]float64),
 		}
 
-		priorityValue += float64(0.0001)
+		priority += float64(0.00001)
 		result = append(result, taxRate)
 	}
 
@@ -37,21 +43,13 @@ func processRecords(name string, records []map[string]interface{}, taxableAmount
 }
 
 // CalculateTax calculates a taxes for a given checkout
-func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) []checkout.StructTaxRate {
-	var result []checkout.StructTaxRate
+func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []checkout.StructPriceAdjustment {
+	var result []checkout.StructPriceAdjustment
+	priority = ConstPriorityValue
 
 	if shippingAddress := currentCheckout.GetShippingAddress(); shippingAddress != nil {
 		state := shippingAddress.GetState()
 		zip := shippingAddress.GetZipCode()
-
-		taxableAmount := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount() - currentCheckout.GetDiscountAmount()
-
-		// event which allows to change and/or track taxable cart amount before tax calculation
-		eventData := map[string]interface{}{"tax": it, "checkout": currentCheckout, "amount": taxableAmount}
-		env.Event("tax.amount", eventData)
-		if newAmount := utils.InterfaceToFloat64(eventData["amount"]); newAmount >= 0 && taxableAmount != newAmount {
-			taxableAmount = newAmount
-		}
 
 		if dbEngine := db.GetDBEngine(); dbEngine != nil {
 			if collection, err := dbEngine.GetCollection("Taxes"); err == nil {
@@ -59,7 +57,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 				collection.AddFilter("zip", "=", "*")
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, taxableAmount, result)
+					result = processRecords(it.GetName(), records, result)
 				}
 
 				collection.ClearFilters()
@@ -67,7 +65,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 				collection.AddFilter("zip", "=", "*")
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, taxableAmount, result)
+					result = processRecords(it.GetName(), records, result)
 				}
 
 				collection.ClearFilters()
@@ -75,7 +73,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 				collection.AddFilter("zip", "=", zip)
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, taxableAmount, result)
+					result = processRecords(it.GetName(), records, result)
 				}
 			}
 		}

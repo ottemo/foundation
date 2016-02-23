@@ -128,10 +128,11 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 					couponPriorityValue += float64(0.000001)
 
 					// build price adjustment for cart coupon discount,
+					// one for percent and one for dollar amount value of coupon
 					currentPriceAdjustment := checkout.StructPriceAdjustment{
 						Code:      applicableDiscount.Code,
 						Label:     getLabel(applicableDiscount),
-						Amount:    applicableDiscount.Percents,
+						Amount:    applicableDiscount.Percents * -1,
 						IsPercent: true,
 						Priority:  couponPriorityValue + float64(0.001),
 						Types:     []string{checkout.ConstLabelSubtotal},
@@ -145,7 +146,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 					}
 
 					if applicableDiscount.Amount > 0 {
-						currentPriceAdjustment.Amount = applicableDiscount.Amount
+						currentPriceAdjustment.Amount = applicableDiscount.Amount * -1
 						currentPriceAdjustment.IsPercent = false
 						currentPriceAdjustment.Priority += float64(0.0001)
 
@@ -220,7 +221,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 							continue
 						}
 
-						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total
+						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total * -1
 
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 
@@ -357,7 +358,7 @@ func getLabel(discount discount) string {
 
 	if discount.Percents != 0 {
 		flag = true
-		result += " |" + utils.InterfaceToString(discount.Percents) + "%x" + qty
+		result += " |" + utils.InterfaceToString(utils.RoundPrice(discount.Percents)) + "%x" + qty
 	}
 
 	if discount.Amount != 0 {
@@ -367,7 +368,7 @@ func getLabel(discount discount) string {
 			result += " |"
 		}
 
-		result += utils.InterfaceToString(discount.Amount) + "$x" + qty
+		result += utils.InterfaceToString(utils.RoundPrice(discount.Amount)) + "$x" + qty
 		flag = true
 	}
 
