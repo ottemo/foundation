@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"time"
+	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -104,7 +105,7 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 	result["taxes"] = currentCheckout.GetTaxes()
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
-	result["priceAdjustments"] = currentCheckout.GetPriceAdjustments()
+	result["priceAdjustments"] = fmt.Println(currentCheckout.GetPriceAdjustments())
 
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})

@@ -216,7 +216,6 @@ func (it *DefaultCheckout) GetPriceAdjustments() []checkout.StructPriceAdjustmen
 			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
 				it.priceAdjustments = append(it.priceAdjustments, priceAdjustmentElement)
 			}
-			fmt.Println(priceAdjustment.GetName())
 		}
 	}
 	fmt.Println(it.priceAdjustments)
@@ -399,6 +398,10 @@ func (it *DefaultCheckout) GetShippingAmount() float64 {
 	return 0
 }
 
+func applyPerItemAdjustment(map[int]float64) {
+
+}
+
 // CalculateAmount do a calculation of all amounts for checkout
 // TODO: make function use calculateTarget as a limit for priority to where it need to be calculated
 func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
@@ -406,7 +409,7 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 	if !it.calculateFlag {
 		it.calculateFlag = true
 
-		discounts := it.GetDiscounts()
+		priceAdjustments := it.GetPriceAdjustments()
 		taxes := it.GetTaxes()
 
 		basePoints := map[float64]func() float64{
@@ -455,19 +458,19 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			}
 
 			// discounts lookup
-			for index, discount := range discounts {
+			for index, priceAdjustment := range priceAdjustments {
 
 				if searchMode {
-					priority := discount.Priority
+					priority := priceAdjustment.Priority
 					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
-						maxPriority = discount.Priority
+						maxPriority = priceAdjustment.Priority
 						maxIsSet = true
 					}
 				} else {
-					if discount.Priority == maxPriority {
-						amount := discount.Amount
-						if discount.IsPercent {
-							amount = it.calculateAmount * discount.Amount / 100
+					if priceAdjustment.Priority == maxPriority {
+						amount := priceAdjustment.Amount
+						if priceAdjustment.IsPercent {
+							amount = it.calculateAmount * priceAdjustment.Amount / 100
 						}
 
 						// prevent negative values for grand total subtract
@@ -475,11 +478,22 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 							amount = it.calculateAmount
 						}
 
+
+						/*
+							Amount    float64
+							IsPercent bool
+							Types     []string
+							PerItem   map[int]float64 // index if item and amount to apply
+
+							should be shown in:
+							calculationDetailTotals map[int]map[string]float64
+						 */
+
 						// round amount add it to calculating amounts and set to discount amount
 						amount = utils.RoundPrice(amount)
-						discounts[index].Amount = amount
+						priceAdjustments[index].Amount = amount
 						it.discountsAmount += amount
-						it.calculateAmount -= amount
+						it.calculateAmount += amount
 					}
 				}
 			}
@@ -516,8 +530,8 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			}
 		}
 
-		it.Discounts = discounts
-		it.Taxes = taxes
+//		it.priceAdjustments = priceAdjustments
+//		it.Taxes = taxes
 
 		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
 		it.taxesAmount = utils.RoundPrice(it.taxesAmount)
