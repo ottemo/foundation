@@ -53,7 +53,11 @@ func processOrder(order order.InterfaceOrder) error {
 	// order number
 	aSale.OrderNo = utils.InterfaceToString(order.Get("_id"))
 
-	Sale(aSale, merchantID)
+	if err := Sale(aSale, merchantID); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	return nil
 }
 
 // Sale is to send tracking information to Share A Sale
@@ -68,7 +72,7 @@ func Sale(sale AffiliateSale, id string) error {
 	// send tracking info
 	response, err := http.GET(url)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return env.ErrorDispatch(err)
 	}
 
 	// check the status code
@@ -78,4 +82,5 @@ func Sale(sale AffiliateSale, id string) error {
 
 	defer response.Body.Close()
 
+	return nil
 }
