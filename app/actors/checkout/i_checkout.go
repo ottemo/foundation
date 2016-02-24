@@ -210,16 +210,15 @@ func (it *DefaultCheckout) GetDiscountAmount() float64 {
 // GetPriceAdjustments collects price adjustments applied for current checkout
 func (it *DefaultCheckout) GetPriceAdjustments() []checkout.StructPriceAdjustment {
 
+	var result []checkout.StructPriceAdjustment
 	if it.calculateFlag {
 		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
-			fmt.Println(priceAdjustment.GetName())
 			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
-				it.priceAdjustments = append(it.priceAdjustments, priceAdjustmentElement)
+				result = append(result, priceAdjustmentElement)
 			}
 		}
 	}
-	fmt.Println(it.priceAdjustments)
-	return it.priceAdjustments
+	return result
 }
 
 // GetTaxes collects taxes applied for current checkout
@@ -418,7 +417,6 @@ func (it *DefaultCheckout) calculateSubtotal() checkout.StructPriceAdjustment {
 			cartProduct.ApplyOptions(cartItem.GetOptions())
 			amount := cartProduct.GetPrice() * float64(cartItem.GetQty())
 			result.PerItem[cartItem.GetIdx()] = amount
-			result.PerItem[0] += amount
 		}
 	}
 
@@ -443,6 +441,14 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 	return checkout.StructPriceAdjustment{}
 }
 
+func (it *DefaultCheckout) GetItemSpecificTotal(idx int, label string) float64 {
+	if value, present := it.GetItemTotals(idx)[label]; present {
+		return value
+	}
+
+	return 0
+}
+
 // applyPriceAdjustment used to handle calculation of changes from price adjustment
 // and storing to all points with details
 func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructPriceAdjustment) {
@@ -450,18 +456,10 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		return
 	}
 
-	/*
-		Amount    float64
-		IsPercent bool
-		Types     []string
-		PerItem   map[int]float64 // index if item and amount to apply
-
-		should be shown in:
-		calculationDetailTotals map[int]map[string]float64
-	*/
+	fmt.Println(priceAdjustment)
 
 	// main part is per items apply (we will handle Amount only if there was no per item value)
-	if priceAdjustment.PerItem == nil {
+	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
 		amount := priceAdjustment.Amount
 		if priceAdjustment.IsPercent {
 			// current grand total will be changed on some percentage
@@ -476,21 +474,54 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		amount = utils.RoundPrice(amount)
 
 		// should we apply this change to given PA?
-		priceAdjustment.Amount = amount
-		priceAdjustment.IsPercent = false
+		//		priceAdjustment.Amount = amount
+		//		priceAdjustment.IsPercent = false
 
-		// affecting grand total
+		// affecting grand total of a cart
 		it.calculateAmount += amount
+		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
+		it.GetItemTotals(0)[checkout.ConstLabelGrandTotal] = it.calculateAmount
 
-		// DANGER amount will be for item next
-		// cart details show amount was applied by Code or Label?
-		if existingAmount, present := it.GetItemTotals(0)[priceAdjustment.Code]; present {
-			amount += existingAmount
+		// cart details show amount was applied by Types
+		for _, label := range priceAdjustment.Types {
+			it.GetItemTotals(0)[label] = amount + it.GetItemSpecificTotal(0, label)
 		}
-		it.GetItemTotals(0)[priceAdjustment.Code] = amount
 
+	} else {
+		/*
+			Amount    float64
+			IsPercent bool
+			Types     []string
+			PerItem   map[int]float64 // index if item and amount to apply
+
+			should be shown in:
+			calculationDetailTotals map[int]map[string]float64
+		*/
+		for index, amount := range priceAdjustment.PerItem {
+
+			itemCurrentAmount := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
+
+			if priceAdjustment.IsPercent {
+				amount = itemCurrentAmount * priceAdjustment.Amount / 100
+			}
+
+			amount = utils.RoundPrice(amount)
+
+			// adding amount to grand total of current item and full cart
+			it.GetItemTotals(index)[checkout.ConstLabelGrandTotal] = itemCurrentAmount + amount
+
+			it.calculateAmount += amount
+			it.calculateAmount = utils.RoundPrice(it.calculateAmount)
+			it.GetItemTotals(0)[checkout.ConstLabelGrandTotal] = it.calculateAmount
+
+			for _, label := range priceAdjustment.Types {
+				it.GetItemTotals(index)[label] = amount + it.GetItemSpecificTotal(index, label)
+				it.GetItemTotals(0)[label] = amount + it.GetItemSpecificTotal(0, label)
+			}
+		}
 	}
-
+	it.priceAdjustments = append(it.priceAdjustments, priceAdjustment)
+	fmt.Println(it.calculateAmount)
 }
 
 // CalculateAmount do a calculation of all amounts for checkout
@@ -510,12 +541,6 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		// totals (current GT)
 		it.calculateAmount = 0
 		it.calculationDetailTotals = make(map[int]map[string]float64)
-
-		// subtotal call should set value of every item subtotal
-		// flow:
-		// call every available point to obtain values and add them to calculationDetailTotals
-		// at the same point making change to GT key of this map for every item and 0 index for cart
-		// cart GT calculated based on current items changes + changes off cart
 
 		// make something to get this values
 		it.discountsAmount = 0
@@ -586,6 +611,8 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		it.taxesAmount = utils.RoundPrice(it.taxesAmount)
 		it.discountsAmount = utils.RoundPrice(it.discountsAmount)
 
+		fmt.Println(it.calculationDetailTotals)
+		fmt.Println(it.priceAdjustments)
 		it.calculateFlag = false
 	}
 

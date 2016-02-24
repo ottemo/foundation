@@ -135,7 +135,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						Amount:    applicableDiscount.Percents * -1,
 						IsPercent: true,
 						Priority:  couponPriorityValue + float64(0.001),
-						Types:     []string{checkout.ConstLabelSubtotal},
+						Types:     []string{checkout.ConstLabelDiscount},
 						PerItem:   make(map[int]float64),
 					}
 
@@ -208,18 +208,24 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						}
 
 						// update used discount and change qty of chosen discount to number of usage
-						if productDiscount := productDiscounts[biggestAppliedDiscountIndex]; productDiscount.Qty > 0 {
-							discountUsed := 1
-							for i < productQty && productDiscount.Qty > 0 {
-								i++
-								productDiscount.Qty--
-								discountUsed++
-							}
-							biggestAppliedDiscount.Qty = discountUsed
-						} else {
-							// something go wrong and our discount isn't in map
-							continue
+						discountUsed := 1
+						productDiscounts[biggestAppliedDiscountIndex].Qty--
+						for i < productQty && productDiscounts[biggestAppliedDiscountIndex].Qty > 0 {
+							i++
+							productDiscounts[biggestAppliedDiscountIndex].Qty--
+							discountUsed++
 						}
+
+						// clear fully used discount from discounts list
+						newProductDiscounts := make([]discount, 0)
+						for _, currentDiscount := range productDiscounts {
+							if currentDiscount.Qty > 0 {
+								newProductDiscounts = append(newProductDiscounts, currentDiscount)
+							}
+						}
+						applicableProductDiscounts[productID] = newProductDiscounts
+
+						biggestAppliedDiscount.Qty = discountUsed
 
 						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total * -1
 
@@ -240,13 +246,12 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 								Amount:    0,
 								IsPercent: false,
 								Priority:  couponPriorityValue,
-								Types:     []string{checkout.ConstLabelSubtotal},
+								Types:     []string{checkout.ConstLabelDiscount},
 								PerItem: map[int]float64{
 									cartItem.GetIdx(): amount,
 								},
 							}
 						}
-
 					}
 				}
 			}
@@ -415,7 +420,7 @@ func updateLabel(existingLabel string, discount discount) string {
 			if separator > index {
 				percentQty += utils.InterfaceToInt(valuePart[index+2 : separator])
 			} else {
-				percentQty += utils.InterfaceToInt(valuePart[index:])
+				percentQty += utils.InterfaceToInt(valuePart[index+2:])
 			}
 		}
 

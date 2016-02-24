@@ -31,7 +31,7 @@ func processRecords(name string, records []map[string]interface{}, result []chec
 			Amount:    utils.InterfaceToFloat64(record["rate"]),
 			IsPercent: true,
 			Priority:  priority,
-			Types:     []string{checkout.ConstLabelSubtotal},
+			Types:     []string{checkout.ConstLabelTax},
 			PerItem:   make(map[int]float64),
 		}
 

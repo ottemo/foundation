@@ -47,9 +47,11 @@ const (
 	ConstCalculateTargetShipping   = 2.0
 	ConstCalculateTargetGrandTotal = 3.0
 
-	ConstLabelSubtotal   = "subtotal"
-	ConstLabelShipping   = "shipping"
+	ConstLabelSubtotal   = "ST"
+	ConstLabelShipping   = "SP"
 	ConstLabelGrandTotal = "GT"
+	ConstLabelDiscount   = "D"
+	ConstLabelTax        = "T"
 
 	ConstDiscountObjectCart = "cart"
 
