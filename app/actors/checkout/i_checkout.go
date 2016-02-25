@@ -235,15 +235,7 @@ func (it *DefaultCheckout) GetDiscounts() []checkout.StructPriceAdjustment {
 // GetSubtotal returns subtotal total for current checkout
 func (it *DefaultCheckout) GetSubtotal() float64 {
 
-	var result float64
-	for _, cartItem := range it.GetItems() {
-		if cartProduct := cartItem.GetProduct(); cartProduct != nil {
-			cartProduct.ApplyOptions(cartItem.GetOptions())
-			result += cartProduct.GetPrice() * float64(cartItem.GetQty())
-		}
-	}
-	return result
-
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelSubtotal)
 }
 
 // GetItems returns current cart items
@@ -257,15 +249,14 @@ func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
 
 // GetShippingAmount returns shipping price for current checkout
 func (it *DefaultCheckout) GetShippingAmount() float64 {
-	if shippingRate := it.GetShippingRate(); shippingRate != nil {
-		return shippingRate.Price
-	}
-	return 0
+
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelShipping)
 }
 
 // calculateSubtotal it's an element of calculation that provides subtotal amounts
 func (it *DefaultCheckout) calculateSubtotal() checkout.StructPriceAdjustment {
 
+	items := it.GetItems()
 	result := checkout.StructPriceAdjustment{
 		Code:      checkout.ConstLabelSubtotal,
 		Label:     checkout.ConstLabelSubtotal,
@@ -273,14 +264,12 @@ func (it *DefaultCheckout) calculateSubtotal() checkout.StructPriceAdjustment {
 		IsPercent: false,
 		Priority:  checkout.ConstCalculateTargetSubtotal,
 		Types:     []string{checkout.ConstLabelSubtotal},
-		PerItem:   map[int]float64{0: float64(0)},
+		PerItem:   map[string]float64{},
 	}
 
-	for _, cartItem := range it.GetItems() {
+	for _, cartItem := range items {
 		if cartProduct := cartItem.GetProduct(); cartProduct != nil {
-			cartProduct.ApplyOptions(cartItem.GetOptions())
-			amount := cartProduct.GetPrice() * float64(cartItem.GetQty())
-			result.PerItem[cartItem.GetIdx()] = amount
+			result.PerItem[utils.InterfaceToString(cartItem.GetIdx())] = utils.RoundPrice(cartProduct.GetPrice() * float64(cartItem.GetQty()))
 		}
 	}
 
@@ -298,7 +287,7 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 			IsPercent: false,
 			Priority:  checkout.ConstCalculateTargetShipping,
 			Types:     []string{checkout.ConstLabelShipping},
-			PerItem:   make(map[int]float64),
+			PerItem:   nil,
 		}
 	}
 
@@ -306,18 +295,27 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 }
 
 // GetItemTotals return details about totals per item (0 is a cart)
-func (it *DefaultCheckout) getItemTotals(idx int) map[string]float64 {
-	itemTotals, present := it.calculationDetailTotals[idx]
+func (it *DefaultCheckout) getItemTotals(idx interface{}) map[string]float64 {
+	index := utils.InterfaceToInt(idx)
+
+	// in this case we don't started calculation process so it will be excuted
+	if it.calculationDetailTotals == nil {
+		it.calculationDetailTotals = make(map[int]map[string]float64)
+		it.CalculateAmount(0)
+	}
+
+	itemTotals, present := it.calculationDetailTotals[index]
 	if !present {
+
 		itemTotals = make(map[string]float64)
-		it.calculationDetailTotals[idx] = itemTotals
+		it.calculationDetailTotals[index] = itemTotals
 	}
 
 	return itemTotals
 }
 
 // GetItemSpecificTotal return current amount value for given item index and label (0 is a cart)
-func (it *DefaultCheckout) GetItemSpecificTotal(idx int, label string) float64 {
+func (it *DefaultCheckout) GetItemSpecificTotal(idx interface{}, label string) float64 {
 	if value, present := it.getItemTotals(idx)[label]; present {
 		return value
 	}
@@ -326,13 +324,11 @@ func (it *DefaultCheckout) GetItemSpecificTotal(idx int, label string) float64 {
 }
 
 // applyAmount applies amounts to checkout detail calculaltion map
-func (it *DefaultCheckout) applyAmount(idx int, label string, amount float64) {
-
-	//	fmt.Println(idx, label, amount)
+func (it *DefaultCheckout) applyAmount(idx interface{}, label string, amount float64) {
 	amount = utils.RoundPrice(amount)
-
-	if idx != 0 {
-		it.getItemTotals(idx)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(idx, label))
+	index := utils.InterfaceToInt(idx)
+	if index != 0 {
+		it.getItemTotals(index)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(index, label))
 	}
 
 	it.getItemTotals(0)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(0, label))
@@ -348,8 +344,6 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 	if priceAdjustment.Code == "" {
 		return
 	}
-
-	fmt.Println(priceAdjustment)
 
 	// main part is per items apply (we will handle Amount only if there was no per item value)
 	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
@@ -403,7 +397,6 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 	}
 	it.priceAdjustments = append(it.priceAdjustments, priceAdjustment)
-	fmt.Println(it.calculateAmount)
 }
 
 // CalculateAmount do a calculation of all amounts for checkout
@@ -412,6 +405,9 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 
 	if !it.calculateFlag {
 		it.calculateFlag = true
+		it.calculateAmount = 0
+		it.priceAdjustments = make([]checkout.StructPriceAdjustment, 0)
+		it.calculationDetailTotals = make(map[int]map[string]float64)
 
 		var priceAdjustments []checkout.StructPriceAdjustment
 		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
@@ -424,10 +420,6 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			checkout.ConstCalculateTargetSubtotal: func() checkout.StructPriceAdjustment { return it.calculateSubtotal() },
 			checkout.ConstCalculateTargetShipping: func() checkout.StructPriceAdjustment { return it.calculateShipping() },
 		}
-
-		// totals (current GT)
-		it.calculateAmount = 0
-		it.calculationDetailTotals = make(map[int]map[string]float64)
 
 		var minPriority float64
 		var maxPriority float64
@@ -488,13 +480,8 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			}
 		}
 
-		//		it.priceAdjustments = priceAdjustments
-
-		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
-
-		fmt.Println(it.calculationDetailTotals)
-		fmt.Println(it.priceAdjustments)
 		it.calculateFlag = false
+		fmt.Println(it.calculationDetailTotals)
 	}
 
 	return it.calculateAmount

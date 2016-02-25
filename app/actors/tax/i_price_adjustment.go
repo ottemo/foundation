@@ -32,7 +32,7 @@ func processRecords(name string, records []map[string]interface{}, result []chec
 			IsPercent: true,
 			Priority:  priority,
 			Types:     []string{checkout.ConstLabelTax},
-			PerItem:   make(map[int]float64),
+			PerItem:   nil,
 		}
 
 		priority += float64(0.00001)

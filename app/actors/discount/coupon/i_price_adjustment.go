@@ -4,7 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"fmt"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -56,7 +55,9 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 			applicableProductDiscounts := make(map[string][]discount)
 			// collect products to one map, that holds productID: qty and used to get apply qty
 			productsInCart := make(map[string]int)
-			for _, productInCart := range checkoutInstance.GetItems() {
+
+			items := checkoutInstance.GetItems()
+			for _, productInCart := range items {
 				productID := productInCart.GetProductID()
 				productQty := productInCart.GetQty()
 
@@ -74,7 +75,6 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 
 				discountsUsageQty := getCouponApplyQty(productsInCart, record)
 				discountCode := utils.InterfaceToString(record["code"])
-				fmt.Println(discountCode, discountsUsageQty)
 
 				if discountCode != "" && discountsUsageQty > 0 {
 					record["usage_qty"] = discountsUsageQty
@@ -132,7 +132,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						IsPercent: true,
 						Priority:  couponPriorityValue + float64(0.001),
 						Types:     []string{checkout.ConstLabelDiscount},
-						PerItem:   make(map[int]float64),
+						PerItem:   nil,
 					}
 
 					if applicableDiscount.Percents > 0 {
@@ -164,10 +164,10 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 			priceAdjustments := make(map[string]checkout.StructPriceAdjustment)
 
 			// adding to discounts the biggest applicable discount per product
-			for _, cartItem := range checkoutInstance.GetItems() {
+			for _, cartItem := range items {
+				index := utils.InterfaceToString(cartItem.GetIdx())
 
 				if cartProduct := cartItem.GetProduct(); cartProduct != nil {
-					cartProduct.ApplyOptions(cartItem.GetOptions())
 					productPrice := cartProduct.GetPrice()
 					productID := cartItem.GetProductID()
 					productQty := cartItem.GetQty()
@@ -228,12 +228,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 
 						// add this amount to already existing PA (with the same coupon code) or creating new
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
-
-							if value, present := priceAdjustment.PerItem[cartItem.GetIdx()]; present {
-								amount += value
-							}
-
-							priceAdjustment.PerItem[cartItem.GetIdx()] = amount
+							priceAdjustment.PerItem[index] = utils.RoundPrice(priceAdjustment.PerItem[index] + amount)
 							priceAdjustment.Label = updateLabel(priceAdjustment.Label, biggestAppliedDiscount)
 
 						} else {
@@ -245,8 +240,8 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 								IsPercent: false,
 								Priority:  couponPriorityValue,
 								Types:     []string{checkout.ConstLabelDiscount},
-								PerItem: map[int]float64{
-									cartItem.GetIdx(): amount,
+								PerItem: map[string]float64{
+									index: amount,
 								},
 							}
 						}

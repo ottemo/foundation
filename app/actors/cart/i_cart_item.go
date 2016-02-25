@@ -54,10 +54,11 @@ func (it *DefaultCartItem) GetProduct() product.InterfaceProduct {
 		return it.product
 	}
 	if it.ProductID != "" {
-		product, err := product.LoadProductByID(it.ProductID)
+		cartProduct, err := product.LoadProductByID(it.ProductID)
 		if err == nil {
-			it.product = product
-			return product
+			cartProduct.ApplyOptions(it.GetOptions())
+			it.product = cartProduct
+			return cartProduct
 		}
 	}
 	return nil
