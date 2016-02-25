@@ -11,9 +11,9 @@ import (
 // init makes package self-initialization routine
 func init() {
 	instance := new(DefaultGiftcard)
-	var _ checkout.InterfaceDiscount = instance
+	var _ checkout.InterfacePriceAdjustment = instance
 
-	checkout.RegisterDiscount(instance)
+	checkout.RegisterPriceAdjustment(instance)
 
 	freeShipping := new(Shipping)
 	var _ checkout.InterfaceShippingMethod = freeShipping

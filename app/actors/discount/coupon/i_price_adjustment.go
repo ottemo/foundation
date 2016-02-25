@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -22,17 +23,10 @@ func (it *Coupon) GetCode() string {
 
 // GetPriority returns the code of the current coupon implementation
 func (it *Coupon) GetPriority() []float64 {
-
 	return []float64{utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))}
 }
 
-// CalculateDiscount calculates and returns a set of coupons applied to the provided checkout
-// flow:
-// add new variable above the loop for coupons - hold items - amount of discount to prevent from staking
-// when discount is applied to cart, just add it to array
-// when there some product target:
-// take a look into var for value and compare if this bigger then update it
-// two possible value - percent and amount we should fond a sum for them to compare amounts
+// Calculate calculates and returns a set of coupons applied to the provided checkout
 func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []checkout.StructPriceAdjustment {
 
 	var result []checkout.StructPriceAdjustment
@@ -80,6 +74,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 
 				discountsUsageQty := getCouponApplyQty(productsInCart, record)
 				discountCode := utils.InterfaceToString(record["code"])
+				fmt.Println(discountCode, discountsUsageQty)
 
 				if discountCode != "" && discountsUsageQty > 0 {
 					record["usage_qty"] = discountsUsageQty
@@ -129,6 +124,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 
 					// build price adjustment for cart coupon discount,
 					// one for percent and one for dollar amount value of coupon
+					// TODO: this part should be moved in calculate phase to priority 2.2
 					currentPriceAdjustment := checkout.StructPriceAdjustment{
 						Code:      applicableDiscount.Code,
 						Label:     getLabel(applicableDiscount),
@@ -215,9 +211,10 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 							productDiscounts[biggestAppliedDiscountIndex].Qty--
 							discountUsed++
 						}
+						biggestAppliedDiscount.Qty = discountUsed
 
-						// clear fully used discount from discounts list
-						newProductDiscounts := make([]discount, 0)
+						// remove fully used discount from discounts list
+						var newProductDiscounts []discount
 						for _, currentDiscount := range productDiscounts {
 							if currentDiscount.Qty > 0 {
 								newProductDiscounts = append(newProductDiscounts, currentDiscount)
@@ -225,10 +222,11 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						}
 						applicableProductDiscounts[productID] = newProductDiscounts
 
-						biggestAppliedDiscount.Qty = discountUsed
-
+						// making from discount price adjustment
+						// calculating amount that will be discounted from item
 						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total * -1
 
+						// add this amount to already existing PA (with the same coupon code) or creating new
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 
 							if value, present := priceAdjustment.PerItem[cartItem.GetIdx()]; present {
@@ -315,10 +313,12 @@ func getCouponApplyQty(productsInCart map[string]int, couponDiscount map[string]
 						}
 
 					}
-				case "max_usage_qty":
-					if limitingQty := utils.InterfaceToInt(limitingValue); limitingQty >= 1 && limitingQty < result {
-						result = limitingQty
-					}
+				} // end of switch
+			} // end of loop
+
+			if maxLimitValue, present := limitations["max_usage_qty"]; present {
+				if limitingQty := utils.InterfaceToInt(maxLimitValue); limitingQty >= 1 && result > limitingQty {
+					result = limitingQty
 				}
 			}
 		}

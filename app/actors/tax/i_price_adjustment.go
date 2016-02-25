@@ -42,7 +42,7 @@ func processRecords(name string, records []map[string]interface{}, result []chec
 	return result
 }
 
-// CalculateTax calculates a taxes for a given checkout
+// Calculate calculates a taxes for a given checkout
 func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []checkout.StructPriceAdjustment {
 	var result []checkout.StructPriceAdjustment
 	priority = ConstPriorityValue

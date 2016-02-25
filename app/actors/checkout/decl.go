@@ -37,22 +37,10 @@ type DefaultCheckout struct {
 	calculationDetailTotals map[int]map[string]float64
 	cart                    cart.InterfaceCart
 
-	Taxes     []checkout.StructTaxRate
-	Discounts []checkout.StructDiscount
-
 	Info map[string]interface{}
-
-	// amounts used to have static values during calculation
-	// out of date?
-	subtotalAmount  float64
-	shippingAmount  float64
-	taxesAmount     float64
-	discountsAmount float64
 
 	calculateAmount float64
 
 	// flags enables and disables during calculation to prevent recursion
-	taxesCalculateFlag     bool
-	discountsCalculateFlag bool
-	calculateFlag          bool
+	calculateFlag bool
 }

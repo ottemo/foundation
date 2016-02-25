@@ -9,9 +9,6 @@ var (
 	registeredShippingMethods = make([]InterfaceShippingMethod, 0)
 	registeredPaymentMethods  = make([]InterfacePaymentMethod, 0)
 
-	registeredTaxes     = make([]InterfaceTax, 0)
-	registeredDiscounts = make([]InterfaceDiscount, 0)
-
 	registeredPriceAdjustments = make([]InterfacePriceAdjustment, 0)
 )
 
@@ -41,32 +38,6 @@ func RegisterPaymentMethod(paymentMethod InterfacePaymentMethod) error {
 	return nil
 }
 
-// RegisterTax registers given tax calculator in system
-func RegisterTax(tax InterfaceTax) error {
-	for _, registeredTax := range registeredTaxes {
-		if registeredTax == tax {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "355841ed-700e-4c8f-bc8d-a2d95844d393", "tax already registered")
-		}
-	}
-
-	registeredTaxes = append(registeredTaxes, tax)
-
-	return nil
-}
-
-// RegisterDiscount registers given discount calculator in system
-func RegisterDiscount(discount InterfaceDiscount) error {
-	for _, registeredDiscount := range registeredDiscounts {
-		if registeredDiscount == discount {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "56234554-d230-403c-b21b-8393e7e138d4", "discount already registered")
-		}
-	}
-
-	registeredDiscounts = append(registeredDiscounts, discount)
-
-	return nil
-}
-
 // RegisterPriceAdjustment registers given discount calculator in system
 func RegisterPriceAdjustment(priceAdjustment InterfacePriceAdjustment) error {
 	for _, registeredDiscount := range registeredPriceAdjustments {
@@ -88,16 +59,6 @@ func GetRegisteredShippingMethods() []InterfaceShippingMethod {
 // GetRegisteredPaymentMethods returns list of registered payment methods
 func GetRegisteredPaymentMethods() []InterfacePaymentMethod {
 	return registeredPaymentMethods
-}
-
-// GetRegisteredTaxes returns list of registered tax calculators
-func GetRegisteredTaxes() []InterfaceTax {
-	return registeredTaxes
-}
-
-// GetRegisteredDiscounts returns list of registered discounts calculators
-func GetRegisteredDiscounts() []InterfaceDiscount {
-	return registeredDiscounts
 }
 
 // GetRegisteredPriceAdjustments returns list of registered price adjustments

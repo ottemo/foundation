@@ -198,163 +198,38 @@ func (it *DefaultCheckout) GetSession() api.InterfaceSession {
 // GetTaxAmount returns total amount of taxes for current checkout
 func (it *DefaultCheckout) GetTaxAmount() float64 {
 
-	return it.taxesAmount
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelTax)
 }
 
 // GetDiscountAmount returns total amount of discounts applied for current checkout
 func (it *DefaultCheckout) GetDiscountAmount() float64 {
 
-	return it.discountsAmount
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount)
 }
 
 // GetPriceAdjustments collects price adjustments applied for current checkout
-func (it *DefaultCheckout) GetPriceAdjustments() []checkout.StructPriceAdjustment {
-
+func (it *DefaultCheckout) GetPriceAdjustments(label string) []checkout.StructPriceAdjustment {
 	var result []checkout.StructPriceAdjustment
-	if it.calculateFlag {
-		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
-			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
-				result = append(result, priceAdjustmentElement)
-			}
+
+	for _, priceAdjustment := range it.priceAdjustments {
+		if label == "" || utils.IsInListStr(label, priceAdjustment.Types) {
+			result = append(result, priceAdjustment)
 		}
 	}
+
 	return result
 }
 
 // GetTaxes collects taxes applied for current checkout
-func (it *DefaultCheckout) GetTaxes() []checkout.StructTaxRate {
+func (it *DefaultCheckout) GetTaxes() []checkout.StructPriceAdjustment {
 
-	if !it.taxesCalculateFlag && it.calculateFlag {
-		it.taxesCalculateFlag = true
-
-		it.Taxes = make([]checkout.StructTaxRate, 0)
-		for _, tax := range checkout.GetRegisteredTaxes() {
-			for _, taxRate := range tax.CalculateTax(it) {
-				it.Taxes = append(it.Taxes, taxRate)
-			}
-		}
-
-		it.taxesCalculateFlag = false
-	}
-
-	return it.Taxes
+	return it.GetPriceAdjustments(checkout.ConstLabelTax)
 }
 
 // GetDiscounts collects discounts applied for current checkout
-func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
+func (it *DefaultCheckout) GetDiscounts() []checkout.StructPriceAdjustment {
 
-	if !it.discountsCalculateFlag && it.calculateFlag {
-		it.discountsCalculateFlag = true
-
-		it.Discounts = make([]checkout.StructDiscount, 0)
-		applicableProductDiscounts := make(map[string][]checkout.StructDiscount)
-
-		for _, discount := range checkout.GetRegisteredDiscounts() {
-			for _, discountValue := range discount.CalculateDiscount(it) {
-				if discountValue.Object == checkout.ConstDiscountObjectCart {
-					it.Discounts = append(it.Discounts, discountValue)
-					continue
-				} else {
-					applicableProductDiscounts[discountValue.Object] = append(applicableProductDiscounts[discountValue.Object], discountValue)
-				}
-			}
-		}
-
-		currentCart := it.GetCart()
-		if currentCart == nil {
-			it.discountsCalculateFlag = false
-			return it.Discounts
-		}
-
-		// adding to discounts the biggest applicable discount per product
-		for _, productInCart := range currentCart.GetItems() {
-
-			if cartProduct := productInCart.GetProduct(); cartProduct != nil {
-				cartProduct.ApplyOptions(productInCart.GetOptions())
-				productPrice := cartProduct.GetPrice()
-				productID := productInCart.GetProductID()
-				productQty := productInCart.GetQty()
-
-				for i := 0; i < productQty; i++ {
-					productDiscounts, present := applicableProductDiscounts[productID]
-
-					if present && len(productDiscounts) > 0 {
-						var biggestAppliedDiscount checkout.StructDiscount
-						var biggestAppliedDiscountIndex int
-
-						for index, productDiscount := range productDiscounts {
-							productDiscountableAmount := productDiscount.Amount
-
-							if productDiscount.IsPercent {
-								productDiscountableAmount = productPrice * productDiscount.Amount / 100
-							}
-
-							if biggestAppliedDiscount.Amount < productDiscountableAmount {
-								biggestAppliedDiscount = productDiscount
-								biggestAppliedDiscount.Amount = productDiscountableAmount
-								biggestAppliedDiscount.IsPercent = false
-								biggestAppliedDiscountIndex = index
-							}
-						}
-
-						var newProductDiscounts []checkout.StructDiscount
-						for index, productDiscount := range productDiscounts {
-							if index != biggestAppliedDiscountIndex {
-								newProductDiscounts = append(newProductDiscounts, productDiscount)
-							}
-						}
-
-						it.Discounts = append(it.Discounts, biggestAppliedDiscount)
-						applicableProductDiscounts[productID] = newProductDiscounts
-					}
-				}
-			}
-		}
-
-		it.discountsCalculateFlag = false
-	}
-
-	return it.Discounts
-}
-
-// GetAggregatedDiscounts returns aggregated total of used discounts
-func (it *DefaultCheckout) GetAggregatedDiscounts() []checkout.StructAggregatedDiscount {
-	var result []checkout.StructAggregatedDiscount
-
-	groupedDiscounts := make(map[string]checkout.StructAggregatedDiscount)
-	usedDiscounts := it.GetDiscounts()
-
-	for _, currentDiscount := range usedDiscounts {
-		key := currentDiscount.Code + currentDiscount.Type
-		var groupedDiscount checkout.StructAggregatedDiscount
-
-		if savedDiscount, present := groupedDiscounts[key]; present {
-			groupedDiscount = savedDiscount
-
-			groupedDiscount.Amount = groupedDiscount.Amount + currentDiscount.Amount
-
-			if _, present := groupedDiscount.Object[currentDiscount.Object]; present {
-				groupedDiscount.Object[currentDiscount.Object]++
-			} else {
-				groupedDiscount.Object[currentDiscount.Object] = 1
-			}
-		} else {
-			groupedDiscount.Code = currentDiscount.Code
-			groupedDiscount.Name = currentDiscount.Name
-			groupedDiscount.Amount = currentDiscount.Amount
-			groupedDiscount.Type = currentDiscount.Type
-
-			groupedDiscount.Object = map[string]int{currentDiscount.Object: 1}
-		}
-
-		groupedDiscounts[key] = groupedDiscount
-	}
-
-	for _, discount := range groupedDiscounts {
-		result = append(result, discount)
-	}
-
-	return result
+	return it.GetPriceAdjustments(checkout.ConstLabelDiscount)
 }
 
 // GetSubtotal returns subtotal total for current checkout
@@ -378,17 +253,6 @@ func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
 	}
 
 	return nil
-}
-
-// GetItemTotals return details about totals per item (0 is a cart)
-func (it *DefaultCheckout) GetItemTotals(idx int) map[string]float64 {
-	itemTotals, present := it.calculationDetailTotals[idx]
-	if !present {
-		itemTotals = make(map[string]float64)
-		it.calculationDetailTotals[idx] = itemTotals
-	}
-
-	return itemTotals
 }
 
 // GetShippingAmount returns shipping price for current checkout
@@ -441,12 +305,41 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 	return checkout.StructPriceAdjustment{}
 }
 
+// GetItemTotals return details about totals per item (0 is a cart)
+func (it *DefaultCheckout) getItemTotals(idx int) map[string]float64 {
+	itemTotals, present := it.calculationDetailTotals[idx]
+	if !present {
+		itemTotals = make(map[string]float64)
+		it.calculationDetailTotals[idx] = itemTotals
+	}
+
+	return itemTotals
+}
+
+// GetItemSpecificTotal return current amount value for given item index and label (0 is a cart)
 func (it *DefaultCheckout) GetItemSpecificTotal(idx int, label string) float64 {
-	if value, present := it.GetItemTotals(idx)[label]; present {
+	if value, present := it.getItemTotals(idx)[label]; present {
 		return value
 	}
 
 	return 0
+}
+
+// applyAmount applies amounts to checkout detail calculaltion map
+func (it *DefaultCheckout) applyAmount(idx int, label string, amount float64) {
+
+	//	fmt.Println(idx, label, amount)
+	amount = utils.RoundPrice(amount)
+
+	if idx != 0 {
+		it.getItemTotals(idx)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(idx, label))
+	}
+
+	it.getItemTotals(0)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(0, label))
+
+	if label == checkout.ConstLabelGrandTotal {
+		it.calculateAmount = utils.RoundPrice(amount + it.calculateAmount)
+	}
 }
 
 // applyPriceAdjustment used to handle calculation of changes from price adjustment
@@ -463,62 +356,51 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		amount := priceAdjustment.Amount
 		if priceAdjustment.IsPercent {
 			// current grand total will be changed on some percentage
-			amount = it.calculateAmount * priceAdjustment.Amount / 100
+			amount = it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * priceAdjustment.Amount / 100
 		}
 
-		// prevent negative values for grand total subtract
-		//		if amount > it.calculateAmount {
-		//			amount = it.calculateAmount
-		//		}
-
-		amount = utils.RoundPrice(amount)
-
-		// should we apply this change to given PA?
-		//		priceAdjustment.Amount = amount
-		//		priceAdjustment.IsPercent = false
+		// prevent negative values of grand total
+		if amount+it.calculateAmount < 0 {
+			amount = it.calculateAmount
+		}
 
 		// affecting grand total of a cart
-		it.calculateAmount += amount
-		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
-		it.GetItemTotals(0)[checkout.ConstLabelGrandTotal] = it.calculateAmount
+		it.applyAmount(0, checkout.ConstLabelGrandTotal, amount)
 
 		// cart details show amount was applied by Types
 		for _, label := range priceAdjustment.Types {
-			it.GetItemTotals(0)[label] = amount + it.GetItemSpecificTotal(0, label)
+			if label != checkout.ConstLabelGrandTotal {
+				it.applyAmount(0, label, amount)
+			}
 		}
 
 	} else {
-		/*
-			Amount    float64
-			IsPercent bool
-			Types     []string
-			PerItem   map[int]float64 // index if item and amount to apply
-
-			should be shown in:
-			calculationDetailTotals map[int]map[string]float64
-		*/
 		for index, amount := range priceAdjustment.PerItem {
-
-			itemCurrentAmount := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
-
+			currentItemTotal := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
 			if priceAdjustment.IsPercent {
-				amount = itemCurrentAmount * priceAdjustment.Amount / 100
+				amount = currentItemTotal * priceAdjustment.Amount / 100
 			}
 
-			amount = utils.RoundPrice(amount)
+			// prevent negative values of grand total per cart
+			if amount+it.calculateAmount < 0 {
+				amount = it.calculateAmount
+			}
+
+			// prevent negative values of grand total per item
+			if amount+currentItemTotal < 0 {
+				amount = it.calculateAmount
+			}
 
 			// adding amount to grand total of current item and full cart
-			it.GetItemTotals(index)[checkout.ConstLabelGrandTotal] = itemCurrentAmount + amount
-
-			it.calculateAmount += amount
-			it.calculateAmount = utils.RoundPrice(it.calculateAmount)
-			it.GetItemTotals(0)[checkout.ConstLabelGrandTotal] = it.calculateAmount
+			it.applyAmount(index, checkout.ConstLabelGrandTotal, amount)
 
 			for _, label := range priceAdjustment.Types {
-				it.GetItemTotals(index)[label] = amount + it.GetItemSpecificTotal(index, label)
-				it.GetItemTotals(0)[label] = amount + it.GetItemSpecificTotal(0, label)
+				if label != checkout.ConstLabelGrandTotal {
+					it.applyAmount(index, label, amount)
+				}
 			}
 		}
+
 	}
 	it.priceAdjustments = append(it.priceAdjustments, priceAdjustment)
 	fmt.Println(it.calculateAmount)
@@ -531,7 +413,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 	if !it.calculateFlag {
 		it.calculateFlag = true
 
-		priceAdjustments := it.GetPriceAdjustments()
+		var priceAdjustments []checkout.StructPriceAdjustment
+		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
+			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
+				priceAdjustments = append(priceAdjustments, priceAdjustmentElement)
+			}
+		}
 
 		basePoints := map[float64]func() checkout.StructPriceAdjustment{
 			checkout.ConstCalculateTargetSubtotal: func() checkout.StructPriceAdjustment { return it.calculateSubtotal() },
@@ -541,10 +428,6 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		// totals (current GT)
 		it.calculateAmount = 0
 		it.calculationDetailTotals = make(map[int]map[string]float64)
-
-		// make something to get this values
-		it.discountsAmount = 0
-		it.taxesAmount = 0
 
 		var minPriority float64
 		var maxPriority float64
@@ -608,8 +491,6 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		//		it.priceAdjustments = priceAdjustments
 
 		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
-		it.taxesAmount = utils.RoundPrice(it.taxesAmount)
-		it.discountsAmount = utils.RoundPrice(it.discountsAmount)
 
 		fmt.Println(it.calculationDetailTotals)
 		fmt.Println(it.priceAdjustments)
