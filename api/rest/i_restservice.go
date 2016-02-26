@@ -14,6 +14,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -179,6 +180,17 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 		if ConstUseDebugLog {
 			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+
+			requestLogData := map[string]interface{}{
+				"type":       "REQUEST",
+				"identifier": debugRequestIdentifier,
+				"session":    currentSession.GetID(),
+				"url":        req.RequestURI,
+			}
+			if content != nil {
+				requestLogData["content"] = fmt.Sprintf("%#v\n", content)
+			}
+			env.LogMap(ConstDebugJSONLogStorage, requestLogData)
 		}
 
 		// event for request
@@ -186,10 +198,22 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		env.Event("api.request", eventData)
 
 		// API handler processing
-		result, err := handler(applicationContext)
-		if err != nil {
-			env.LogError(err)
-		}
+		var result interface{}
+
+		context.MakeContext(func() {
+			if context := context.GetContext(); context != nil {
+				context["context"] = applicationContext
+				context["requestURL"] = req.RequestURI
+			}
+
+			result, err = handler(applicationContext)
+			if context := context.GetContext(); context != nil {
+				context["response"] = result
+			}
+			if err != nil {
+				env.LogError(err)
+			}
+		})
 
 		if err == nil {
 			applicationContext.Result = result
@@ -252,6 +276,15 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		if ConstUseDebugLog {
 			responseTime := time.Now().Sub(startTime)
 			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+
+			responseLogData := map[string]interface{}{
+				"type":         "RESPONSE",
+				"identifier":   debugRequestIdentifier,
+				"responseTime": responseTime,
+				"session":      currentSession.GetID(),
+				"result":       fmt.Sprintf("%s\n", result),
+			}
+			env.LogMap(ConstDebugJSONLogStorage, responseLogData)
 		}
 
 		if value, ok := result.([]byte); ok {

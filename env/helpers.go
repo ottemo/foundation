@@ -29,6 +29,13 @@ func Log(storage string, prefix string, message string) {
 	}
 }
 
+// LogMap logs map data
+func LogMap(storage string, data map[string]interface{}) {
+	if logger := GetLogger(); logger != nil {
+		logger.LogMap(storage, data)
+	}
+}
+
 // LogError logs an error message
 func LogError(err error) {
 	err = ErrorDispatch(err)

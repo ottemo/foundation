@@ -8,6 +8,7 @@ import (
 	_ "github.com/ottemo/foundation/env/ini"      // INI Configuration service
 	_ "github.com/ottemo/foundation/env/logger"   // File-based Logging service
 
+	_ "github.com/ottemo/foundation/api/context"   // Context runtime transfer service
 	_ "github.com/ottemo/foundation/api/rest"      // RESTful API service
 	_ "github.com/ottemo/foundation/api/session"   // Session Management service
 	_ "github.com/ottemo/foundation/impex"         // Import/Export service
