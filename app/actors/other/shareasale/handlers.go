@@ -24,23 +24,25 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 		}
 	}
 
-	// send the order to share a sale if it is not nil
 	if checkoutOrder != nil {
-		go processOrder(checkoutOrder)
+		aSale := createAffiliateSale(checkoutOrder)
+		go sendSale(aSale)
 	}
 
 	return true
 }
 
-func processOrder(order order.InterfaceOrder) error {
+func createAffiliateSale(order order.InterfaceOrder) (AffiliateSale, error) {
 
 	var merchantID string
 	var grandTotal, taxes, shipping, discount float64
 	var aSale AffiliateSale
 
+	// retrieve merchant id
 	if merchantID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShareASaleMerchantID)); merchantID == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "247fec44-cb47-494c-ae5f-adfd6f28eb2d", "Share a Sale Merchant ID may not be empty.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "247fec44-cb47-494c-ae5f-adfd6f28eb2d", "Share a Sale Merchant ID may not be empty.")
 	}
+	aSale.MerchantID = merchantID
 
 	// calculate true subtotal
 	grandTotal = utils.InterfaceToFloat64(order.Get("grand_total"))
@@ -53,21 +55,17 @@ func processOrder(order order.InterfaceOrder) error {
 	// order number
 	aSale.OrderNo = utils.InterfaceToString(order.Get("_id"))
 
-	if err := Sale(aSale, merchantID); err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	return nil
+	return aSale, nil
 }
 
-// Sale is to send tracking information to Share A Sale
-func Sale(sale AffiliateSale, id string) error {
+// sendSale is to send tracking information to Share A Sale
+func sendSale(sale AffiliateSale) error {
 
 	var err error
 	var url string
 
 	// construct the url
-	url = fmt.Sprintf("https://shareasale.com/sale.cfm?amount=$(%s)&tracking=$(%s)&transtype=SALE&merchantID=%s", sale.SubTotal, sale.SubTotal, id)
+	url = fmt.Sprintf("https://shareasale.com/sale.cfm?amount=$(%s)&tracking=$(%s)&transtype=SALE&merchantID=%s", sale.SubTotal, sale.SubTotal, sale.MerchantID)
 
 	// send tracking info
 	response, err := http.GET(url)
@@ -77,7 +75,7 @@ func Sale(sale AffiliateSale, id string) error {
 
 	// check the status code
 	if response.StatusCode != http.StatusOK {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6a3346e3-115e-4c72-bc0f-ee14d7f15c43", "ShareASale.com is not responding.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6a3346e3-115e-4c72-bc0f-ee14d7f15c43", "ShareASale.com is not responding when attempting to send affiliate sales.")
 	}
 
 	defer response.Body.Close()

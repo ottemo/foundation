@@ -11,12 +11,12 @@ const (
 
 	ConstConfigPathShareASale           = "general.shareasale"
 	ConstConfigPathShareASaleEnabled    = "general.shareasale.enabled"
-	ConstConfigPathShareASaleURL        = "general.shareasale.base_url"
 	ConstConfigPathShareASaleMerchantID = "general.shareasale.merchant_id"
 )
 
 // AffiliateSale is a struct to hold a single affiliate order for Share A Sale promotions
 type AffiliateSale struct {
-	SubTotal float64 `json:"subtotal"`
-	OrderNo  string  `json:"order_no"`
+	SubTotal   float64
+	OrderNo    string
+	MerchantID string
 }
