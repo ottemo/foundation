@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -171,7 +172,18 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 	case "taxes":
 		arrayValue := utils.InterfaceToArray(value)
 		it.Taxes = make([]order.StructTaxRate, 0)
+
 		for _, arrayItem := range arrayValue {
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
+				taxRate := order.StructTaxRate{
+					Name:   priceAdjustment.Label,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Taxes = append(it.Taxes, taxRate)
+				continue
+			}
+
 			mapValue := utils.InterfaceToMap(arrayItem)
 			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
 				taxRate := order.StructTaxRate{
@@ -188,7 +200,19 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 	case "discounts":
 		arrayValue := utils.InterfaceToArray(value)
 		it.Discounts = make([]order.StructDiscount, 0)
+
 		for _, arrayItem := range arrayValue {
+
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
+				discount := order.StructDiscount{
+					Name:   priceAdjustment.Label,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Discounts = append(it.Discounts, discount)
+				continue
+			}
+
 			mapValue := utils.InterfaceToMap(arrayItem)
 			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
 				discount := order.StructDiscount{

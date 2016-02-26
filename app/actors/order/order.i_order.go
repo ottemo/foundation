@@ -154,19 +154,20 @@ func (it *DefaultOrder) SetIncrementID(incrementID string) error {
 // CalculateTotals recalculates order Subtotal and GrandTotal
 func (it *DefaultOrder) CalculateTotals() error {
 
-	var subtotal float64
-	for _, orderItem := range it.Items {
-		subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
-	}
-	it.Subtotal = utils.RoundPrice(subtotal)
-
-	it.GrandTotal = utils.RoundPrice(it.Subtotal + it.ShippingAmount + it.TaxAmount - it.Discount)
+	it.GrandTotal = utils.RoundPrice(it.GetSubtotal() + it.GetShippingAmount() + it.GetTaxAmount() + it.GetDiscountAmount())
 
 	return nil
 }
 
 // GetSubtotal returns subtotal of order
 func (it *DefaultOrder) GetSubtotal() float64 {
+	if it.Subtotal == 0 {
+		var subtotal float64
+		for _, orderItem := range it.Items {
+			subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
+		}
+		it.Subtotal = utils.RoundPrice(subtotal)
+	}
 	return it.Subtotal
 }
 

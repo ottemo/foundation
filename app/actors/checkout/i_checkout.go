@@ -197,14 +197,12 @@ func (it *DefaultCheckout) GetSession() api.InterfaceSession {
 
 // GetTaxAmount returns total amount of taxes for current checkout
 func (it *DefaultCheckout) GetTaxAmount() float64 {
-
 	return it.GetItemSpecificTotal(0, checkout.ConstLabelTax)
 }
 
 // GetDiscountAmount returns total amount of discounts applied for current checkout
 func (it *DefaultCheckout) GetDiscountAmount() float64 {
-
-	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount)
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount) + it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
 }
 
 // GetPriceAdjustments collects price adjustments applied for current checkout
@@ -229,12 +227,17 @@ func (it *DefaultCheckout) GetTaxes() []checkout.StructPriceAdjustment {
 // GetDiscounts collects discounts applied for current checkout
 func (it *DefaultCheckout) GetDiscounts() []checkout.StructPriceAdjustment {
 
-	return it.GetPriceAdjustments(checkout.ConstLabelDiscount)
+	// currently we will include GC to discount
+	result := it.GetPriceAdjustments(checkout.ConstLabelDiscount)
+	for _, giftCardPA := range it.GetPriceAdjustments(checkout.ConstLabelGiftCard) {
+		result = append(result, giftCardPA)
+	}
+
+	return result
 }
 
 // GetSubtotal returns subtotal total for current checkout
 func (it *DefaultCheckout) GetSubtotal() float64 {
-
 	return it.GetItemSpecificTotal(0, checkout.ConstLabelSubtotal)
 }
 
@@ -249,7 +252,6 @@ func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
 
 // GetShippingAmount returns shipping price for current checkout
 func (it *DefaultCheckout) GetShippingAmount() float64 {
-
 	return it.GetItemSpecificTotal(0, checkout.ConstLabelShipping)
 }
 
@@ -298,9 +300,8 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 func (it *DefaultCheckout) getItemTotals(idx interface{}) map[string]float64 {
 	index := utils.InterfaceToInt(idx)
 
-	// in this case we don't started calculation process so it will be excuted
+	// in this case we don't started calculation process so it will be executed first
 	if it.calculationDetailTotals == nil {
-		it.calculationDetailTotals = make(map[int]map[string]float64)
 		it.CalculateAmount(0)
 	}
 
@@ -344,7 +345,7 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 	if priceAdjustment.Code == "" {
 		return
 	}
-
+	var totalPriceAdjustmentAmount float64
 	// main part is per items apply (we will handle Amount only if there was no per item value)
 	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
 		amount := priceAdjustment.Amount
@@ -360,6 +361,7 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 		// affecting grand total of a cart
 		it.applyAmount(0, checkout.ConstLabelGrandTotal, amount)
+		totalPriceAdjustmentAmount += utils.RoundPrice(amount)
 
 		// cart details show amount was applied by Types
 		for _, label := range priceAdjustment.Types {
@@ -387,6 +389,7 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 			// adding amount to grand total of current item and full cart
 			it.applyAmount(index, checkout.ConstLabelGrandTotal, amount)
+			totalPriceAdjustmentAmount += utils.RoundPrice(amount)
 
 			for _, label := range priceAdjustment.Types {
 				if label != checkout.ConstLabelGrandTotal {
@@ -396,6 +399,8 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		}
 
 	}
+
+	priceAdjustment.Amount = totalPriceAdjustmentAmount
 	it.priceAdjustments = append(it.priceAdjustments, priceAdjustment)
 }
 
@@ -481,13 +486,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		}
 
 		it.calculateFlag = false
-		fmt.Println(it.calculationDetailTotals)
 	}
 
 	return it.calculateAmount
 }
 
-// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
+// GetGrandTotal returns grand total for current checkout
 func (it *DefaultCheckout) GetGrandTotal() float64 {
 	return it.CalculateAmount(0)
 }
@@ -649,6 +653,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
 	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
 	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetName()
+	paymentInfo["gift_cards_charged_amount"] = it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
 	checkoutOrder.Set("payment_info", paymentInfo)
 
 	discounts := it.GetDiscounts()
@@ -661,7 +666,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	checkoutOrder.Set("tax_amount", taxAmount)
 	checkoutOrder.Set("taxes", taxes)
 
-	checkoutOrder.Set("shipping_amount", it.GetShippingRate().Price)
+	checkoutOrder.Set("shipping_amount", it.GetShippingAmount())
 
 	// remove order items, and add new from current cart with new description
 	for index := range checkoutOrder.GetItems() {

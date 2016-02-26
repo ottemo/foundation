@@ -335,6 +335,9 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 // included is image path, model object and the image name.
 func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error) {
 	mediaSet := make(map[string]string)
+	if mediaName == "" {
+		return mediaSet, nil
+	}
 
 	path, err := it.GetMediaPath(model, objID, mediaType)
 	if err != nil {

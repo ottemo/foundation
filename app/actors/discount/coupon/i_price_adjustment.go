@@ -230,7 +230,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 							priceAdjustment.PerItem[index] = utils.RoundPrice(priceAdjustment.PerItem[index] + amount)
 							priceAdjustment.Label = updateLabel(priceAdjustment.Label, biggestAppliedDiscount)
-
+							priceAdjustments[biggestAppliedDiscount.Code] = priceAdjustment
 						} else {
 							couponPriorityValue += float64(0.000001)
 							priceAdjustments[biggestAppliedDiscount.Code] = checkout.StructPriceAdjustment{

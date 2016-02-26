@@ -93,12 +93,12 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 
 	if shippingRate := currentCheckout.GetShippingRate(); shippingRate != nil {
 		result["shipping_rate"] = shippingRate
-		result["shipping_amount"] = shippingRate.Price
 	}
 
+	result["grandtotal"] = currentCheckout.GetGrandTotal()
 	result["subtotal"] = currentCheckout.GetSubtotal()
 
-	result["grandtotal"] = currentCheckout.GetGrandTotal()
+	result["shipping_amount"] = currentCheckout.GetShippingAmount()
 
 	result["tax_amount"] = currentCheckout.GetTaxAmount()
 	result["taxes"] = currentCheckout.GetTaxes()
