@@ -44,7 +44,7 @@ func (it *DefaultTax) CalculateTax(currentCheckout checkout.InterfaceCheckout) [
 		state := shippingAddress.GetState()
 		zip := shippingAddress.GetZipCode()
 
-		taxableAmount := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount()
+		taxableAmount := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount() - currentCheckout.GetDiscountAmount()
 
 		// event which allows to change and/or track taxable cart amount before tax calculation
 		eventData := map[string]interface{}{"tax": it, "checkout": currentCheckout, "amount": taxableAmount}
