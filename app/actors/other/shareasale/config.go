@@ -1,14 +1,8 @@
 package shareasale
 
-import (
-	"fmt"
-
-	"github.com/ottemo/foundation/env"
-)
+import "github.com/ottemo/foundation/env"
 
 func setupConfig() error {
-
-	fmt.Println("Initializing shareasale module")
 
 	config := env.GetConfig()
 	if config == nil {
@@ -21,7 +15,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
-		Label:       "Share A Sale",
+		Label:       "ShareASale",
 		Description: "Share A Sale Settings",
 		Image:       "",
 	}, nil)

@@ -65,10 +65,13 @@ func sendSale(sale *AffiliateSale) error {
 	var url string
 
 	// construct the url
-	url = fmt.Sprintf("https://shareasale.com/sale.cfm?amount=%s&tracking=%s&transtype=SALE&merchantID=%s", sale.SubTotal, sale.SubTotal, sale.MerchantID)
+	url = fmt.Sprintf("https://shareasale.com/sale.cfm?amount=%.2f&tracking=%s&transtype=SALE&merchantID=%s", sale.SubTotal, sale.OrderNo, sale.MerchantID)
+	fmt.Println("ShareASale Tracking url: " + url)
 
 	// send tracking info
 	response, err := http.Get(url)
+	fmt.Printf("Response Code: %v\n", response.StatusCode)
+	fmt.Printf("Response Header: %+v\n", response.Header)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
