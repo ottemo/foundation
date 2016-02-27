@@ -1,8 +1,15 @@
 package shareasale
 
-import "github.com/ottemo/foundation/env"
+import (
+	"fmt"
+
+	"github.com/ottemo/foundation/env"
+)
 
 func setupConfig() error {
+
+	fmt.Println("Initializing shareasale module")
+
 	config := env.GetConfig()
 	if config == nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring ShareASale module")
@@ -52,4 +59,6 @@ func setupConfig() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+
+	return nil
 }

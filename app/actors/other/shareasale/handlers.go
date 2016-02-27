@@ -19,20 +19,20 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	// inpsect the order
 	var checkoutOrder order.InterfaceOrder
 	if eventItem, present := eventData["order"]; present {
-		if typedItem, ok := eventItem.(Order.InterfaceOrder); ok {
+		if typedItem, ok := eventItem.(order.InterfaceOrder); ok {
 			checkoutOrder = typedItem
 		}
 	}
 
 	if checkoutOrder != nil {
-		aSale := createAffiliateSale(checkoutOrder)
+		aSale, _ := createAffiliateSale(checkoutOrder)
 		go sendSale(aSale)
 	}
 
 	return true
 }
 
-func createAffiliateSale(order order.InterfaceOrder) (AffiliateSale, error) {
+func createAffiliateSale(order order.InterfaceOrder) (*AffiliateSale, error) {
 
 	var merchantID string
 	var grandTotal, taxes, shipping, discount float64
@@ -55,11 +55,11 @@ func createAffiliateSale(order order.InterfaceOrder) (AffiliateSale, error) {
 	// order number
 	aSale.OrderNo = utils.InterfaceToString(order.Get("_id"))
 
-	return aSale, nil
+	return &aSale, nil
 }
 
 // sendSale is to send tracking information to Share A Sale
-func sendSale(sale AffiliateSale) error {
+func sendSale(sale *AffiliateSale) error {
 
 	var err error
 	var url string
@@ -68,7 +68,7 @@ func sendSale(sale AffiliateSale) error {
 	url = fmt.Sprintf("https://shareasale.com/sale.cfm?amount=%s&tracking=%s&transtype=SALE&merchantID=%s", sale.SubTotal, sale.SubTotal, sale.MerchantID)
 
 	// send tracking info
-	response, err := http.GET(url)
+	response, err := http.Get(url)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
