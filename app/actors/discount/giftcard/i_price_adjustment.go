@@ -75,11 +75,11 @@ func (it *DefaultGiftcard) Calculate(checkoutInstance checkout.InterfaceCheckout
 				if giftCardAmount > 0 {
 					result = append(result, checkout.StructPriceAdjustment{
 						Code:      utils.InterfaceToString(giftCard["code"]),
-						Label:     utils.InterfaceToString(giftCard["name"]),
+						Name:      utils.InterfaceToString(giftCard["name"]),
 						Amount:    giftCardAmount * -1,
 						IsPercent: false,
 						Priority:  priorityValue,
-						Types:     []string{checkout.ConstLabelGiftCard},
+						Labels:    []string{checkout.ConstLabelGiftCard},
 					})
 					priorityValue += float64(0.0001)
 				}

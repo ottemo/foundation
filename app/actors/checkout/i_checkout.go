@@ -207,10 +207,11 @@ func (it *DefaultCheckout) GetDiscountAmount() float64 {
 
 // GetPriceAdjustments collects price adjustments applied for current checkout
 func (it *DefaultCheckout) GetPriceAdjustments(label string) []checkout.StructPriceAdjustment {
+	it.GetItemSpecificTotal(0, label) // this function will do initial calculation of checkout if it wasn't done
 	var result []checkout.StructPriceAdjustment
 
 	for _, priceAdjustment := range it.priceAdjustments {
-		if label == "" || utils.IsInListStr(label, priceAdjustment.Types) {
+		if label == "" || utils.IsInListStr(label, priceAdjustment.Labels) {
 			result = append(result, priceAdjustment)
 		}
 	}
@@ -261,11 +262,11 @@ func (it *DefaultCheckout) calculateSubtotal() checkout.StructPriceAdjustment {
 	items := it.GetItems()
 	result := checkout.StructPriceAdjustment{
 		Code:      checkout.ConstLabelSubtotal,
-		Label:     checkout.ConstLabelSubtotal,
+		Name:      checkout.ConstLabelSubtotal,
 		Amount:    0,
 		IsPercent: false,
 		Priority:  checkout.ConstCalculateTargetSubtotal,
-		Types:     []string{checkout.ConstLabelSubtotal},
+		Labels:    []string{checkout.ConstLabelSubtotal},
 		PerItem:   map[string]float64{},
 	}
 
@@ -284,11 +285,11 @@ func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
 	if shippingRate := it.GetShippingRate(); shippingRate != nil {
 		return checkout.StructPriceAdjustment{
 			Code:      shippingRate.Code,
-			Label:     shippingRate.Name,
+			Name:      shippingRate.Name,
 			Amount:    shippingRate.Price,
 			IsPercent: false,
 			Priority:  checkout.ConstCalculateTargetShipping,
-			Types:     []string{checkout.ConstLabelShipping},
+			Labels:    []string{checkout.ConstLabelShipping},
 			PerItem:   nil,
 		}
 	}
@@ -364,7 +365,7 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		totalPriceAdjustmentAmount += utils.RoundPrice(amount)
 
 		// cart details show amount was applied by Types
-		for _, label := range priceAdjustment.Types {
+		for _, label := range priceAdjustment.Labels {
 			if label != checkout.ConstLabelGrandTotal {
 				it.applyAmount(0, label, amount)
 			}
@@ -391,7 +392,7 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 			it.applyAmount(index, checkout.ConstLabelGrandTotal, amount)
 			totalPriceAdjustmentAmount += utils.RoundPrice(amount)
 
-			for _, label := range priceAdjustment.Types {
+			for _, label := range priceAdjustment.Labels {
 				if label != checkout.ConstLabelGrandTotal {
 					it.applyAmount(index, label, amount)
 				}
@@ -484,6 +485,13 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 				searchMode = true
 			}
 		}
+
+		infoDetails := map[string]interface{}{}
+		for index, details := range it.calculationDetailTotals {
+			infoDetails[utils.InterfaceToString(index)] = details
+		}
+
+		it.SetInfo("calculation", infoDetails)
 
 		it.calculateFlag = false
 	}

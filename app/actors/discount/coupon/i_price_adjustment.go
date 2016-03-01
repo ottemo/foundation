@@ -112,7 +112,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 				// add discount object for every product id that it can affect
 				applicableDiscount := discount{
 					Code:     utils.InterfaceToString(discountCoupon["code"]),
-					Label:    utils.InterfaceToString(discountCoupon["name"]),
+					Name:     utils.InterfaceToString(discountCoupon["name"]),
 					Amount:   utils.InterfaceToFloat64(discountCoupon["amount"]),
 					Percents: utils.InterfaceToFloat64(discountCoupon["percent"]),
 					Qty:      utils.InterfaceToInt(discountCoupon["usage_qty"]),
@@ -127,11 +127,11 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 					// TODO: this part should be moved in calculate phase to priority 2.2
 					currentPriceAdjustment := checkout.StructPriceAdjustment{
 						Code:      applicableDiscount.Code,
-						Label:     getLabel(applicableDiscount),
+						Name:      applicableDiscount.Name,
 						Amount:    applicableDiscount.Percents * -1,
 						IsPercent: true,
 						Priority:  couponPriorityValue + float64(0.001),
-						Types:     []string{checkout.ConstLabelDiscount},
+						Labels:    []string{checkout.ConstLabelDiscount},
 						PerItem:   nil,
 					}
 
@@ -229,17 +229,17 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 						// add this amount to already existing PA (with the same coupon code) or creating new
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 							priceAdjustment.PerItem[index] = utils.RoundPrice(priceAdjustment.PerItem[index] + amount)
-							priceAdjustment.Label = updateLabel(priceAdjustment.Label, biggestAppliedDiscount)
+							//							priceAdjustment.Name = updateLabel(priceAdjustment.Name, biggestAppliedDiscount)
 							priceAdjustments[biggestAppliedDiscount.Code] = priceAdjustment
 						} else {
 							couponPriorityValue += float64(0.000001)
 							priceAdjustments[biggestAppliedDiscount.Code] = checkout.StructPriceAdjustment{
 								Code:      biggestAppliedDiscount.Code,
-								Label:     getLabel(biggestAppliedDiscount),
+								Name:      biggestAppliedDiscount.Name,
 								Amount:    0,
 								IsPercent: false,
 								Priority:  couponPriorityValue,
-								Types:     []string{checkout.ConstLabelDiscount},
+								Labels:    []string{checkout.ConstLabelDiscount},
 								PerItem: map[string]float64{
 									index: amount,
 								},
@@ -352,7 +352,7 @@ func isValidEnd(end interface{}) bool {
 // example 'name |20%x3&15$x3|'
 func getLabel(discount discount) string {
 
-	result := discount.Label
+	result := discount.Name
 	qty := utils.InterfaceToString(discount.Qty)
 	flag := false
 

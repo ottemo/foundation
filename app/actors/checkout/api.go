@@ -105,17 +105,14 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
 	result["discounts"] = currentCheckout.GetDiscounts()
-	result["priceAdjustments"] = currentCheckout.GetPriceAdjustments("")
 
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})
 
-	if currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID)); currentVisitorID == "" {
-		for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
-			// prevent from showing cc values in info
-			if key != "cc" {
-				infoMap[key] = value
-			}
+	for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
+		// prevent from showing cc values in info
+		if key != "cc" {
+			infoMap[key] = value
 		}
 	}
 

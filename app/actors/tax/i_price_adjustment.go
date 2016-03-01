@@ -27,11 +27,11 @@ func processRecords(name string, records []map[string]interface{}, result []chec
 	for _, record := range records {
 		taxRate := checkout.StructPriceAdjustment{
 			Code:      utils.InterfaceToString(record["code"]),
-			Label:     name,
+			Name:      name,
 			Amount:    utils.InterfaceToFloat64(record["rate"]),
 			IsPercent: true,
 			Priority:  priority,
-			Types:     []string{checkout.ConstLabelTax},
+			Labels:    []string{checkout.ConstLabelTax},
 			PerItem:   nil,
 		}
 

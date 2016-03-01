@@ -27,7 +27,7 @@ var usedCoupons map[string][]string
 
 type discount struct {
 	Code     string
-	Label    string
+	Name     string
 	Total    float64
 	Amount   float64
 	Percents float64

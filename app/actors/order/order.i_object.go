@@ -176,7 +176,7 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 		for _, arrayItem := range arrayValue {
 			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
 				taxRate := order.StructTaxRate{
-					Name:   priceAdjustment.Label,
+					Name:   priceAdjustment.Name,
 					Code:   priceAdjustment.Code,
 					Amount: priceAdjustment.Amount}
 
@@ -205,7 +205,7 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
 				discount := order.StructDiscount{
-					Name:   priceAdjustment.Label,
+					Name:   priceAdjustment.Name,
 					Code:   priceAdjustment.Code,
 					Amount: priceAdjustment.Amount}
 
