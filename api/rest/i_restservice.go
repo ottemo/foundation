@@ -121,6 +121,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 		// request contains POST text
 		case strings.Contains(contentType, "text/plain"):
+			fallthrough
 		default:
 			var body []byte
 
