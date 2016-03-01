@@ -2,6 +2,7 @@ package env
 
 import (
 	"errors"
+
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -37,10 +38,10 @@ func LogError(err error) {
 	}
 }
 
-// LogMessage is a Log function short form for info messages in default storage
-func LogMessage(message string) {
+// LogEvent is a Log function short form for info messages in default storage
+func LogEvent(f LogFields, eventName string) {
 	if logger := GetLogger(); logger != nil {
-		logger.LogMessage(message)
+		logger.LogEvent(f, eventName)
 	}
 }
 

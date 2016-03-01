@@ -1,12 +1,17 @@
 package logger
 
 import (
-	"github.com/ottemo/foundation/env"
 	"os"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus/formatters/logstash"
+	"github.com/ottemo/foundation/env"
 )
 
 // init makes package self-initialization routine
 func init() {
+	log.SetFormatter(&logstash.LogstashFormatter{Type: "ottemo_api"})
+
 	instance := new(DefaultLogger)
 	var _ env.InterfaceLogger = instance
 

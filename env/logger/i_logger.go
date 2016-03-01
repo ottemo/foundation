@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -37,17 +38,14 @@ func (it *DefaultLogger) LogError(err error) {
 	}
 }
 
-// LogToStorage logs info type message to specific storage
-func (it *DefaultLogger) LogToStorage(storage string, msg string) {
-	it.Log(storage, env.ConstLogPrefixInfo, msg)
-}
+// LogEvent Saves log details out to a file for logstash consumption
+func (it *DefaultLogger) LogEvent(fields env.LogFields, eventName string) {
+	f, err := os.OpenFile(baseDirectory+"events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		it.LogError(err)
+	}
+	defer f.Close()
 
-// LogWithPrefix logs prefixed message to default storage
-func (it *DefaultLogger) LogWithPrefix(prefix string, msg string) {
-	it.Log(defaultLogFile, prefix, msg)
-}
-
-// LogMessage logs info message to default storage
-func (it *DefaultLogger) LogMessage(msg string) {
-	it.Log(defaultLogFile, env.ConstLogPrefixInfo, msg)
+	log.SetOutput(f)
+	log.WithFields(log.Fields(fields)).Info(eventName)
 }
