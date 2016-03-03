@@ -134,6 +134,22 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 	case "description":
 		it.Description = utils.InterfaceToString(value)
 
+	case "product_ids":
+		savedPids := []string{}
+
+		for _, pid := range value.([]interface{}) {
+			pidS := pid.(string)
+			_, err := product.LoadProductByID(pidS)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			savedPids = append(savedPids, pidS)
+		}
+
+		it.ProductIds = savedPids
+
+	// @DEPRECATED
 	case "products":
 		switch typedValue := value.(type) {
 
