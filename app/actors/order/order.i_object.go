@@ -169,37 +169,68 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 		it.GrandTotal = utils.InterfaceToFloat64(value)
 
 	case "taxes":
-		arrayValue := utils.InterfaceToArray(value)
 		it.Taxes = make([]order.StructTaxRate, 0)
+
+		arrayValue := utils.InterfaceToArray(value)
 		for _, arrayItem := range arrayValue {
 			mapValue := utils.InterfaceToMap(arrayItem)
+			taxRate := order.StructTaxRate{}
+
+			// Coming from the db
+			if utils.StrKeysInMap(mapValue, "name", "code", "amount") {
+				taxRate = order.StructTaxRate{
+					Name:   utils.InterfaceToString(mapValue["name"]),
+					Code:   utils.InterfaceToString(mapValue["code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["amount"]),
+				}
+			}
+
+			// Coming from a struct
 			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
-				taxRate := order.StructTaxRate{
+				taxRate = order.StructTaxRate{
 					Name:   utils.InterfaceToString(mapValue["Name"]),
 					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
-
-				if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
-					it.Taxes = append(it.Taxes, taxRate)
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"]),
 				}
+			}
+
+			// if we have data then append
+			if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
+				it.Taxes = append(it.Taxes, taxRate)
 			}
 		}
 
 	case "discounts":
-		arrayValue := utils.InterfaceToArray(value)
 		it.Discounts = make([]order.StructDiscount, 0)
+
+		arrayValue := utils.InterfaceToArray(value)
 		for _, arrayItem := range arrayValue {
 			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
-				discount := order.StructDiscount{
-					Name:   utils.InterfaceToString(mapValue["Name"]),
-					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
+			discount := order.StructDiscount{}
 
-				if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
-					it.Discounts = append(it.Discounts, discount)
+			// Coming from the db
+			if utils.StrKeysInMap(mapValue, "name", "code", "amount") {
+				discount = order.StructDiscount{
+					Name:   utils.InterfaceToString(mapValue["name"]),
+					Code:   utils.InterfaceToString(mapValue["code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["amount"]),
 				}
 			}
+
+			// Coming from a struct
+			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+				discount = order.StructDiscount{
+					Name:   utils.InterfaceToString(mapValue["Name"]),
+					Code:   utils.InterfaceToString(mapValue["Code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"]),
+				}
+			}
+
+			// If we have any data then append
+			if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
+				it.Discounts = append(it.Discounts, discount)
+			}
+
 		}
 
 	case "created_at":
