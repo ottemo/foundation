@@ -32,6 +32,8 @@ func setupAPI() error {
 	service.GET("category/:categoryID/layers", APIGetCategoryLayers)
 
 	service.GET("category/:categoryID/products", APIGetCategoryProducts)
+
+	// @DEPRECATED
 	service.POST("category/:categoryID/product/:productID", APIAddProductToCategory)
 	service.DELETE("category/:categoryID/product/:productID", APIRemoveProductFromCategory)
 
