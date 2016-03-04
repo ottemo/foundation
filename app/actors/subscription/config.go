@@ -113,6 +113,38 @@ provider, please create new subscription using valid credit card.`,
 		return env.ErrorDispatch(err)
 	}
 
+	// Cancellation email subject
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        subscription.ConstConfigPathSubscriptionCancelEmailSubject,
+		Value:       "Subscription cancellation",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     "",
+		Label:       "Cancellation Email: Subject",
+		Description: "",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Cancellation email body
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        subscription.ConstConfigPathSubscriptionCancelEmailTemplate,
+		Value:       "Your subscription has been canceled",
+		Type:        env.ConstConfigTypeText,
+		Editor:      "multiline_text",
+		Options:     "",
+		Label:       "Cancellation Email: Body",
+		Description: "",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionStockEmailTemplate,
 		Value:       "Subscription failure due to out of stock items.",

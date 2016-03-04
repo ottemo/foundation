@@ -1,8 +1,10 @@
 package env
 
 import (
-	"github.com/ottemo/foundation/utils"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/ottemo/foundation/utils"
 )
 
 // Package global constants
@@ -92,11 +94,10 @@ type InterfaceLogger interface {
 	Log(storage string, prefix string, message string)
 
 	LogError(err error)
-	LogMessage(message string)
-
-	LogToStorage(storage string, message string)
-	LogWithPrefix(prefix string, message string)
+	LogEvent(f LogFields, eventName string)
 }
+
+type LogFields logrus.Fields
 
 // InterfaceIniConfig is an interface to startup configuration predefined values service
 type InterfaceIniConfig interface {

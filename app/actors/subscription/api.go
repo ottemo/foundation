@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
@@ -183,5 +184,38 @@ func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// Send cancellation emails
+	isCancelled := requestedStatus == subscription.ConstSubscriptionStatusCanceled
+	if isCancelled {
+		sendCancellationEmail(subscriptionInstance)
+	}
+
 	return "ok", subscriptionInstance.Save()
+}
+
+func sendCancellationEmail(subscriptionItem subscription.InterfaceSubscription) {
+	email := utils.InterfaceToString(subscriptionItem.GetCustomerEmail())
+	subject, body := getEmailInfo(subscriptionItem)
+	app.SendMail(email, subject, body)
+}
+
+func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, string) {
+	subject := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionCancelEmailSubject))
+
+	siteVariables := map[string]interface{}{
+		"Url": app.GetStorefrontURL(""),
+	}
+
+	templateVariables := map[string]interface{}{
+		"Subscription": subscriptionItem.ToHashMap(),
+		"Site":         siteVariables,
+	}
+
+	body := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionCancelEmailTemplate))
+	body, err := utils.TextTemplate(body, templateVariables)
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	return subject, body
 }

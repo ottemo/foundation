@@ -19,11 +19,17 @@ const (
 
 	ConstConfigPathSubscriptionProducts = "general.subscription.products"
 
+	// Admin: Out of stock email
+	ConstConfigPathSubscriptionStockEmailSubject  = "general.subscription.emailStockSubject"
+	ConstConfigPathSubscriptionStockEmailTemplate = "general.subscription.emailStockTemplate"
+
+	// Inusfficient funds email
 	ConstConfigPathSubscriptionEmailSubject  = "general.subscription.emailSubject"
 	ConstConfigPathSubscriptionEmailTemplate = "general.subscription.emailTemplate"
 
-	ConstConfigPathSubscriptionStockEmailSubject  = "general.subscription.emailStockSubject"
-	ConstConfigPathSubscriptionStockEmailTemplate = "general.subscription.emailStockTemplate"
+	// Cancellation Email
+	ConstConfigPathSubscriptionCancelEmailSubject  = "general.subscription.emailCancelSubject"
+	ConstConfigPathSubscriptionCancelEmailTemplate = "general.subscription.emailCancelTemplate"
 
 	ConstSubscriptionLogStorage = "subscription.log"
 

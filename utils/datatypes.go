@@ -152,7 +152,7 @@ func DataTypeParse(typeName string) DataType {
 		result.Name = ConstDataTypeInteger
 		result.IsKnown = true
 
-	case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double"):
+	case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double", "decimal", "money"):
 		result.Name = ConstDataTypeFloat
 		result.IsKnown = true
 

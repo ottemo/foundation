@@ -1,12 +1,13 @@
 package subscription
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"strings"
-	"time"
 )
 
 // Function for every hour check subscriptions to place an order

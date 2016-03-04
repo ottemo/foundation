@@ -1,13 +1,14 @@
 package subscription
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // GetCustomerEmail returns subscriber e-mail
