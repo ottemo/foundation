@@ -28,23 +28,24 @@ var (
 	SessionService api.InterfaceSessionService
 )
 
-// DefaultSessionService is a basic implementer of InterfaceSessionService declared in
-// "github.com/ottemo/foundation/api" package
-type DefaultSessionService struct {
-	Sessions      map[string]*DefaultSessionContainer // active sessions set
-	sessionsMutex sync.RWMutex                        // syncronization on Sessions variable modification
-
-	// package supports "memcache", "redis", "memsession" build tags to change default (filesystem) storage location
-	Storage InterfaceServiceStorage
-}
-
 // DefaultSession is a default implementer of InterfaceSession declared in
 // "github.com/ottemo/foundation/api" package
 type DefaultSession string
 
+// DefaultSessionService is a basic implementer of InterfaceSessionService declared in
+// "github.com/ottemo/foundation/api" package
+type DefaultSessionService struct {
+	sessions map[string]*DefaultSessionContainer // active sessions set
+	mutex    sync.Mutex                          // synchronization on Sessions variable modification
+
+	// package supports "memcache", "redis", "memsession" build tags to change default (filesystem) storage location
+	storage InterfaceServiceStorage
+}
+
 // DefaultSessionContainer is a structure to hold session related information
 type DefaultSessionContainer struct {
-	id        DefaultSession
+	id        string
+	mutex     sync.Mutex
 	Data      map[string]interface{}
 	UpdatedAt time.Time
 }
