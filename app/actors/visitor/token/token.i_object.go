@@ -1,10 +1,11 @@
 package token
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // Get will return the requested attribute when provided a string representation of the attribute
@@ -70,6 +71,9 @@ func (it *DefaultVisitorCard) Set(attribute string, value interface{}) error {
 
 	case "token_updated":
 		it.TokenUpdated = utils.InterfaceToTime(value)
+
+	case "created_at":
+		it.CreatedAt = utils.InterfaceToTime(value)
 	}
 	return nil
 }

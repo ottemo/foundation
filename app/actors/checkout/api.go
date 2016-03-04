@@ -471,6 +471,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
 	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
 	creditCardInfo["token_updated"] = time.Now()
+	creditCardInfo["created_at"] = time.Now()
 
 	// filling new instance with request provided data
 	// TODO: check other places with such code:
