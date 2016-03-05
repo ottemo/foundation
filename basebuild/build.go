@@ -47,5 +47,6 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/other/grouping"   // products grouping extension
 	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"  // MailChimp integration
 	_ "github.com/ottemo/foundation/app/actors/other/quickbooks" // QuickBooks exporting extension
+	_ "github.com/ottemo/foundation/app/actors/other/shareasale" // Share A Sale integration
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot" // TrustPilot integration
 )
