@@ -1,8 +1,13 @@
 package mongo
 
 import (
-	"gopkg.in/mgo.v2"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"net"
 	"time"
+
+	"gopkg.in/mgo.v2"
 
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -21,6 +26,11 @@ func (it *DBEngine) Startup() error {
 
 	var DBUri = "mongodb://localhost:27017/ottemo"
 	var DBName = "ottemo"
+	var UseSSL = false
+	var Cert = ""
+
+	// root certificates
+	roots := x509.NewCertPool()
 
 	if iniConfig := env.GetIniConfig(); iniConfig != nil {
 		if iniValue := iniConfig.GetValue("mongodb.uri", DBUri); iniValue != "" {
@@ -30,15 +40,41 @@ func (it *DBEngine) Startup() error {
 		if iniValue := iniConfig.GetValue("mongodb.db", DBName); iniValue != "" {
 			DBName = iniValue
 		}
+		if iniValue := iniConfig.GetValue("ssl.cert", Cert); iniValue != "" {
+			UseSSL = true
+			Cert = iniValue
+			if ca, err := ioutil.ReadFile(Cert); err == nil {
+				roots.AppendCertsFromPEM(ca)
+			}
+		}
 	}
 
-	session, err := mgo.Dial(DBUri)
-	if err != nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "9cbde45b-17c0-4a45-b0cb-c261db261458", "Can't connect to DBEngine")
+	// create session with db
+	if !UseSSL {
+		// use plain text
+		if session, err := mgo.Dial(DBUri); err == nil {
+			it.session = session
+		} else {
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "9cbde45b-17c0-4a45-b0cb-c261db261458", "Can't connect to DBEngine")
+		}
+	} else {
+		tlsConfig := &tls.Config{}
+		tlsConfig.RootCAs = roots
+
+		// make tls connection
+		dialInfo, _ := mgo.ParseURL(DBUri)
+		dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+			conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+			return conn, err
+		}
+		if session, err := mgo.DialWithInfo(dialInfo); err == nil {
+			it.session = session
+		} else {
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "948fda13-9579-4407-a22b-654ceda317c2", "Can't connect to DBEngine using SSL")
+		}
 	}
 
-	it.session = session
-	it.database = session.DB(DBName)
+	it.database = it.session.DB(DBName)
 	it.DBName = DBName
 	it.collections = map[string]bool{}
 
@@ -64,7 +100,7 @@ func (it *DBEngine) Startup() error {
 		}
 	}
 
-	err = db.OnDatabaseStart()
+	err := db.OnDatabaseStart()
 
 	return err
 }

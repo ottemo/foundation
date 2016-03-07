@@ -17,17 +17,24 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("checkout", APIGetCheckout)
-	service.GET("checkout/payment/methods", APIGetPaymentMethods)
-	service.GET("checkout/shipping/methods", APIGetShippingMethods)
+
+	// Addresses
 	service.PUT("checkout/shipping/address", APISetShippingAddress)
 	service.PUT("checkout/billing/address", APISetBillingAddress)
-	service.PUT("checkout/payment/method/:method", APISetPaymentMethod)
-	service.PUT("checkout/shipping/method/:method/:rate", APISetShippingMethod)
-	service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 
+	// Shipping method
+	service.GET("checkout/shipping/methods", APIGetShippingMethods)
+	service.PUT("checkout/shipping/method/:method/:rate", APISetShippingMethod)
+
+	// Payment method
+	service.GET("checkout/payment/methods", APIGetPaymentMethods)
+	service.PUT("checkout/payment/method/:method", APISetPaymentMethod)
+
+	// Finalize
 	service.PUT("checkout", APISetCheckoutInfo)
 	service.POST("checkout/submit", APISubmitCheckout)
 
+	// service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 	return nil
 }
 
@@ -661,18 +668,11 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
-	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
-	if specifiedCreditCard == nil {
-		specifiedCreditCard = currentCheckout.GetInfo("cc")
-	}
-
-	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
-	if specifiedCreditCard != nil {
-		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
+	// Now that checkout is about to submit we want to see if we can turn our cc info into a token
+	// if this errors out, it just means that the criteria wasn't met to create a token. Which is ok
+	specifiedCreditCard := currentCheckout.GetInfo("cc")
+	creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
+	if err == nil {
 		currentCheckout.SetInfo("cc", creditCard)
 	}
 
