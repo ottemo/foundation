@@ -49,20 +49,17 @@ func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, erro
 	var resultArray []map[string]interface{}
 
 	for url, count := range referrers {
-		resultArray = append(resultArray, map[string]interface{}{
+		result = append(resultArray, map[string]interface{}{
 			"url":   url,
 			"count": count,
 		})
-	}
 
-	resultArray = sortArrayOfMapByKey(resultArray, "count")
-
-	for _, value := range resultArray {
-		result = append(result, value)
 		if len(result) >= 20 {
 			break
 		}
 	}
+
+	result = utils.SortMapByKeys(result, "count", "url")
 
 	return result, nil
 }
@@ -506,7 +503,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
-	result = sortArrayOfMapByKey(result, "count")
+	result = utils.SortMapByKeys(result, "count", "name")
 
 	return result, nil
 }
