@@ -195,14 +195,6 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied in this cart.")
 	}
 
-	previousRedemptions := utils.InterfaceToStringArray(currentSession.Get(ConstSessionKeyPreviousRedemptions))
-
-	// check if coupon has already been used
-	if utils.IsInArray(couponCode, previousRedemptions) {
-		responseWriter.WriteHeader(http.StatusBadRequest)
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce50c9d3-5541-4235-bcb9-c1c8f7f7338e", "Coupon code, "+couponCode+" has already been applied in previous session.")
-	}
-
 	// load coupon for specified code
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
