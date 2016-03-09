@@ -26,6 +26,8 @@ const (
 
 	ConstErrorModule = "rts"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstBestsellerCount = 12 // number of bestsellers to return
 )
 
 // Package global variables

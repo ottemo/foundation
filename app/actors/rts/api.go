@@ -498,7 +498,8 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 		result = append(result, bestsellerItem)
 
-		if len(result) >= 10 {
+		// only return a max num of bestsellers
+		if len(result) >= ConstBestsellerCount {
 			break
 		}
 	}
