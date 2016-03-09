@@ -89,7 +89,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	var orderModel order.InterfaceOrder
 	var err error
 
-	if orderModel, err = getOrderID(context); err != nil {
+	if orderModel, err = loadOrder(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -112,7 +112,7 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 	var err error
 	var orderID string
 
-	if orderModel, err = getOrderID(context); err != nil {
+	if orderModel, err = loadOrder(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 	orderID = orderModel.GetID()
@@ -230,7 +230,7 @@ func APISendConfirmation(context api.InterfaceApplicationContext) (interface{}, 
 	var err error
 	var email, emailAddress, timeZone, giftCardSku string
 
-	if orderModel, err = getOrderID(context); err != nil {
+	if orderModel, err = loadOrder(context); err != nil {
 		return "failure", env.ErrorDispatch(err)
 	}
 
@@ -308,8 +308,8 @@ func APISendConfirmation(context api.InterfaceApplicationContext) (interface{}, 
 	return "success", nil
 }
 
-// getOrderID will load the order from the database
-func getOrderID(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
+// loadOrder will load the order from the database
+func loadOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
 
 	var orderID string
 	var orderModel order.InterfaceOrder
