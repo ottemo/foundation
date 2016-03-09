@@ -115,7 +115,6 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 	if orderModel, err = loadOrder(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	orderID = orderModel.GetID()
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -126,8 +125,6 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 		orderModel.Set(attribute, value)
 	}
 
-	// TODO: shouldn't need this
-	orderModel.SetID(orderID)
 	orderModel.Save()
 
 	return orderModel.ToHashMap(), nil
