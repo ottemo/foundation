@@ -413,8 +413,10 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 }
 
 // APIGetBestsellers returns information about bestsellers for some period
-// 	possible periods: "today", "yesterday", "week", "month"
+//     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	const bestsellerLimit = 12 // Limit on returned bestsellers
 	var result []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
@@ -474,7 +476,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// sort the products by count in descending order
-	prodSorted := utils.SortDownByCount(productsSold)
+	prodSorted := utils.SortDownByValue(productsSold)
 
 	// build out bestseller map
 	for _, bestSeller := range prodSorted {
@@ -503,8 +505,8 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 		result = append(result, bestsellerItem)
 
-		// only return a max num of bestsellers
-		if len(result) >= ConstBestsellerCount {
+		// limit on returned bestsellers
+		if len(result) >= bestsellerLimit {
 			break
 		}
 	}

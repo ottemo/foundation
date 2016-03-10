@@ -16,13 +16,13 @@ type mapSorter struct {
 	data []map[string]interface{}
 }
 
-// KeyValueSorter is a containter for key values
+// KeyValueSorter is a container for key values
 type KeyValueSorter struct {
 	Key   string
 	Value int
 }
 
-// KeyValueList is a container for KeyValueSorter
+// KeyValueList is a sort.Interface implementor for map[string]int
 type KeyValueList []KeyValueSorter
 
 // Len returns length of given slice
@@ -118,8 +118,8 @@ func SortMapByKeys(data []map[string]interface{}, keys ...string) []map[string]i
 	return sortable.data
 }
 
-// SortUpByCount will sort a map[string]int in ascending order
-func SortUpByCount(count map[string]int) KeyValueList {
+// SortUpByValue will sort a map[string]int in ascending order
+func SortUpByValue(count map[string]int) KeyValueList {
 	list := make(KeyValueList, len(count))
 	i := 0
 	for k, v := range count {
@@ -130,8 +130,8 @@ func SortUpByCount(count map[string]int) KeyValueList {
 	return list
 }
 
-// SortDownByCount will sort a map[string]int in descending order
-func SortDownByCount(count map[string]int) KeyValueList {
+// SortDownByValue will sort a map[string]int in descending order
+func SortDownByValue(count map[string]int) KeyValueList {
 	list := make(KeyValueList, len(count))
 	i := 0
 	for k, v := range count {
