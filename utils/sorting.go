@@ -16,6 +16,15 @@ type mapSorter struct {
 	data []map[string]interface{}
 }
 
+// KeyValueSorter is a containter for key values
+type KeyValueSorter struct {
+	Key   string
+	Value int
+}
+
+// KeyValueList is a container for KeyValueSorter
+type KeyValueList []KeyValueSorter
+
 // Len returns length of given slice
 func (it *funcSorter) Len() int {
 	return len(it.data)
@@ -26,6 +35,11 @@ func (it *mapSorter) Len() int {
 	return len(it.data)
 }
 
+// Len returns the length of Key Value List
+func (it KeyValueList) Len() int {
+	return len(it)
+}
+
 // Swap switches slice values between themselves
 func (it *funcSorter) Swap(i, j int) {
 	it.data[i], it.data[j] = it.data[j], it.data[i]
@@ -34,6 +48,11 @@ func (it *funcSorter) Swap(i, j int) {
 // Swap switches slice values between themselves
 func (it *mapSorter) Swap(i, j int) {
 	it.data[i], it.data[j] = it.data[j], it.data[i]
+}
+
+// Swap switches the values in the Key Value List
+func (it KeyValueList) Swap(i, j int) {
+	it[i], it[j] = it[j], it[i]
 }
 
 // Less compares slice values with a given function
@@ -80,6 +99,11 @@ func (it *mapSorter) Less(i, j int) bool {
 	return false
 }
 
+// Less compares the values
+func (it KeyValueList) Less(i, j int) bool {
+	return it[i].Value < it[j].Value
+}
+
 // SortByFunc sorts slice with a given comparator function
 func SortByFunc(data interface{}, less func(a, b interface{}) bool) []interface{} {
 	sortable := &funcSorter{data: InterfaceToArray(data), less: less}
@@ -90,6 +114,30 @@ func SortByFunc(data interface{}, less func(a, b interface{}) bool) []interface{
 // SortMapByKeys sorts given map by specified keys values
 func SortMapByKeys(data []map[string]interface{}, keys ...string) []map[string]interface{} {
 	sortable := &mapSorter{data: data, keys: keys}
-	sort.Sort(sortable)
+	sort.Sort(sort.Reverse(sortable))
 	return sortable.data
+}
+
+// SortUpByCount will sort a map[string]int in ascending order
+func SortUpByCount(count map[string]int) KeyValueList {
+	list := make(KeyValueList, len(count))
+	i := 0
+	for k, v := range count {
+		list[i] = KeyValueSorter{k, v}
+		i++
+	}
+	sort.Sort(list)
+	return list
+}
+
+// SortDownByCount will sort a map[string]int in descending order
+func SortDownByCount(count map[string]int) KeyValueList {
+	list := make(KeyValueList, len(count))
+	i := 0
+	for k, v := range count {
+		list[i] = KeyValueSorter{k, v}
+		i++
+	}
+	sort.Sort(sort.Reverse(list))
+	return list
 }

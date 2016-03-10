@@ -473,8 +473,13 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
 	}
 
-	for productID, count := range productsSold {
-		productID := utils.InterfaceToString(productID)
+	// sort the products by count in descending order
+	prodSorted := utils.SortDownByCount(productsSold)
+
+	//
+	for _, bestSeller := range prodSorted {
+		productID := bestSeller.Key
+		count := bestSeller.Value
 
 		productInstance, err := product.LoadProductByID(productID)
 		if err != nil {
@@ -503,8 +508,6 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 			break
 		}
 	}
-
-	result = utils.SortMapByKeys(result, "count", "name")
 
 	return result, nil
 }
