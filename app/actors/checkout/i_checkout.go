@@ -261,11 +261,12 @@ func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
 						var biggestAppliedDiscount checkout.StructDiscount
 						var biggestAppliedDiscountIndex int
 
+						// calculate discount amount for each line item
 						for index, productDiscount := range productDiscounts {
-							productDiscountableAmount := productDiscount.Amount
+							productDiscountableAmount := productDiscount.Amount * float64(productQty)
 
 							if productDiscount.IsPercent {
-								productDiscountableAmount = productPrice * productDiscount.Amount / 100
+								productDiscountableAmount = productPrice * float64(productQty) * productDiscount.Amount / 100
 							}
 
 							if biggestAppliedDiscount.Amount < productDiscountableAmount {

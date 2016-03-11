@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // GetVisitorAddressCollectionModel retrieves current InterfaceVisitorAddressCollection model implementation
@@ -143,8 +144,8 @@ func GetCurrentVisitorID(context api.InterfaceApplicationContext) string {
 
 // GetCurrentVisitor returns visitor for current session if registered or nil - for guest visitor
 func GetCurrentVisitor(context api.InterfaceApplicationContext) (InterfaceVisitor, error) {
-	sessionVisitorID, ok := context.GetSession().Get(ConstSessionKeyVisitorID).(string)
-	if !ok {
+	sessionVisitorID := utils.InterfaceToString(context.GetSession().Get(ConstSessionKeyVisitorID))
+	if sessionVisitorID == "" {
 		if app.ConstAllowGuest {
 			visitorInstance, err := GetVisitorModel()
 			if err != nil {

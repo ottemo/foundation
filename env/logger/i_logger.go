@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -37,17 +38,40 @@ func (it *DefaultLogger) LogError(err error) {
 	}
 }
 
-// LogToStorage logs info type message to specific storage
-func (it *DefaultLogger) LogToStorage(storage string, msg string) {
-	it.Log(storage, env.ConstLogPrefixInfo, msg)
+// LogEvent Saves log details out to a file for logstash consumption
+func (it *DefaultLogger) LogEvent(fields env.LogFields, eventName string) {
+	f, err := os.OpenFile(baseDirectory+"events.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Close()
+
+	msg, err := logstashFormatter(fields, eventName)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	f.Write(msg)
 }
 
-// LogWithPrefix logs prefixed message to default storage
-func (it *DefaultLogger) LogWithPrefix(prefix string, msg string) {
-	it.Log(defaultLogFile, prefix, msg)
-}
+func logstashFormatter(fields env.LogFields, eventName string) ([]byte, error) {
+	// Attach the message
+	fields["message"] = eventName
 
-// LogMessage logs info message to default storage
-func (it *DefaultLogger) LogMessage(msg string) {
-	it.Log(defaultLogFile, env.ConstLogPrefixInfo, msg)
+	// Logstash required fields
+	fields["@version"] = 1
+	fields["@timestamp"] = time.Now().Format(time.RFC3339)
+
+	// default to info level
+	_, ok := fields["level"]
+	if !ok {
+		fields["level"] = "INFO"
+	}
+
+	serialized, err := json.Marshal(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(serialized, '\n'), nil
 }
