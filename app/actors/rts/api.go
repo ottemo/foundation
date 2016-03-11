@@ -474,7 +474,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// sort the products by count in descending order
-	prodSorted := utils.SortDownByCount(productsSold)
+	prodSorted := utils.SortByInt(productsSold, true)
 
 	// build out bestseller map
 	for _, bestSeller := range prodSorted {
