@@ -371,14 +371,14 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Group:      "General",
 			Editors:    "selector",
 			Options: strings.Join([]string{
-				order.ConstOrderStatusDeclined,
 				order.ConstOrderStatusNew,
 				order.ConstOrderStatusPending,
 				order.ConstOrderStatusProcessed,
+				order.ConstOrderStatusDeclined,
 				order.ConstOrderStatusCompleted,
 				order.ConstOrderStatusCancelled,
 			}, ","),
-			Default: "new",
+			Default: order.ConstOrderStatusNew,
 		},
 		models.StructAttributeInfo{
 			Model:      order.ConstModelNameOrder,
