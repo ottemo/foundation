@@ -49,20 +49,17 @@ func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, erro
 	var resultArray []map[string]interface{}
 
 	for url, count := range referrers {
-		resultArray = append(resultArray, map[string]interface{}{
+		result = append(resultArray, map[string]interface{}{
 			"url":   url,
 			"count": count,
 		})
-	}
 
-	resultArray = sortArrayOfMapByKey(resultArray, "count")
-
-	for _, value := range resultArray {
-		result = append(result, value)
 		if len(result) >= 20 {
 			break
 		}
 	}
+
+	result = utils.SortMapByKeys(result, true, "count", "url")
 
 	return result, nil
 }
@@ -416,8 +413,10 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 }
 
 // APIGetBestsellers returns information about bestsellers for some period
-// 	possible periods: "today", "yesterday", "week", "month"
+//     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	const bestsellerLimit = 12 // Limit on returned bestsellers
 	var result []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
@@ -476,8 +475,13 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
 	}
 
-	for productID, count := range productsSold {
-		productID := utils.InterfaceToString(productID)
+	// sort the products by count in descending order
+	prodSorted := utils.SortByInt(productsSold, true)
+
+	// build out bestseller map
+	for _, bestSeller := range prodSorted {
+		productID := bestSeller.Key
+		count := bestSeller.Value
 
 		productInstance, err := product.LoadProductByID(productID)
 		if err != nil {
@@ -501,12 +505,11 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 		result = append(result, bestsellerItem)
 
-		if len(result) >= 10 {
+		// limit on returned bestsellers
+		if len(result) >= bestsellerLimit {
 			break
 		}
 	}
-
-	result = sortArrayOfMapByKey(result, "count")
 
 	return result, nil
 }

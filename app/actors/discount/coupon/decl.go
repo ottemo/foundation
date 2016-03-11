@@ -9,7 +9,6 @@ import (
 // Package global constants
 const (
 	ConstSessionKeyCurrentRedemptions  = "current_redemption_codes"
-	ConstSessionKeyPreviousRedemptions = "previous_redemption_codes"
 	ConstCollectionNameCouponDiscounts = "coupon_discounts"
 
 	ConstConfigPathDiscounts             = "general.discounts"

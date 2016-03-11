@@ -16,34 +16,36 @@ func setupConfig() error {
 	validateNewRules := func(newRulesValues interface{}) (interface{}, error) {
 
 		// taking rules as array
-		rules, err := utils.DecodeJSONToArray(newRulesValues)
-		if err != nil {
-			return nil, err
-		}
-
-		// checking rules array
-		for _, rule := range rules {
-			ruleItem := utils.InterfaceToMap(rule)
-
-			if !utils.KeysInMapAndNotBlank(ruleItem, "group", "into") {
-				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7912df05-8ea7-451e-83bd-78e9e201378e", "keys 'group' and 'into' should be not null")
+		if newRulesValues != "" {
+			rules, err := utils.DecodeJSONToArray(newRulesValues)
+			if err != nil {
+				return nil, err
 			}
 
-			// checking product specification arrays
-			for _, groupingValue := range []interface{}{ruleItem["group"], ruleItem["into"]} {
-				groupingElement := utils.InterfaceToArray(groupingValue)
+			// checking rules array
+			for _, rule := range rules {
+				ruleItem := utils.InterfaceToMap(rule)
 
-				for _, productValue := range groupingElement {
-					productElement := utils.InterfaceToMap(productValue)
+				if !utils.KeysInMapAndNotBlank(ruleItem, "group", "into") {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7912df05-8ea7-451e-83bd-78e9e201378e", "keys 'group' and 'into' should be not null")
+				}
 
-					if !utils.KeysInMapAndNotBlank(productElement, "pid", "qty") {
-						return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6b9deedd-39d1-46b0-9157-9b8d96bda858", "keys 'qty' and 'pid' should be not null")
+				// checking product specification arrays
+				for _, groupingValue := range []interface{}{ruleItem["group"], ruleItem["into"]} {
+					groupingElement := utils.InterfaceToArray(groupingValue)
+
+					for _, productValue := range groupingElement {
+						productElement := utils.InterfaceToMap(productValue)
+
+						if !utils.KeysInMapAndNotBlank(productElement, "pid", "qty") {
+							return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6b9deedd-39d1-46b0-9157-9b8d96bda858", "keys 'qty' and 'pid' should be not null")
+						}
 					}
 				}
 			}
-		}
 
-		currentRules = rules
+			currentRules = rules
+		}
 
 		return newRulesValues, nil
 	}
@@ -52,16 +54,18 @@ func setupConfig() error {
 	//----------------------------
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:    ConstGroupingConfigPath,
-		Value:   `[]`,
+		Value:   ``,
 		Type:    env.ConstConfigTypeText,
 		Editor:  "multiline_text",
 		Options: "",
 		Label:   "Rules for grouping items",
-		Description: `products grouping rules, pattern:
-   [
-   {"group": [{"pid": "id1", "qty": 1 }, ...],
-    "into":  [{"pid": "id2", "qty": 1, "options": {"color": "red"}, ...]
-   }, ... ]`,
+		Description: `Rules must be in JSON format:
+[
+	{
+		"group": [{ "pid": "id1", "qty": 1 }, ...],
+		"into":  [{ "pid": "id2", "qty": 1, "options": {"color": "red"}, ...]
+	}, ...
+]`,
 		Image: "",
 	}, env.FuncConfigValueValidator(validateNewRules))
 
