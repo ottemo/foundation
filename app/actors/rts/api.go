@@ -59,7 +59,7 @@ func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, erro
 		}
 	}
 
-	result = utils.SortMapByKeys(result, "count", "url")
+	result = utils.SortMapByKeys(result, true, "count", "url")
 
 	return result, nil
 }
