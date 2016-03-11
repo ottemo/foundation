@@ -30,8 +30,6 @@ func setupAPI() error {
 	service.DELETE("order/:orderID", APIDeleteOrder)
 	service.POST("order/:orderID/sendConfirmation", APISendConfirmation)
 
-	// service.POST("order", APICreateOrder)
-
 	// Public
 	service.GET("visit/orders", APIGetVisitOrders)
 	service.GET("visit/order/:orderID", APIGetVisitOrder)
@@ -158,7 +156,7 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 	return "ok", nil
 }
 
-// APIGetOrder returns current visitor order details for specified order
+// APIGetVisitOrder returns current visitor order details for specified order
 //   - orderID should be specified in arguments
 func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
@@ -184,7 +182,7 @@ func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, err
 	return result, nil
 }
 
-// APIGetOrders returns list of orders related to current visitor
+// APIGetVisitOrders returns list of orders related to current visitor
 func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// list operation
@@ -226,6 +224,11 @@ func APISendConfirmation(context api.InterfaceApplicationContext) (interface{}, 
 	var orderItems []map[string]interface{}
 	var err error
 	var email, emailAddress, timeZone, giftCardSku string
+
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	if orderModel, err = loadOrder(context); err != nil {
 		return "failure", env.ErrorDispatch(err)
@@ -311,11 +314,6 @@ func loadOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, e
 	var orderID string
 	var orderModel order.InterfaceOrder
 	var err error
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	// load orderID
 	if orderID = context.GetRequestArgument("orderID"); orderID == "" {
