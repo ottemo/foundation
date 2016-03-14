@@ -470,16 +470,9 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	productsSold := make(map[string]int)
-	// productsSold := []map[string]interface{}
 
 	for _, item := range collectionRecords {
 		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
-		// productsSold = append(productsSold,
-		// map[string]inteface{} {
-		// 	"id": utils.InterfaceToString(item["product_id"]),
-		// 	"count": utils.InterfaceToString(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])],
-		// 	"count": utils.InterfaceToString(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])],
-		// })
 	}
 
 	for id, count := range productsSold {
