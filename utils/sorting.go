@@ -16,15 +16,6 @@ type mapSorter struct {
 	data []map[string]interface{}
 }
 
-// KeyValueSorter is a container for key values
-type KeyValueSorter struct {
-	Key   string
-	Value int
-}
-
-// KeyValueList is a sort.Interface implementor for map[string]int
-type KeyValueList []KeyValueSorter
-
 // Len returns length of given slice
 func (it *funcSorter) Len() int {
 	return len(it.data)
@@ -35,11 +26,6 @@ func (it *mapSorter) Len() int {
 	return len(it.data)
 }
 
-// Len returns the length of Key Value List
-func (it KeyValueList) Len() int {
-	return len(it)
-}
-
 // Swap switches slice values between themselves
 func (it *funcSorter) Swap(i, j int) {
 	it.data[i], it.data[j] = it.data[j], it.data[i]
@@ -48,11 +34,6 @@ func (it *funcSorter) Swap(i, j int) {
 // Swap switches slice values between themselves
 func (it *mapSorter) Swap(i, j int) {
 	it.data[i], it.data[j] = it.data[j], it.data[i]
-}
-
-// Swap switches the values in the Key Value List
-func (it KeyValueList) Swap(i, j int) {
-	it[i], it[j] = it[j], it[i]
 }
 
 // Less compares slice values with a given function
@@ -128,22 +109,4 @@ func SortMapByKeys(data []map[string]interface{}, reverse bool, keys ...string) 
 		sort.Sort(sortable)
 	}
 	return sortable.data
-}
-
-// SortByInt will sort a map[string]int in ascending order
-// 	- to sort in ascending order pass reverse as false
-//      - to sort in descending order pass reverse as true
-func SortByInt(count map[string]int, reverse bool) KeyValueList {
-	list := make(KeyValueList, len(count))
-	i := 0
-	for k, v := range count {
-		list[i] = KeyValueSorter{k, v}
-		i++
-	}
-	if reverse {
-		sort.Sort(sort.Reverse(list))
-	} else {
-		sort.Sort(list)
-	}
-	return list
 }
