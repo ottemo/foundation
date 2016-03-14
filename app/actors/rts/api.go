@@ -470,20 +470,21 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	productsSold := make(map[string]int)
+	// productsSold := []map[string]interface{}
 
 	for _, item := range collectionRecords {
 		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
+		// productsSold = append(productsSold,
+		// map[string]inteface{} {
+		// 	"id": utils.InterfaceToString(item["product_id"]),
+		// 	"count": utils.InterfaceToString(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])],
+		// 	"count": utils.InterfaceToString(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])],
+		// })
 	}
 
-	// sort the products by count in descending order
-	prodSorted := utils.SortByInt(productsSold, true)
+	for id, count := range productsSold {
 
-	// build out bestseller map
-	for _, bestSeller := range prodSorted {
-		productID := bestSeller.Key
-		count := bestSeller.Value
-
-		productInstance, err := product.LoadProductByID(productID)
+		productInstance, err := product.LoadProductByID(id)
 		if err != nil {
 			continue
 		}
@@ -495,7 +496,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 		bestsellerItem := make(map[string]interface{})
 
-		bestsellerItem["pid"] = productID
+		bestsellerItem["pid"] = id
 		if productInstance.GetDefaultImage() != "" {
 			bestsellerItem["image"] = mediaPath + productInstance.GetDefaultImage()
 		}
@@ -509,7 +510,11 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		if len(result) >= bestsellerLimit {
 			break
 		}
+
 	}
+
+	// sort the products by count in descending order
+	result = utils.SortMapByKeys(result, true, "count", "id")
 
 	return result, nil
 }
