@@ -75,38 +75,3 @@ func TestSortByFuncDescend(t *testing.T) {
 		t.Error("Unexpected sort by func result: ", result)
 	}
 }
-
-// TestSortMapByIntAscend validates sort by map[string]int implementation in ascending order
-func TestSortMapByIntAscend(t *testing.T) {
-	data := map[string]int{
-		"Blue":   2,
-		"red":    7,
-		"Green":  21,
-		"yellow": 5,
-		"black":  0,
-		"Violet": 15,
-	}
-
-	result := SortByInt(data, false)
-	if result[1].Value != 2 || result[3].Value != 7 || result[5].Key != "Green" {
-		t.Error("Unexpected sort by func result: ", result)
-	}
-
-}
-
-// TestSortMapByIntDescend validates sort by map[string]int implementation in descending order
-func TestSortMapByIntDescend(t *testing.T) {
-	data := map[string]int{
-		"Blue":   2,
-		"red":    7,
-		"Green":  21,
-		"yellow": 5,
-		"black":  0,
-		"Violet": 15,
-	}
-
-	result := SortByInt(data, true)
-	if result[1].Value != 15 || result[3].Key != "yellow" || result[5].Key != "black" {
-		t.Error("Unexpected sort by func result: ", result)
-	}
-}
