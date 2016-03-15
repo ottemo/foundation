@@ -58,7 +58,7 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "description":
 		return it.GetDescription()
 
-	case "product_ids", "producs":
+	case "product_ids", "products":
 		return it.GetProductIds()
 	}
 
