@@ -58,7 +58,7 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "description":
 		return it.GetDescription()
 
-	case "product_ids":
+	case "product_ids", "producs":
 		return it.GetProductIds()
 	}
 
@@ -134,7 +134,7 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 	case "description":
 		it.Description = utils.InterfaceToString(value)
 
-	case "products":
+	case "products", "product_ids":
 		switch typedValue := value.(type) {
 
 		case []interface{}:
