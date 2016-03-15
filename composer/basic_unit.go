@@ -1,7 +1,8 @@
 package composer
+
 import (
-	"strings"
 	"sort"
+	"strings"
 )
 
 func (it *BasicUnit) GetName() string {
@@ -27,7 +28,7 @@ func (it *BasicUnit) ValidateType(item string, inType string) bool {
 func (it *BasicUnit) ListItems() []string {
 	var result []string
 
-	for itemName, _ := range it.Type {
+	for itemName := range it.Type {
 		result = append(result, itemName)
 	}
 

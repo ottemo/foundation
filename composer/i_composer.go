@@ -1,12 +1,42 @@
 package composer
 
 import (
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 	"regexp"
 	"strings"
-	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/app/models"
 )
+
+func (it *DefaultComposer) RegisterType(item InterfaceComposeType) error {
+	typeName := item.GetName()
+
+	if _, present := it.units[typeName]; !present {
+		it.types[typeName] = item
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "57d471d0-1fe0-40bf-999d-96ef803f62fa", "unit already registered")
+	}
+
+	return nil
+}
+
+// GetType returns information
+func (it *DefaultComposer) GetType(name string) InterfaceComposeType {
+	if item, present := it.types[name]; present {
+		return item
+	}
+	return nil
+}
+
+func (it *DefaultComposer) ListTypes() []InterfaceComposeType {
+	var result []InterfaceComposeType
+
+	for _, item := range it.types {
+		result = append(result, item)
+	}
+
+	return result
+}
 
 func (it *DefaultComposer) RegisterUnit(unit InterfaceComposeUnit) error {
 	unitName := unit.GetName()
@@ -31,7 +61,6 @@ func (it *DefaultComposer) UnRegisterUnit(unit InterfaceComposeUnit) error {
 
 	return nil
 }
-
 
 func (it *DefaultComposer) GetName() string {
 	return "DefaultComposer"
@@ -151,7 +180,7 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 				result = false
 			}
 
-		// case 2: in interface{} <- {...}
+			// case 2: in interface{} <- {...}
 		} else if mapRule, ok := ruleItem.(map[string]interface{}); ok {
 
 			for ruleKey, ruleValue := range mapRule {
@@ -174,7 +203,7 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 						result = false
 					}
 
-				// case 2.2: in map[string]interface{} <- {"key": value}
+					// case 2.2: in map[string]interface{} <- {"key": value}
 				} else if inAsMap, ok := in.(map[string]interface{}); ok {
 					if inValue, present := inAsMap[ruleKey]; present {
 						result, err = it.Check(inValue, ruleValue)
@@ -182,26 +211,34 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 						result = false
 					}
 
-				// case 2.3: in InterfaceObject <- {"key": value}
+					// case 2.3: in InterfaceObject <- {"key": value}
 				} else if inAsObject, ok := in.(models.InterfaceObject); ok {
 					result, err = it.Check(inAsObject.Get(ruleKey), ruleValue)
 
-				// case 2.4: in interface{} <- {"key": value}
+					// case 2.4: in interface{} <- {"key": value}
 				} else {
 					result = utils.Equals(in, ruleValue)
 				}
 
-				if err != nil { result = false }
-				if !result { break }
+				if err != nil {
+					result = false
+				}
+				if !result {
+					break
+				}
 			}
 
-		// case 3: in interface{} <- interface{}
+			// case 3: in interface{} <- interface{}
 		} else {
 			result = utils.Equals(in, rule)
 		}
 
-		if err != nil { result = false }
-		if !result { break }
+		if err != nil {
+			result = false
+		}
+		if !result {
+			break
+		}
 	}
 
 	// fmt.Printf("e: %v <- %v = %v, %v\n", in, rule, result, err)
