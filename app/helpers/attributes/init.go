@@ -7,11 +7,11 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	db.RegisterOnDatabaseStart(SetupDB)
+	db.RegisterOnDatabaseStart(setupDB)
 }
 
-// SetupDB prepares system database for package usage
-func SetupDB() error {
+// setupDB prepares database for a package
+func setupDB() error {
 
 	if collection, err := db.GetCollection("custom_attributes"); err == nil {
 		collection.AddColumn("model", db.ConstTypeVarchar, true)

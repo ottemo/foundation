@@ -22,16 +22,29 @@ const (
 
 // Package global variables
 var (
-	globalCustomAttributes      = map[string]map[string]models.StructAttributeInfo{}
-	globalCustomAttributesMutex sync.RWMutex
+	modelCustomAttributes      = map[string]map[string]models.StructAttributeInfo{}
+	modelCustomAttributesMutex sync.Mutex
 )
 
-// CustomAttributes is a implementer of InterfaceCustomAttributes
+// CustomAttributes implements InterfaceCustomAttributes
+//
+// CustomAttributes type represents a set of attributes which could be modified (edited/added/removed) dynamically.
+// The implementation relays on InterfaceCollection which is used to store values and have ability to add/remove
+// columns on a fly.
 type CustomAttributes struct {
 	model      string
 	collection string
 
-	attributes map[string]models.StructAttributeInfo
+	info   map[string]models.StructAttributeInfo
+	values map[string]interface{}
+}
 
+// ExternalAttributes implements InterfaceExternalAttributes
+//
+// ExternalAttributes type represents a set of object attributes managed by "external" package (outside of implementor)
+// which supposing setters/getters delegation routines handled by this type.
+type ExternalAttributes struct {
+	model  string
+	info   map[string]models.StructAttributeInfo
 	values map[string]interface{}
 }

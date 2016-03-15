@@ -47,6 +47,12 @@ type InterfaceCustomAttributes interface {
 	EditAttribute(attributeName string, attributeValues StructAttributeInfo) error
 }
 
+// InterfaceExternalAttributes represents interface to access business layer implementation object external attributes
+type InterfaceExternalAttributes interface {
+	AddAttribute(newAttribute StructAttributeInfo, delegate interface{}) error
+	RemoveAttribute(attributeName string) error
+}
+
 // InterfaceMedia represents interface to access business layer implementation object assigned media resources
 type InterfaceMedia interface {
 	AddMedia(mediaType string, mediaName string, content []byte) error

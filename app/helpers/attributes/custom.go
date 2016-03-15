@@ -7,21 +7,20 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// Init initializes helper before usage
+// Init initializes helper instance before usage
 func (it *CustomAttributes) Init(model string, collection string) (*CustomAttributes, error) {
 	it.model = model
 	it.collection = collection
 	it.values = make(map[string]interface{})
 
-	globalCustomAttributesMutex.Lock()
+	modelCustomAttributesMutex.Lock()
 
-	_, present := globalCustomAttributes[model]
+	_, present := modelCustomAttributes[model]
 
 	if present {
-		it.attributes = globalCustomAttributes[model]
+		it.info = modelCustomAttributes[model]
 	} else {
-
-		it.attributes = make(map[string]models.StructAttributeInfo)
+		it.info = make(map[string]models.StructAttributeInfo)
 
 		// retrieving information from DB
 		//-------------------------------
@@ -74,20 +73,26 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 				}
 			}
 
-			it.attributes[attribute.Attribute] = attribute
+			it.info[attribute.Attribute] = attribute
 		}
 
-		globalCustomAttributes[it.model] = it.attributes
+		modelCustomAttributes[it.model] = it.info
 	}
 
-	globalCustomAttributesMutex.Unlock()
+	modelCustomAttributesMutex.Unlock()
 
 	return it, nil
 }
 
+
+// --------------------------------------------------------------------------------------------
+// InterfaceCustomAttributes implementation (package "github.com/ottemo/foundation/app/models")
+// --------------------------------------------------------------------------------------------
+
+
 // EditAttribute modifies custom attribute for collection
 func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
-	customAttribute, present := it.attributes[attributeName]
+	customAttribute, present := it.info[attributeName]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
@@ -140,7 +145,7 @@ func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues 
 			return err
 		}
 
-		it.attributes[attributeName] = customAttribute
+		it.info[attributeName] = customAttribute
 	}
 
 	return nil
@@ -149,7 +154,7 @@ func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues 
 // RemoveAttribute removes custom attribute from collection
 func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 
-	customAttribute, present := it.attributes[attributeName]
+	customAttribute, present := it.info[attributeName]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
@@ -169,9 +174,9 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "901ce41c-6802-4ecd-b654-93d96d34b361", "Can't remove attribute '"+attributeName+"' from collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
-	globalCustomAttributesMutex.Lock()
-	delete(globalCustomAttributes, it.model)
-	globalCustomAttributesMutex.Unlock()
+	modelCustomAttributesMutex.Lock()
+	delete(modelCustomAttributes, it.model)
+	modelCustomAttributesMutex.Unlock()
 
 	customAttributesCollection.AddFilter("model", "=", customAttribute.Model)
 	customAttributesCollection.AddFilter("attribute", "=", attributeName)
@@ -186,7 +191,7 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 // AddNewAttribute extends collection with new custom attribute
 func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
 
-	if _, present := it.attributes[newAttribute.Attribute]; present {
+	if _, present := it.info[newAttribute.Attribute]; present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "24aa5125-d8b3-4e55-b321-79eef3eeccb8", "There is already atribute '"+newAttribute.Attribute+"' for model '"+it.model+"'")
 	}
 
@@ -250,7 +255,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c11b43b-ec29-4e08-b614-7a8ec8345c9b", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
 	}
 
-	it.attributes[newAttribute.Attribute] = newAttribute
+	it.info[newAttribute.Attribute] = newAttribute
 
 	return env.ErrorDispatch(err)
 }
@@ -258,4 +263,46 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 // GetCustomAttributeCollectionName returns collection name you can use to fill CustomAttributes struct
 func (it *CustomAttributes) GetCustomAttributeCollectionName() string {
 	return it.collection
+}
+
+
+// ----------------------------------------------------------------------------------
+// InterfaceObject implementation (package "github.com/ottemo/foundation/app/models")
+// ----------------------------------------------------------------------------------
+
+
+// Get returns object attribute value or nil
+func (it *CustomAttributes) Get(attribute string) interface{} {
+	return it.values[attribute]
+}
+
+// Set sets attribute value to object or returns error
+func (it *CustomAttributes) Set(attribute string, value interface{}) error {
+	if _, present := it.info[attribute]; present {
+		it.values[attribute] = value
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "154b03ed-0e75-416d-890b-8775fcd74063", "attribute '"+attribute+"' invalid")
+	}
+
+	return nil
+}
+
+// GetAttributesInfo represents object as map[string]interface{}
+func (it *CustomAttributes) GetAttributesInfo() []models.StructAttributeInfo {
+	var info []models.StructAttributeInfo
+	for _, attribute := range it.info {
+		info = append(info, attribute)
+	}
+	return info
+}
+
+// FromHashMap represents object as map[string]interface{}
+func (it *CustomAttributes) FromHashMap(input map[string]interface{}) error {
+	it.values = input
+	return nil
+}
+
+// ToHashMap fills object attributes from map[string]interface{}
+func (it *CustomAttributes) ToHashMap() map[string]interface{} {
+	return it.values
 }
