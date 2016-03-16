@@ -38,21 +38,6 @@ type InterfaceListable interface {
 	GetCollection() InterfaceCollection
 }
 
-// InterfaceCustomAttributes represents interface to access business layer implementation object custom attributes
-type InterfaceCustomAttributes interface {
-	GetCustomAttributeCollectionName() string
-
-	AddNewAttribute(newAttribute StructAttributeInfo) error
-	RemoveAttribute(attributeName string) error
-	EditAttribute(attributeName string, attributeValues StructAttributeInfo) error
-}
-
-// InterfaceExternalAttributes represents interface to access business layer implementation object external attributes
-type InterfaceExternalAttributes interface {
-	AddAttribute(newAttribute StructAttributeInfo, delegate interface{}) error
-	RemoveAttribute(attributeName string) error
-}
-
 // InterfaceMedia represents interface to access business layer implementation object assigned media resources
 type InterfaceMedia interface {
 	AddMedia(mediaType string, mediaName string, content []byte) error
@@ -76,4 +61,19 @@ type InterfaceCollection interface {
 	ListFilterReset() error
 
 	ListLimit(offset int, limit int) error
+}
+
+// InterfaceCustomAttributes represents interface to access business layer implementation object custom attributes
+type InterfaceCustomAttributes interface {
+	GetCustomAttributeCollectionName() string
+
+	AddNewAttribute(newAttribute StructAttributeInfo) error
+	RemoveAttribute(attributeName string) error
+	EditAttribute(attributeName string, attributeValues StructAttributeInfo) error
+}
+
+// InterfaceExternalAttributes represents interface to access business layer implementation object external attributes
+type InterfaceExternalAttributes interface {
+	AddExternalAttribute(newAttribute StructAttributeInfo, delegate InterfaceObject) error
+	RemoveExternalAttribute(attributeName string) error
 }

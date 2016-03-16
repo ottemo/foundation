@@ -8,7 +8,7 @@ import (
 )
 
 // Init initializes helper instance before usage
-func (it *CustomAttributes) Init(model string, collection string) (*CustomAttributes, error) {
+func (it *ModelCustomAttributes) Init(model string, collection string) (*ModelCustomAttributes, error) {
 	it.model = model
 	it.collection = collection
 	it.values = make(map[string]interface{})
@@ -91,7 +91,7 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 
 
 // EditAttribute modifies custom attribute for collection
-func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
+func (it *ModelCustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
 	customAttribute, present := it.info[attributeName]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
@@ -152,7 +152,7 @@ func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues 
 }
 
 // RemoveAttribute removes custom attribute from collection
-func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
+func (it *ModelCustomAttributes) RemoveAttribute(attributeName string) error {
 
 	customAttribute, present := it.info[attributeName]
 	if !present {
@@ -189,7 +189,7 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 }
 
 // AddNewAttribute extends collection with new custom attribute
-func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
+func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
 
 	if _, present := it.info[newAttribute.Attribute]; present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "24aa5125-d8b3-4e55-b321-79eef3eeccb8", "There is already atribute '"+newAttribute.Attribute+"' for model '"+it.model+"'")
@@ -260,8 +260,8 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	return env.ErrorDispatch(err)
 }
 
-// GetCustomAttributeCollectionName returns collection name you can use to fill CustomAttributes struct
-func (it *CustomAttributes) GetCustomAttributeCollectionName() string {
+// GetCustomAttributeCollectionName returns collection name you can use to fill ModelCustomAttributes struct
+func (it *ModelCustomAttributes) GetCustomAttributeCollectionName() string {
 	return it.collection
 }
 
@@ -272,12 +272,12 @@ func (it *CustomAttributes) GetCustomAttributeCollectionName() string {
 
 
 // Get returns object attribute value or nil
-func (it *CustomAttributes) Get(attribute string) interface{} {
+func (it *ModelCustomAttributes) Get(attribute string) interface{} {
 	return it.values[attribute]
 }
 
 // Set sets attribute value to object or returns error
-func (it *CustomAttributes) Set(attribute string, value interface{}) error {
+func (it *ModelCustomAttributes) Set(attribute string, value interface{}) error {
 	if _, present := it.info[attribute]; present {
 		it.values[attribute] = value
 	} else {
@@ -288,7 +288,7 @@ func (it *CustomAttributes) Set(attribute string, value interface{}) error {
 }
 
 // GetAttributesInfo represents object as map[string]interface{}
-func (it *CustomAttributes) GetAttributesInfo() []models.StructAttributeInfo {
+func (it *ModelCustomAttributes) GetAttributesInfo() []models.StructAttributeInfo {
 	var info []models.StructAttributeInfo
 	for _, attribute := range it.info {
 		info = append(info, attribute)
@@ -297,12 +297,12 @@ func (it *CustomAttributes) GetAttributesInfo() []models.StructAttributeInfo {
 }
 
 // FromHashMap represents object as map[string]interface{}
-func (it *CustomAttributes) FromHashMap(input map[string]interface{}) error {
+func (it *ModelCustomAttributes) FromHashMap(input map[string]interface{}) error {
 	it.values = input
 	return nil
 }
 
 // ToHashMap fills object attributes from map[string]interface{}
-func (it *CustomAttributes) ToHashMap() map[string]interface{} {
+func (it *ModelCustomAttributes) ToHashMap() map[string]interface{} {
 	return it.values
 }
