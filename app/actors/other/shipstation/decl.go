@@ -10,3 +10,10 @@ const (
 )
 
 // struct goes here
+type Order struct {
+	Name string `xml:"name"`
+}
+
+type Orders struct {
+	Orders []Order `xml:"Order"`
+}
