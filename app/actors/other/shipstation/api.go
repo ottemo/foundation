@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -75,29 +76,49 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	context.SetResponseContentType("text/xml")
 
-	const dateFormat = "01/02/2006 15:04"
+	const parseDateFormat = "01/02/2006 15:04"
 
-	action := context.GetRequestArgument("action") // only expecting "export"
-	page := context.GetRequestArgument("page")
+	// action := context.GetRequestArgument("action") // only expecting "export"
+	// page := context.GetRequestArgument("page")
+	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	startArg := context.GetRequestArgument("start_date")
 	endArg := context.GetRequestArgument("end_date")
+	startDate, _ := time.Parse(parseDateFormat, startArg)
+	endDate, _ := time.Parse(parseDateFormat, endArg)
 
-	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
-	startDate, startErr := time.Parse(dateFormat, startArg)
-	endDate, endErr := time.Parse(dateFormat, endArg)
+	fmt.Println(startDate, endDate)
 
-	if page != "" {
-		//TODO: LOG THAT WE ARE SURPRISED
+	// Get the orders
+	orderCollectionModel, _ := order.GetOrderCollectionModel()
+	// orderCollectionModel.ListFilterAdd("updated_at", ">=", startDate)
+	// orderCollectionModel.ListFilterAdd("updated_at", "<", endDate)
+	orderCollectionModel.ListLimit(0, 5)
+	orders := orderCollectionModel.ListOrders()
+
+	// Assemble our response
+	response := &Orders{}
+	for _, order := range orders {
+		responseOrder := buildItem(order)
+		response.Orders = append(response.Orders, responseOrder)
 	}
 
-	if startErr != nil || endErr != nil {
-		//TODO: ERROR WITH INPUTS
+	return response, nil
+}
+
+func buildItem(order order.InterfaceOrder) Order {
+	const outputDateFormat = "01/02/2006 15:04"
+	createdAt := utils.InterfaceToTime(order.Get("created_at"))
+	updatedAt := utils.InterfaceToTime(order.Get("updated_at"))
+
+	item := Order{
+		OrderId:        order.GetID(),
+		OrderNumber:    order.GetID(),
+		OrderDate:      createdAt.Format(outputDateFormat),
+		OrderStatus:    order.GetStatus(),
+		LastModified:   updatedAt.Format(outputDateFormat),
+		OrderTotal:     order.GetSubtotal(),
+		ShippingAmount: order.GetShippingAmount(),
 	}
 
-	fmt.Println(action, startDate, endDate)
-
-	orders := &Orders{}
-	orders.Orders = append(orders.Orders, Order{"Adam"})
-
-	return orders, nil
+	return item
 }
