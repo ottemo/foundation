@@ -2,7 +2,9 @@ package shipstation
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
@@ -73,24 +75,26 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	context.SetResponseContentType("text/xml")
 
-	// const dateFormat = "01/02/2006 15:04"
+	const dateFormat = "01/02/2006 15:04"
 
-	// action := context.GetRequestArgument("action")
-	// page := context.GetRequestArgument("page")
-	// startArg := context.GetRequestArgument("start_date")
-	// endArg := context.GetRequestArgument("end_date")
+	action := context.GetRequestArgument("action") // only expecting "export"
+	page := context.GetRequestArgument("page")
+	startArg := context.GetRequestArgument("start_date")
+	endArg := context.GetRequestArgument("end_date")
 
-	// // Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
-	// startDate, startErr := time.Parse(dateFormat, startArg)
-	// endDate, endErr := time.Parse(dateFormat, endArg)
+	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
+	startDate, startErr := time.Parse(dateFormat, startArg)
+	endDate, endErr := time.Parse(dateFormat, endArg)
 
-	// if page != "" {
-	// 	//TODO: LOG THAT WE ARE SURPRISED
-	// }
+	if page != "" {
+		//TODO: LOG THAT WE ARE SURPRISED
+	}
 
-	// if startErr != nil || endErr != nil {
-	// 	//TODO: ERROR WITH INPUTS
-	// }
+	if startErr != nil || endErr != nil {
+		//TODO: ERROR WITH INPUTS
+	}
+
+	fmt.Println(action, startDate, endDate)
 
 	orders := &Orders{}
 	orders.Orders = append(orders.Orders, Order{"Adam"})
