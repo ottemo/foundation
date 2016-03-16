@@ -1,7 +1,9 @@
 package shipstation
 
 import (
+	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
@@ -11,13 +13,13 @@ import (
 func setupAPI() error {
 	service := api.GetRestService()
 
-	service.GET("shipstation", isEnabled(middleAuth(listOrders)))
+	service.GET("shipstation", isEnabled(basicAuth(listOrders)))
 	// service.POST("shipstation", updateShipmentStatus)
 
 	return nil
 }
 
-func isEnabled(handler api.FuncAPIHandler) api.FuncAPIHandler {
+func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 	return func(context api.InterfaceApplicationContext) (interface{}, error) {
 		isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathShipstationEnabled))
 
@@ -26,20 +28,42 @@ func isEnabled(handler api.FuncAPIHandler) api.FuncAPIHandler {
 			return "not enabled", nil
 		}
 
-		return handler(context)
+		return next(context)
 	}
 }
 
-func middleAuth(handler api.FuncAPIHandler) api.FuncAPIHandler {
+func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 	return func(context api.InterfaceApplicationContext) (interface{}, error) {
-		isAuthed := true //TODO: REAL LOGIC
 
-		if !isAuthed {
+		authHash := utils.InterfaceToString(context.GetRequestSetting("Authorization"))
+		username := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShipstationUsername))
+		password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShipstationPassword))
+
+		isAuthed := func(authHash string, username string, password string) bool {
+			hashParts := strings.SplitN(authHash, " ", 2)
+			if len(hashParts) != 2 {
+				return false
+			}
+
+			b, err := base64.StdEncoding.DecodeString(hashParts[1])
+			if err != nil {
+				return false
+			}
+
+			pair := strings.SplitN(string(b), ":", 2)
+			if len(pair) != 2 {
+				return false
+			}
+
+			return pair[0] == username && pair[1] == password
+		}
+
+		if !isAuthed(authHash, username, password) {
 			// TODO: update status?
 			return "not authed", nil
 		}
 
-		return handler(context)
+		return next(context)
 	}
 }
 
