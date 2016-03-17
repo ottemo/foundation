@@ -357,6 +357,8 @@ func (it *GenericProduct) Get(attribute string) interface{} {
 func (it *GenericProduct) Set(attribute string, value interface{}) error {
 	lowerCaseAttribute := strings.ToLower(attribute)
 
+	it.ModelCustomAttributes.Set(attribute, value)
+
 	switch lowerCaseAttribute {
 	case "_id", "id":
 		it.id = utils.InterfaceToString(value)

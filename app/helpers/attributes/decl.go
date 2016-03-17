@@ -22,10 +22,14 @@ const (
 
 // Package global variables
 var (
-	modelCustomAttributes      = make(map[string]*ModelCustomAttributes)
+	// modelCustomAttributes is a per model attribute information storage (map[model][attribute])
+	modelCustomAttributes      = make(map[string]map[string]models.StructAttributeInfo)
+	// modelCustomAttributesMutex is a synchronization for modelCustomAttributes
 	modelCustomAttributesMutex sync.Mutex
 
-	modelExternalAttributes      = make(map[string]*ModelCustomAttributes)
+	// modelExternalAttributes is a per model attribute information storage (map[model][attribute])
+	modelExternalAttributes      = make(map[string]*ModelExternalAttributes)
+	// modelExternalAttributesMutex is a synchronization for modelCustomAttributes
 	modelExternalAttributesMutex sync.Mutex
 )
 
@@ -35,9 +39,11 @@ var (
 type ModelCustomAttributes struct {
 	model      string
 	collection string
-	mutex      sync.Mutex
 
-	info   map[string]models.StructAttributeInfo
+	info      map[string]models.StructAttributeInfo
+	infoMutex sync.Mutex
+
+	instance   interface{}
 	values map[string]interface{}
 }
 
@@ -45,9 +51,12 @@ type ModelCustomAttributes struct {
 // which supposing at least InerfaceObject methods delegation, but also could delegate InterfaceStorable if the methods
 // are implemented in delegate instance.
 type ModelExternalAttributes struct {
-	model  string
-	mutex  sync.Mutex
+	model     string
 
-	info   map[string]models.StructAttributeInfo
-	values map[string]models.InterfaceObject
+	// the info is a shared field, so it must by synchronized
+	info  map[string]models.StructAttributeInfo
+	mutex sync.Mutex
+
+	instance  interface{}
+	delegates map[string]interface{}
 }

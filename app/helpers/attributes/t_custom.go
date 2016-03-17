@@ -168,7 +168,7 @@ func (it *ModelCustomAttributes) RemoveAttribute(attributeName string) error {
 	if err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "861e9bf1-44ac-418b-8249-85613451fc9c", "Can't get attribute '"+customAttribute.Attribute+"' collection '"+customAttribute.Collection+"': "+err.Error())
 	}
-
+	
 	err = modelCollection.RemoveColumn(attributeName)
 	if err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "901ce41c-6802-4ecd-b654-93d96d34b361", "Can't remove attribute '"+attributeName+"' from collection '"+customAttribute.Collection+"': "+err.Error())
