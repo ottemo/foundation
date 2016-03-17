@@ -107,18 +107,52 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 func buildItem(order order.InterfaceOrder) Order {
 	const outputDateFormat = "01/02/2006 15:04"
+
+	// Base Order Details
 	createdAt := utils.InterfaceToTime(order.Get("created_at"))
 	updatedAt := utils.InterfaceToTime(order.Get("updated_at"))
 
-	item := Order{
+	orderDetails := Order{
 		OrderId:        order.GetID(),
 		OrderNumber:    order.GetID(),
 		OrderDate:      createdAt.Format(outputDateFormat),
 		OrderStatus:    order.GetStatus(),
 		LastModified:   updatedAt.Format(outputDateFormat),
-		OrderTotal:     order.GetSubtotal(),
+		OrderTotal:     order.GetSubtotal(), //TODO: DOUBLE CHECK THIS IS THE RIGHT ONE
 		ShippingAmount: order.GetShippingAmount(),
 	}
 
-	return item
+
+	// Customer Details
+	oShipAddress := order.GetShippingAddress()
+	oBillAddress := order.GetBillingAddress()
+
+	customer := Customer{}
+	customer.BillingAddress = BillingAddress{
+		Name: oBillAddress.GetFirstName() + " " + oBillAddress.GetLastName(),
+	}
+	customer.ShippingAddress = ShippingAddress{
+		Name:  oShipAddress.GetFirstName() + " " + oShipAddress.GetLastName(),
+		Address1: oShipAddress.GetAddressLine1(),
+		City: oShipAddress.GetCity(),
+		State: oShipAddress.GetState(),
+		Country: oShipAddress.GetCountry(),
+	}
+
+	orderDetails.Customer = customer
+
+
+	// Order Items
+	oItem := range order.GetItems() {
+		orderItem := OrderItem{
+			Sku: oItem.GetSku(),
+			Name: oItem.GetName(),
+			Quantity: oItem.GetQty(),
+			UnitPrice: oItem.GetPrice(),
+		}
+
+		orderDetails.Items = append(orderDetails.Items, orderItem)
+	}
+
+	return orderDetails
 }

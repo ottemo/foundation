@@ -22,8 +22,8 @@ type Order struct {
 	ShippingAmount float64
 
 	// Containers
-	// Customer Customer
-	// Items    []OrderItem
+	Customer Customer
+	Items    []OrderItem
 }
 
 type Customer struct {
