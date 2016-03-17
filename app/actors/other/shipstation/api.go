@@ -27,7 +27,8 @@ func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 
 		if !isEnabled {
 			// TODO: update status?
-			return "not enabled", nil
+			// return "not enabled", nil
+			return next(context); //TODO: REMOVE
 		}
 
 		return next(context)
@@ -90,10 +91,10 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// Get the orders
 	orderCollectionModel, _ := order.GetOrderCollectionModel()
-	// orderCollectionModel.ListFilterAdd("updated_at", ">=", startDate)
-	// orderCollectionModel.ListFilterAdd("updated_at", "<", endDate)
-	orderCollectionModel.ListLimit(0, 5)
+	orderCollectionModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
+	orderCollectionModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
 	orders := orderCollectionModel.ListOrders()
+
 
 	// Assemble our response
 	response := &Orders{}
