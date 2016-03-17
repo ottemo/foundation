@@ -143,7 +143,7 @@ func buildItem(order order.InterfaceOrder) Order {
 
 
 	// Order Items
-	oItem := range order.GetItems() {
+	for _, oItem := range order.GetItems() {
 		orderItem := OrderItem{
 			Sku: oItem.GetSku(),
 			Name: oItem.GetName(),
