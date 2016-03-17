@@ -507,7 +507,8 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// sort the products by count in descending order
-	result = utils.SortMapByKeys(result, true, "count", "id")
+	descending := true
+	result = utils.SortMapByKeys(result, descending, "count", "name")
 
 	return result, nil
 }
