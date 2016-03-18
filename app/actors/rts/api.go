@@ -507,7 +507,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	productsToSort = utils.SortMapByKeys(productsToSort, descending, "count", "name")
 
 	// pass back only bestsellerLimit or less
-	if len(productsToSort) < bestsellerLimit {
+	if len(productsToSort) <= bestsellerLimit {
 		bestSellers = productsToSort
 	} else {
 		bestSellers = productsToSort[:bestsellerLimit]
