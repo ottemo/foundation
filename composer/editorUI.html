@@ -1,0 +1,1338 @@
+<!doctype html>
+<html>
+<head lang="en">
+    <meta charset="utf-8">
+    <title>Discount Editor</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" >
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular-route.min.js"></script>
+
+    <style>
+        .temp-btn {
+            float: right;
+        }
+
+        .save-btn {
+            margin-top: 3px;
+        }
+
+        .show-btn {
+            margin: 10px 10px
+        }
+
+        #screen {
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.25);
+            position: absolute;
+            top: 0;
+        }
+
+        #modal {
+            width: 33.333%;
+            top: 20%;
+            left: 33.3333%;
+            z-index: 2;
+            position: fixed;
+        }
+
+        #editors {
+            margin-left: 35px;
+            padding: 10px 10px 0px 10px;
+            display: inline-flex;
+        }
+
+        .head {
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        .container {
+            width: 900px;
+            margin-right: 10px;
+            padding: 0px 5px 0px 0px;
+            background-color: #f3f6fa;
+            background-image: repeating-linear-gradient(180deg, #d9edf7, #d9edf7 30px, #f5f5f5 30px, white 60px);
+        }
+
+        .represent {
+            width: 900px;
+            margin-right: 10px;
+        }
+
+        h2 {
+            display: inline;
+            margin-right: 10px;
+        }
+
+        ul {
+            list-style: none;
+            margin: 0px;
+        }
+
+        li {
+            height: 100%;
+        }
+
+        li.tree-item {
+            padding-left: 20px;
+        }
+
+        li.minimized {
+            height: 30px;
+            overflow-y: hidden;
+        }
+
+        .arrow {
+            margin-left: -18px;
+        }
+
+        .css-form input.ng-invalid.ng-touched {
+            border-color: #FA787E;
+        }
+
+        input.form-input {
+            width: 100px;
+            border: none;
+            display: inline;
+            height: 30px;
+            padding: 5px;
+            background-color: transparent;
+        }
+
+        input.form-control, select.form-control {
+            width: 150px;
+            display: inline;
+            height: 30px;
+            padding: 5px;
+            background-color: transparent;
+        }
+
+        .composer-item-line {
+            height: 30px;
+        }
+
+        .composer-item-icon {
+            line-height: 30px;
+        }
+
+        .composer-item-line button {
+            float: right;
+            box-sizing: border-box;
+            height: 30px;
+            line-height: 26px;
+            border-color: transparent;
+            background-color: transparent;
+        }
+
+    </style>
+
+    <script type="text/javascript">
+        /** Config function
+         *
+         * @param {object} $routeProvider - Angular router
+         */
+        config.$inject = ["$routeProvider"];
+        function config($routeProvider){
+            $routeProvider
+                    .when("/composer", {
+                        templateUrl: "testUI_template.html",
+                        resolve: {
+                            storeDataS: "storeDataS",
+                            storeDataResolver: function(storeDataS){
+                                return storeDataS.initialized.promise;
+                            }
+                        }
+                    })
+                    .otherwise({
+                        redirectTo: "/composer",
+                    });
+        }
+
+        /**
+         * Stores data Service
+         *
+         * @constructor
+         *
+         * @param {object} $http - Angular http provider
+         * @param {object} $q - Angular promise
+         * @param {object} $log - Angular log provider
+         */
+        storeDataS.$inject = ["$http", "$q", "$log"];
+        function storeDataS($http, $q, $log){
+            var me = this;
+            var basicTypes = ["any", "string", "int", "float", "boolean", "array", "object"];
+
+            me.data = {};
+            me.data.types = {};
+            me.data.units = {};
+
+            activate($http, $q, $log);
+
+            /**
+             * Initialize instance of Service and fills data async
+             */
+            function activate($http, $q, $log) {
+
+                /**
+                 *  Sets initialized property as deferred object
+                 *  like new Promise()
+                 */
+                me.initialized = $q.defer();
+
+                $http
+                /**
+                 * Makes HTTP request to get information about db types
+                 * @return {promise} types info
+                 */
+                        .get("http://localhost:3000/composer/go-json")
+                        .then(function(response) {
+                            me.data.types.goTypes = response.data.result;
+                        })
+                        /**
+                         * Makes HTTP request to get information about types
+                         */
+                        .then(function () {
+                            return $http.get("http://localhost:3000/composer/types/" + basicTypes);
+                        })
+                        .then(function(response) {
+                            me.data.units = response.data.result.units;
+                            Object.assign(me.data.types, response.data.result.types);
+                            me.data.t_u_b = response.data.result.type_unit_binding;
+                        })
+                        /**
+                         * Makes HTTP request to get information about config values
+                         */
+                        .then(function () {
+                            return $http.get("http://localhost:3000/testDiscount/GetConfigForTestDiscount");
+                        })
+                        .then(function (response) {
+                            var res = response.data.result;
+                            res.rule.json = convertData(res.rule.json);
+                            res.action.json = convertData(res.action.json);
+                            me.data.configs = res;
+                        })
+                        .then(function () {
+                            return collectTypes(me.data.configs.rule.json,  me.data.configs.rule.type);
+                        })
+                        .then(function () {
+                            return collectTypes(me.data.configs.action.json,  me.data.configs.action.type);
+                        })
+                        .then(function () {
+                            me.initialized.resolve();
+                        })
+                        .catch(function (reason) {
+                            $log.warn(reason);
+
+                            /** Rejects initialized defer for angular route if smthg goes wrong*/
+                            me.initialized.reject();
+                        });
+            }
+
+            function collectTypes(inp, inpType) {
+
+                var def = $q.defer();
+
+                $http
+                        .get("http://localhost:3000/composer/types/" + inpType)
+                        .then(function (response) {
+                            Object.assign(me.data.types, response.data.result.types);
+                            Object.assign(me.data.units, response.data.result.units);
+                            Object.assign(me.data.t_u_b, response.data.result.type_unit_binding);
+
+                            var info = response.data.result.types[inpType];
+                            for(var key in inp) {
+                                var val = inp[key];
+                                for (var key in val) {
+                                    if (key in info) {
+                                        var type = info[key].type;
+                                        type = type.replace("[]", "");
+                                    }
+                                    if (me.data.types[type] || basicTypes.indexOf(type) == -1) {
+                                        collectTypes(val, type);
+                                    }
+                                }
+                            }
+                            def.resolve("Success");
+                        });
+
+                return def.promise;
+            }
+
+            function convertData(json){
+
+                if(json == ""){
+                    json = {};
+                } else if(typeof json == "string"){
+                    json = JSON.parse(json);
+                }
+
+                return json;
+            }
+
+        }
+
+        angular.module("JSONEditor", ["ngRoute"])
+                .config(config)
+
+                .service('storeDataS', storeDataS)
+                .service('baseS', baseS)
+
+                .controller("JSONEditor", JSONEditor)
+                .directive("template", template)
+                .directive("modalDialog", modalDialog)
+                .directive("editor", editor);
+
+
+        /**
+         *  baseTypes Service
+         *
+         * @constructor
+         *
+         */
+        baseS.$inject = [];
+        function baseS(){
+            var me = this;
+
+            /**
+             * Base types declaration and validation
+             */
+            me.base = {
+                "string":   function(val) {
+                    if(val == undefined){
+                        val = "";
+                    }
+                    return val.toString();
+                },
+                "int":      function(val) {
+                    if(val == undefined){
+                        val = 0;
+                    }
+                    return parseInt(val);
+                },
+                "float":    function(val) {
+                    if(val == undefined){
+                        val = 0;
+                    }
+                    return parseFloat(val);
+                },
+                "boolean":  function(val) {
+                    return val ? true : false;
+                },
+                "array":    function(val) {
+                    if (!Array.isArray(val)) {
+                        val = [];
+                    }
+                    return val;
+                },
+                "object":   function(val) {
+                    if (me.getTypeOf(val) != "object") {
+                        val = {};
+                    }
+                    return val;
+                }
+            };
+
+            /**
+             * Returns true if given type is kind of "base" type
+             */
+            me.isBaseType = function(type) {
+                return me.base.hasOwnProperty(type);
+            };
+
+            /**
+             * Check if complex type consist of array items
+             * (the same type for each item)
+             */
+            me.isArray = function(key) {
+                return key.indexOf("[]") == 0;
+            };
+
+            /**
+             * Returns array of "base" types names
+             * TODO: modify
+             */
+            me.getBaseTypes = function() {
+                return Object.keys(me.base);
+            };
+
+            /**
+             * Returns simple type of the given object
+             */
+            me.getTypeOf = function(value) {
+                if(value === null) {
+                    return "null";
+                }
+                if(Array.isArray(value)) {
+                    return "array";
+                }
+                if(typeof value == "number"){
+                    if(Number.isInteger(value)){
+                        return "int";
+                    } else {
+                        return "float";
+                    }
+                }
+
+                return (typeof value).toLowerCase();
+            };
+
+            /**
+             * Converts the given value to a specified type
+             * (returns original value for unknown types)
+             *
+             * TODO: modify
+             */
+            me.convertToValue = function(type, val) {
+                if(type == undefined) {
+                    return null;
+                }
+                //type in base types
+                if(type in me.base) {
+                    val = me.base[type](val);
+                } else if(type == "number") {
+                    if(Number.isInteger(val)){
+                        val = me.base["int"](val);
+                    } else {
+                        val = me.base["float"](val);
+                    }
+                } else {
+                    if(me.isArray(type)){
+                        type = "array";
+                    } else {
+                        type = "object";
+                    }
+                    val = me.convertToValue(type, val);
+                }
+
+                return val;
+            };
+
+            return me;
+        }
+
+        /**
+         * THE CONTROLLER
+         */
+
+        JSONEditor.$inject = ["$scope", "$http", "storeDataS", "baseS"];
+        function JSONEditor($scope, $http, storeDataS, baseS){
+            /**
+             * ---------- VARIABLES DECLARATION -----------
+             */
+            var _UP_ = "*"; // unit prefix
+            var _OP_ = "#"; // output prefix
+            var _ANY_ = "any"; // any base type
+            var _PS_ = "/"; // path separator
+
+            var json = {};
+            var jsonType = "";
+            var types = storeDataS.data.types;
+            var units = storeDataS.data.units;
+            var t_u_b = storeDataS.data.t_u_b; //type_unit_binding
+            $scope.t_u_b = t_u_b;
+
+            $scope.isDialogHidden = true;
+
+            $scope.baseS = baseS;
+            $scope.initData = initData;
+
+            var item = {};
+            item.getJsonItem = getJsonItem;
+            item.getInfo = getInfo;
+            item.getItemInfo = getItemInfo;
+            item.getDialogItemInfo = getDialogItemInfo;
+            item.getKeyInfo = getKeyInfo;
+            item.getItemType = getItemType;
+            item.getItemLabel = getItemLabel;
+            item.getItemDesc = getItemDesc;
+
+            $scope.addJsonItem = addJsonItem;
+            $scope.removeJsonItem = removeJsonItem;
+            $scope.editJsonItem = editJsonItem;
+            $scope.getKeyInfo = getKeyInfo;
+
+            var unit = {};
+            unit.isUnit = isUnit;
+            unit.hasUnits = hasUnits;
+            unit.getUnits = getUnits;
+            unit.getUnitKeys = getUnitKeys;
+
+            $scope.isUnit = isUnit;
+            $scope.hasUnits = hasUnits;
+
+            var pathway = {};
+            pathway.isRoot = isRoot;
+            pathway.toArray = toArray;
+            pathway.getLastElementOfPath = getLastElementOfPath;
+            pathway.convertKey = convertKey;
+            pathway.removeNumbers = removeNumbers;
+            pathway.removeLetters = removeLetters;
+
+            $scope.isRoot = isRoot;
+            $scope.convertKey = convertKey;
+
+            var type = {};
+            type.hasItems = hasItems;
+            type.getKeys = getKeys;
+            type.convertType = convertType;
+            type.requestTypeInfo = requestTypeInfo;
+
+            $scope.hasItems = hasItems;
+
+            var dialog = {};
+
+            dialog.addItemDialog = addItemDialog;
+            dialog.addUnitDialog = addUnitDialog;
+            dialog.resetDialog = resetDialog;
+            dialog.showDialog = showDialog;
+
+            $scope.addItemDialog = addItemDialog;
+            $scope.addUnitDialog = addUnitDialog;
+
+            $scope.save = save;
+
+            $scope.btns = {
+                btnName: "Show",
+                flag: false
+            };
+
+            $scope.showJSON = showJson;
+
+            /**
+             *----------------- FUNCTIONS -------------------
+             */
+
+            /**
+             * Initialize controller instance data
+             *
+             * @param {String} val - instance name
+             */
+            function initData(val){
+                json = storeDataS.data.configs[val].json;
+                jsonType = storeDataS.data.configs[val].type;
+
+                $scope.json = json;
+                $scope.jsonType = jsonType;
+            }
+
+            /**
+             * Updates the given root object with a new item for a specified path
+             *
+             * @param {Object} data - new JSON item
+             */
+            function addJsonItem(data) {
+
+                var path = data.path;
+                var key = data.key;
+                var currType = data.type;
+                var val = data.val;
+
+                if(key == undefined) {
+                    alert("please enter the key");
+                    $scope.isDialogHidden = false;
+                    return;
+                }
+
+                var workingItem = item.getJsonItem(path);
+
+                if (baseS.getTypeOf(workingItem) != "object" && baseS.getTypeOf(workingItem) != "array") {
+                    editJsonItem(path, {});
+                    workingItem = item.getJsonItem(path);
+                }
+
+                val = baseS.convertToValue(currType, val);
+
+                //request info
+                if(types[currType] == undefined && !baseS.isBaseType(currType)){
+                    type.requestTypeInfo(currType, function() {
+                        addNewItem();
+                    });
+                } else {
+                    addNewItem();
+                }
+
+                function addNewItem(){
+                    if(key in workingItem){
+                        alert("this key already exist");
+                        $scope.isDialogHidden = false;
+                    } else {
+                        workingItem[key] = val;
+                    }
+                }
+            }
+
+            /**
+             * Removes the given object value for a specified path
+             *
+             * @param {String} path - path to item
+             */
+            function removeJsonItem(path) {
+                path = pathway.toArray(path);
+                var endPath = path.pop();
+                endPath = pathway.removeLetters(endPath);
+
+                var currItem = item.getJsonItem(path);
+                var type = baseS.getTypeOf(currItem);
+                if (type == "object") {
+                    delete(currItem[endPath]);
+                } else if (type == "array") {
+                    currItem.splice(endPath,1);
+                }
+            }
+
+            /**
+             * Edits the given object value by specified path
+             *
+             * @param {String} path - path to item
+             * @param {Any} val - current value
+             */
+            function editJsonItem(path, val) {
+                if (path == undefined) {
+                    path = "";
+                }
+
+                path = pathway.toArray(path);
+                var key = path.pop();
+                var currItem = item.getJsonItem(path);
+
+                currItem[key] = val;
+            }
+
+            /**
+             * addItemDialog - opens the items creation dialog
+             *
+             * @param {String} path - path to item which will be updated with new value
+             */
+            function addItemDialog(path){
+                if (path == undefined){
+                    path = "";
+                }
+
+                var dialogObject = {};
+                var workingItem = item.getJsonItem(path);
+                var workingItemType = type.convertType(path, item.getItemInfo);
+                var isArray = baseS.isArray(workingItemType);
+                var itemKey = pathway.getLastElementOfPath(path);
+
+                dialogObject.path = path;
+                dialogObject.keyLabel = "Key";
+                dialogObject.getType = function(selectedKey) {
+                    var newPath = path + _PS_ + selectedKey;
+                    return item.getItemType(item.getKeyInfo(newPath));
+                };
+                if(unit.isUnit(itemKey.key)) {
+                    dialogObject.keys = unit.getUnitKeys(itemKey.key);
+                } else if(!isArray){
+                    dialogObject.keys = type.getKeys(workingItemType);
+                }
+
+                dialog.showDialog(workingItem, workingItemType, isArray);
+                Object.assign($scope.dialog, dialogObject);
+
+                //$scope.dialog = dialog;
+
+                if($scope.isDialogHidden){
+                    $scope.isDialogHidden = false;
+                }
+            }
+
+            /**
+             * addUnitDialog - opens the units creation dialog
+             *
+             * @param {String} path - path to item which will be updated with new value
+             */
+            function addUnitDialog(path) {
+                if (path == undefined){
+                    path = "";
+                }
+
+                var dialogObject = {};
+                var workingItem = item.getJsonItem(path);
+                var workingItemType = type.convertType(path, item.getDialogItemInfo);
+                var isArray = baseS.isArray(workingItemType);
+
+                dialogObject.path = path;
+                dialogObject.keyLabel = "Unit";
+                dialogObject.getType = function(selectedKey) {
+                    var newPath = path + _PS_ + selectedKey;
+                    return item.getItemType(item.getKeyInfo(newPath));
+                };
+
+                dialogObject.keys = unit.getUnits(workingItemType);
+                dialog.showDialog(workingItem, workingItemType, isArray);
+                Object.assign($scope.dialog, dialogObject);
+
+//                $scope.dialog = dialog;
+
+                if($scope.isDialogHidden){
+                    $scope.isDialogHidden = false;
+                }
+            }
+
+            /**
+             * Saves json
+             *
+             * @param {Object} json - current SJON
+             * @param {String} name - insctance name
+             */
+            function save(json, name){
+                //json = json[Object.keys(json)[0]];
+                json = JSON.stringify(json);
+                var promise = $http({
+                    method: "POST",
+                    data: json,
+                    url: "http://localhost:3000/testDiscount/CreateTest" + name
+                });
+
+                promise.then(function(response){
+                            alert(response.data.result);
+                        },
+                        function(){
+                            return null;
+                        });
+            }
+
+            /**
+             * ----------------------------
+             * HELPER FUNCTIONS
+             * ----------------------------
+             */
+
+            /**
+             * ---------------
+             * ITEM
+             * ---------------
+             */
+
+            /**
+             * Returns the given object value for a specified path
+             *
+             * @param {String} path - path to item
+             * @param {Object} object
+             * @return {Object} - value by path
+             */
+            function getJsonItem(path, object) {
+
+                if(object == undefined){
+                    object = $scope.json;
+                }
+
+                if(path == undefined || path == "" || typeof object != "object"){
+                    return object;
+                }
+
+                if(!Array.isArray(path)){
+                    path = pathway.toArray(path);
+                }
+
+                var path0 = path.shift();
+                path0 = pathway.removeLetters(path0);
+
+                if (path0 in object) {
+                    object = object[path0];
+                } else {
+                    return null
+                }
+
+                if (path.length > 0) {
+                    return item.getJsonItem(path, object);
+                }
+
+                return object;
+            }
+
+            /**
+             * Returns item info
+             *
+             * @param {String} parentKey
+             * @param {Object} key
+             * @param {function} unitVal - is unit input or output info depends on context
+             * @return {Object} - item info
+             */
+            function getInfo(parentKey, key, unitVal) {
+
+                var info = {};
+
+                if(key == undefined || key == "") {
+                    key = jsonType;
+                }
+                if(parentKey == undefined) {
+                    parentKey = "";
+                }
+
+                key = pathway.removeNumbers(key);
+                parentKey = pathway.removeNumbers(parentKey);
+
+                if (unit.isUnit(key)) {
+                    info = unitVal();
+                } else if (unit.isUnit(parentKey)){
+                    info = units[parentKey][key];
+                } else if (parentKey == undefined ||
+                        parentKey == "" ||
+                        baseS.isArray(parentKey)) {
+                    info = types[key][""];
+                } else {
+                    info = types[parentKey][key];
+                }
+
+                return info;
+            }
+
+            /**
+             * Returns item info
+             *
+             * @param {String} parentKey
+             * @param {Object} key
+             * @return {Object} - item info
+             */
+            function getItemInfo(parentKey, key) {
+
+                return item.getInfo(parentKey, key, function(){
+                    return units[key][_UP_];
+                });
+            }
+
+            /**
+             * Returns information for dialog window
+             *
+             * @param {String} parentKey
+             * @param {Object} key
+             * @return {Object} - item info
+             */
+            function getDialogItemInfo(parentKey, key) {
+                return item.getInfo(parentKey, key, function(){
+                    return units[key][_OP_];
+                });
+            }
+
+            /**
+             * Returns type, typeLabel, label and description for corresponding type by path
+             *
+             * @param {String} path
+             * @return {Object} - extended item info
+             */
+            function getKeyInfo(path) {
+
+                var info = {};
+                var currItem = item.getJsonItem(path);
+                var lastKeys = pathway.getLastElementOfPath(path);
+                var itemInfo = item.getItemInfo(lastKeys.pKey, lastKeys.key);
+
+                info.type = type.convertType(path, getItemInfo);
+                if(baseS.getTypeOf(currItem) == "object" && unit.isUnit(lastKeys.key)) {
+                    info.typeLabel = "unit";
+                } else {
+                    info.typeLabel = info.type;
+                }
+                info.label = item.getItemLabel(itemInfo);
+                if(!info.label){
+                    info.label = lastKeys.key;
+                }
+                info.desc = item.getItemDesc(itemInfo);
+
+                return info;
+            }
+
+            /**
+             * Returns type for item
+             */
+            function getItemType(typeInfo) {
+                return typeInfo.type;
+            }
+
+            /**
+             * Returns label for item
+             */
+            function getItemLabel(typeInfo) {
+                return typeInfo.label;
+            }
+
+            /**
+             * Returns description for item
+             */
+            function getItemDesc(typeInfo) {
+                return typeInfo.description;
+            }
+
+            /**
+             * ---------------
+             *     UNITS
+             * ---------------
+             */
+
+            /**
+             * Check if working item is unit
+             *
+             * @param {String} key - working item key
+             * @return {Boolean}
+             */
+            function isUnit(key) {
+                if(key == undefined){
+                    return false;
+                }
+                return key.toString().startsWith(_UP_);
+            }
+
+            /**
+             * Units applied to certain type.
+             * Checks if to working item type can be applied units
+             *
+             * @param {String} type - working item type
+             * @param {Object} t_u_b - type unit binding
+             * @return {Boolean}
+             */
+            function hasUnits(type, t_u_b) {
+                return t_u_b[type] != null;
+            }
+
+            /**
+             * Gets units which can be applied to item
+             *
+             * @param {String} type - working item type
+             * @return {Array}
+             */
+            function getUnits(type) {
+                return t_u_b[type];
+            }
+
+            /**
+             * Gets arguments and outputs information of unit
+             *
+             * @param {String} key - working item key
+             * @return {Array}
+             */
+            function getUnitKeys(key){
+                var keys = Object.keys(units[key]);
+                if(keys.indexOf(_UP_) != -1){
+                    keys.splice(keys.indexOf(_UP_), 1);
+                }
+
+                return keys;
+            }
+
+            /**
+             * -------------
+             * PATH
+             * -------------
+             */
+
+            /**
+             * Check if is root of JSON
+             *
+             * @param {String} path
+             * @return {Boolean}
+             */
+            function isRoot(path) {
+                path = pathway.toArray(path);
+                return path.length == 1;
+            }
+
+            /**
+             * Convert path from string to array
+             *
+             * @param {String} path
+             * @return {Array}
+             */
+            function toArray(path) {
+                return path.toString()
+                        .replace(new RegExp("^[" + _PS_ + "]+"), "")
+                        .replace(new RegExp("[" + _PS_ + "]+$"), "")
+                        .split(_PS_);
+            }
+
+//            function getFirstElementOfPath(path){
+//                if(!Array.isArray(path)){
+//                    path = pathway.toArray(path);
+//                }
+//                return path.shift();
+//            }
+
+            /**
+             * Gets last items of path
+             *
+             * @param {String} path
+             * @return {Object}
+             */
+            function getLastElementOfPath(path){
+                if(!Array.isArray(path)){
+                    path = pathway.toArray(path);
+                }
+
+                return {key: path.pop(),
+                    pKey: path.pop()
+                    //path: path
+                };
+            }
+
+            /**
+             * Converts path keys to proper format
+             *
+             * @param {String} pKey
+             * @param {String} key
+             * @return {String}
+             */
+            function convertKey(pKey, key){
+                if(baseS.isArray(pKey)){
+                    return key + pKey.replace("[]", "");
+                }
+                return key;
+            }
+
+            /**
+             * Removes all numbers from key
+             *
+             * @param {String} key
+             * @return {String}
+             */
+            function removeNumbers(key) {
+                return key.replace(/\d/g,"");
+            }
+
+            /**
+             * Removes all letters from key if first symbol is is a number
+             *
+             * @param {String} key
+             * @return {String}
+             */
+            function removeLetters(key) {
+                if(key.search(/\D/g)){
+                    return key.replace(/\D/g, "");
+                }
+
+                return key;
+            }
+
+            /**
+             * -------------
+             * TYPES
+             * -------------
+             */
+
+            /**
+             * Checks if item has sub items by type
+             *
+             * @param {String} typeName
+             * @return {Boolean}
+             */
+            function hasItems(typeName) {
+                return types[typeName] != undefined;
+            }
+
+            /**
+             * Return available keys
+             *
+             * @param {String} type
+             * @return {Array}
+             */
+            function getKeys(type) {
+                var keys = Object.keys(types[type]);
+                keys.splice(keys.indexOf(""), 1);
+
+                return keys;
+
+//                var keys = types[type];
+//                delete keys[""];
+//                return keys;
+            }
+
+            /**
+             * Return available keys
+             *
+             * @param {String} path
+             * @param {Funcrion} handler
+             * @return {String}
+             */
+            function convertType(path, handler){
+                //convert working item type
+                path = pathway.toArray(path);
+                var itemKey = path.pop();
+                var itemPKey = path.pop();
+                var itemInfo = handler(itemPKey, itemKey);
+                var workingItemType = item.getItemType(itemInfo);
+                while(workingItemType == _ANY_){
+                    if(unit.isUnit(itemKey)){
+                        itemKey = itemPKey;
+                        itemPKey = path.pop();
+                        workingItemType = item.getItemType(item.getDialogItemInfo(itemPKey, itemKey));
+                    } else {
+                        itemKey = itemPKey;
+                        itemPKey = path.pop();
+                        workingItemType = item.getItemType(item.getItemInfo(itemPKey, itemKey));
+                    }
+                }
+                if(workingItemType in types.goTypes){
+                    workingItemType = types.goTypes[workingItemType].type
+                }
+
+                return workingItemType;
+            }
+
+            /**
+             * Makes HTTP request in order to resolve complex type information
+             *
+             * @param {String} type - Type of whatever
+             * @param {Function} handler - callback func
+             * @return {Promise} - http promise
+             */
+            function requestTypeInfo(type, handler) {
+                var promise = $http({
+                    method : "GET",
+                    url : "http://localhost:3000/composer/types/" + type
+                });
+
+                promise.then(function (response){
+                    var res = response.data.result;
+                    Object.assign(types, res.types);
+                    Object.assign(units, res.units);
+                    Object.assign(t_u_b, res.type_unit_binding);
+
+                    if(handler != undefined) {
+                        try {
+                            handler();
+                        } catch(e) {}
+                    }
+                }, function(){
+                    return null;
+                });
+
+                return promise;
+            }
+
+            /**
+             * -------------
+             * DIALOG
+             * -------------
+             */
+
+            var baseDialog =  {
+                showKey: true,  //if item adds to array, key will not show (true/def)
+                //keyLabel: "",   //item is unit or key
+                keyText: false, //if item adds to simple object, key should be typed (true/def)
+                //keys: [],       //list of keys which may be added to item/unit
+                typeAny: false  // if type of item is any, you can select any base type (true/def)
+            };
+
+            function resetDialog() {
+                $scope.dialog = angular.copy(baseDialog);
+            }
+
+            function showDialog(currItem, itemType, isArray) {
+                // Dialog variables preparations before show
+                // -----------------------------------------
+                dialog.resetDialog();
+
+                if (isArray) {
+                    $scope.dialog.showKey = false;
+                    $scope.dialog.key = currItem.length;
+                    if (itemType == "[]Any" || itemType == "array") {
+                        $scope.dialog.typeAny = true;
+                    } else {
+                        $scope.dialog.type = itemType.replace("[]", "");
+                    }
+                } else if (itemType == "object") {
+                    $scope.dialog.keyText = true;
+                    $scope.dialog.typeAny = true;
+                } else if (itemType == "any") {
+                    $scope.dialog.typeAny = true;
+                }
+//
+//                return dialogObject;
+            }
+
+            /**
+             * -------------
+             * VIEW HANDLERS
+             * -------------
+             */
+            $scope.canCollapse =  function (value) {
+                return (typeof value == "object" && Object.keys(value).length > 0) ||
+                        (Array.isArray(value) && value.length > 0);
+            };
+
+            /**
+             * hides/shows list view
+             */
+            $scope.collapse = function (event) {
+                event.stopPropagation();
+
+                var target = angular.element(event.target);
+                target.toggleClass('glyphicon-triangle-right glyphicon-triangle-bottom');
+
+                while(target.parent()){
+                    if (target.parent().prop('tagName') === 'LI'){
+                        target.parent().toggleClass('minimized');
+                        return
+                    } else {
+                        target = target.parent();
+                    }
+                }
+
+                console.log(target.prop('tagName'));
+
+            };
+
+            function showJson(btn){
+                if(btn.flag){
+                    btn.btnName = "Show";
+                    btn.flag =  false;
+                } else {
+                    btn.btnName = "Hide";
+                    btn.flag = true;
+                }
+            }
+        }
+
+        /**
+         * THE <template> DIRECTIVE
+         */
+
+        template.$inject = ["$compile"];
+        function template($compile) {
+            return {
+                restrict: 'EA',
+                scope: true,
+                compile: function(element, attributes) {
+
+                    /* initializing directive related variables */
+                    var templateIsTag = false;
+                    var templateName = null;
+                    var templateAttributes = {};
+
+                    if (element[0].tagName.toLowerCase() == this.name.toLowerCase()) {
+                        templateIsTag = true;
+                    }
+
+                    /* template attributes filtering */
+                    if (templateIsTag) {
+                        /* case 1: directive usage as a tag - all attributes related */
+                        for(var attribute in attributes.$attr) {
+                            var attr = attribute.replace(/^(data-|x-)/, "").toLowerCase();
+                            templateAttributes[attr] = attributes[attribute];
+                        }
+
+                    } else {
+                        /* case 2: directive usage as an attribute - attribute prefix filtering*/
+                        var templatePrefix = "tp";
+                        for (var loop=true; loop; loop=!loop) {
+                            for(var attribute in  attributes.$attr) {
+                                var attr = attribute.replace(/^(data-|x-)/, "").toLowerCase();
+
+                                /* non default prefix specified, we should repeat scan for that case (as attributes order is not strict) */
+                                if (attr == "template" && attributes[attribute] != "") {
+                                    templatePrefix = attributes[attribute];
+
+                                    delete attributes.$attr[attribute];
+                                    element.removeAttr(attribute);
+
+                                    loop = false;
+                                }
+
+                                /* grabbing template related attributes and removing them from element */
+                                if (attr.startsWith(templatePrefix)) {
+                                    attr = attr.slice(templatePrefix.length);
+
+                                    templateAttributes[attr] = attributes[attribute];
+                                    delete attributes.$attr[attribute];
+                                    element.removeAttr(attribute);
+                                }
+                            }
+                        }
+                    }
+
+                    /* template "set" operation specified */
+                    if ("set" in templateAttributes) {
+                        var templateName = templateAttributes["set"];
+                        delete templateAttributes["set"]
+
+                        if (typeof angular.templates == 'undefined') {
+                            angular.templates = {};
+                        }
+
+                        /* angular scope and $compile operations requires top element */
+                        if (templateIsTag) {
+                            angular.templates[templateName] = "<span>" + element.html() + "</span>";
+                        } else {
+                            angular.templates[templateName] = element[0].outerHTML;
+                        }
+                    }
+
+                    /* template "get" operation specified */
+                    if ("get" in templateAttributes) {
+                        templateName = templateAttributes["get"];
+                        delete templateAttributes["get"]
+                    } else {
+                        templateName = null;
+                    }
+
+                    /* directive's "link" function */
+                    return function(scope, element, attributes) {
+
+                        var result = '';
+                        if (templateName != null && templateName != '') {
+                            /* looking for a stored template HTML */
+                            var templateHTML = '';
+                            if (typeof angular.templates != 'undefined' &&
+                                    typeof angular.templates[templateName] != 'undefined') {
+
+                                templateHTML = angular.templates[templateName];
+                            }
+
+                            /* taking subject to which new scope will be applied */
+                            var templateElement = angular.element();
+                            if (templateIsTag) {
+                                if (templateHTML != '') {
+                                    templateElement = angular.element(templateHTML)
+                                }
+                            } else {
+                                templateElement = element.append(templateHTML);
+                            }
+
+                            /* making new scope */
+                            var templateScope = scope.$new(false, scope);
+
+                            for (var attr in templateAttributes) {
+                                val = templateAttributes[attr];
+                                try {
+                                    val = val.replace(/^\s*\{\{\s*/, "").replace(/\s*\}\}\s*$/, "");
+                                    val = scope.$parent.$eval(val);
+                                } catch (e) {
+                                    console.log("error", val);
+                                }
+                                templateScope[attr] = val;
+                            }
+
+                            /* applying new scope to the subject */
+                            result = $compile(templateElement)(templateScope);
+                        }
+                        element.replaceWith(result);
+
+                    }
+                }
+            }
+        }
+
+        function modalDialog() {
+            return {
+                templateUrl: "dialog.html",
+                scope: false
+            }
+        }
+
+        function editor() {
+            return {
+                templateUrl: "editor.html",
+                scope: false
+            }
+        }
+
+    </script>
+</head>
+<body ng-app="JSONEditor">
+
+<div ng-view></div>
+
+</body>
+
+</html>

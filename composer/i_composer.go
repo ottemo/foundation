@@ -114,11 +114,11 @@ func (it *DefaultComposer) SearchUnits(namePattern string, typeFilter map[string
 }
 
 func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error) {
-	var result bool
+	var result bool = true
 	var err error
 	var stop bool
 
-	// fmt.Printf("s: %v <- %v\n", in, rule)
+	//fmt.Printf("s: (%T)%v <- (%T)%v\n", in, in, rule, rule)
 
 	// subroutine used within 2 places
 	applyRuleToUnit := func(unit InterfaceComposeUnit, rule interface{}) (interface{}, error, bool) {
@@ -143,7 +143,7 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 			}
 		} else {
 			if unit.GetType(ConstPrefixArg) != "" {
-				args[ConstPrefixArg] = rule
+				args[""] = rule
 				useAsResult = true
 			}
 		}
@@ -180,14 +180,20 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 				result = false
 			}
 
-			// case 2: in interface{} <- {...}
+		// case 2: in interface{} <- {...}
 		} else if mapRule, ok := ruleItem.(map[string]interface{}); ok {
 
 			for ruleKey, ruleValue := range mapRule {
 
+				// skipping unit arguments
+				if strings.HasPrefix(ruleKey, ConstPrefixArg) {
+					continue
+				}
+
 				// case 2.1: in interface{} <- {"$unit": value}
 				if strings.HasPrefix(ruleKey, ConstPrefixUnit) {
-					if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstPrefixUnit)]; present {
+					//if unit, present := it.units[strings.TrimPrefix(ruleKey, ConstPrefixUnit)]; present {
+					if unit, present := it.units[ruleKey]; present {
 						if out, outErr, stop := applyRuleToUnit(unit, ruleValue); err == nil {
 							if !stop {
 								result, err = it.Check(out, ruleValue)
@@ -217,6 +223,9 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 
 					// case 2.4: in interface{} <- {"key": value}
 				} else {
+					if ruleKey != ConstPrefixOut {
+						continue
+					}
 					result = utils.Equals(in, ruleValue)
 				}
 
@@ -241,7 +250,7 @@ func (it *DefaultComposer) Check(in interface{}, rule interface{}) (bool, error)
 		}
 	}
 
-	// fmt.Printf("e: %v <- %v = %v, %v\n", in, rule, result, err)
+	//fmt.Printf("e: (%T)%v <- (%T)%v = (%T)%v, %v\n", in, in, rule, rule, result, result, err)
 
 	return result, err
 }

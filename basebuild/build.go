@@ -36,6 +36,7 @@ import (
 
 	_ "github.com/ottemo/foundation/app/actors/discount/coupon"   // Coupon based discounts
 	_ "github.com/ottemo/foundation/app/actors/discount/giftcard" // Gift Cards
+ 	_ "github.com/ottemo/foundation/app/actors/discount/testDiscount" // Test Discount
 	_ "github.com/ottemo/foundation/app/actors/tax"               // Tax Rates
 
 	_ "github.com/ottemo/foundation/app/actors/rts" // Real Time Statistics service

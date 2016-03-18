@@ -10,10 +10,11 @@ var (
 
 // Package global constants
 const (
-	ConstPrefixUnit = "$"
+	ConstPrefixUnit = "*"
 	ConstPrefixArg  = "@"
+	ConstPrefixOut  = "#"
 
-	ConstTypeAny      = "*"
+	ConstTypeAny      = "any"
 	ConstTypeValidate = "validate"
 
 	ConstErrorModule = "composer"

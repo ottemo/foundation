@@ -42,20 +42,17 @@ func TestOperations(tst *testing.T) {
 
 	tst.Log(object.Get("sku"))
 	input := map[string]interface{}{
-		"a": 10,
+		"cartAmount": 10,
 		"b": "test",
 		"c": 3.14,
 		"d": object,
 	}
 
 	rules, err := utils.DecodeJSONToStringKeyMap(`{
-		"a": "10",
+		"cartAmount": {">gt": 15},
 		"b": "test",
-		"c": {"$gt": 3},
-		"d": {
-			"price": 1.1,
-			"sku": {"$contains": "test"}
-		}
+		"c": 3.14,
+		"d": {}
 	}`)
 	if err != nil {
 		tst.Errorf("JSON decode fail: %v", err)

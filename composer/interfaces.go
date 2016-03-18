@@ -40,4 +40,6 @@ type InterfaceComposer interface {
 	SearchUnits(namePattern string, typeFilter map[string]string) []InterfaceComposeUnit
 
 	Check(in interface{}, rule interface{}) (bool, error)
+//	Validate(inType InterfaceComposeType, json interface{})
+//	Resolve(json interface{})
 }

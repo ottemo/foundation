@@ -1,0 +1,210 @@
+<!-- Template for tree item rendering -->
+
+<ul class="composer-element" template="tpl" tpl-set="composer-item" ng-if="baseS.getTypeOf(item) == 'object' || baseS.getTypeOf(item) == 'array'">
+
+    <!-- items loop -->
+    <li class="composer-element-item" ng-repeat="(key, val) in item track by [key, val, item]">
+
+        <div class="composer-item-line"
+             ng-init="key = convertKey(pkey, key);
+                      itPath = path + '/' + key; itInfo = getKeyInfo(itPath);">
+
+            <span class="composer-item-icon" ng-switch="canCollapse(val)">
+                <i class="glyphicon glyphicon-triangle-bottom"
+                   ng-switch-when="true"
+                   ng-click="collapse($event)"></i>
+
+                <i class="glyphicon"
+                   ng-switch-default>&nbsp;</i>
+            </span>
+
+            <span class="composer-item-label">
+                <b title="{{itInfo.desc}}">{{itInfo.label}}</b>
+                ({{itInfo.typeLabel}})
+            </span>
+
+            <span class="composer-item-editor" ng-if="baseS.getTypeOf(val) != 'object'" ng-switch="itInfo.type">
+                <input class="form-input"
+                       type="text"
+                       ng-switch-when="string"
+                       ng-model="val"
+                       ng-change="editJsonItem(itPath, val)"/>
+
+                <input class="form-input"
+                       type="number"
+                       step="0.1"
+                       ng-switch-when="int"
+                       ng-model="val"
+                       ng-change="editJsonItem(itPath, val)"/>
+
+                 <input class="form-input"
+                        type="number"
+                        step="0.1"
+                        ng-switch-when="float"
+                        ng-model="val"
+                        ng-change="editJsonItem(itPath, val)"/>
+
+                <input class="form-input-checkbox"
+                       type="checkbox"
+                       ng-switch-when="boolean"
+                       ng-model="val"
+                       ng-change="editJsonItem(itPath, val)"/>
+            </span>
+
+            <button ng-if="!isRoot(itPath)" ng-click="removeJsonItem(itPath)">
+                <i class="glyphicon glyphicon-trash"></i>
+            </button>
+
+            <button ng-if="hasItems(itInfo.type) || baseS.isArray(itInfo.type) || isUnit(key)" ng-click="addItemDialog(itPath)">
+                <i class="glyphicon glyphicon-plus"></i>
+            </button>
+
+            <button ng-if="hasUnits(itInfo.type, t_u_b)" ng-click="addUnitDialog(itPath)">
+                <i class="glyphicon glyphicon-indent-left"></i>
+            </button>
+        </div>
+
+        <!-- recursive template execution for a value -->
+        <template get="composer-item" item="val" pkey="key" type="itType" path="itPath"></template>
+    </li>
+</ul>
+
+<!-- JSON Editors -->
+
+<div id="editors">
+
+    <div ng-controller="JSONEditor">
+
+        <div editor ng-init="initData('action'); name = 'Action'"></div>
+        <div modal-dialog></div>
+
+    </div>
+
+    <div ng-controller="JSONEditor">
+        <div editor ng-init=" initData('rule'); name = 'Rule'"></div>
+        <div modal-dialog></div>
+
+    </div>
+
+</div>
+
+<!-- JSON Editor template -->
+<script type="text/ng-template" id="editor.html">
+
+    <div class="head">
+        <h2>{{name}}</h2>
+        <!-- Save button -->
+        <button  class="save-btn temp-btn" ng-click="save(json, name)">Save {{name}}</button>
+    </div>
+
+    <div class="container">
+        <template get="composer-item" item="json" pkey="''" path="''"></template>
+    </div>
+
+    <!-- JSON Representation -->
+    <div class="represent">
+        <button class="show-btn" ng-click="showJSON(btns)">{{btns.btnName}}</button>
+        <pre ng-show="btns.flag">{{json | json}}</pre>
+    </div>
+
+</script>
+
+
+<!-- Create Item Dialog template-->
+<script type="text/ng-template" id="dialog.html">
+
+    <!--<div id="screen" ng-hide="isDialogHidden"></div>-->
+    <div id="modal" class="panel panel-default" ng-hide="isDialogHidden">
+        <div class="panel-heading">
+            <p>add to <b>{{dialog.path}}</b></p>
+        </div>
+        <div class="panel-body">
+            <br novalidate name="addItem" class="css-form">
+
+            <!-- key input -->
+            <div ng-if="dialog.showKey">
+                <label>{{dialog.keyLabel}}</label>
+                    <span ng-switch="dialog.keyText">
+                        <input  class="form-control"
+                                type="text"
+                                ng-switch-when="true"
+                                ng-model="dialog.key" required/>
+                        <select class="form-control"
+                                ng-switch-default
+                                ng-options="option for option in dialog.keys"
+                                ng-model="dialog.key"
+                                ng-change="dialog.type = dialog.getType(dialog.key)" required>
+                        </select>
+                    </span>
+            </div>
+
+            <br/>
+            <!-- type selector -->
+            <div>
+                <label>Type:</label>
+                     <span ng-switch="dialog.typeAny">
+                        <select class="form-control"
+                                ng-switch-when="true"
+                                ng-options="option for option in baseS.getBaseTypes()"
+                                ng-model="dialog.type" required>
+                        </select>
+                         <input class="form-control"
+                                type="text"
+                                ng-switch-default
+                                ng-model="dialog.type" readonly/>
+                    </span>
+            </div>
+
+            <br/>
+            <!-- value input -->
+            <div ng-switch="dialog.type">
+                <label>Value:</label>
+
+                <!-- string value -->
+                <span ng-switch-when="string">
+                    <input class="form-control"
+                           type="text"
+                           ng-model="dialog.val" required/>
+                </span>
+
+                <!-- number value -->
+                <span ng-switch-when="int">
+                    <input class="form-control"
+                           type="number"
+                           ng-model="dialog.val" required/>
+                </span>
+
+                <!-- number value -->
+                <span ng-switch-when="float">
+                    <input class="form-control"
+                           type="number"
+                           ng-model="dialog.val" required/>
+                </span>
+
+                <!--boolean value -->
+                <span ng-switch-when="boolean">
+                    <input class="form-input-checkbox"
+                           type="checkbox"
+                           ng-model="dialog.val"/>
+                </span>
+
+                <!-- default value -->
+                <span ng-switch-default>
+                     <input class="form-control"
+                            type="hidden"
+                            ng-model="dialog.val"
+                            value="" readonly/>
+                </span>
+            </div>
+
+            </form>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel-footer">
+            <button class="btn btn-default" ng-click="isDialogHidden=true; addJsonItem(dialog)">Add</button>
+            <button class="btn btn-default" ng-click="isDialogHidden=true;">Cancel</button>
+        </div>
+    </div>
+
+</script>
