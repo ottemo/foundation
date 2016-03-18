@@ -120,6 +120,9 @@ func getOrderItems(orderIds []string) []map[string]interface{} {
 	oiDB := oiModel.GetDBCollection()
 	oiDB.AddFilter("order_id", "in", orderIds)
 	oiResults, _ := oiDB.Load()
+	// NOTE: If we could FromHashMap this into a struct i'd be happier
+	// as is this is the only place where i'm forced to pass around an
+	// ugly variable
 
 	return oiResults
 }
