@@ -12,7 +12,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures package related API endpoint routines
 func setupAPI() error {
 
 	service := api.GetRestService()
@@ -416,8 +416,7 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 //     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	const bestsellerLimit = 12 // Limit on returned bestsellers
-	var result []map[string]interface{}
+	var productsToSort, bestSellers []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
 
@@ -457,7 +456,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	salesHistoryCollection.AddFilter("count", ">", 0)
@@ -466,7 +465,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	collectionRecords, err := salesHistoryCollection.Load()
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	productsSold := make(map[string]int)
@@ -497,20 +496,24 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		bestsellerItem["name"] = productInstance.GetName()
 		bestsellerItem["count"] = count
 
-		result = append(result, bestsellerItem)
-
-		// limit on returned bestsellers
-		if len(result) >= bestsellerLimit {
-			break
-		}
+		productsToSort = append(productsToSort, bestsellerItem)
 
 	}
 
-	// sort the products by count in descending order
-	descending := true
-	result = utils.SortMapByKeys(result, descending, "count", "name")
+	descending := true    // sort in descending order
+	bestsellerLimit := 12 // limit on returned bestsellers
 
-	return result, nil
+	// sort list of products by sales
+	productsToSort = utils.SortMapByKeys(productsToSort, descending, "count", "name")
+
+	// pass back only bestsellerLimit or less
+	if len(productsToSort) < bestsellerLimit {
+		bestSellers = productsToSort
+	} else {
+		bestSellers = productsToSort[:bestsellerLimit]
+	}
+
+	return bestSellers, nil
 }
 
 // APIGetVisitsRealtime returns real-time information on current visits
