@@ -224,7 +224,7 @@ func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{},
 	shippingInfo["service"] = service
 	shippingInfo["tracking_number"] = trackingNumber
 
-	orderModel.Set("shippingInfo", shippingInfo)
+	orderModel.Set("shipping_info", shippingInfo)
 	orderModel.Set("updated_at", time.Now())
 	orderModel.Save()
 
