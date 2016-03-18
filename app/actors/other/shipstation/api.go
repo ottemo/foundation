@@ -76,12 +76,11 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	context.SetResponseContentType("text/xml")
 
+	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	const parseDateFormat = "01/02/2006 15:04"
 
 	// action := context.GetRequestArgument("action") // only expecting "export"
 	// page := context.GetRequestArgument("page")
-
-	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	startArg := context.GetRequestArgument("start_date")
 	endArg := context.GetRequestArgument("end_date")
 	startDate, _ := time.Parse(parseDateFormat, startArg)
@@ -143,25 +142,21 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 	}
 
 	// Customer Details
-	oShipAddress := oItem.GetShippingAddress()
+	orderDetails.Customer.CustomerCode = utils.InterfaceToString(oItem.Get("customer_email"))
+
 	oBillAddress := oItem.GetBillingAddress()
-
-	customer := Customer{}
-	customer.CustomerCode = utils.InterfaceToString(oItem.Get("customer_email"))
-
-	customer.BillingAddress = BillingAddress{
+	orderDetails.Customer.BillingAddress = BillingAddress{
 		Name: oBillAddress.GetFirstName() + " " + oBillAddress.GetLastName(),
 	}
 
-	customer.ShippingAddress = ShippingAddress{
+	oShipAddress := oItem.GetShippingAddress()
+	orderDetails.Customer.ShippingAddress = ShippingAddress{
 		Name:     oShipAddress.GetFirstName() + " " + oShipAddress.GetLastName(),
 		Address1: oShipAddress.GetAddressLine1(),
 		City:     oShipAddress.GetCity(),
 		State:    oShipAddress.GetState(),
 		Country:  oShipAddress.GetCountry(),
 	}
-
-	orderDetails.Customer = customer
 
 	// Order Items
 	for _, oiItem := range allOrderItems {
