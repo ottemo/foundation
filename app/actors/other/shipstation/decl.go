@@ -23,7 +23,7 @@ type Order struct {
 
 	// Containers
 	Customer Customer
-	Items    []OrderItem
+	Items    []OrderItem `xml:"Items>Item"`
 }
 
 type Customer struct {

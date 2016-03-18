@@ -2,7 +2,6 @@ package shipstation
 
 import (
 	"encoding/base64"
-	"fmt"
 	"strings"
 	"time"
 
@@ -28,7 +27,7 @@ func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 		if !isEnabled {
 			// TODO: update status?
 			// return "not enabled", nil
-			return next(context); //TODO: REMOVE
+			return next(context) //TODO: REMOVE
 		}
 
 		return next(context)
@@ -81,75 +80,101 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// action := context.GetRequestArgument("action") // only expecting "export"
 	// page := context.GetRequestArgument("page")
+
 	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	startArg := context.GetRequestArgument("start_date")
 	endArg := context.GetRequestArgument("end_date")
 	startDate, _ := time.Parse(parseDateFormat, startArg)
 	endDate, _ := time.Parse(parseDateFormat, endArg)
 
-	fmt.Println(startDate, endDate)
-
 	// Get the orders
-	orderCollectionModel, _ := order.GetOrderCollectionModel()
-	orderCollectionModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
-	orderCollectionModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
-	orders := orderCollectionModel.ListOrders()
+	orderQuery := getOrders(startDate, endDate)
 
+	// Get the order items
+	var orderIds []string
+	for _, orderResult := range orderQuery {
+		orderIds = append(orderIds, orderResult.GetID())
+	}
+	oiResults := getOrderItems(orderIds)
 
 	// Assemble our response
 	response := &Orders{}
-	for _, order := range orders {
-		responseOrder := buildItem(order)
+	for _, orderResult := range orderQuery {
+		responseOrder := buildItem(orderResult, oiResults)
 		response.Orders = append(response.Orders, responseOrder)
 	}
 
 	return response, nil
 }
 
-func buildItem(order order.InterfaceOrder) Order {
+func getOrders(startDate time.Time, endDate time.Time) []order.InterfaceOrder {
+	oModel, _ := order.GetOrderCollectionModel()
+	oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
+	oModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
+	result := oModel.ListOrders()
+
+	return result
+}
+
+func getOrderItems(orderIds []string) []map[string]interface{} {
+	oiModel, _ := order.GetOrderItemCollectionModel()
+	oiDB := oiModel.GetDBCollection()
+	oiDB.AddFilter("order_id", "in", orderIds)
+	oiResults, _ := oiDB.Load()
+
+	return oiResults
+}
+
+func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{}) Order {
 	const outputDateFormat = "01/02/2006 15:04"
 
 	// Base Order Details
-	createdAt := utils.InterfaceToTime(order.Get("created_at"))
-	updatedAt := utils.InterfaceToTime(order.Get("updated_at"))
+	createdAt := utils.InterfaceToTime(oItem.Get("created_at"))
+	updatedAt := utils.InterfaceToTime(oItem.Get("updated_at"))
 
 	orderDetails := Order{
-		OrderId:        order.GetID(),
-		OrderNumber:    order.GetID(),
+		OrderId:        oItem.GetID(),
+		OrderNumber:    oItem.GetID(),
 		OrderDate:      createdAt.Format(outputDateFormat),
-		OrderStatus:    order.GetStatus(),
+		OrderStatus:    oItem.GetStatus(),
 		LastModified:   updatedAt.Format(outputDateFormat),
-		OrderTotal:     order.GetSubtotal(), //TODO: DOUBLE CHECK THIS IS THE RIGHT ONE
-		ShippingAmount: order.GetShippingAmount(),
+		OrderTotal:     oItem.GetSubtotal(),       // TODO: DOUBLE CHECK THIS IS THE RIGHT ONE, AND FORMAT?
+		ShippingAmount: oItem.GetShippingAmount(), // TODO: FORMAT?
 	}
 
-
 	// Customer Details
-	oShipAddress := order.GetShippingAddress()
-	oBillAddress := order.GetBillingAddress()
+	oShipAddress := oItem.GetShippingAddress()
+	oBillAddress := oItem.GetBillingAddress()
 
 	customer := Customer{}
+	customer.CustomerCode = utils.InterfaceToString(oItem.Get("customer_email"))
+
 	customer.BillingAddress = BillingAddress{
 		Name: oBillAddress.GetFirstName() + " " + oBillAddress.GetLastName(),
 	}
+
 	customer.ShippingAddress = ShippingAddress{
-		Name:  oShipAddress.GetFirstName() + " " + oShipAddress.GetLastName(),
+		Name:     oShipAddress.GetFirstName() + " " + oShipAddress.GetLastName(),
 		Address1: oShipAddress.GetAddressLine1(),
-		City: oShipAddress.GetCity(),
-		State: oShipAddress.GetState(),
-		Country: oShipAddress.GetCountry(),
+		City:     oShipAddress.GetCity(),
+		State:    oShipAddress.GetState(),
+		Country:  oShipAddress.GetCountry(),
 	}
 
 	orderDetails.Customer = customer
 
-
 	// Order Items
-	for _, oItem := range order.GetItems() {
+	for _, oiItem := range allOrderItems {
+		isThisOrder := oiItem["order_id"] == oItem.GetID()
+		if !isThisOrder {
+			continue
+		}
+
 		orderItem := OrderItem{
-			Sku: oItem.GetSku(),
-			Name: oItem.GetName(),
-			Quantity: oItem.GetQty(),
-			UnitPrice: oItem.GetPrice(),
+			Sku:       utils.InterfaceToString(oiItem["sku"]),
+			Name:      utils.InterfaceToString(oiItem["name"]),
+			Quantity:  utils.InterfaceToInt(oiItem["qty"]),
+			UnitPrice: utils.InterfaceToFloat64(oiItem["price"]), // TODO: FORMAT?
 		}
 
 		orderDetails.Items = append(orderDetails.Items, orderItem)
