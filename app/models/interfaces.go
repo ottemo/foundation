@@ -65,7 +65,7 @@ type InterfaceCollection interface {
 
 // InterfaceCustomAttributes represents interface to access business layer implementation object custom attributes
 type InterfaceCustomAttributes interface {
-	GetCurrentInstance() interface{}
+	GetInstance() interface{}
 
 	GetCustomAttributeCollectionName() string
 
@@ -76,7 +76,7 @@ type InterfaceCustomAttributes interface {
 
 // InterfaceExternalAttributes represents interface to access business layer implementation object external attributes
 type InterfaceExternalAttributes interface {
-	GetCurrentInstance() interface{}
+	GetInstance() interface{}
 
 	AddExternalAttribute(newAttribute StructAttributeInfo, delegate interface{}) error
 	RemoveExternalAttribute(attributeName string) error

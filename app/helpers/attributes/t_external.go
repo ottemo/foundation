@@ -28,20 +28,16 @@ func (it *ModelExternalAttributes) Init(instance interface{}) (*ModelExternalAtt
 
 	// getting external attributes for instance model, if not set - making empty list
 	modelExternalAttributesMutex.Lock()
-	attributesInfo, present := modelExternalAttributes[modelName];
-	if !present {
-		attributesInfo = new(map[string]ModelExternalAttributes)
-		modelExternalAttributes[modelName] = attributesInfo
+	if _, present := modelExternalAttributes[modelName]; !present {
+		modelExternalAttributes[modelName] = make(map[string]models.StructAttributeInfo)
 	}
 	modelExternalAttributesMutex.Unlock()
 
 	// updating instantized ModelExternalAttributes struct
 	result.model  = modelName
-	result.info   = attributesInfo
 
 	return result, nil
 }
-
 
 // ----------------------------------------------------------------------------------------------
 // InterfaceExternalAttributes implementation (package "github.com/ottemo/foundation/app/models")
@@ -49,7 +45,7 @@ func (it *ModelExternalAttributes) Init(instance interface{}) (*ModelExternalAtt
 
 
 // GetCurrentInstance returns current instance delegate attached to
-func (it *ModelExternalAttributes) GetCurrentInstance() interface{} {
+func (it *ModelExternalAttributes) GetInstance() interface{} {
 	return it.instance
 }
 
@@ -58,17 +54,17 @@ func (it *ModelExternalAttributes) AddExternalAttribute(newAttribute models.Stru
 	modelName := it.model
 	attributeName := newAttribute.Attribute
 
-	modelCustomAttributesMutex.Lock()
-	defer modelCustomAttributesMutex.Unlock()
+	modelExternalAttributesMutex.Lock()
+	defer modelExternalAttributesMutex.Unlock()
 
 	attributesInfo, present := modelCustomAttributes[modelName]
 	if !present {
-		modelCustomAttributes[modelName] = new(map[string]models.StructAttributeInfo)
+		modelCustomAttributes[modelName] = make(map[string]models.StructAttributeInfo)
 	}
 
 	_, present = attributesInfo[attributeName]
 	if !present {
-		modelCustomAttributes[modelName] = newAttribute
+		modelCustomAttributes[modelName][attributeName] = newAttribute
 	} else {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c2175996-b5f1-40dc-9ce2-9df133c3a2c4", "Attribute already exist")
 	}
@@ -80,12 +76,12 @@ func (it *ModelExternalAttributes) AddExternalAttribute(newAttribute models.Stru
 func (it *ModelExternalAttributes) RemoveExternalAttribute(attributeName string) error {
 	modelName := it.model
 
-	modelCustomAttributesMutex.Lock()
-	defer modelCustomAttributesMutex.Unlock()
+	modelExternalAttributesMutex.Lock()
+	defer modelExternalAttributesMutex.Unlock()
 
 	attributesInfo, present := modelCustomAttributes[modelName]
 	if !present {
-		modelCustomAttributes[modelName] = new(map[string]models.StructAttributeInfo)
+		modelCustomAttributes[modelName] = make(map[string]models.StructAttributeInfo)
 	}
 
 	_, present = attributesInfo[attributeName]
@@ -100,7 +96,22 @@ func (it *ModelExternalAttributes) RemoveExternalAttribute(attributeName string)
 
 // ListExternalAttributes registers new delegate for a given attribute
 func (it *ModelExternalAttributes) ListExternalAttributes() []string {
+	var result []string
+	modelName := it.model
 
+	modelExternalAttributesMutex.Lock()
+	defer modelExternalAttributesMutex.Unlock()
+
+	attributesInfo, present := modelCustomAttributes[modelName]
+	if !present {
+		modelCustomAttributes[modelName] = make(map[string]models.StructAttributeInfo)
+	}
+
+	for name := range attributesInfo {
+		result = append(result, name)
+	}
+
+	return result
 }
 
 
@@ -111,9 +122,14 @@ func (it *ModelExternalAttributes) ListExternalAttributes() []string {
 
 // Get returns object attribute value or nil
 func (it *ModelExternalAttributes) Get(attribute string) interface{} {
-	if delegate, present := it.delegates[attribute]; present {
-		if delegate, ok := delegate.(interface{ Get(string) interface{} }); ok {
-			return delegate.Get(attribute)
+	modelExternalDelegatesMutex.Lock()
+	defer modelExternalDelegatesMutex.Unlock()
+
+	if delegates, present := modelExternalDelegates[it.model]; present {
+		if delegate, present := delegates[attribute]; present {
+			if delegate, ok := delegate.(interface{ Get(string) interface{} }); ok {
+				return delegate.Get(attribute)
+			}
 		}
 	}
 
@@ -122,9 +138,14 @@ func (it *ModelExternalAttributes) Get(attribute string) interface{} {
 
 // Set sets attribute value to object or returns error
 func (it *ModelExternalAttributes) Set(attribute string, value interface{}) error {
-	if delegate, present := it.delegates[attribute]; present {
-		if delegate, ok := delegate.(interface{ Set(string, interface{}) error }); ok {
-			return delegate.Set(attribute, value)
+	modelExternalDelegatesMutex.Lock()
+	defer modelExternalDelegatesMutex.Unlock()
+
+	if delegates, present := modelExternalDelegates[it.model]; present {
+		if delegate, present := delegates[attribute]; present {
+			if delegate, ok := delegate.(interface{ Set(string, interface{}) error }); ok {
+				return delegate.Set(attribute, value)
+			}
 		}
 	}
 
@@ -135,20 +156,34 @@ func (it *ModelExternalAttributes) Set(attribute string, value interface{}) erro
 func (it *ModelExternalAttributes) GetAttributesInfo() []models.StructAttributeInfo {
 	var result []models.StructAttributeInfo
 
-	it.mutex.Lock()
-	for _, x := range it.info {
-		result = append(result, x)
+	modelExternalAttributesMutex.Lock()
+	defer modelExternalAttributesMutex.Unlock()
+
+	if attributesInfo, present := modelExternalAttributes[it.model]; !present {
+		for _, info := range attributesInfo {
+			result = append(result, info)
+		}
 	}
-	it.mutex.Unlock()
 
 	return result
 }
 
 // FromHashMap represents object as map[string]interface{}
 func (it *ModelExternalAttributes) FromHashMap(input map[string]interface{}) error {
-	if delegate, present := it.delegates[attribute]; present {
-		if delegate, ok := delegate.(models.InterfaceObject); ok {
-			return delegate.FromHashMap()
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	if present {
+		for attribute, delegate := range delegates {
+			if value, present := input[attribute]; present {
+				if delegate, ok := delegate.(interface{ Set(string, interface{}) error }); ok {
+					err := delegate.Set(attribute, value)
+					if err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -157,5 +192,103 @@ func (it *ModelExternalAttributes) FromHashMap(input map[string]interface{}) err
 
 // ToHashMap fills object attributes from map[string]interface{}
 func (it *ModelExternalAttributes) ToHashMap() map[string]interface{} {
-	return it.values
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	result := make(map[string]interface{})
+	if present {
+		for attribute, delegate := range delegates {
+			if delegate, ok := delegate.(interface{ Get(string) interface{} }); ok {
+				result[attribute] = delegate.Get(attribute)
+			}
+		}
+	}
+	return result
 }
+
+// ------------------------------------------------------------------------------------
+// InterfaceStorable implementation (package "github.com/ottemo/foundation/app/models")
+// ------------------------------------------------------------------------------------
+
+
+// GetID delegates call back to instance (stub method)
+func (it *ModelExternalAttributes) GetID() string {
+	if instance, ok := it.instance.(interface{ GetID() string }); ok {
+		return instance.GetID()
+	}
+	return ""
+}
+
+// SetID callbacks all external attribute delegates
+func (it *ModelExternalAttributes) SetID(id string) error {
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	if present {
+		for _, delegate := range delegates {
+			if delegate, ok := delegate.(interface{ SetID(newID string) error }); ok {
+				if err := delegate.SetID(id); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Load callbacks all external attribute delegates
+func (it *ModelExternalAttributes) Load(id string) error {
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	if present {
+		for _, delegate := range delegates {
+			if delegate, ok := delegate.(interface{ Load(loadID string) error }); ok {
+				if err := delegate.Load(id); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Delete callbacks all external attribute delegates
+func (it *ModelExternalAttributes) Delete() error {
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	if present {
+		for _, delegate := range delegates {
+			if delegate, ok := delegate.(interface{ Delete() error }); ok {
+				if err := delegate.Delete(); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Save callbacks all external attribute delegates
+func (it *ModelExternalAttributes) Save() error {
+	modelExternalDelegatesMutex.Lock()
+	delegates, present := modelExternalDelegates[it.model]
+	modelExternalDelegatesMutex.Unlock()
+
+	if present {
+		for _, delegate := range delegates {
+			if delegate, ok := delegate.(interface{ Save() error }); ok {
+				if err := delegate.Save(); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
