@@ -15,7 +15,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("shipstation", isEnabled(basicAuth(listOrders)))
-	// service.POST("shipstation", updateShipmentStatus)
+	service.POST("shipstation", isEnabled(basicAuth(updateShipmentStatus)))
 
 	return nil
 }
@@ -25,7 +25,7 @@ func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 		isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathShipstationEnabled))
 
 		if !isEnabled {
-			// TODO: update status?
+			// context.SetResponseStatusNotFound()
 			// return "not enabled", nil
 			return next(context) //TODO: REMOVE
 		}
@@ -62,9 +62,9 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 		}
 
 		if !isAuthed(authHash, username, password) {
-			// TODO: update status?
-			return next(context) //TODO: REMOVE
+			// context.SetResponseStatusForbidden()
 			// return "not authed", nil
+			return next(context) //TODO: REMOVE
 		}
 
 		return next(context)
@@ -190,4 +190,43 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 	}
 
 	return orderDetails
+}
+
+// action	The value will always be "shipnotify" when sending shipping notifications.
+// order_number	This is the order's unique identifier.
+// carrier	USPS, UPS, FedEx, DHL, Other, DHLGlobalMail, UPSMI, BrokersWorldWide, FedExInternationalMailService, CanadaPost, FedExCanada, OnTrac, Newgistics, FirstMile, Globegistics, LoneStar, Asendia, RoyalMail, APC, AccessWorldwide, AustraliaPost, DHLCanada, IMEX
+// service	This will be the name of the shipping service that was used to ship the order.
+// tracking_number	This is the tracking number for the package.
+func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{}, error) {
+	const expectedAction = "shipnotify"
+
+	action := context.GetRequestArgument("action")
+	if action != expectedAction {
+		context.SetResponseStatusBadRequest()
+		return nil, nil
+	}
+
+	orderID := context.GetRequestArgument("order_number")
+	carrier := context.GetRequestArgument("carrier")
+	service := context.GetRequestArgument("service")
+	trackingNumber := context.GetRequestArgument("tracking_number")
+
+	// fmt.Println(action, orderID, carrier, service, trackingNumber)
+
+	orderModel, orderNotFound := order.LoadOrderByID(orderID)
+	if orderNotFound != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, nil
+	}
+
+	shippingInfo := utils.InterfaceToMap(orderModel.Get("shipping_info"))
+	shippingInfo["carrier"] = carrier
+	shippingInfo["service"] = service
+	shippingInfo["tracking_number"] = trackingNumber
+
+	orderModel.Set("shippingInfo", shippingInfo)
+	orderModel.Set("updated_at", time.Now())
+	orderModel.Save()
+
+	return nil, nil
 }
