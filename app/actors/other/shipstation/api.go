@@ -71,20 +71,28 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 	}
 }
 
-// Your page should return data for any order that was modified between
-// the start and end date, regardless of the order’s status.
+// Handler for getting a list of orders
+// - XML formatted response
+// - Should return any orders that were modified within the date range
+//   regardless of the order status
 func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	context.SetResponseContentType("text/xml")
 
 	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	const parseDateFormat = "01/02/2006 15:04"
+	const exportAction = "export"
 
-	// action := context.GetRequestArgument("action") // only expecting "export"
-	// page := context.GetRequestArgument("page")
+	// The only action this endpoint accepts is "export"
+	action := context.GetRequestArgument("action")
+	if action != exportAction {
+		return nil, nil
+	}
+
 	startArg := context.GetRequestArgument("start_date")
 	endArg := context.GetRequestArgument("end_date")
 	startDate, _ := time.Parse(parseDateFormat, startArg)
 	endDate, _ := time.Parse(parseDateFormat, endArg)
+	// page := context.GetRequestArgument("page") // we don't paginate currently
 
 	// Get the orders
 	orderQuery := getOrders(startDate, endDate)
@@ -106,6 +114,7 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	return response, nil
 }
 
+// db query for getting all orders
 func getOrders(startDate time.Time, endDate time.Time) []order.InterfaceOrder {
 	oModel, _ := order.GetOrderCollectionModel()
 	oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
@@ -115,6 +124,7 @@ func getOrders(startDate time.Time, endDate time.Time) []order.InterfaceOrder {
 	return result
 }
 
+// db query for getting all relavent order items
 func getOrderItems(orderIds []string) []map[string]interface{} {
 	oiModel, _ := order.GetOrderItemCollectionModel()
 	oiDB := oiModel.GetDBCollection()
@@ -127,6 +137,7 @@ func getOrderItems(orderIds []string) []map[string]interface{} {
 	return oiResults
 }
 
+// Convert an ottemo order and all possible orderitems into a shipstation order
 func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{}) Order {
 	const outputDateFormat = "01/02/2006 15:04"
 
