@@ -1,4 +1,4 @@
-package tests
+package test
 
 import (
 	"os"
@@ -126,7 +126,7 @@ func CheckTestIniDefaults() error {
 	return nil
 }
 
-// StartAppInTestingMode starts application in "test mode" (you should use that function for your package tests)
+// StartAppInTestingMode starts application in "test mode" (you should use that function for your package test)
 func StartAppInTestingMode() error {
 	startAppMutex.Lock()
 	defer startAppMutex.Unlock()

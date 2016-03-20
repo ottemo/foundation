@@ -10,11 +10,11 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	productInstance := new(GenericProduct)
+	productInstance := new(DefaultProduct)
 	var _ product.InterfaceProduct = productInstance
 	models.RegisterModel(product.ConstModelNameProduct, productInstance)
 
-	collectionInstance := new(GenericProductCollection)
+	collectionInstance := new(DefaultProductCollection)
 	var _ product.InterfaceProductCollection = collectionInstance
 	models.RegisterModel(product.ConstModelNameProductCollection, collectionInstance)
 

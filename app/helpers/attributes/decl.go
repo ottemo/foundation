@@ -48,9 +48,10 @@ type ModelCustomAttributes struct {
 }
 
 // ModelExternalAttributes type represents a set of attributes managed by "external" package (outside of model package)
-// which supposing at least InerfaceObject methods delegation, but also could delegate InterfaceStorable if the methods
+// which supposing at least InterfaceObject methods delegation, but also could delegate InterfaceStorable if the methods
 // are implemented in delegate instance.
 type ModelExternalAttributes struct {
 	model     string
 	instance  interface{}
+	delegates map[string]interface{}
 }

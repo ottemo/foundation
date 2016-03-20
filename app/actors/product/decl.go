@@ -18,8 +18,8 @@ const (
 	ConstProductMediaTypeImage = "image"
 )
 
-// GenericProduct is a default implementer of InterfaceProduct
-type GenericProduct struct {
+// DefaultProduct is a default implementer of InterfaceProduct
+type DefaultProduct struct {
 	id string
 
 	Enabled bool
@@ -48,11 +48,12 @@ type GenericProduct struct {
 	// updatedQty holds qty should be updated during save operation ("" item holds qty value)
 	updatedQty []map[string]interface{}
 
-	*attributes.ModelCustomAttributes
+	customAttributes *attributes.ModelCustomAttributes
+	externalAttributes *attributes.ModelExternalAttributes
 }
 
-// GenericProductCollection is a default implementer of InterfaceProduct
-type GenericProductCollection struct {
+// DefaultProductCollection is a default implementer of InterfaceProduct
+type DefaultProductCollection struct {
 	listCollection     db.InterfaceDBCollection
 	listExtraAtributes []string
 }

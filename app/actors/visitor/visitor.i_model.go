@@ -20,7 +20,7 @@ func (it *DefaultVisitor) GetImplementationName() string {
 // New returns new instance of model implementation object for the Visitor
 func (it *DefaultVisitor) New() (models.InterfaceModel, error) {
 
-	customAttributes, err := new(attributes.ModelCustomAttributes).Init(visitor.ConstModelNameVisitor, ConstCollectionNameVisitor)
+	customAttributes, err := attributes.CustomAttributes(visitor.ConstModelNameVisitor, ConstCollectionNameVisitor)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

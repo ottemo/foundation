@@ -1,6 +1,6 @@
 package product
 
-// GenericProduct type implements:
+// DefaultProduct type implements:
 // 	- InterfaceProduct
 // 	- InterfaceModel
 // 	- InterfaceObject
@@ -29,24 +29,32 @@ import (
 
 
 // GetModelName returns model name
-func (it *GenericProduct) GetModelName() string {
+func (it *DefaultProduct) GetModelName() string {
 	return product.ConstModelNameProduct
 }
 
 // GetImplementationName returns model implementation name
-func (it *GenericProduct) GetImplementationName() string {
+func (it *DefaultProduct) GetImplementationName() string {
 	return "Default" + product.ConstModelNameProduct
 }
 
 // New returns new instance of model implementation object
-func (it *GenericProduct) New() (models.InterfaceModel, error) {
+func (it *DefaultProduct) New() (models.InterfaceModel, error) {
+	newInstance := new(DefaultProduct)
 
-	customAttributes, err := new(attributes.ModelCustomAttributes).Init(product.ConstModelNameProduct, ConstCollectionNameProduct)
+	customAttributes, err := attributes.CustomAttributes(product.ConstModelNameProduct, ConstCollectionNameProduct)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+	newInstance.customAttributes = customAttributes
 
-	return &GenericProduct{ModelCustomAttributes: customAttributes}, nil
+	externalAttributes, err := attributes.ExternalAttributes(newInstance)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	newInstance.externalAttributes = externalAttributes
+
+	return newInstance, nil
 }
 
 
@@ -56,47 +64,47 @@ func (it *GenericProduct) New() (models.InterfaceModel, error) {
 
 
 // GetEnabled returns enabled flag for the given product
-func (it *GenericProduct) GetEnabled() bool {
+func (it *DefaultProduct) GetEnabled() bool {
 	return it.Enabled
 }
 
 // GetSku returns requested sku for the given product
-func (it *GenericProduct) GetSku() string {
+func (it *DefaultProduct) GetSku() string {
 	return it.Sku
 }
 
 // GetName returns the name of the given product
-func (it *GenericProduct) GetName() string {
+func (it *DefaultProduct) GetName() string {
 	return it.Name
 }
 
 // GetShortDescription returns the short description of the requested product
-func (it *GenericProduct) GetShortDescription() string {
+func (it *DefaultProduct) GetShortDescription() string {
 	return it.ShortDescription
 }
 
 // GetDescription returns the long description of the requested product
-func (it *GenericProduct) GetDescription() string {
+func (it *DefaultProduct) GetDescription() string {
 	return it.Description
 }
 
 // GetDefaultImage returns the imaged identified as defult for the given product
-func (it *GenericProduct) GetDefaultImage() string {
+func (it *DefaultProduct) GetDefaultImage() string {
 	return it.DefaultImage
 }
 
 // GetPrice returns the price as a float64 for the given product
-func (it *GenericProduct) GetPrice() float64 {
+func (it *DefaultProduct) GetPrice() float64 {
 	return it.Price
 }
 
 // GetWeight returns the weight for the given product
-func (it *GenericProduct) GetWeight() float64 {
+func (it *DefaultProduct) GetWeight() float64 {
 	return it.Weight
 }
 
 // GetOptions returns current products possible options as a map[string]interface{}
-func (it *GenericProduct) GetOptions() map[string]interface{} {
+func (it *DefaultProduct) GetOptions() map[string]interface{} {
 	options := it.Options
 	eventData := map[string]interface{}{"id": it.GetID(), "product": it, "options": options}
 	env.Event("product.getOptions", eventData)
@@ -104,12 +112,12 @@ func (it *GenericProduct) GetOptions() map[string]interface{} {
 }
 
 // GetRelatedProductIds returns the related product id list
-func (it *GenericProduct) GetRelatedProductIds() []string {
+func (it *DefaultProduct) GetRelatedProductIds() []string {
 	return it.RelatedProductIds
 }
 
 // GetRelatedProducts returns related products instances list
-func (it *GenericProduct) GetRelatedProducts() []product.InterfaceProduct {
+func (it *DefaultProduct) GetRelatedProducts() []product.InterfaceProduct {
 	var result []product.InterfaceProduct
 
 	for _, productID := range it.RelatedProductIds {
@@ -128,7 +136,7 @@ func (it *GenericProduct) GetRelatedProducts() []product.InterfaceProduct {
 
 // GetQty updates and returns the product qty if stock manager is available and Qty was not set to instance
 // otherwise returns qty was set
-func (it *GenericProduct) GetQty() int {
+func (it *DefaultProduct) GetQty() int {
 	if stockManager := product.GetRegisteredStock(); it.Qty == 0 && stockManager != nil {
 		it.Qty = stockManager.GetProductQty(it.GetID(), it.GetAppliedOptions())
 	}
@@ -136,7 +144,7 @@ func (it *GenericProduct) GetQty() int {
 }
 
 // GetAppliedOptions returns applied options for current product instance
-func (it *GenericProduct) GetAppliedOptions() map[string]interface{} {
+func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 	if it.appliedOptions != nil {
 		return it.appliedOptions
 	}
@@ -145,7 +153,7 @@ func (it *GenericProduct) GetAppliedOptions() map[string]interface{} {
 
 // ApplyOptions updates current product attributes according to given product options,
 // returns error if specified option are not possible for the product
-func (it *GenericProduct) ApplyOptions(options map[string]interface{}) error {
+func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	// taking item specified options and product options
 	productOptions := it.GetOptions()
 
@@ -322,7 +330,12 @@ func (it *GenericProduct) ApplyOptions(options map[string]interface{}) error {
 
 
 // Get returns an object attribute value or nil
-func (it *GenericProduct) Get(attribute string) interface{} {
+func (it *DefaultProduct) Get(attribute string) interface{} {
+
+	if utils.IsInListStr(attribute, it.externalAttributes.ListExternalAttributes()) {
+		return it.externalAttributes.Get(attribute)
+	}
+
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
 		return it.id
@@ -350,14 +363,19 @@ func (it *GenericProduct) Get(attribute string) interface{} {
 		return it.GetRelatedProductIds()
 	}
 
-	return it.ModelCustomAttributes.Get(attribute)
+	return it.customAttributes.Get(attribute)
 }
 
 // Set will apply the given attribute value to the product or return an error
-func (it *GenericProduct) Set(attribute string, value interface{}) error {
+func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 	lowerCaseAttribute := strings.ToLower(attribute)
 
-	it.ModelCustomAttributes.Set(attribute, value)
+	if utils.IsInListStr(attribute, it.externalAttributes.ListExternalAttributes()) {
+		err := it.externalAttributes.Set(attribute, value)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
 
 	switch lowerCaseAttribute {
 	case "_id", "id":
@@ -438,7 +456,7 @@ func (it *GenericProduct) Set(attribute string, value interface{}) error {
 		}
 
 	default:
-		err := it.ModelCustomAttributes.Set(attribute, value)
+		err := it.customAttributes.Set(attribute, value)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -448,7 +466,7 @@ func (it *GenericProduct) Set(attribute string, value interface{}) error {
 }
 
 // FromHashMap will populate object attributes from map[string]interface{}
-func (it *GenericProduct) FromHashMap(input map[string]interface{}) error {
+func (it *DefaultProduct) FromHashMap(input map[string]interface{}) error {
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
 			env.LogError(err)
@@ -458,8 +476,8 @@ func (it *GenericProduct) FromHashMap(input map[string]interface{}) error {
 }
 
 // ToHashMap returns a map[string]interface{}
-func (it *GenericProduct) ToHashMap() map[string]interface{} {
-	result := it.ModelCustomAttributes.ToHashMap()
+func (it *DefaultProduct) ToHashMap() map[string]interface{} {
+	result := it.customAttributes.ToHashMap()
 
 	result["_id"] = it.id
 
@@ -484,11 +502,15 @@ func (it *GenericProduct) ToHashMap() map[string]interface{} {
 		result["qty"] = it.Get("qty")
 	}
 
+	for key, value := range it.externalAttributes.ToHashMap() {
+		result[key] = value
+	}
+
 	return result
 }
 
 // GetAttributesInfo returns the requested object attributes
-func (it *GenericProduct) GetAttributesInfo() []models.StructAttributeInfo {
+func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 	result := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
 			Model:      product.ConstModelNameProduct,
@@ -656,16 +678,21 @@ func (it *GenericProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			})
 	}
 
-	customAttributesInfo := it.ModelCustomAttributes.GetAttributesInfo()
+	customAttributesInfo := it.customAttributes.GetAttributesInfo()
 	for _, customAttribute := range customAttributesInfo {
 		result = append(result, customAttribute)
+	}
+
+	externalAttributesInfo := it.externalAttributes.GetAttributesInfo()
+	for _, externalAttribute := range externalAttributesInfo {
+		result = append(result, externalAttribute)
 	}
 
 	return result
 }
 
 // checkOptionsForQty looking for specified qty attribute for options, removes it and passes for stock management
-func (it *GenericProduct) checkOptionsForQty() {
+func (it *DefaultProduct) checkOptionsForQty() {
 
 	for productOptionName, productOption := range it.GetOptions() {
 		if productOption, ok := productOption.(map[string]interface{}); ok {
@@ -711,30 +738,36 @@ func (it *GenericProduct) checkOptionsForQty() {
 
 
 // GetID returns current product id
-func (it *GenericProduct) GetID() string {
+func (it *DefaultProduct) GetID() string {
 	return it.id
 }
 
 // SetID sets current product id
-func (it *GenericProduct) SetID(NewID string) error {
-	it.id = NewID
-	return nil
+func (it *DefaultProduct) SetID(id string) error {
+	it.id = id
+
+	return it.externalAttributes.SetID(id)
 }
 
 // Load loads product information from DB
-func (it *GenericProduct) Load(loadID string) error {
+func (it *DefaultProduct) Load(id string) error {
 
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	dbRecord, err := collection.LoadByID(loadID)
+	dbRecord, err := collection.LoadByID(id)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a671dee4-b95b-11e5-a86b-28cfe917b6c7", "Unable to find product by id; "+loadID)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a671dee4-b95b-11e5-a86b-28cfe917b6c7", "Unable to find product by id; "+id)
 	}
 
 	err = it.FromHashMap(dbRecord)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = it.externalAttributes.Load(id)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -743,13 +776,18 @@ func (it *GenericProduct) Load(loadID string) error {
 }
 
 // Delete removes current product from DB
-func (it *GenericProduct) Delete() error {
+func (it *DefaultProduct) Delete() error {
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	err = collection.DeleteByID(it.GetID())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = it.externalAttributes.Delete()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -763,7 +801,7 @@ func (it *GenericProduct) Delete() error {
 }
 
 // Save stores current product to DB
-func (it *GenericProduct) Save() error {
+func (it *DefaultProduct) Save() error {
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -777,7 +815,17 @@ func (it *GenericProduct) Save() error {
 	if _, present := valuesToStore["qty"]; present {
 		delete(valuesToStore, "qty")
 	}
+
+	for _, x := range it.externalAttributes.ListExternalAttributes() {
+		delete(valuesToStore, x)
+	}
+
 	newID, err := collection.Save(valuesToStore)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = it.externalAttributes.Save()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -816,7 +864,7 @@ func (it *GenericProduct) Save() error {
 
 
 // GetCollection returns collection of current instance type
-func (it *GenericProduct) GetCollection() models.InterfaceCollection {
+func (it *DefaultProduct) GetCollection() models.InterfaceCollection {
 	model, _ := models.GetModel(product.ConstModelNameProductCollection)
 	if result, ok := model.(product.InterfaceProductCollection); ok {
 		return result
@@ -832,7 +880,7 @@ func (it *GenericProduct) GetCollection() models.InterfaceCollection {
 
 
 // AddMedia adds new media assigned to product
-func (it *GenericProduct) AddMedia(mediaType string, mediaName string, content []byte) error {
+func (it *DefaultProduct) AddMedia(mediaType string, mediaName string, content []byte) error {
 	productID := it.GetID()
 	if productID == "" {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "85650715-3acf-4e47-a365-c6e8911d9118", "product id not set")
@@ -847,7 +895,7 @@ func (it *GenericProduct) AddMedia(mediaType string, mediaName string, content [
 }
 
 // RemoveMedia removes media assigned to product
-func (it *GenericProduct) RemoveMedia(mediaType string, mediaName string) error {
+func (it *DefaultProduct) RemoveMedia(mediaType string, mediaName string) error {
 	productID := it.GetID()
 	if productID == "" {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "87bb383a-cf35-48e0-9d50-ad517ed2e8f9", "product id not set")
@@ -862,7 +910,7 @@ func (it *GenericProduct) RemoveMedia(mediaType string, mediaName string) error 
 }
 
 // ListMedia lists media assigned to product
-func (it *GenericProduct) ListMedia(mediaType string) ([]string, error) {
+func (it *DefaultProduct) ListMedia(mediaType string) ([]string, error) {
 	var result []string
 
 	productID := it.GetID()
@@ -879,7 +927,7 @@ func (it *GenericProduct) ListMedia(mediaType string) ([]string, error) {
 }
 
 // GetMedia returns content of media assigned to product
-func (it *GenericProduct) GetMedia(mediaType string, mediaName string) ([]byte, error) {
+func (it *DefaultProduct) GetMedia(mediaType string, mediaName string) ([]byte, error) {
 	productID := it.GetID()
 	if productID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5f5d3c33-de82-4580-a6e7-f5c45e9281e5", "product id not set")
@@ -894,7 +942,7 @@ func (it *GenericProduct) GetMedia(mediaType string, mediaName string) ([]byte, 
 }
 
 // GetMediaPath returns relative location of media assigned to product in media storage
-func (it *GenericProduct) GetMediaPath(mediaType string) (string, error) {
+func (it *DefaultProduct) GetMediaPath(mediaType string) (string, error) {
 	productID := it.GetID()
 	if productID == "" {
 		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0055f93a-5d10-41db-8d93-ea2bb4bee216", "product id not set")
@@ -906,4 +954,57 @@ func (it *GenericProduct) GetMediaPath(mediaType string) (string, error) {
 	}
 
 	return mediaStorage.GetMediaPath(it.GetModelName(), productID, mediaType)
+}
+
+
+// --------------------------------------------------------------------------------------------
+// InterfaceCustomAttributes implementation (package "github.com/ottemo/foundation/app/models")
+// --------------------------------------------------------------------------------------------
+
+
+// GetCurrentInstance returns current instance delegate attached to
+func (it *DefaultProduct) GetInstance() interface{} {
+	return it
+}
+
+// EditAttribute modifies custom attribute for collection
+func (it *DefaultProduct) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
+	return it.customAttributes.EditAttribute(attributeName, attributeValues)
+}
+
+// RemoveAttribute removes custom attribute from collection
+func (it *DefaultProduct) RemoveAttribute(attributeName string) error {
+	return it.customAttributes.RemoveAttribute(attributeName)
+}
+
+// AddNewAttribute extends collection with new custom attribute
+func (it *DefaultProduct) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
+	return it.customAttributes.AddNewAttribute(newAttribute)
+}
+
+// GetCustomAttributeCollectionName returns collection name you can use to fill ModelCustomAttributes struct
+func (it *DefaultProduct) GetCustomAttributeCollectionName() string {
+	return it.customAttributes.GetCustomAttributeCollectionName()
+}
+
+
+// ----------------------------------------------------------------------------------------------
+// InterfaceExternalAttributes implementation (package "github.com/ottemo/foundation/app/models")
+// ----------------------------------------------------------------------------------------------
+
+
+// AddExternalAttribute registers new delegate for a given attribute
+func (it *DefaultProduct) AddExternalAttribute(newAttribute models.StructAttributeInfo, delegate interface{}) error {
+
+	return it.externalAttributes.AddExternalAttribute(newAttribute, delegate)
+}
+
+// RemoveExternalAttribute registers new delegate for a given attribute
+func (it *DefaultProduct) RemoveExternalAttribute(attributeName string) error {
+	return it.externalAttributes.RemoveExternalAttribute(attributeName)
+}
+
+// ListExternalAttributes registers new delegate for a given attribute
+func (it *DefaultProduct) ListExternalAttributes() []string {
+	return it.externalAttributes.ListExternalAttributes()
 }

@@ -1,6 +1,6 @@
 package product
 
-// GenericProductCollection type implements:
+// DefaultProductCollection type implements:
 //	- InterfaceModel
 //	- InterfaceCollection
 //	- InterfaceProductCollection
@@ -20,7 +20,7 @@ import (
 
 
 // List enumerates items of Product model type
-func (it *GenericProductCollection) List() ([]models.StructListItem, error) {
+func (it *DefaultProductCollection) List() ([]models.StructListItem, error) {
 	var result []models.StructListItem
 
 	dbRecords, err := it.listCollection.Load()
@@ -72,7 +72,7 @@ func (it *GenericProductCollection) List() ([]models.StructListItem, error) {
 }
 
 // ListAddExtraAttribute allows to obtain additional attributes from  List() function
-func (it *GenericProductCollection) ListAddExtraAttribute(attribute string) error {
+func (it *DefaultProductCollection) ListAddExtraAttribute(attribute string) error {
 
 	productModel, err := product.GetProductModel()
 	if err != nil {
@@ -98,19 +98,19 @@ func (it *GenericProductCollection) ListAddExtraAttribute(attribute string) erro
 }
 
 // ListFilterAdd adds selection filter to List() function
-func (it *GenericProductCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
+func (it *DefaultProductCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
 	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
-func (it *GenericProductCollection) ListFilterReset() error {
+func (it *DefaultProductCollection) ListFilterReset() error {
 	it.listCollection.ClearFilters()
 	return nil
 }
 
 // ListLimit specifies selection paging
-func (it *GenericProductCollection) ListLimit(offset int, limit int) error {
+func (it *DefaultProductCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
 }
 
@@ -121,23 +121,23 @@ func (it *GenericProductCollection) ListLimit(offset int, limit int) error {
 
 
 // GetModelName returns model name
-func (it *GenericProductCollection) GetModelName() string {
+func (it *DefaultProductCollection) GetModelName() string {
 	return product.ConstModelNameProductCollection
 }
 
 // GetImplementationName returns model implementation name
-func (it *GenericProductCollection) GetImplementationName() string {
+func (it *DefaultProductCollection) GetImplementationName() string {
 	return "Default" + product.ConstModelNameProductCollection
 }
 
 // New returns new instance of model implementation object
-func (it *GenericProductCollection) New() (models.InterfaceModel, error) {
+func (it *DefaultProductCollection) New() (models.InterfaceModel, error) {
 	dbCollection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return &GenericProductCollection{listCollection: dbCollection, listExtraAtributes: make([]string, 0)}, nil
+	return &DefaultProductCollection{listCollection: dbCollection, listExtraAtributes: make([]string, 0)}, nil
 }
 
 
@@ -147,12 +147,12 @@ func (it *GenericProductCollection) New() (models.InterfaceModel, error) {
 
 
 // GetDBCollection returns database collection
-func (it *GenericProductCollection) GetDBCollection() db.InterfaceDBCollection {
+func (it *DefaultProductCollection) GetDBCollection() db.InterfaceDBCollection {
 	return it.listCollection
 }
 
 // ListProducts returns array of products in model instance form
-func (it *GenericProductCollection) ListProducts() []product.InterfaceProduct {
+func (it *DefaultProductCollection) ListProducts() []product.InterfaceProduct {
 	var result []product.InterfaceProduct
 
 	dbRecords, err := it.listCollection.Load()

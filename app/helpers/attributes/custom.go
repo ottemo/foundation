@@ -8,10 +8,12 @@ import (
 )
 
 // Init initializes helper instance before usage
-func (it *ModelCustomAttributes) Init(model string, collection string) (*ModelCustomAttributes, error) {
-	it.model = model
-	it.collection = collection
-	it.values = make(map[string]interface{})
+func CustomAttributes(model string, collection string) (*ModelCustomAttributes, error) {
+	result := new(ModelCustomAttributes)
+
+	result.model = model
+	result.collection = collection
+	result.values = make(map[string]interface{})
 
 	modelCustomAttributesMutex.Lock()
 	defer modelCustomAttributesMutex.Unlock()
@@ -26,14 +28,14 @@ func (it *ModelCustomAttributes) Init(model string, collection string) (*ModelCu
 		//-------------------------------
 		customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 		if err != nil {
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
+			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
 		}
 
-		customAttributesCollection.AddFilter("model", "=", it.model)
+		customAttributesCollection.AddFilter("model", "=", result.model)
 		records, err := customAttributesCollection.Load()
 		if err != nil {
 			env.LogError(err)
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+it.model+"'")
+			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+result.model+"'")
 		}
 
 		// filling attribute info structure
@@ -76,12 +78,10 @@ func (it *ModelCustomAttributes) Init(model string, collection string) (*ModelCu
 			info[attribute.Attribute] = attribute
 		}
 
-		modelCustomAttributes[it.model] = info
+		modelCustomAttributes[result.model] = info
 	}
 
-	modelCustomAttributesMutex.Unlock()
-
-	return it, nil
+	return result, nil
 }
 
 
