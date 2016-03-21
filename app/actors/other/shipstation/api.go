@@ -190,11 +190,16 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 	return orderDetails
 }
 
-// action	The value will always be "shipnotify" when sending shipping notifications.
-// order_number	This is the order's unique identifier.
-// carrier	USPS, UPS, FedEx, DHL, Other, DHLGlobalMail, UPSMI, BrokersWorldWide, FedExInternationalMailService, CanadaPost, FedExCanada, OnTrac, Newgistics, FirstMile, Globegistics, LoneStar, Asendia, RoyalMail, APC, AccessWorldwide, AustraliaPost, DHLCanada, IMEX
-// service	This will be the name of the shipping service that was used to ship the order.
-// tracking_number	This is the tracking number for the package.
+// updateShipmentStatus An endpoint for shipstation to hit that will update the order with some shipment tracking info
+// and then send off an email update
+//
+// - action :			The value will always be "shipnotify" when sending shipping notifications.
+// - order_number :		This is the order's unique identifier.
+// - carrier :			USPS, UPS, FedEx, DHL, Other, DHLGlobalMail, UPSMI, BrokersWorldWide, FedExInternationalMailService,
+// 						CanadaPost, FedExCanada, OnTrac, Newgistics, FirstMile, Globegistics, LoneStar, Asendia,
+// 						RoyalMail, APC, AccessWorldwide, AustraliaPost, DHLCanada, IMEX
+// - service :			This will be the name of the shipping service that was used to ship the order.
+// - tracking_number :	This is the tracking number for the package.
 func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{}, error) {
 	const expectedAction = "shipnotify"
 
