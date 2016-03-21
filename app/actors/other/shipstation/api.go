@@ -149,8 +149,8 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 		OrderDate:      createdAt.Format(outputDateFormat),
 		OrderStatus:    oItem.GetStatus(),
 		LastModified:   updatedAt.Format(outputDateFormat),
-		OrderTotal:     oItem.GetSubtotal(),       // TODO: DOUBLE CHECK THIS IS THE RIGHT ONE, AND FORMAT?
-		ShippingAmount: oItem.GetShippingAmount(), // TODO: FORMAT?
+		OrderTotal:     oItem.GetGrandTotal(),
+		ShippingAmount: oItem.GetShippingAmount(),
 	}
 
 	// Customer Details
@@ -227,6 +227,7 @@ func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{},
 
 	orderModel.Set("shipping_info", shippingInfo)
 	orderModel.Set("updated_at", time.Now())
+	orderModel.SetStatus(order.ConstOrderStatusCompleted)
 	err := orderModel.Save()
 
 	if err != nil {

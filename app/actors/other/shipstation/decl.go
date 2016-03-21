@@ -27,7 +27,7 @@ type Order struct {
 }
 
 type Customer struct {
-	CustomerCode string
+	CustomerCode string // We use email address here
 
 	// Containers
 	BillingAddress  BillingAddress  `xml:"BillTo"`
