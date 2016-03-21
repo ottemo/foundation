@@ -25,9 +25,8 @@ func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 		isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathShipstationEnabled))
 
 		if !isEnabled {
-			// context.SetResponseStatusNotFound()
-			// return "not enabled", nil
-			return next(context) //TODO: REMOVE
+			context.SetResponseStatusNotFound()
+			return "not enabled", nil
 		}
 
 		return next(context)
@@ -62,9 +61,8 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 		}
 
 		if !isAuthed(authHash, username, password) {
-			// context.SetResponseStatusForbidden()
-			// return "not authed", nil
-			return next(context) //TODO: REMOVE
+			context.SetResponseStatusForbidden()
+			return "not authed", nil
 		}
 
 		return next(context)
@@ -203,15 +201,13 @@ func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{},
 	action := context.GetRequestArgument("action")
 	if action != expectedAction {
 		context.SetResponseStatusBadRequest()
-		return nil, nil
+		return "unexpected action", nil
 	}
 
 	orderID := context.GetRequestArgument("order_number")
 	carrier := context.GetRequestArgument("carrier")
 	service := context.GetRequestArgument("service")
 	trackingNumber := context.GetRequestArgument("tracking_number")
-
-	// fmt.Println(action, orderID, carrier, service, trackingNumber)
 
 	orderModel, orderNotFound := order.LoadOrderByID(orderID)
 	if orderNotFound != nil {
@@ -226,7 +222,13 @@ func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{},
 
 	orderModel.Set("shipping_info", shippingInfo)
 	orderModel.Set("updated_at", time.Now())
-	orderModel.Save()
+	err := orderModel.Save()
+
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+	} else {
+		orderModel.SendShippingStatusUpdateEmail()
+	}
 
 	return nil, nil
 }

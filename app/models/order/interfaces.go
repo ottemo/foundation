@@ -83,6 +83,7 @@ type InterfaceOrder interface {
 	Rollback() error
 
 	DuplicateOrder(params map[string]interface{}) (interface{}, error)
+	SendShippingStatusUpdateEmail() error
 
 	models.InterfaceModel
 	models.InterfaceObject
