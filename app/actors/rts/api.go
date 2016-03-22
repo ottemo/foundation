@@ -416,7 +416,9 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 //     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	var productsToSort, bestSellers []map[string]interface{}
+	var productSales map[string]int
+	var productsToSort []map[string]interface{}
+	var response []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
 
@@ -425,7 +427,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	}
 
-	// get a hours pasted for local day and base from it
+	// get a hours passed for local day and base from it
 	todayTo := time.Now().Truncate(time.Hour).Add(time.Hour) // last hour of current day
 	todayFrom, _ := utils.MakeUTCOffsetTime(todayTo, timeZone)
 	if utils.IsZeroTime(todayFrom) {
@@ -468,13 +470,15 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	productsSold := make(map[string]int)
-
+	// aggregate the counts for each pid
 	for _, item := range collectionRecords {
-		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
+		count := utils.InterfaceToInt(item["count"])
+		pid := utils.InterfaceToString(item["product_id"])
+		productSales[pid] = count + productSales[pid]
 	}
 
-	for id, count := range productsSold {
+	// load product to build out response
+	for id, count := range productSales {
 
 		productInstance, err := product.LoadProductByID(id)
 		if err != nil {
@@ -487,33 +491,30 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		}
 
 		bestsellerItem := make(map[string]interface{})
-
 		bestsellerItem["pid"] = id
+		bestsellerItem["name"] = productInstance.GetName()
+		bestsellerItem["count"] = count
+
 		if productInstance.GetDefaultImage() != "" {
 			bestsellerItem["image"] = mediaPath + productInstance.GetDefaultImage()
 		}
 
-		bestsellerItem["name"] = productInstance.GetName()
-		bestsellerItem["count"] = count
-
 		productsToSort = append(productsToSort, bestsellerItem)
-
 	}
-
-	descending := true    // sort in descending order
-	bestsellerLimit := 12 // limit on returned bestsellers
 
 	// sort list of products by sales
-	productsToSort = utils.SortMapByKeys(productsToSort, descending, "count", "name")
+	descending := true    // sort in descending order
+	bestsellerLimit := 12 // limit on returned bestsellers
+	sortedResponse := utils.SortMapByKeys(productsToSort, descending, "count", "name")
 
-	// pass back only bestsellerLimit or less
-	if len(productsToSort) <= bestsellerLimit {
-		bestSellers = productsToSort
+	// apply a limit
+	if len(sortedResponse) <= bestsellerLimit {
+		response = sortedResponse
 	} else {
-		bestSellers = productsToSort[:bestsellerLimit]
+		response = sortedResponse[:bestsellerLimit]
 	}
 
-	return bestSellers, nil
+	return response, nil
 }
 
 // APIGetVisitsRealtime returns real-time information on current visits
