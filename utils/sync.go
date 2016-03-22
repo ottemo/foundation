@@ -3,17 +3,16 @@ package utils
 import (
 	"sync"
 	"reflect"
-	"crypto/md5"
-	"fmt"
+	"errors"
 )
 
 var (
-	locks = make(map[string]*syncMutex)
+	locks = make(map[uintptr]*syncMutex)
 	locksMutex sync.Mutex
 )
 
 type syncMutex struct {
-	index string
+	index uintptr
 	refs  int
 	lock  bool
 	mutex sync.Mutex
@@ -37,7 +36,7 @@ func (it *syncMutex) Unlock() {
 	it.mutex.Unlock()
 }
 
-func (it *syncMutex) GetIndex() string {
+func (it *syncMutex) GetIndex() uintptr {
 	return it.index
 }
 
@@ -49,53 +48,94 @@ func (it *syncMutex) Refs() int {
 	return it.refs
 }
 
-func getMutexIndex(combination []interface{}) string {
-	index := ""
-	for _, item := range combination {
-		value := reflect.ValueOf(item)
-
-		var indexElement string = ""
-		switch value.Kind() {
-		case reflect.String:
-			indexElement += value.String()
-
-		case reflect.Chan,
-			reflect.Map,
-			reflect.Ptr,
-			reflect.UnsafePointer,
-			reflect.Func,
-			reflect.Slice,
-			reflect.Array:
-
-			indexElement = string(value.Pointer())
-			// indexElement = fmt.Sprintf("%p", item)
-
-		default:
-			indexElement = fmt.Sprintf("%v", item)
-		}
-
-		index += "/" + indexElement
+func GetPointer(subject interface{}) uintptr {
+	if subject == nil {
+		return 0
 	}
 
-	if len(index) > 32 {
-		index = string(md5.New().Sum([]byte(index)))
+	value := reflect.ValueOf(subject)
+	switch value.Kind() {
+	case reflect.Chan,
+		reflect.Map,
+		reflect.Ptr,
+		reflect.UnsafePointer,
+		reflect.Func,
+		reflect.Slice,
+		reflect.Array:
+
+		return value.Pointer()
 	}
 
-	return index
+	return 0
 }
 
-func GetMutex(combination ...interface{}) *syncMutex {
+func GetMutex(subject interface{}) *syncMutex {
 	locksMutex.Lock()
 	defer locksMutex.Unlock()
 
-	index := getMutexIndex(combination)
-
-	mutex, present := locks[index]
-	if !present {
-		mutex = new(syncMutex)
-		mutex.index = index
-		locks[index] = mutex
+	if index := GetPointer(subject); index != 0 {
+		mutex, present := locks[index]
+		if !present {
+			mutex = new(syncMutex)
+			mutex.index = index
+			locks[index] = mutex
+		}
+		mutex.refs++
+		return mutex
 	}
-	mutex.refs++
-	return mutex
+
+	return nil
+}
+
+func SyncSet(subject interface{}, value interface{}, path ...interface{}) error {
+	rSubject := reflect.ValueOf(subject)
+	for _, x := range path {
+		if rSubject.IsNil() {
+			return errors.New("path not found")
+		}
+
+		switch rSubject.Kind() {
+		case reflect.Map:
+			xType := reflect.TypeOf(x)
+			rSubjectType := rSubject.Type()
+			if xType != rSubjectType {
+				return errors.New("wrong key type")
+			}
+
+			m := GetMutex(rSubject.Pointer())
+			if m == nil {
+				return errors.New("invalid mutex")
+			}
+
+			m.Lock()
+			rSubject = rSubject.MapIndex(reflect.ValueOf(x))
+			m.Unlock()
+		}
+	}
+
+	if rSubject.IsNil() {
+		return errors.New("invalid object")
+	}
+
+	valueType := reflect.TypeOf(value)
+	rSubjectType := rSubject.Type()
+	if rSubjectType != valueType {
+		return errors.New("invalid value type")
+	}
+
+	m := GetMutex(rSubject.Pointer())
+	if m == nil {
+		return errors.New("invalid mutex")
+	}
+
+	m.Lock()
+	rSubject = rSubject.MapIndex(reflect.ValueOf(x))
+	m.Unlock()
+
+	rSubject.Set(value)
+	return nil
+}
+
+func SyncGet(subject interface{}, path ...interface{}) (interface{}, error) {
+	return nil, nil
 }
