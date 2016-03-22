@@ -4,6 +4,7 @@ import (
 	"sync"
 	"reflect"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -88,36 +89,48 @@ func GetMutex(subject interface{}) *syncMutex {
 }
 
 func SyncSet(subject interface{}, value interface{}, path ...interface{}) error {
-	rSubject := reflect.ValueOf(subject)
-	for _, x := range path {
-		if rSubject.IsNil() {
-			return errors.New("path not found")
-		}
+	if subject == nil {
+		return errors.New("subject is nil")
+	}
 
+	rSubject := reflect.ValueOf(subject)
+	rSubjectType := rSubject.Type()
+
+	var rKey reflect.Value
+	var rKeyType reflect.Type
+
+	rValue := reflect.ValueOf(value)
+	rValueType := rValue.Type()
+
+	length := len(path)
+	last := length-1
+	for idx, key := range path {
 		switch rSubject.Kind() {
 		case reflect.Map:
-			xType := reflect.TypeOf(x)
-			rSubjectType := rSubject.Type()
-			if xType != rSubjectType {
-				return errors.New("wrong key type")
+			rKey = reflect.ValueOf(key)
+			rKeyType = rKey.Type()
+			if rKey.IsNil() || rKeyType != rSubjectType.Key() {
+				return errors.New(fmt.Sprintf("invalid path key %d - %v" % rKey))
 			}
 
-			m := GetMutex(rSubject.Pointer())
-			if m == nil {
-				return errors.New("invalid mutex")
-			}
+			if idx != last {
+				m := GetMutex(rSubject.Pointer())
+				if m == nil {
+					return errors.New(fmt.Sprintf("invalid mutex on %v" % rSubject))
+				}
 
-			m.Lock()
-			rSubject = rSubject.MapIndex(reflect.ValueOf(x))
-			m.Unlock()
+				m.Lock()
+				rSubject = rSubject.MapIndex(rKey)
+				m.Unlock()
+			}
+		}
+
+		if rSubject.IsNil() {
+			return errors.New("subject is nil")
 		}
 	}
 
-	if rSubject.IsNil() {
-		return errors.New("invalid object")
-	}
 
-	valueType := reflect.TypeOf(value)
 	rSubjectType := rSubject.Type()
 	if rSubjectType != valueType {
 		return errors.New("invalid value type")
@@ -137,5 +150,8 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 }
 
 func SyncGet(subject interface{}, path ...interface{}) (interface{}, error) {
+
+
+
 	return nil, nil
 }
