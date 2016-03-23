@@ -4,7 +4,6 @@ import (
 	"sync"
 	"reflect"
 	"errors"
-	"fmt"
 )
 
 var (
@@ -70,7 +69,7 @@ func GetPointer(subject interface{}) uintptr {
 	return 0
 }
 
-func GetMutex(subject interface{}) *syncMutex {
+func SyncMutex(subject interface{}) *syncMutex {
 	locksMutex.Lock()
 	defer locksMutex.Unlock()
 
@@ -109,19 +108,21 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 		case reflect.Map:
 			rKey = reflect.ValueOf(key)
 			rKeyType = rKey.Type()
-			if rKey.IsNil() || rKeyType != rSubjectType.Key() {
-				return errors.New(fmt.Sprintf("invalid path key %d - %v" % rKey))
+			if rKeyType != rSubjectType.Key() {
+				return errors.New("invalid path key")
 			}
 
 			if idx != last {
-				m := GetMutex(rSubject.Pointer())
+				m := SyncMutex(rSubject.Pointer())
 				if m == nil {
-					return errors.New(fmt.Sprintf("invalid mutex on %v" % rSubject))
+					return errors.New("invalid mutex")
 				}
 
 				m.Lock()
 				rSubject = rSubject.MapIndex(rKey)
 				m.Unlock()
+
+				rSubjectType = rSubject.Type()
 			}
 		}
 
@@ -130,22 +131,63 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 		}
 	}
 
-
-	rSubjectType := rSubject.Type()
-	if rSubjectType != valueType {
-		return errors.New("invalid value type")
-	}
-
-	m := GetMutex(rSubject.Pointer())
+	m := SyncMutex(rSubject.Pointer())
 	if m == nil {
-		return errors.New("invalid mutex")
+		return errors.New("invalid mutex creation for subject")
 	}
 
-	m.Lock()
-	rSubject = rSubject.MapIndex(reflect.ValueOf(x))
-	m.Unlock()
+	// allowing to pass value as a "func(oldValue) => newValue" func
+	isLocked := false
+	if rValue.Kind() == reflect.Func {
+		if rValueType.NumOut()==1 && rValueType.NumIn()==1 &&
+			!rValueType.In(0).AssignableTo(rSubjectType) &&
+			!rValueType.Out(0).AssignableTo(rSubjectType) {
 
-	rSubject.Set(value)
+			// the result is dependable on input, so we need
+			// to keep read lock while the value would not
+			// be updated
+			m.Lock()
+			isLocked = true
+			rValue = rValue.Call([]reflect.Value{rValue})[0]
+		}
+	}
+
+	switch rSubject.Kind() {
+	case reflect.Map:
+		if rKeyType != rSubjectType.Key() {
+			return errors.New("invalid map key type")
+		}
+
+		if rKeyType != rValueType {
+			return errors.New("invalid value type")
+		}
+
+		if !isLocked { m.Lock() }
+		rSubject.SetMapIndex(rKey, rValue)
+		m.Unlock()
+
+	case reflect.Slice, reflect.Array:
+		if rKey.Kind() != reflect.Int {
+			return errors.New("invalid key, should be integer")
+		}
+		idx := int(rKey.Int())
+		if rSubject.Len() <= idx {
+			return errors.New("out of bound")
+		}
+
+		if !isLocked { m.Lock() }
+		rSubject.Index(idx).Set(rValue)
+		m.Unlock()
+
+	case reflect.Ptr, reflect.Chan, reflect.Func:
+		if !isLocked { m.Lock() }
+		rSubject.Set(rValue)
+		m.Unlock()
+
+	default:
+		return errors.New("invalid subject - must be pointer and not scalar value")
+	}
+
 	return nil
 }
 
