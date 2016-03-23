@@ -4,7 +4,7 @@ import "github.com/ottemo/foundation/env"
 
 const (
 	ConstErrorModule = "shipstation"
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	ConstErrorLevel  = env.ConstErrorLevel
 )
 
 // struct goes here
