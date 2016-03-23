@@ -4,6 +4,7 @@ import (
 	"sync"
 	"reflect"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -53,7 +54,14 @@ func GetPointer(subject interface{}) uintptr {
 		return 0
 	}
 
-	value := reflect.ValueOf(subject)
+	var value reflect.Value
+
+	if rValue, ok := subject.(reflect.Value); ok {
+		value = rValue
+	} else {
+		value = reflect.ValueOf(subject)
+	}
+
 	switch value.Kind() {
 	case reflect.Chan,
 		reflect.Map,
@@ -101,9 +109,22 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 	rValue := reflect.ValueOf(value)
 	rValueType := rValue.Type()
 
+	// time critical segment (because of lock)
+	initBlankValue := func() error {
+		switch rSubjectType.Kind() {
+		case reflect.Map:
+			rSubject = reflect.MakeMap(rSubjectType)
+		}
+		return errors.New("subject is nil")
+	}
+
 	length := len(path)
 	last := length-1
 	for idx, key := range path {
+
+		if rSubject.IsNil() && rSubjectType != nil {
+		}
+
 		switch rSubject.Kind() {
 		case reflect.Map:
 			rKey = reflect.ValueOf(key)
@@ -113,22 +134,29 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 			}
 
 			if idx != last {
-				m := SyncMutex(rSubject.Pointer())
+				m := SyncMutex(rSubject)
 				if m == nil {
-					return errors.New("invalid mutex")
+					return errors.New(fmt.Sprintf("invalid mutex on '%v' type '%v'", rKey, rSubjectType))
 				}
 
+				// time critical segment (because of lock)
 				m.Lock()
-				rSubject = rSubject.MapIndex(rKey)
+				rSubjectValue := rSubject.MapIndex(rKey)
+				if rSubjectValue.IsNil() {
+					if err := initBlankValue(); err != nil {
+						m.Unlock()
+						return err
+					}
+				}
 				m.Unlock()
 
+				rSubject = rSubjectValue
 				rSubjectType = rSubject.Type()
 			}
 		}
 
-		if rSubject.IsNil() {
-			return errors.New("subject is nil")
-		}
+
+
 	}
 
 	m := SyncMutex(rSubject.Pointer())
@@ -136,7 +164,7 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 		return errors.New("invalid mutex creation for subject")
 	}
 
-	// allowing to pass value as a "func(oldValue) => newValue" func
+	// allowing to pass value as setter function "func(oldValue) => newValue"
 	isLocked := false
 	if rValue.Kind() == reflect.Func {
 		if rValueType.NumOut()==1 && rValueType.NumIn()==1 &&
