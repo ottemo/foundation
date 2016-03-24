@@ -9,10 +9,22 @@ import (
 func (it DefaultOrder) SendShippingStatusUpdateEmail() error {
 	subject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShippingEmailSubject))
 	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShippingEmailTemplate))
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+
+	// Assemble template variables
+	orderMap := it.ToHashMap()
+
+	// convert date of order creation to store time zone
+	if date, present := orderMap["created_at"]; present {
+		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
+		if !utils.IsZeroTime(convertedDate) {
+			orderMap["created_at"] = convertedDate
+		}
+	}
 
 	templateVariables := map[string]interface{}{
 		"Site":  map[string]string{"Url": app.GetStorefrontURL("")},
-		"Order": it.ToHashMap(),
+		"Order": orderMap,
 	}
 
 	body, err := utils.TextTemplate(emailTemplate, templateVariables)
