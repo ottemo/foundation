@@ -19,7 +19,7 @@ func setupAPI() error {
 
 	service.GET("visitor/:visitorID/addresses", APIListVisitorAddresses)
 
-	service.GET("visitors/addresses/attributes", APIListVisitorAddressAttributes)
+	service.GET("visitors/addresses/attributes", api.IsAdmin(APIListVisitorAddressAttributes)
 	service.DELETE("visitors/address/:addressID", APIDeleteVisitorAddress)
 	service.PUT("visitors/address/:addressID", APIUpdateVisitorAddress)
 	service.GET("visitors/address/:addressID", APIGetVisitorAddress)
@@ -156,11 +156,6 @@ func APIDeleteVisitorAddress(context api.InterfaceApplicationContext) (interface
 
 // APIListVisitorAddressAttributes returns a list of visitor address attributes
 func APIListVisitorAddressAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	visitorAddressModel, err := visitor.GetVisitorAddressModel()
 	if err != nil {

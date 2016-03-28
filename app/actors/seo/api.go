@@ -20,15 +20,18 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("seo/items", APIListSEOItems)
-	service.POST("seo/item", APICreateSEOItem)
-	service.PUT("seo/item/:itemID", APIUpdateSEOItem)
-	service.DELETE("seo/item/:itemID", APIDeleteSEOItem)
+
 	service.GET("seo/url", APIGetSEOItem)
 	service.GET("seo/url/:url", APIGetSEOItem)
 	service.GET("seo/canonical/:id", APIGetSEOItemByID)
 
 	service.GET("seo/sitemap", APIGenerateSitemap)
 	service.GET("seo/sitemap/sitemap.xml", APIGetSitemap)
+
+	// Admin Only
+	service.POST("seo/item", api.IsAdmin(APICreateSEOItem))
+	service.PUT("seo/item/:itemID", api.IsAdmin(APIUpdateSEOItem))
+	service.DELETE("seo/item/:itemID", api.IsAdmin(APIDeleteSEOItem))
 
 	return nil
 }
@@ -109,13 +112,6 @@ func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, er
 //   - SEO item id should be specified in "itemID" argument
 func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -171,14 +167,6 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 // APICreateSEOItem creates a new SEO item
 //   - "url" and "rewrite" attributes are required
 func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// checking request context
-	//------------------------
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -239,10 +227,6 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 // APIDeleteSEOItem deletes specified SEO item
 //   - SEO item id should be specified in "itemID" argument
 func APIDeleteSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {

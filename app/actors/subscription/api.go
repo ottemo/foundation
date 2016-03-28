@@ -17,8 +17,8 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Administrative
-	service.GET("subscriptions", APIListSubscriptions)
-	service.GET("subscriptions/:id", APIGetSubscription)
+	service.GET("subscriptions", api.IsAdmin(APIListSubscriptions))
+	service.GET("subscriptions/:id", api.IsAdmin(APIGetSubscription))
 	service.PUT("subscriptions/:id", APIUpdateSubscription)
 
 	// Public
@@ -34,10 +34,6 @@ func setupAPI() error {
 // APIListSubscriptions returns a list of subscriptions for visitor
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	// list operation
 	subscriptionCollectionModel, err := subscription.GetSubscriptionCollectionModel()
@@ -111,10 +107,6 @@ func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, e
 
 	subscriptionModel, err := subscription.LoadSubscriptionByID(subscriptionID)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
