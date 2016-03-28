@@ -222,6 +222,9 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 	statusFilter := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
 	orderCollection.GetDBCollection().AddFilter("status", "in", statusFilter)
 
+	descending := true
+	orderCollection.GetDBCollection().AddSort("created_at", descending)
+
 	// filters handle
 	models.ApplyFilters(context, orderCollection.GetDBCollection())
 
