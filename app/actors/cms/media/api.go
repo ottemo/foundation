@@ -17,8 +17,10 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("cms/media", APIListMediaImages)
-	service.POST("cms/media", APIAddMediaImages)
-	service.DELETE("cms/media/:mediaName", APIRemoveMediaImage)
+
+	// Admin only
+	service.POST("cms/media", api.IsAdmin(APIAddMediaImages))
+	service.DELETE("cms/media/:mediaName", api.IsAdmin(APIRemoveMediaImage))
 
 	return nil
 }
@@ -38,11 +40,6 @@ func APIListMediaImages(context api.InterfaceApplicationContext) (interface{}, e
 //   - media file should be provided in "file" field with full name
 func APIAddMediaImages(context api.InterfaceApplicationContext) (interface{}, error) {
 	var result []interface{}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	files := context.GetRequestFiles()
 	if len(files) == 0 {
@@ -93,11 +90,6 @@ func APIRemoveMediaImage(context api.InterfaceApplicationContext) (interface{}, 
 	imageName := context.GetRequestArgument("mediaName")
 	if imageName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// remove media operation
