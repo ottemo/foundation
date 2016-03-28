@@ -307,6 +307,7 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 // DownloadCSV returns a csv file with the current coupons and their configuration
 //   * returns a csv file
 func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
 	// preparing csv writer
 	csvWriter := csv.NewWriter(context.GetResponseWriter())
@@ -349,7 +350,7 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 // UploadCSV will overwrite and replace the current coupon configuration with the uploaded CSV
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 	csvFile := context.GetRequestFile("file")
 	if csvFile == nil {
 		responseWriter.WriteHeader(http.StatusBadRequest)
@@ -403,7 +404,7 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 // GetByID returns a coupon with the specified ID
 // * coupon id should be specified in the "id" argument
 func GetByID(context api.InterfaceApplicationContext) (interface{}, error) {
-
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
 		responseWriter.WriteHeader(http.StatusInternalServerError)
@@ -503,7 +504,7 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 // DeleteByID deletes specified SEO item
 //   * discount id should be specified in the "couponID" argument
 func DeleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
-
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
 		responseWriter.WriteHeader(http.StatusInternalServerError)

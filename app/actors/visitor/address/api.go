@@ -19,7 +19,7 @@ func setupAPI() error {
 
 	service.GET("visitor/:visitorID/addresses", APIListVisitorAddresses)
 
-	service.GET("visitors/addresses/attributes", api.IsAdmin(APIListVisitorAddressAttributes)
+	service.GET("visitors/addresses/attributes", api.IsAdmin(APIListVisitorAddressAttributes))
 	service.DELETE("visitors/address/:addressID", APIDeleteVisitorAddress)
 	service.PUT("visitors/address/:addressID", APIUpdateVisitorAddress)
 	service.GET("visitors/address/:addressID", APIGetVisitorAddress)
