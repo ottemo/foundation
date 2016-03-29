@@ -45,7 +45,9 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 // 3. get a service review link, and set the product review url as the redirect once they complete the service review
 // 4. set the service url on the order object
 func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.InterfaceCart) error {
+
 	if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotEnabled)) {
+
 		// taking TrustPilot settings into variables
 		trustPilotAPIKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
 		trustPilotAPISecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
@@ -61,7 +63,6 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		// verification of configuration values
 		if trustPilotAPIKey != "" && trustPilotAPISecret != "" && trustPilotBusinessUnitID != "" && trustPilotUsername != "" &&
 			trustPilotPassword != "" && trustPilotAccessTokenURL != "" && trustPilotProductReviewURL != "" && trustPilotServiceReviewURL != "" {
-
 			/**
 			 * 1. Get the access token
 			 */
@@ -94,8 +95,9 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 			}
 
 			if response.StatusCode >= 300 {
-				errMsg := "Non 200 response while trying to get trustpilot access token: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
+				errMsg := "Non 200 response while trying to get trustpilot access token: StatusCode:" + response.Status
 				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "376b178e-6cbf-4b4e-a3a8-fd65251d176b", errMsg)
+
 				env.LogError(err)
 				return err
 			}
@@ -197,7 +199,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 				if response.StatusCode >= 300 {
-					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
 					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
 					env.LogError(err)
 					return err
@@ -216,7 +218,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					} else {
 						errorMessage += "no error message provided"
 					}
-					env.LogError(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
+					env.LogError(env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
 					return err
 				}
 
@@ -265,7 +267,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 				if response.StatusCode >= 300 {
-					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
 					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
 					env.LogError(err)
 					return err
@@ -307,12 +309,12 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 			} else {
-				env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1293708d-9638-455a-8d49-3a387f086181", "Trustpilot didn't return an access token for our request")
+				env.ErrorNew(ConstErrorModule, 1, "1293708d-9638-455a-8d49-3a387f086181", "Trustpilot didn't return an access token for our request")
 				env.LogError(err)
 				return err
 			}
 		} else {
-			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured")
+			err := env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured")
 			env.LogError(err)
 			return err
 		}
