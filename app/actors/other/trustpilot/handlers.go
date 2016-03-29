@@ -94,7 +94,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 			}
 
 			if response.StatusCode >= 300 {
-				errMsg := "Non 200 response while trying to get trustpilot access token: StatusCode:" + response.StatusCode + " Body:" + responseBody
+				errMsg := "Non 200 response while trying to get trustpilot access token: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
 				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "376b178e-6cbf-4b4e-a3a8-fd65251d176b", errMsg)
 				env.LogError(err)
 				return err
@@ -197,7 +197,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 				if response.StatusCode >= 300 {
-					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.StatusCode + " Body:" + responseBody
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
 					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
 					env.LogError(err)
 					return err
@@ -265,7 +265,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 				if response.StatusCode >= 300 {
-					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.StatusCode + " Body:" + responseBody
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status + " Body:" + utils.InterfaceToString(responseBody)
 					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
 					env.LogError(err)
 					return err
@@ -312,7 +312,8 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				return err
 			}
 		} else {
-			env.LogError(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured")
+			env.LogError(err)
 			return err
 		}
 	}
