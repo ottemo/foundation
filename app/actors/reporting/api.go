@@ -17,8 +17,8 @@ import (
 func setupAPI() error {
 
 	service := api.GetRestService()
-
 	service.GET("reporting/product-performance", listProductPerformance)
+
 	return nil
 }
 
@@ -33,9 +33,15 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 		msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
 		return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
 	}
+	if startDate.After(endDate) || startDate.Equal(endDate) {
+		context.SetResponseStatusBadRequest()
+		msg := "the start_date must come before the end_date"
+		return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+	}
 
 	foundOrders := getOrders(startDate, endDate)
-	foundOrderItems := getItemsForOrders(foundOrders)
+	foundOrderIds := getOrderIds(foundOrders)
+	foundOrderItems := getItemsForOrders(foundOrderIds)
 	aggregatedResults := aggregateOrderItems(foundOrderItems)
 
 	response := map[string]interface{}{
@@ -47,10 +53,8 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 	return response, nil
 }
 
+// getOrders Get the orders `created_at` a certain date range
 func getOrders(startDate time.Time, endDate time.Time) []models.StructListItem {
-
-	// fmt.Println(endDate, startDate)
-
 	oModel, _ := order.GetOrderCollectionModel()
 	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
 	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
@@ -60,14 +64,17 @@ func getOrders(startDate time.Time, endDate time.Time) []models.StructListItem {
 	return foundOrders
 }
 
-func getItemsForOrders(foundOrders []models.StructListItem) []map[string]interface{} {
-	// get list of order ids
+// getOrderIds Create a list of order ids
+func getOrderIds(foundOrders []models.StructListItem) []string {
 	var orderIds []string
 	for _, foundOrder := range foundOrders {
 		orderIds = append(orderIds, foundOrder.ID)
 	}
+	return orderIds
+}
 
-	// load the order items
+// getItemsForOrders Get the relavent order items given a slice of orders
+func getItemsForOrders(orderIds []string) []map[string]interface{} {
 	oiModel, _ := order.GetOrderItemCollectionModel()
 	oiDB := oiModel.GetDBCollection()
 	oiDB.AddFilter("order_id", "in", orderIds)
@@ -76,6 +83,7 @@ func getItemsForOrders(foundOrders []models.StructListItem) []map[string]interfa
 	return oiResults
 }
 
+// aggregateOrderItems Takes a list of order ids and aggregates their price / qty by their sku
 func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	keyedResults := make(map[string]AggrOrderItems)
 
@@ -96,7 +104,7 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 		keyedResults[sku] = item
 	}
 
-	// Strip the keys off of this map
+	// Strip the keys off now that we are done aggregating
 	var results []AggrOrderItems
 	for _, item := range keyedResults {
 		results = append(results, item)
@@ -105,6 +113,7 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	return results
 }
 
+//TODO: move to decl
 type AggrOrderItems struct {
 	Name       string  `json:"name"`
 	Sku        string  `json:"sku"`
