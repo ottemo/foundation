@@ -78,7 +78,7 @@ func setupConfig() error {
 		<br />
 		The following email address could not be added to Mailchimp:
 		{{.email_address}}`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Support Email Template",

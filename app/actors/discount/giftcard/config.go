@@ -65,7 +65,7 @@ func setupConfig() error {
 			<br />
 			<h3>Gift Cards</h3><br />
 			Unique Code: {{.GiftCard.Code}}, Value: ${{.GiftCard.Amount}}`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Gift Card Recipeient E-mail: ",

@@ -55,7 +55,7 @@ func setupConfig() error {
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:    ConstGroupingConfigPath,
 		Value:   ``,
-		Type:    env.ConstConfigTypeText,
+		Type:    env.ConstConfigTypeJSON,
 		Editor:  "multiline_text",
 		Options: "",
 		Label:   "Rules for grouping items",

@@ -145,7 +145,7 @@ func setupConfig() error {
 		err = config.RegisterItem(env.StructConfigItem{
 			Path:    ConstConfigPathAdditionalRates,
 			Value:   `[]`,
-			Type:    env.ConstConfigTypeText,
+			Type:    env.ConstConfigTypeJSON,
 			Editor:  "multiline_text",
 			Options: "",
 			Label:   "Additional rates",

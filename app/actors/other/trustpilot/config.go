@@ -187,7 +187,7 @@ func setupConfig() error {
 		please provide your feedback on recently purchase
 		<br />
 		{{.Visitor.link}}`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Trustpilot data send e-mail: ",
