@@ -70,7 +70,10 @@ func TestLock(t *testing.T) {
 				key1 := rand.Intn(scatter)
 				key2 := rand.Intn(scatter)
 
-				m := SyncMutex(x) // synchronization
+				m, err := SyncMutex(x) // synchronization
+				if err != nil {
+					t.Error(err)
+				}
 				m.Lock()
 
 				oldValue := x[key1][key2]
@@ -91,24 +94,20 @@ func TestLock(t *testing.T) {
 
 
 func TestSyncSet(t *testing.T) {
-	x := make(map[string]map[int]map[bool]int)
+
+	const concurrent = 9999
+
+	A := make([]int, 0)
+	B := make(map[string]map[int]map[bool]int)
 
 	finished := make(chan int)
-	routines := 9999
+	routines := concurrent
 
-	_ = func(oldVal int) int {
-		return oldVal+1
-	}
-
+	// Test 1: slice access
 	for i:=0; i<routines; i++ {
 		go func(i int) {
-			for j:=0; j<100; j++ {
-				err := SyncSet(x, 1, "a", j, true)
-				if err != nil {
-					t.Error(err)
-				}
-				finished <- i
-			}
+			SyncSet(A, i)
+			finished <- i
 		}(i)
 	}
 
@@ -117,7 +116,30 @@ func TestSyncSet(t *testing.T) {
 		routines--
 	}
 
-	if len(x["a"]) != 100 || x["a"][0][true] != routines-1 {
-		t.Error("unexpected result: len(x[\"a\"])=", len(x["a"]), ", x[\"a\"][0][true]=", x["a"][0][true])
+	if len(A) != concurrent {
+		t.Error("unexpected result: len(A) = ", len(A), " and should be ", concurrent)
+	}
+
+	// Test 2: map access
+	routines = 9999
+	for i:=0; i<routines; i++ {
+		go func(i int) {
+			for j:=0; j<100; j++ {
+				err := SyncSet(B, func (old int) int { return old+1 }, "a", j, true)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			finished <- i
+		}(i)
+	}
+
+	for routines > 0 {
+		<- finished
+		routines--
+	}
+
+	if len(B["a"]) != 100 || B["a"][0][true] != concurrent {
+		t.Error("unexpected result: len(x[\"a\"]) =", len(B["a"]), ", x[\"a\"][0][true] =", B["a"][0][true])
 	}
 }

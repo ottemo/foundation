@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"errors"
 	"fmt"
+	"runtime/debug"
 )
 
 var (
@@ -49,9 +50,9 @@ func (it *syncMutex) Refs() int {
 	return it.refs
 }
 
-func GetPointer(subject interface{}) uintptr {
+func GetPointer(subject interface{}) (uintptr, error) {
 	if subject == nil {
-		return 0
+		return 0, errors.New("can't get pointer to nil")
 	}
 
 	var value reflect.Value
@@ -71,34 +72,40 @@ func GetPointer(subject interface{}) uintptr {
 		reflect.Slice,
 		reflect.Array:
 
-		return value.Pointer()
+		return value.Pointer(), nil
 	}
 
-	return 0
+	debug.PrintStack()
+	return 0, errors.New("can't get pointer to " + value.Type().String())
 }
 
-func SyncMutex(subject interface{}) *syncMutex {
+func SyncMutex(subject interface{}) (*syncMutex, error) {
 	locksMutex.Lock()
 	defer locksMutex.Unlock()
 
-	if index := GetPointer(subject); index != 0 {
-		mutex, present := locks[index]
-		if !present {
-			mutex = new(syncMutex)
-			mutex.index = index
-			locks[index] = mutex
-		}
-		mutex.refs++
-		return mutex
+	index, err := GetPointer(subject)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil
+	if index == 0 {
+		return nil, errors.New("mutex to zero pointer")
+	}
+	mutex, present := locks[index]
+	if !present {
+		mutex = new(syncMutex)
+		mutex.index = index
+		locks[index] = mutex
+	}
+	mutex.refs++
+	return mutex, nil
 }
 
 func SyncSet(subject interface{}, value interface{}, path ...interface{}) error {
 	if subject == nil {
 		return errors.New("subject is nil")
 	}
+
+	var err error
 
 	rSubject := reflect.ValueOf(subject)
 	rSubjectType := rSubject.Type()
@@ -109,15 +116,33 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 	rValue := reflect.ValueOf(value)
 	rValueType := rValue.Type()
 
-	// time critical segment (because of lock)
-	initBlankValue := func() error {
-		switch rSubjectType.Kind() {
-		case reflect.Map:
-			rSubject = reflect.MakeMap(rSubjectType)
+	getValue := func(oldValue reflect.Value) reflect.Value {
+		if rValue.Kind() == reflect.Func {
+			if rValueType.NumOut()==1 && rValueType.NumIn()==1 {
+				// oldValueType := oldValue.Type()
+				// !rValueType.In(0).AssignableTo(oldValueType) &&
+				//!rValueType.Out(0).AssignableTo(oldValueType) {
+				return rValue.Call([]reflect.Value{oldValue})[0]
+			}
 		}
-		return errors.New("subject is nil")
+		return rValue
 	}
 
+	initBlankValue := func(valueType reflect.Type) (reflect.Value, error) {
+		switch valueType.Kind() {
+		case reflect.Map:
+			return reflect.MakeMap(valueType), nil
+		case reflect.Slice, reflect.Array:
+			return reflect.MakeSlice(valueType, 0, 10), nil
+		case reflect.Chan, reflect.Func:
+			break
+		default:
+			return reflect.New(valueType).Elem(), nil
+		}
+		return reflect.ValueOf(nil), errors.New("unsuported blank value type " + valueType.String())
+	}
+
+	// If path specified - going to path element in subject
 	length := len(path)
 	last := length-1
 	for idx, key := range path {
@@ -130,23 +155,24 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 			rKey = reflect.ValueOf(key)
 			rKeyType = rKey.Type()
 			if rKeyType != rSubjectType.Key() {
-				return errors.New("invalid path key")
+				return errors.New(fmt.Sprintf("invalid type of key %d", idx))
 			}
 
 			if idx != last {
-				m := SyncMutex(rSubject)
-				if m == nil {
-					return errors.New(fmt.Sprintf("invalid mutex on '%v' type '%v'", rKey, rSubjectType))
+				m, err := SyncMutex(rSubject)
+				if err != nil {
+					return err
 				}
 
 				// time critical segment (because of lock)
 				m.Lock()
 				rSubjectValue := rSubject.MapIndex(rKey)
-				if rSubjectValue.IsNil() {
-					if err := initBlankValue(); err != nil {
+				if !rSubjectValue.IsValid() {
+					if rSubjectValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
 						m.Unlock()
 						return err
 					}
+					rSubject.SetMapIndex(rKey, rSubjectValue)
 				}
 				m.Unlock()
 
@@ -159,64 +185,60 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 
 	}
 
-	m := SyncMutex(rSubject.Pointer())
-	if m == nil {
-		return errors.New("invalid mutex creation for subject")
+	// setting value to subject
+	m, err := SyncMutex(rSubject)
+	if err != nil {
+		return err
 	}
 
-	// allowing to pass value as setter function "func(oldValue) => newValue"
-	isLocked := false
-	if rValue.Kind() == reflect.Func {
-		if rValueType.NumOut()==1 && rValueType.NumIn()==1 &&
-			!rValueType.In(0).AssignableTo(rSubjectType) &&
-			!rValueType.Out(0).AssignableTo(rSubjectType) {
-
-			// the result is dependable on input, so we need
-			// to keep read lock while the value would not
-			// be updated
-			m.Lock()
-			isLocked = true
-			rValue = rValue.Call([]reflect.Value{rValue})[0]
-		}
-	}
-
+	// setting the value according to subject type
 	switch rSubject.Kind() {
 	case reflect.Map:
 		if rKeyType != rSubjectType.Key() {
-			return errors.New("invalid map key type")
+			return errors.New("invalid map key type (" + rKeyType.String() + " != " + rSubjectType.Key().String() + ")")
 		}
 
-		if rKeyType != rValueType {
-			return errors.New("invalid value type")
+		m.Lock()
+		oldValue := rSubject.MapIndex(rKey)
+		if !oldValue.IsValid() {
+			if oldValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
+				m.Unlock()
+				return err
+			}
 		}
-
-		if !isLocked { m.Lock() }
-		rSubject.SetMapIndex(rKey, rValue)
+		rSubject.SetMapIndex(rKey, getValue(oldValue))
 		m.Unlock()
 
 	case reflect.Slice, reflect.Array:
-		if rKey.Kind() != reflect.Int {
-			return errors.New("invalid key, should be integer")
-		}
-		idx := int(rKey.Int())
-		if rSubject.Len() <= idx {
-			return errors.New("out of bound")
-		}
+		if rKey.IsValid() {
+			if rKey.Kind() != reflect.Int {
+				return errors.New("invalid index type - should be integer")
+			}
+			idx := int(rKey.Int())
+			if rSubject.Len() <= idx {
+				return errors.New("index out of bound")
+			}
 
-		if !isLocked { m.Lock() }
-		rSubject.Index(idx).Set(rValue)
-		m.Unlock()
+			m.Lock()
+			oldValue := rSubject.Index(idx)
+			oldValue.Set(getValue(oldValue))
+			m.Unlock()
+		} else {
+			m.Lock()
+			reflect.Append(rSubject, getValue(rSubject))
+			m.Unlock()
+		}
 
 	case reflect.Ptr, reflect.Chan, reflect.Func:
-		if !isLocked { m.Lock() }
-		rSubject.Set(rValue)
+		m.Lock()
+		rSubject.Set(getValue(rValue))
 		m.Unlock()
 
 	default:
-		return errors.New("invalid subject - must be pointer and not scalar value")
+		return errors.New("invalid acceptor, must be pointer and not scalar value")
 	}
 
-	return nil
+	return err
 }
 
 func SyncGet(subject interface{}, path ...interface{}) (interface{}, error) {
