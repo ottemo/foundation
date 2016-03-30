@@ -22,6 +22,7 @@ func setupAPI() error {
 	return nil
 }
 
+// listProductPerformance Handler that returns product performance information by date range
 func listProductPerformance(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// Expecting dates in UTC, and adjusted for your timezone
