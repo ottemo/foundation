@@ -3,6 +3,7 @@ package reporting
 import (
 	// "fmt"
 	"github.com/ottemo/foundation/api"
+	"sort"
 	"time"
 	// "github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
@@ -105,19 +106,13 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 		keyedResults[sku] = item
 	}
 
-	// Strip the keys off now that we are done aggregating
+	// map to slice
 	var results []AggrOrderItems
 	for _, item := range keyedResults {
 		results = append(results, item)
 	}
 
-	return results
-}
+	sort.Sort(ByUnitsSold(results))
 
-//TODO: move to decl
-type AggrOrderItems struct {
-	Name       string  `json:"name"`
-	Sku        string  `json:"sku"`
-	GrossSales float64 `json:"gross_sales"`
-	UnitsSold  int     `json:"units_sold"`
+	return results
 }
