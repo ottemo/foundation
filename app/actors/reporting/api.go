@@ -1,7 +1,7 @@
 package reporting
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/ottemo/foundation/api"
 	"time"
 	// "github.com/ottemo/foundation/app"
@@ -25,6 +25,7 @@ func setupAPI() error {
 func listProductPerformance(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// Expecting dates in UTC, and adjusted for your timezone
+	// `2006-01-02 15:04`
 	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
 	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
 	if startDate.IsZero() || endDate.IsZero() {
@@ -33,22 +34,26 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
 	}
 
-	// Debugging //TODO: RM
-	fmt.Println(endDate, startDate)
-
-	foundOrders := getOrderIds(startDate, endDate)
+	foundOrders := getOrders(startDate, endDate)
 	foundOrderItems := getItemsForOrders(foundOrders)
 	aggregatedResults := aggregateOrderItems(foundOrderItems)
 
-	return aggregatedResults, nil
+	response := map[string]interface{}{
+		"order_count":     len(foundOrders),
+		"item_count":      len(foundOrderItems),
+		"aggregate_items": aggregatedResults,
+	}
+
+	return response, nil
 }
 
-func getOrderIds(startDate time.Time, endDate time.Time) []models.StructListItem {
+func getOrders(startDate time.Time, endDate time.Time) []models.StructListItem {
+
+	// fmt.Println(endDate, startDate)
+
 	oModel, _ := order.GetOrderCollectionModel()
-	//TODO:
-	// oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
-	// oModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
-	oModel.ListLimit(0, 10)
+	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
 	oModel.ListAddExtraAttribute("created_at")
 	foundOrders, _ := oModel.List()
 
