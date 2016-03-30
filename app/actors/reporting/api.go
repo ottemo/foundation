@@ -1,6 +1,7 @@
 package reporting
 
 import (
+	"fmt"
 	"github.com/ottemo/foundation/api"
 	"time"
 	// "github.com/ottemo/foundation/app"
@@ -8,7 +9,7 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	// "github.com/ottemo/foundation/app/models/subscription"
 	// "github.com/ottemo/foundation/app/models/visitor"
-	// "github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -23,17 +24,17 @@ func setupAPI() error {
 
 func listProductPerformance(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	startDateS := context.GetRequestArgument("start_date")
-	endDateS := context.GetRequestArgument("end_date")
-	if startDateS == "" || endDateS == "" {
-		//todo: err
+	// Expecting dates in UTC, and adjusted for your timezone
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	if startDate.IsZero() || endDate.IsZero() {
+		context.SetResponseStatusBadRequest()
+		msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+		return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
 	}
-	endDate := utils.InterfaceToTime(endDateS)
-	startDate := utils.InterfaceToTime(startDateS)
 
 	// Debugging //TODO: RM
-	endDate = time.Now()
-	startDate = time.Now()
+	fmt.Println(endDate, startDate)
 
 	foundOrders := getOrderIds(startDate, endDate)
 	foundOrderItems := getItemsForOrders(foundOrders)
