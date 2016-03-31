@@ -93,46 +93,24 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	// page := context.GetRequestArgument("page") // we don't paginate currently
 
 	// Get the orders
-	orderQuery := getOrders(startDate, endDate)
+	oResults := order.GetFullOrdersUpdatedBetween(startDate, endDate)
 
 	// Get the order items
 	var orderIds []string
-	for _, orderResult := range orderQuery {
+	for _, orderResult := range oResults {
 		orderIds = append(orderIds, orderResult.GetID())
 	}
-	oiResults := getOrderItems(orderIds)
+    
+    oiResults := order.GetItemsForOrders(orderIds)
 
 	// Assemble our response
 	response := &Orders{}
-	for _, orderResult := range orderQuery {
+	for _, orderResult := range oResults {
 		responseOrder := buildItem(orderResult, oiResults)
 		response.Orders = append(response.Orders, responseOrder)
 	}
 
 	return response, nil
-}
-
-// db query for getting all orders
-func getOrders(startDate time.Time, endDate time.Time) []order.InterfaceOrder {
-	oModel, _ := order.GetOrderCollectionModel()
-	oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
-	oModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
-	result := oModel.ListOrders()
-
-	return result
-}
-
-// db query for getting all relavent order items
-func getOrderItems(orderIds []string) []map[string]interface{} {
-	oiModel, _ := order.GetOrderItemCollectionModel()
-	oiDB := oiModel.GetDBCollection()
-	oiDB.AddFilter("order_id", "in", orderIds)
-	oiResults, _ := oiDB.Load()
-	// NOTE: If we could FromHashMap this into a struct i'd be happier
-	// as is this is the only place where i'm forced to pass around an
-	// ugly variable
-
-	return oiResults
 }
 
 // Convert an ottemo order and all possible orderitems into a shipstation order

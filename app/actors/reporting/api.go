@@ -7,7 +7,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"sort"
-	"time"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -43,9 +42,9 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
 	}
 
-	foundOrders := getOrders(startDate, endDate)
+    foundOrders := order.GetOrdersCreatedBetween(startDate, endDate)
 	foundOrderIds := getOrderIds(foundOrders)
-	foundOrderItems := getItemsForOrders(foundOrderIds)
+	foundOrderItems := order.GetItemsForOrders(foundOrderIds)
 	aggregatedResults := aggregateOrderItems(foundOrderItems)
 
 	response := map[string]interface{}{
@@ -57,17 +56,6 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 	return response, nil
 }
 
-// getOrders Get the orders `created_at` a certain date range
-func getOrders(startDate time.Time, endDate time.Time) []models.StructListItem {
-	oModel, _ := order.GetOrderCollectionModel()
-	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
-	oModel.ListAddExtraAttribute("created_at")
-	foundOrders, _ := oModel.List()
-
-	return foundOrders
-}
-
 // getOrderIds Create a list of order ids
 func getOrderIds(foundOrders []models.StructListItem) []string {
 	var orderIds []string
@@ -75,16 +63,6 @@ func getOrderIds(foundOrders []models.StructListItem) []string {
 		orderIds = append(orderIds, foundOrder.ID)
 	}
 	return orderIds
-}
-
-// getItemsForOrders Get the relavent order items given a slice of orders
-func getItemsForOrders(orderIds []string) []map[string]interface{} {
-	oiModel, _ := order.GetOrderItemCollectionModel()
-	oiDB := oiModel.GetDBCollection()
-	oiDB.AddFilter("order_id", "in", orderIds)
-	oiResults, _ := oiDB.Load()
-
-	return oiResults
 }
 
 // aggregateOrderItems Takes a list of order ids and aggregates their price / qty by their sku
