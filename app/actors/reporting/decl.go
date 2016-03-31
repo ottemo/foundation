@@ -12,9 +12,15 @@ type ByUnitsSold []AggrOrderItems
 func (a ByUnitsSold) Len() int {
 	return len(a)
 }
+
 func (a ByUnitsSold) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
+
 func (a ByUnitsSold) Less(i, j int) bool {
-	return a[i].UnitsSold > a[j].UnitsSold
+    if a[i].UnitsSold == a[j].UnitsSold {
+        return a[i].Name < a[j].Name
+    } else {
+        return a[i].UnitsSold > a[j].UnitsSold
+    }
 }
