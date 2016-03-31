@@ -1,17 +1,13 @@
 package reporting
 
 import (
-	// "fmt"
 	"github.com/ottemo/foundation/api"
-	"sort"
-	"time"
-	// "github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/order"
-	// "github.com/ottemo/foundation/app/models/subscription"
-	// "github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"sort"
+	"time"
 )
 
 // setupAPI setups package related API endpoint routines
