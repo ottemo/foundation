@@ -13,6 +13,7 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
+	// Admin only endpoint
 	service := api.GetRestService()
 	service.GET("reporting/product-performance", listProductPerformance)
 
@@ -21,6 +22,11 @@ func setupAPI() error {
 
 // listProductPerformance Handler that returns product performance information by date range
 func listProductPerformance(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check rights
+	if err := api.ValidateAdminRights(context); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	// Expecting dates in UTC, and adjusted for your timezone
 	// `2006-01-02 15:04`
