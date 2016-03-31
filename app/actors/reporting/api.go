@@ -47,9 +47,12 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 	foundOrderItems := order.GetItemsForOrders(foundOrderIds)
 	aggregatedResults := aggregateOrderItems(foundOrderItems)
 
+	totalSales := getTotalSales(foundOrderItems)
+
 	response := map[string]interface{}{
-		"order_count":     len(foundOrders),
-		"item_count":      len(foundOrderItems),
+		"total_orders":     len(foundOrders),
+		"total_items":      len(foundOrderItems),
+		"total_sales":     totalSales,
 		"aggregate_items": aggregatedResults,
 	}
 
@@ -95,4 +98,12 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	sort.Sort(ByUnitsSold(results))
 
 	return results
+}
+
+func getTotalSales(oitems []map[string]interface{}) float64 {
+	var totalSales float64
+	for _, oitem := range oitems {
+		totalSales += utils.InterfaceToFloat64(oitem["price"])
+	}
+	return totalSales
 }
