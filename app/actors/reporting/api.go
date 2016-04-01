@@ -92,6 +92,8 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	// map to slice
 	var results []AggrOrderItems
 	for _, item := range keyedResults {
+		// @TODO: Round money is bad
+		item.GrossSales = utils.RoundPrice(item.GrossSales);
 		results = append(results, item)
 	}
 
@@ -105,5 +107,6 @@ func getTotalSales(oitems []map[string]interface{}) float64 {
 	for _, oitem := range oitems {
 		totalSales += utils.InterfaceToFloat64(oitem["price"])
 	}
+
 	return totalSales
 }
