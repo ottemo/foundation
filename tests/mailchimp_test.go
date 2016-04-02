@@ -2,11 +2,12 @@ package tests
 
 import (
 	"fmt"
-	"github.com/ottemo/foundation/app/actors/other/mailchimp"
-	"github.com/ottemo/foundation/env"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/ottemo/foundation/app/actors/other/mailchimp"
+	"github.com/ottemo/foundation/env"
 )
 
 func TestMailchimpSubscribe(tst *testing.T) {
@@ -16,9 +17,9 @@ func TestMailchimpSubscribe(tst *testing.T) {
 
 	//set the configuration to allow mailchimp
 	var config = env.GetConfig()
-	config.SetValue(mailchimp.MailchimpEnabledConfig, true)
-	config.SetValue(mailchimp.MailchimpApiKeyConfig, "23dbf42618e8f43e624a6dd89de9bd46-us12")
-	config.SetValue(mailchimp.MailchimpBaseUrlConfig, "https://us12.api.mailchimp.com/3.0/")
+	config.SetValue(mailchimp.ConstConfigPathMailchimpEnabled, true)
+	config.SetValue(mailchimp.ConstConfigPathMailchimpAPIKey, "23dbf42618e8f43e624a6dd89de9bd46-us12")
+	config.SetValue(mailchimp.ConstConfigPathMailchimpBaseURL, "https://us12.api.mailchimp.com/3.0/")
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	testRegistration := mailchimp.Registration{
