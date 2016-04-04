@@ -106,7 +106,10 @@ func TestSyncSet(t *testing.T) {
 	// Test 1: slice access
 	for i:=0; i<routines; i++ {
 		go func(i int) {
-			SyncSet(A, i)
+			err := SyncSet(&A, i)
+			if err != nil {
+				t.Error(err)
+			}
 			finished <- i
 		}(i)
 	}

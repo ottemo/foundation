@@ -101,22 +101,49 @@ func SyncMutex(subject interface{}) (*syncMutex, error) {
 }
 
 func SyncSet(subject interface{}, value interface{}, path ...interface{}) error {
-	if subject == nil {
-		return errors.New("subject is nil")
-	}
 
 	var err error
-
-	rSubject := reflect.ValueOf(subject)
-	rSubjectType := rSubject.Type()
-
 	var rKey reflect.Value
 	var rKeyType reflect.Type
 
+	// if the path is specified - taking element to work with
+	pathLen := len(path)
+	if len(path) > 1 {
+		subject, err = SyncGet(subject, true, path[:pathLen-1]...)
+		if err != nil {
+			return err
+		}
+
+		rKey = reflect.ValueOf( path[pathLen-1] )
+		rKeyType = rKey.Type()
+	}
+
+	// checking subject
+	if subject == nil {
+		return errors.New("subject is nil")
+	}
+	rSubject := reflect.ValueOf(subject)
+
+	// taking mutex to subject
+	m, err := SyncMutex(rSubject)
+	if err != nil {
+		return err
+	}
+
+	// if pointer is given taking reflected element to work with
+	rSubjectKind := rSubject.Kind()
+	if rSubjectKind == reflect.Ptr || rSubjectKind == reflect.Interface {
+		rSubject = rSubject.Elem()
+		rSubjectKind = rSubject.Kind()
+	}
+	rSubjectType := rSubject.Type()
+
+	// set value validation
 	rValue := reflect.ValueOf(value)
 	rValueType := rValue.Type()
 
-	getValue := func(oldValue reflect.Value) reflect.Value {
+	// allowing to have setter function instead of just value
+	funcValue := func(oldValue reflect.Value) reflect.Value {
 		if rValue.Kind() == reflect.Func {
 			if rValueType.NumOut()==1 && rValueType.NumIn()==1 {
 				// oldValueType := oldValue.Type()
@@ -128,6 +155,61 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 		return rValue
 	}
 
+	// setting the subject value according it's type
+	switch rSubject.Kind() {
+	case reflect.Map:
+		if rKeyType != rSubjectType.Key() {
+			return errors.New("invalid map key type (" + rKeyType.String() + " != " + rSubjectType.Key().String() + ")")
+		}
+
+		m.Lock()
+		oldValue := rSubject.MapIndex(rKey)
+		rSubject.SetMapIndex(rKey, funcValue(oldValue))
+		m.Unlock()
+
+	case reflect.Slice, reflect.Array:
+		if rKey.IsValid() {
+			// slice index was specified
+			if rKey.Kind() != reflect.Int {
+				return errors.New("invalid index type - should be integer")
+			}
+			idx := int(rKey.Int())
+			if rSubject.Len() <= idx {
+				return errors.New("index out of bound")
+			}
+
+			m.Lock()
+			oldValue := rSubject.Index(idx)
+			oldValue.Set(funcValue(oldValue))
+			m.Unlock()
+		} else {
+			// the new element supposed
+			return errors.New("not implemented")
+		}
+
+	case reflect.Ptr, reflect.Chan, reflect.Func:
+		m.Lock()
+		rSubject.Set(funcValue(rValue))
+		m.Unlock()
+
+	default:
+		return errors.New("invalid acceptor, must be pointer and not scalar value")
+	}
+
+	return err
+}
+
+func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interface{}, error) {
+
+	if subject == nil {
+		return nil, errors.New("nil subject")
+	}
+
+	rSubject := reflect.ValueOf(subject)
+	var rSubjectType reflect.Type
+	var rSubjectKind reflect.Kind
+
+	// function to make a blankValue based on given type
 	initBlankValue := func(valueType reflect.Type) (reflect.Value, error) {
 		switch valueType.Kind() {
 		case reflect.Map:
@@ -143,74 +225,54 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 	}
 
 	// If path specified - going to path element in subject
-	length := len(path)
-	last := length-1
+
+	var rKey reflect.Value
+	var rKeyType reflect.Type
+
 	for idx, key := range path {
 
-		if rSubject.IsNil() && rSubjectType != nil {
+		if !rSubject.IsValid() {
+			return nil, errors.New("invalid path")
 		}
 
-		switch rSubject.Kind() {
+		rSubjectKind = rSubject.Kind()
+		if rSubjectKind == reflect.Ptr || rSubjectKind == reflect.Interface {
+			rSubject = rSubject.Elem()
+			rSubjectKind = rSubject.Kind()
+		}
+		rSubjectType = rSubject.Type()
+
+		switch rSubjectKind {
 		case reflect.Map:
 			rKey = reflect.ValueOf(key)
 			rKeyType = rKey.Type()
 			if rKeyType != rSubjectType.Key() {
-				return errors.New(fmt.Sprintf("invalid type of key %d", idx))
+				return nil, errors.New(fmt.Sprintf("invalid type of path item %d", idx))
 			}
 
-			if idx != last {
-				m, err := SyncMutex(rSubject)
-				if err != nil {
-					return err
+			// taking mutex for item
+			m, err := SyncMutex(rSubject)
+			if err != nil {
+				return nil, err
+			}
+
+			// time critical access to element
+			m.Lock()
+			rSubjectValue := rSubject.MapIndex(rKey)
+			if !rSubjectValue.IsValid() && initBlank {
+				if rSubjectValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
+					m.Unlock()
+					return nil, err
 				}
-
-				// time critical segment (because of lock)
-				m.Lock()
-				rSubjectValue := rSubject.MapIndex(rKey)
-				if !rSubjectValue.IsValid() {
-					if rSubjectValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
-						m.Unlock()
-						return err
-					}
-					rSubject.SetMapIndex(rKey, rSubjectValue)
-				}
-				m.Unlock()
-
-				rSubject = rSubjectValue
-				rSubjectType = rSubject.Type()
+				rSubject.SetMapIndex(rKey, rSubjectValue)
 			}
-		}
+			m.Unlock()
 
+			rSubject = rSubjectValue
+			rSubjectType = rSubject.Type()
 
-
-	}
-
-	// setting value to subject
-	m, err := SyncMutex(rSubject)
-	if err != nil {
-		return err
-	}
-
-	// setting the value according to subject type
-	switch rSubject.Kind() {
-	case reflect.Map:
-		if rKeyType != rSubjectType.Key() {
-			return errors.New("invalid map key type (" + rKeyType.String() + " != " + rSubjectType.Key().String() + ")")
-		}
-
-		m.Lock()
-		oldValue := rSubject.MapIndex(rKey)
-		if !oldValue.IsValid() {
-			if oldValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
-				m.Unlock()
-				return err
-			}
-		}
-		rSubject.SetMapIndex(rKey, getValue(oldValue))
-		m.Unlock()
-
-	case reflect.Slice, reflect.Array:
-		if rKey.IsValid() {
+		case reflect.Slice, reflect.Array:
+			// key should be index
 			if rKey.Kind() != reflect.Int {
 				return errors.New("invalid index type - should be integer")
 			}
@@ -219,31 +281,30 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 				return errors.New("index out of bound")
 			}
 
+			// taking mutex for item
+			m, err := SyncMutex(rSubject)
+			if err != nil {
+				return nil, err
+			}
+
+			// time critical access to element
 			m.Lock()
-			oldValue := rSubject.Index(idx)
-			oldValue.Set(getValue(oldValue))
+			rSubject := rSubject.Index(idx)
+			if !rSubject.IsValid() && initBlank {
+				if rSubjectValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
+					m.Unlock()
+					return nil, err
+				}
+				rSubject.Set(rSubjectValue)
+			}
 			m.Unlock()
-		} else {
-			m.Lock()
-			reflect.Append(rSubject, getValue(rSubject))
-			m.Unlock()
+
+			rSubjectType = rSubject.Type()
+
+		default:
+			return nil, errors.New(fmt.Sprintf("invalid element type on path item %d", idx))
 		}
-
-	case reflect.Ptr, reflect.Chan, reflect.Func:
-		m.Lock()
-		rSubject.Set(getValue(rValue))
-		m.Unlock()
-
-	default:
-		return errors.New("invalid acceptor, must be pointer and not scalar value")
 	}
 
-	return err
-}
-
-func SyncGet(subject interface{}, path ...interface{}) (interface{}, error) {
-
-
-
-	return nil, nil
+	return rSubject.Interface(), nil
 }
