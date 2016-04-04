@@ -3,15 +3,19 @@ package attributes
 import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/app/models"
 )
 
 // init makes package self-initialization routine
 func init() {
-	db.RegisterOnDatabaseStart(SetupDB)
+	var _ models.InterfaceCustomAttributes = new(ModelCustomAttributes)
+	var _ models.InterfaceExternalAttributes = new(ModelExternalAttributes)
+
+	db.RegisterOnDatabaseStart(setupDB)
 }
 
-// SetupDB prepares system database for package usage
-func SetupDB() error {
+// setupDB prepares database for a package
+func setupDB() error {
 
 	if collection, err := db.GetCollection("custom_attributes"); err == nil {
 		collection.AddColumn("model", db.ConstTypeVarchar, true)

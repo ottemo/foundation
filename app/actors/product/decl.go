@@ -48,7 +48,8 @@ type DefaultProduct struct {
 	// updatedQty holds qty should be updated during save operation ("" item holds qty value)
 	updatedQty []map[string]interface{}
 
-	*attributes.CustomAttributes
+	customAttributes *attributes.ModelCustomAttributes
+	externalAttributes *attributes.ModelExternalAttributes
 }
 
 // DefaultProductCollection is a default implementer of InterfaceProduct
