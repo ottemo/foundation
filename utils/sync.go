@@ -143,7 +143,10 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 	rValueType := rValue.Type()
 
 	// allowing to have setter function instead of just value
-	funcValue := func(oldValue reflect.Value) reflect.Value {
+	funcValue := func(oldValue reflect.Value, valueType reflect.Type) reflect.Value {
+		if !oldValue.IsValid() {
+			oldValue = reflect.New(valueType).Elem()
+		}
 		if rValue.Kind() == reflect.Func {
 			if rValueType.NumOut()==1 && rValueType.NumIn()==1 {
 				// oldValueType := oldValue.Type()
@@ -164,32 +167,65 @@ func SyncSet(subject interface{}, value interface{}, path ...interface{}) error 
 
 		m.Lock()
 		oldValue := rSubject.MapIndex(rKey)
-		rSubject.SetMapIndex(rKey, funcValue(oldValue))
+		rSubject.SetMapIndex(rKey, funcValue(oldValue, rSubjectType.Elem()))
 		m.Unlock()
 
 	case reflect.Slice, reflect.Array:
-		if rKey.IsValid() {
-			// slice index was specified
-			if rKey.Kind() != reflect.Int {
-				return errors.New("invalid index type - should be integer")
-			}
-			idx := int(rKey.Int())
-			if rSubject.Len() <= idx {
-				return errors.New("index out of bound")
+		// checking if path was not specified
+		if !rKey.IsValid() {
+			// no path key was specified - i.e. assigning value should be slice/array
+			if !rSubject.CanAddr() {
+				return errors.New("unadressable sbject")
 			}
 
 			m.Lock()
-			oldValue := rSubject.Index(idx)
-			oldValue.Set(funcValue(oldValue))
+			newValue := funcValue(rSubject, rSubjectType)
+			if newValue.Type().AssignableTo(rSubjectType) {
+				rSubject.Set(newValue)
+			}
 			m.Unlock()
 		} else {
-			// the new element supposed
-			return errors.New("not implemented")
+			// path key was specified - i.e. slice item modification or adding new
+			if rKey.Kind() != reflect.Int {
+				return errors.New("invalid index type - should be integer")
+			}
+
+			idx := int(rKey.Int())
+			if rSubject.Len() <= idx {
+				return errors.New("index out of bound (SyncSet)")
+			}
+
+			// (idx = -1) is a condition to create new item
+			if idx >= 0 {
+				// changing existing item
+				m.Lock()
+				oldValue := rSubject.Index(idx)
+				oldValue.Set(funcValue(oldValue, rSubjectType.Elem()))
+				m.Unlock()
+			} else {
+				// making new item
+				if !rSubject.CanAddr() {
+					return errors.New("invalid acceptor: " + rSubjectType.String() )
+				}
+
+				m.Lock()
+				oldValue := reflect.ValueOf(nil)
+				newValue := funcValue(oldValue, rSubjectType.Elem())
+
+				length := rSubject.Len()
+				if rSubject.Cap() < length {
+					rSubject.SetLen(length + 1)
+					rSubject.Index(length).Set(newValue)
+				} else {
+					rSubject.Set(reflect.Append(rSubject, newValue))
+				}
+				m.Unlock()
+			}
 		}
 
 	case reflect.Ptr, reflect.Chan, reflect.Func:
 		m.Lock()
-		rSubject.Set(funcValue(rValue))
+		rSubject.Set(funcValue(rValue, rSubjectType))
 		m.Unlock()
 
 	default:
@@ -215,7 +251,9 @@ func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interfac
 		case reflect.Map:
 			return reflect.MakeMap(valueType), nil
 		case reflect.Slice, reflect.Array:
-			return reflect.MakeSlice(valueType, 0, 10), nil
+			value := reflect.New(valueType).Elem()
+			value.Set(reflect.MakeSlice(valueType, 0, 10))
+			return value, nil
 		case reflect.Chan, reflect.Func:
 			break
 		default:
@@ -224,11 +262,10 @@ func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interfac
 		return reflect.ValueOf(nil), errors.New("unsuported blank value type " + valueType.String())
 	}
 
-	// If path specified - going to path element in subject
-
 	var rKey reflect.Value
 	var rKeyType reflect.Type
 
+	// If path is specified then taking path element as subject
 	for idx, key := range path {
 
 		if !rSubject.IsValid() {
@@ -242,10 +279,12 @@ func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interfac
 		}
 		rSubjectType = rSubject.Type()
 
+		// taking path key type
+		rKey = reflect.ValueOf(key)
+		rKeyType = rKey.Type()
+
 		switch rSubjectKind {
 		case reflect.Map:
-			rKey = reflect.ValueOf(key)
-			rKeyType = rKey.Type()
 			if rKeyType != rSubjectType.Key() {
 				return nil, errors.New(fmt.Sprintf("invalid type of path item %d", idx))
 			}
@@ -271,14 +310,17 @@ func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interfac
 			rSubject = rSubjectValue
 			rSubjectType = rSubject.Type()
 
+		// (idx = -1) is a condition to create new item
 		case reflect.Slice, reflect.Array:
+
 			// key should be index
 			if rKey.Kind() != reflect.Int {
-				return errors.New("invalid index type - should be integer")
+				return nil, errors.New("invalid slice/array index type (" + rKey.Kind().String() + "), should be integer")
 			}
+
 			idx := int(rKey.Int())
 			if rSubject.Len() <= idx {
-				return errors.New("index out of bound")
+				return nil, errors.New("index out of bound (SyncGet)")
 			}
 
 			// taking mutex for item
@@ -287,18 +329,50 @@ func SyncGet(subject interface{}, initBlank bool, path ...interface{}) (interfac
 				return nil, err
 			}
 
-			// time critical access to element
-			m.Lock()
-			rSubject := rSubject.Index(idx)
-			if !rSubject.IsValid() && initBlank {
-				if rSubjectValue, err = initBlankValue(rSubjectType.Elem()); err != nil {
-					m.Unlock()
+
+			if idx >= 0 {
+				// access to existing item (time critical)
+				m.Lock()
+				rSubject = rSubject.Index(idx).Addr() //?
+				if !rSubject.IsValid() && initBlank {
+					// item value is nil
+					rSubjectValue, err := initBlankValue(rSubjectType.Elem())
+					if err != nil {
+						m.Unlock()
+						return nil, err
+					}
+					rSubject.Set(rSubjectValue)
+				}
+				m.Unlock()
+			} else {
+				// making new item
+				if (!initBlank) {
+					return nil, errors.New("invalid index -1 as initBlank = false")
+				}
+
+				if !rSubject.CanAddr() {
+					return nil, errors.New("not addresable subject")
+				}
+
+				// checking if capacity allows to increase slice/array length
+				m.Lock()
+				newItemValue, err := initBlankValue(rSubjectType.Elem())
+				if err != nil {
 					return nil, err
 				}
-				rSubject.Set(rSubjectValue)
-			}
-			m.Unlock()
 
+				length := rSubject.Len()
+				if rSubject.Cap() < length {
+					rSubject.SetLen(length + 1)
+					rSubject.Index(length).Set(newItemValue)
+					rSubject = rSubject.Index(length).Addr()
+
+				} else {
+					rSubject.Set(reflect.Append(rSubject, newItemValue))
+				}
+				rSubject = rSubject.Index(length).Addr()
+				m.Unlock()
+			}
 			rSubjectType = rSubject.Type()
 
 		default:

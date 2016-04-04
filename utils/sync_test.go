@@ -3,6 +3,7 @@ package utils
 import (
 	"testing"
 	"math/rand"
+	"fmt"
 )
 
 func BenchmarkPtrMapAccess(b *testing.B) {
@@ -96,17 +97,15 @@ func TestLock(t *testing.T) {
 func TestSyncSet(t *testing.T) {
 
 	const concurrent = 9999
-
-	A := make([]int, 0)
-	B := make(map[string]map[int]map[bool]int)
-
 	finished := make(chan int)
-	routines := concurrent
 
 	// Test 1: slice access
+	A := make([][]int, 0, 10)
+
+	routines := concurrent
 	for i:=0; i<routines; i++ {
 		go func(i int) {
-			err := SyncSet(&A, i)
+			err := SyncSet(&A, 1, -1, -1)
 			if err != nil {
 				t.Error(err)
 			}
@@ -119,20 +118,35 @@ func TestSyncSet(t *testing.T) {
 		routines--
 	}
 
-	if len(A) != concurrent {
-		t.Error("unexpected result: len(A) = ", len(A), " and should be ", concurrent)
+	fmt.Println(A)
+	return;
+
+	if len(A) != concurrent || A[concurrent-1][0] != 1 {
+		t.Error("unexpected result:",
+			"len(A) = ", len(A),
+			", A[concurrent-1][0] = ", A[concurrent-1][0])
 	}
 
 	// Test 2: map access
-	routines = 9999
+	B := make(map[string]map[int]map[bool]int)
+
+	routines = concurrent
 	for i:=0; i<routines; i++ {
+		setter := func(old int) int {
+			return old + 1
+		}
+
 		go func(i int) {
-			for j:=0; j<100; j++ {
-				err := SyncSet(B, func (old int) int { return old+1 }, "a", j, true)
-				if err != nil {
-					t.Error(err)
-				}
+			err := SyncSet(B, setter, "a", i, true)
+			if err != nil {
+				t.Error(err)
 			}
+
+			err = SyncSet(B, setter, "b", 0, false)
+			if err != nil {
+				t.Error(err)
+			}
+
 			finished <- i
 		}(i)
 	}
@@ -142,7 +156,13 @@ func TestSyncSet(t *testing.T) {
 		routines--
 	}
 
-	if len(B["a"]) != 100 || B["a"][0][true] != concurrent {
-		t.Error("unexpected result: len(x[\"a\"]) =", len(B["a"]), ", x[\"a\"][0][true] =", B["a"][0][true])
+	if len(B["a"]) != concurrent ||
+		B["a"][concurrent-1][true] != 1 ||
+		B["b"][0][false] != concurrent {
+
+		t.Error("unexpected result: concurrent =", concurrent,
+			", len(B[\"a\"]) =", len(B["a"]),
+			", B[\"a\"][concurrent-1][true] =", B["a"][0][true],
+			", B[\"b\"][0][false] = ", B["b"][0][false])
 	}
 }
