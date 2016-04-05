@@ -11,13 +11,14 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("cron/schedule", getSchedule)
-	service.POST("cron/task", createTask)
-	service.GET("cron/task", getTasks)
-	service.GET("cron/task/enable/:taskIndex", enableTask)
-	service.GET("cron/task/disable/:taskIndex", disableTask)
-	service.PUT("cron/task/:taskIndex", updateTask)
-	service.GET("cron/task/run/:taskIndex", runTask)
+	// Admin Only
+	service.GET("cron/schedule", api.IsAdmin(getSchedule))
+	service.POST("cron/task", api.IsAdmin(createTask))
+	service.GET("cron/task", api.IsAdmin(getTasks))
+	service.GET("cron/task/enable/:taskIndex", api.IsAdmin(enableTask))
+	service.GET("cron/task/disable/:taskIndex", api.IsAdmin(disableTask))
+	service.PUT("cron/task/:taskIndex", api.IsAdmin(updateTask))
+	service.GET("cron/task/run/:taskIndex", api.IsAdmin(runTask))
 
 	return nil
 }
@@ -25,11 +26,6 @@ func setupAPI() error {
 // runTask - allows to execute task of schedule without updating of it
 // taskIndex - need to be specified in request argument
 func runTask(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	reqTaskIndex := context.GetRequestArgument("taskIndex")
 	if reqTaskIndex == "" {
@@ -71,11 +67,6 @@ func runTask(context api.InterfaceApplicationContext) (interface{}, error) {
 // getSchedule to get information about current schedules
 func getSchedule(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	var result []interface{}
 
 	scheduler := env.GetScheduler()
@@ -89,25 +80,13 @@ func getSchedule(context api.InterfaceApplicationContext) (interface{}, error) {
 
 // getTasks return scheduler registered tasks (functions that are available to execute)
 func getTasks(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	scheduler := env.GetScheduler()
-
 	return scheduler.ListTasks(), nil
 }
 
 // updateTask update scheduler task
 //   - "taskIndex" should be specified as argument (task index can be obtained from getSchedules)
 func updateTask(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	reqTaskIndex := context.GetRequestArgument("taskIndex")
 	if reqTaskIndex == "" {
@@ -146,13 +125,6 @@ func updateTask(context api.InterfaceApplicationContext) (interface{}, error) {
 // createTask with request params
 // in request params required are time or cronExpr for creating different type of tasks
 func createTask(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -209,11 +181,6 @@ func createTask(context api.InterfaceApplicationContext) (interface{}, error) {
 // taskIndex - need to be specified in request argument
 func enableTask(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	reqTaskIndex := context.GetRequestArgument("taskIndex")
 	if reqTaskIndex == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d4ee4c0c-124a-4098-aeef-23d868b0d682", "task index should be specified")
@@ -247,11 +214,6 @@ func enableTask(context api.InterfaceApplicationContext) (interface{}, error) {
 // disableTask make schedule inactive
 // taskIndex - need to be specified in request argument
 func disableTask(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	reqTaskIndex := context.GetRequestArgument("taskIndex")
 	if reqTaskIndex == "" {

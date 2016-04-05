@@ -15,14 +15,12 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Admin
-	service.GET("orders/attributes", APIListOrderAttributes)
-	service.GET("orders", APIListOrders)
+	service.GET("orders/attributes", api.IsAdmin(APIListOrderAttributes))
+	service.GET("orders", api.IsAdmin(APIListOrders))
 
-	service.GET("order/:orderID", APIGetOrder)
-	service.PUT("order/:orderID", APIUpdateOrder)
-	service.DELETE("order/:orderID", APIDeleteOrder)
-
-	// service.POST("order", APICreateOrder)
+	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
+	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
+	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitOrders)
@@ -45,11 +43,6 @@ func APIListOrderAttributes(context api.InterfaceApplicationContext) (interface{
 // APIListOrders returns a list of existing purchase orders
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	// taking orders collection model
 	orderCollectionModel, err := order.GetOrderCollectionModel()
@@ -90,11 +83,6 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	result := orderModel.ToHashMap()
@@ -119,11 +107,6 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -153,11 +136,6 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 	orderID := context.GetRequestArgument("orderID")
 	if orderID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation
@@ -221,6 +199,9 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 	// We only return orders that are in these two states
 	statusFilter := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
 	orderCollection.GetDBCollection().AddFilter("status", "in", statusFilter)
+
+	descending := true
+	orderCollection.GetDBCollection().AddSort("created_at", descending)
 
 	// filters handle
 	models.ApplyFilters(context, orderCollection.GetDBCollection())

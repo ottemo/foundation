@@ -17,7 +17,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"launchpad.net/xmlpath"
+	"gopkg.in/xmlpath.v1"
 	"strings"
 )
 

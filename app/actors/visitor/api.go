@@ -24,16 +24,16 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Dashboard API
-	service.POST("visitor", APICreateVisitor)
+	service.POST("visitor", api.IsAdmin(APICreateVisitor))
 	service.PUT("visitor/:visitorID", APIUpdateVisitor)
-	service.DELETE("visitor/:visitorID", APIDeleteVisitor)
-	service.GET("visitor/:visitorID", APIGetVisitor)
+	service.DELETE("visitor/:visitorID", api.IsAdmin(APIDeleteVisitor))
+	service.GET("visitor/:visitorID", api.IsAdmin(APIGetVisitor))
 
-	service.GET("visitors", APIListVisitors)
+	service.GET("visitors", api.IsAdmin(APIListVisitors))
 	service.GET("visitors/attributes", APIListVisitorAttributes)
-	service.DELETE("visitors/attribute/:attribute", APIDeleteVisitorAttribute)
-	service.PUT("visitors/attribute/:attribute", APIUpdateVisitorAttribute)
-	service.POST("visitors/attribute", APICreateVisitorAttribute)
+	service.DELETE("visitors/attribute/:attribute", api.IsAdmin(APIDeleteVisitorAttribute))
+	service.PUT("visitors/attribute/:attribute", api.IsAdmin(APIUpdateVisitorAttribute))
+	service.POST("visitors/attribute", api.IsAdmin(APICreateVisitorAttribute))
 
 	// Storefront API
 	service.POST("visitors/register", APIRegisterVisitor)
@@ -59,12 +59,6 @@ func setupAPI() error {
 //   - visitor attributes should be specified in content
 //   - "email" attribute required
 func APICreateVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -175,12 +169,6 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 //   - visitor id should be specified in "visitorID" argument
 func APIDeleteVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorID := context.GetRequestArgument("visitorID")
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "No Visitor ID found, please specify a Visitor ID.")
@@ -205,12 +193,6 @@ func APIDeleteVisitor(context api.InterfaceApplicationContext) (interface{}, err
 //   - visitor id should be specified in "visitorID" argument
 func APIGetVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorID := context.GetRequestArgument("visitorID")
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "58630919-23f5-4406-8676-a7d1a629b35f", "No Visitor ID found, please specify a Visitor ID.")
@@ -229,11 +211,6 @@ func APIGetVisitor(context api.InterfaceApplicationContext) (interface{}, error)
 // APIListVisitors returns a list of existing visitors
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListVisitors(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	visitorCollectionModel, err := visitor.GetVisitorCollectionModel()
 	if err != nil {
@@ -271,12 +248,6 @@ func APIListVisitorAttributes(context api.InterfaceApplicationContext) (interfac
 // APICreateVisitorAttribute creates a new custom attribute for a visitor model
 //   - attribute parameters "Attribute" and "Label" are required
 func APICreateVisitorAttribute(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -361,11 +332,6 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "Attribute Name was not specified, this is a required field.")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorModel, err := visitor.GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -413,12 +379,6 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 // APIDeleteVisitorAttribute removes existing custom attribute of a visitor model
 //   - attribute name/code should be provided in "attribute" argument
 func APIDeleteVisitorAttribute(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//--------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {

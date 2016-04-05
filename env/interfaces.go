@@ -18,6 +18,7 @@ const (
 	ConstConfigTypeFloat    = utils.ConstDataTypeFloat
 	ConstConfigTypeDatetime = utils.ConstDataTypeDatetime
 	ConstConfigTypeJSON     = utils.ConstDataTypeJSON
+	ConstConfigTypeHTML     = utils.ConstDataTypeHTML
 	ConstConfigTypeGroup    = "group"
 	ConstConfigTypeSecret   = "secret"
 

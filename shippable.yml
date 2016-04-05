@@ -1,38 +1,41 @@
 language: go
 go:
-    - 1.3
+    - 1.5.3
+
 env:
     global:
         - SLACK_ORG=Ottemo PROJECT=Foundation
         - secure: T2ImzTpns/H12TPzWD+/XYWBJzvLdIdBj2rzO7EgCezxBRk3EcixCCcj6ImXKxk7kyCMHJR/fALjoE7u7elHG9Y+TmtR7useu95TMVekO66RD702jrEu4LA7tUGvDfBzTw8Dr4PVeCjr0NFQlJ/z1XHk9knrsHEXydHRtQ4ciN/DTw4M1yVImp3VXYMpOePCGIfjcYA20M8/ZvTZA9Nv5f/eBcGZbPLsNCdvMasUEekWwpZzJvXycX7tS7EYc5kUZdqzpHpToY1/HYLtcLm4qmILUahWiaMKAYloA0nT/FCUcPpZLCOf0hhm9nNaEuE1YfA/3anAhBu89rqqSPzM5Q==
 
-before_install:
-    - wget -q -O ~/go.tgz https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz
-    - tar -C $HOME -xzf ~/go.tgz
-    - export GOROOT=$HOME/go
-    - export GOPATH=$HOME/workspace
-    - export PATH=$SHIPPABLE_GOPATH/bin:$HOME/go/bin:$PATH
+build:
 
-install: 
-    - cd $GOPATH/src/github.com/ottemo/foundation
+    ci:
+        - sudo apt-get install bzr -y
+        - go version
 
-script: 
-    - go version
+    on_failure:
+        - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN
+
+    on_success:
+        - REMOTE_HOST=rk.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=kg.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=mp.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=demo.staging.ottemo.io bash bin/deploy.sh
+        - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s
+
 
 # only build develop
-branch:
+branches:
+
     only:
         - develop
 
-after_failure:
-    - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN
+integrations:
 
-after_success:
-    - REMOTE_HOST=rk.staging.ottemo.io bash bin/deploy.sh
-    - REMOTE_HOST=kg.staging.ottemo.io bash bin/deploy.sh
-    - REMOTE_HOST=mp.staging.ottemo.io bash bin/deploy.sh
-    - REMOTE_HOST=demo.staging.ottemo.io bash bin/deploy.sh
-    - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s
+    notifications:
 
-notifications:
-    email: false
+        - integrationName: email
+          type: email
+          on_success: never
+          on_failure: never
+          on_pull_request: never

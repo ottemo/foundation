@@ -18,16 +18,17 @@ import (
 func setupAPI() error {
 
 	service := api.GetRestService()
-
-	service.GET("coupons", List)
-	service.POST("coupons", Create)
-	service.GET("csv/coupons", DownloadCSV)
-	service.POST("csv/coupons", UploadCSV)
 	service.POST("cart/coupons", Apply)
 	service.DELETE("cart/coupons/:code", Revert)
-	service.GET("coupons/:id", GetByID)
-	service.PUT("coupons/:id", UpdateByID)
-	service.DELETE("coupons/:id", DeleteByID)
+
+	// Admin Only
+	service.GET("coupons", api.IsAdmin(List))
+	service.POST("coupons", api.IsAdmin(Create))
+	service.GET("csv/coupons", api.IsAdmin(DownloadCSV))
+	service.POST("csv/coupons", api.IsAdmin(UploadCSV))
+	service.GET("coupons/:id", api.IsAdmin(GetByID))
+	service.PUT("coupons/:id", api.IsAdmin(UpdateByID))
+	service.DELETE("coupons/:id", api.IsAdmin(DeleteByID))
 
 	return nil
 }
@@ -36,12 +37,6 @@ func setupAPI() error {
 func List(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
@@ -62,12 +57,6 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
 
 	// checking request context
 	//------------------------
@@ -318,14 +307,7 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 // DownloadCSV returns a csv file with the current coupons and their configuration
 //   * returns a csv file
 func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
 
 	// preparing csv writer
 	csvWriter := csv.NewWriter(context.GetResponseWriter())
@@ -368,14 +350,7 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 // UploadCSV will overwrite and replace the current coupon configuration with the uploaded CSV
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
-
 	csvFile := context.GetRequestFile("file")
 	if csvFile == nil {
 		responseWriter.WriteHeader(http.StatusBadRequest)
@@ -429,14 +404,7 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 // GetByID returns a coupon with the specified ID
 // * coupon id should be specified in the "id" argument
 func GetByID(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
-
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
 		responseWriter.WriteHeader(http.StatusInternalServerError)
@@ -458,11 +426,6 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	//---------------------
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -541,15 +504,7 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 // DeleteByID deletes specified SEO item
 //   * discount id should be specified in the "couponID" argument
 func DeleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		responseWriter.WriteHeader(http.StatusForbidden)
-		return nil, env.ErrorDispatch(err)
-	}
-
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
 		responseWriter.WriteHeader(http.StatusInternalServerError)

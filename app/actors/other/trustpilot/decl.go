@@ -1,17 +1,13 @@
 // Package trustpilot implements trust pilot functions
 package trustpilot
 
-import (
-	"github.com/ottemo/foundation/env"
-)
-
 // Package global constants
 const (
 	ConstProductBrand = "Kari Gran"
 	ConstEmailSubject = "Purchase feedback"
 
 	ConstErrorModule = "trustpilot"
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	ConstErrorLevel  = 1 // if i tell you to log, then do it
 
 	ConstOrderCustomInfoLinkKey = "trustpilot_link"
 	ConstOrderCustomInfoSentKey = "trustpilot_sent"

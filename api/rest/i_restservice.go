@@ -264,8 +264,9 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 			}
 
 			// XML encode
-			if resp.Header().Get("Content-Type") == "text/xml" {
-				result, _ = xml.Marshal(result)
+			if resp.Header().Get("Content-Type") == "text/xml" && result != nil {
+				xmlResult, _ := xml.MarshalIndent(result, "", "    ")
+				result = []byte(xml.Header + string(xmlResult))
 			}
 		}
 

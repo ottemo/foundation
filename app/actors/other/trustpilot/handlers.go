@@ -40,8 +40,14 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 }
 
 // sendOrderInfo is a asynchronously calling request to TrustPilot
+// 1. get a token from trustpilot
+// 2. get a product review link
+// 3. get a service review link, and set the product review url as the redirect once they complete the service review
+// 4. set the service url on the order object
 func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.InterfaceCart) error {
+
 	if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotEnabled)) {
+
 		// taking TrustPilot settings into variables
 		trustPilotAPIKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
 		trustPilotAPISecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
@@ -58,13 +64,17 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		if trustPilotAPIKey != "" && trustPilotAPISecret != "" && trustPilotBusinessUnitID != "" && trustPilotUsername != "" &&
 			trustPilotPassword != "" && trustPilotAccessTokenURL != "" && trustPilotProductReviewURL != "" && trustPilotServiceReviewURL != "" {
 
-			// making request to get authentication token required for following requests
+			/**
+			 * 1. Get the access token
+			 */
+
 			bodyString := "grant_type=password&username=" + trustPilotUsername + "&password=" + trustPilotPassword
 			buffer := bytes.NewBuffer([]byte(bodyString))
 
 			valueAMIKeySecret := []byte(trustPilotAPIKey + ":" + trustPilotAPISecret)
 			encodedString := base64.StdEncoding.EncodeToString(valueAMIKeySecret)
 
+			// https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken
 			request, err := http.NewRequest("POST", trustPilotAccessTokenURL, buffer)
 			if err != nil {
 				return env.ErrorDispatch(err)
@@ -85,13 +95,27 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				return env.ErrorDispatch(err)
 			}
 
+			if response.StatusCode >= 300 {
+				errMsg := "Non 200 response while trying to get trustpilot access token: StatusCode:" + response.Status
+				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "376b178e-6cbf-4b4e-a3a8-fd65251d176b", errMsg)
+				return env.ErrorDispatch(err)
+			}
+
 			jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
 
 			if accessToken, present := jsonResponse["access_token"]; present {
-				// access token received - making requests
+				/**
+				 * 2. Create product review invitation link
+				 *
+				 * https://developers.trustpilot.com/product-reviews-api
+				 *
+				 * Given information about the consumer and the product(s) purchased, get a link that can be sent to
+				 * the consumer to request reviews.
+				 */
+
 				cartItems := currentCart.GetItems()
 
 				requestData := make(map[string]interface{})
@@ -147,6 +171,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 
 				requestData["products"] = productsOrdered
 
+				// https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links
 				trustPilotProductReviewURL = strings.Replace(trustPilotProductReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
 
 				jsonString := utils.EncodeToJSONString(requestData)
@@ -172,6 +197,12 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					return env.ErrorDispatch(err)
 				}
 
+				if response.StatusCode >= 300 {
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+					return env.ErrorDispatch(err)
+				}
+
 				jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 				if err != nil {
 					return env.ErrorDispatch(err)
@@ -185,9 +216,19 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					} else {
 						errorMessage += "no error message provided"
 					}
-					env.LogError(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
+					env.LogError(env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
 					return nil
 				}
+
+				/**
+				 * 3. Generate service review invitation link
+				 *
+				 * https://developers.trustpilot.com/invitation-api#Generate service review invitation link
+				 *
+				 * Generate a unique invitation link that can be sent to a consumer by email or website. Use the request
+				 * parameter called redirectURI to take the user to a product review link after the user has left a
+				 * service review.
+				 */
 
 				// make service review link with the same token and product review link
 				requestData = map[string]interface{}{
@@ -198,6 +239,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					"redirectUri": reviewLink,
 				}
 
+				// https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links
 				trustPilotServiceReviewURL = strings.Replace(trustPilotServiceReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
 
 				jsonString = utils.EncodeToJSONString(requestData)
@@ -222,6 +264,12 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					return env.ErrorDispatch(err)
 				}
 
+				if response.StatusCode >= 300 {
+					errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+					return env.ErrorDispatch(err)
+				}
+
 				jsonResponse, err = utils.DecodeJSONToStringKeyMap(responseBody)
 				if err != nil {
 					return env.ErrorDispatch(err)
@@ -239,6 +287,10 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 					return nil
 				}
 
+				/**
+				 * 4. Update order with the service review link
+				 */
+
 				orderCustomInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
 				orderCustomInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
 				orderCustomInfo[ConstOrderCustomInfoSentKey] = false
@@ -254,10 +306,10 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				}
 
 			} else {
-				return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1293708d-9638-455a-8d49-3a387f086181", "access token is empty"))
+				return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "1293708d-9638-455a-8d49-3a387f086181", "Trustpilot didn't return an access token for our request"))
 			}
 		} else {
-			return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "22207d49-e001-4666-8501-26bf5ef0926b", "some of trust pilot settings are blank"))
+			return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
 		}
 	}
 	return nil
