@@ -415,10 +415,6 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 //     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	var productSales map[string]int
-	var productsToSort []map[string]interface{}
-	var response []map[string]interface{}
-
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
 
 	timeZone, err := app.GetSessionTimeZone(context.GetSession())
@@ -469,14 +465,18 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// aggregate the counts for each pid
+	// map  and arrays to hold sales data
+	productSales := make(map[string]int)
+	var productsToSort, bestSellers []map[string]interface{}
+
+	// count the products sales by product id
 	for _, item := range collectionRecords {
-		count := utils.InterfaceToInt(item["count"])
 		pid := utils.InterfaceToString(item["product_id"])
+		count := utils.InterfaceToInt(item["count"])
 		productSales[pid] = count + productSales[pid]
 	}
 
-	// load product to build out response
+	// populate the bestseller data
 	for id, count := range productSales {
 
 		productInstance, err := product.LoadProductByID(id)
@@ -504,16 +504,16 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	// sort list of products by sales
 	descending := true    // sort in descending order
 	bestsellerLimit := 12 // limit on returned bestsellers
-	sortedResponse := utils.SortMapByKeys(productsToSort, descending, "count", "name")
+	productsSorted := utils.SortMapByKeys(productsToSort, descending, "count", "name")
 
-	// apply a limit
-	if len(sortedResponse) <= bestsellerLimit {
-		response = sortedResponse
+	// pass back only bestsellerLimit or less
+	if len(productsSorted) <= bestsellerLimit {
+		bestSellers = productsSorted
 	} else {
-		response = sortedResponse[:bestsellerLimit]
+		bestSellers = productsSorted[:bestsellerLimit]
 	}
 
-	return response, nil
+	return bestSellers, nil
 }
 
 // APIGetVisitsRealtime returns real-time information on current visits
