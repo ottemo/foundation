@@ -45,21 +45,6 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathTrustPilotTestMode,
-		Value:       false,
-		Type:        env.ConstConfigTypeBoolean,
-		Editor:      "boolean",
-		Options:     nil,
-		Label:       "Test mode",
-		Description: `Enabled Trust Pilot sent order data in test mode (add _test@ to email)`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathTrustPilotBusinessUnitID,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,

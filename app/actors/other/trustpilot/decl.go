@@ -14,7 +14,6 @@ const (
 
 	ConstConfigPathTrustPilot                 = "general.trustpilot"
 	ConstConfigPathTrustPilotEnabled          = "general.trustpilot.enabled"
-	ConstConfigPathTrustPilotTestMode         = "general.trustpilot.test"
 	ConstConfigPathTrustPilotAPIKey           = "general.trustpilot.apiKey"
 	ConstConfigPathTrustPilotAPISecret        = "general.trustpilot.apiSecret"
 	ConstConfigPathTrustPilotBusinessUnitID   = "general.trustpilot.businessUnitID"

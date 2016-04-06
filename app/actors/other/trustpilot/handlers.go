@@ -58,8 +58,6 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		trustPilotProductReviewURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotProductReviewURL))
 		trustPilotServiceReviewURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotServiceReviewURL))
 
-		trustPilotTestMode := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotTestMode))
-
 		// verification of configuration values
 		if trustPilotAPIKey != "" && trustPilotAPISecret != "" && trustPilotBusinessUnitID != "" && trustPilotUsername != "" &&
 			trustPilotPassword != "" && trustPilotAccessTokenURL != "" && trustPilotProductReviewURL != "" && trustPilotServiceReviewURL != "" {
@@ -122,10 +120,6 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 				customerEmail := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 				customerName := checkoutOrder.Get("customer_name")
 				checkoutOrderID := checkoutOrder.GetID()
-
-				if trustPilotTestMode {
-					customerEmail = strings.Replace(customerEmail, "@", "_test@", 1)
-				}
 
 				requestData["consumer"] = map[string]interface{}{
 					"email": customerEmail,
