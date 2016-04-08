@@ -29,18 +29,6 @@ func setupAPI() error {
 	return nil
 }
 
-func sendAbandonEmail(context api.InterfaceApplicationContext) (interface{}, error) {
-	// cartID := context.GetRequestArgument("cartID")
-	// aCart, err := cart.LoadCartByID(cartID)
-	// if err != nil {
-	// 	return "issue loading that cart", env.ErrorDispatch(err)
-	// }
-
-	// err = sendAbandonEmail(emailData)
-
-	return "ok", nil
-}
-
 func testHandler(context api.InterfaceApplicationContext) (interface{}, error) {
 	fmt.Println("request")
 
