@@ -1,11 +1,15 @@
 package cart
 
 import (
+	"fmt"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+	"time"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -18,7 +22,87 @@ func setupAPI() error {
 	service.PUT("cart/item/:itemIdx/:qty", APICartItemUpdate)
 	service.DELETE("cart/item/:itemIdx", APICartItemDelete)
 
+	service.GET("cart-abandon", handler)
 	return nil
+}
+
+func handler(context api.InterfaceApplicationContext) (interface{}, error) {
+	// Check frequency
+	beforeDate, isEnabled := getConfigSendBefore()
+	if !isEnabled {
+		context.SetResponseStatusNotFound()
+		return "endpoint not enabled", nil
+	}
+
+	// Get a list of carts that are:
+	// - active
+	// - were updated in our time frame
+	// - have not been sent an abandon cart email
+	dbEngine := db.GetDBEngine()
+	cartCollection, _ := dbEngine.GetCollection(ConstCartCollectionName)
+	cartCollection.AddFilter("active", "=", true)
+	// cartCollection.AddFilter("is_abandon_email_sent", "=", true)
+	cartCollection.AddFilter("updated_at", "<", beforeDate)
+	cartCollection.SetLimit(0, 2) //TODO: REMOVE
+	resultCarts, _ := cartCollection.Load()
+
+	fmt.Println("carts found", len(resultCarts))
+	data := make(map[string]interface{})
+
+	// Determine which carts have an email we can use
+	for _, resultCart := range resultCarts {
+		// var email string
+		sessionID := utils.InterfaceToString(resultCart["session_id"])
+		visitorID := utils.InterfaceToString(resultCart["visitor_id"])
+
+		fmt.Println("vis:", visitorID)
+		fmt.Println("ses:", sessionID)
+
+		// try to get by visitor_id
+		if visitorID != "" {
+			vModel, _ := visitor.LoadVisitorByID(visitorID)
+			email = vModel.GetEmail()
+
+		} else if sessionID != "" {
+			// create := false
+			// session, err := *session.DefaultSessionService.Get(sessionID, false)
+			// thing := session.Get(checkout.ConstSessionKeyCurrentCheckout)
+
+			//todo: dump this and see what we have
+		}
+
+		// if we don't have an email then flag this cart as don't update?
+
+		// success: add the cart, email address, and name to our email list
+	}
+
+	// Get the cart items for the carts we are about to email
+	// cartItemsCollection, err := dbEngine.GetCollection(ConstCartItemsCollectionName)
+	// cartItemsCollection.AddFilter("cart_id", "=", it.GetID())
+	// cartItems, err := cartItemsCollection.Load()
+
+	// loop over our emailList
+	// compile email
+	// send email
+
+	return data, nil
+}
+
+func getConfigSendBefore() (time.Time, bool) {
+	var isEnabled bool
+	beforeConfig := utils.InterfaceToInt(env.ConfigGetValue(ConstConfigPathCartAbandonEmailSendTime))
+
+	// Flag it as enabled
+	if beforeConfig != 0 {
+		isEnabled = true
+	}
+
+	// Build out the time to send before, we are expecting a config
+	// that is a negative int
+	beforeDuration := time.Duration(beforeConfig) * time.Hour
+	beforeDate := time.Now().Add(beforeDuration)
+
+	return beforeDate, isEnabled
 }
 
 // APICartInfo returns get cart related information
