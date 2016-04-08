@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -23,12 +24,26 @@ func setupAPI() error {
 	service.PUT("cart/item/:itemIdx/:qty", APICartItemUpdate)
 	service.DELETE("cart/item/:itemIdx", APICartItemDelete)
 
-	service.GET("cart-abandon", handler)
+	service.GET("cart-abandon", testHandler)
+
 	return nil
 }
 
-func handler(context api.InterfaceApplicationContext) (interface{}, error) {
+func sendAbandonEmail(context api.InterfaceApplicationContext) (interface{}, error) {
+	// cartID := context.GetRequestArgument("cartID")
+	// aCart, err := cart.LoadCartByID(cartID)
+	// if err != nil {
+	// 	return "issue loading that cart", env.ErrorDispatch(err)
+	// }
+
+	// err = sendAbandonEmail(emailData)
+
+	return "ok", nil
+}
+
+func testHandler(context api.InterfaceApplicationContext) (interface{}, error) {
 	fmt.Println("request")
+
 	// Check frequency
 	beforeDate, isEnabled := getConfigSendBefore()
 	if !isEnabled {
@@ -45,8 +60,7 @@ func handler(context api.InterfaceApplicationContext) (interface{}, error) {
 			continue
 		}
 
-		// Flag the cart as emailed
-		fmt.Println("then flag them")
+		flagCartAsEmailed(aCart.Cart.ID)
 	}
 
 	return actionableCarts, nil
@@ -100,13 +114,13 @@ func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
 	dbEngine := db.GetDBEngine()
 	cartCollection, _ := dbEngine.GetCollection(ConstCartCollectionName)
 	cartCollection.AddFilter("active", "=", true)
-	// cartCollection.AddFilter("is_abandon_email_sent", "=", true)
+	cartCollection.AddFilter("custom_info.is_abandon_email_sent", "!=", true)
 	cartCollection.AddFilter("updated_at", "<", beforeDate)
 	cartCollection.AddSort("updated_at", true)
-	cartCollection.SetLimit(0, 1) //TODO: REMOVE
+	cartCollection.SetLimit(0, 3) //TODO: REMOVE
 	resultCarts, _ := cartCollection.Load()
 
-	fmt.Println("carts found", len(resultCarts)) //TODO: CLEANUP
+	fmt.Println("abandoned carts found", len(resultCarts)) //TODO: CLEANUP
 	return resultCarts
 }
 
@@ -133,11 +147,16 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 			lastName = vModel.GetLastName()
 
 		} else if sessionID != "" {
-			// create := false
-			// session, err := *session.DefaultSessionService.Get(sessionID, false)
-			// thing := session.Get(checkout.ConstSessionKeyCurrentCheckout)
+			create := false
+			sessionWrapper, _ := api.GetSessionService().Get(sessionID, create)
+			sCheckout := utils.InterfaceToMap(sessionWrapper.Get(checkout.ConstSessionKeyCurrentCheckout))
 
-			//todo: dump this and see what we have
+			scInfo := utils.InterfaceToMap(sCheckout["Info"])
+			email = utils.InterfaceToString(scInfo["customer_email"])
+			//NOTE: We have customer_name here as well, which we could split
+			//      or we could look to see if the address is filled out yet
+
+			// fmt.Println("info map:", scInfo) //TODO: CLEANUP
 		}
 
 		// TODO: if we don't have an email then flag this cart as don't update?
@@ -167,6 +186,7 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 
 		allCartEmailData = append(allCartEmailData, cartEmailData)
 	}
+
 	return allCartEmailData
 }
 
@@ -178,6 +198,10 @@ func sendAbandonEmail(emailData AbandonCartEmailData) error {
 	}
 
 	templateData := utils.InterfaceToMap(emailData)
+	templateData["Site"] = map[string]interface{}{
+		"Url": app.GetStorefrontURL(""),
+	}
+
 	body, err := utils.TextTemplate(template, templateData)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -189,6 +213,17 @@ func sendAbandonEmail(emailData AbandonCartEmailData) error {
 	}
 
 	return nil
+}
+
+func flagCartAsEmailed(cartID string) {
+	iCart, _ := cart.LoadCartByID(cartID)
+
+	info := iCart.GetCustomInfo()
+	info["is_abandon_email_sent"] = true
+	info["abandon_email_sent_at"] = time.Now()
+	iCart.SetCustomInfo(info)
+
+	iCart.Save()
 }
 
 // APICartInfo returns get cart related information
