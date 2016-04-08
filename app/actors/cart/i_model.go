@@ -18,7 +18,8 @@ func (it *DefaultCart) GetImplementationName() string {
 // New makes new instance of model
 func (it *DefaultCart) New() (models.InterfaceModel, error) {
 	return &DefaultCart{
-		Items: make(map[int]cart.InterfaceCartItem),
-		Info:  make(map[string]interface{}),
+		Items:      make(map[int]cart.InterfaceCartItem),
+		Info:       make(map[string]interface{}),
+		CustomInfo: make(map[string]interface{}),
 	}, nil
 }

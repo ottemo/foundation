@@ -30,13 +30,13 @@ type DefaultCart struct {
 	VisitorID string
 	SessionID string
 
-	Info  map[string]interface{}
-	Items map[int]cart.InterfaceCartItem
+	Info       map[string]interface{}
+	CustomInfo map[string]interface{}
+	Items      map[int]cart.InterfaceCartItem
 
 	Active    bool
 	UpdatedAt time.Time
-
-	Subtotal float64
+	Subtotal  float64
 
 	maxIdx int
 }

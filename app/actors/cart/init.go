@@ -121,6 +121,7 @@ func (it *DefaultCart) setupDB() error {
 		collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
 		collection.AddColumn("active", db.ConstTypeBoolean, true)
 		collection.AddColumn("info", db.ConstTypeJSON, false)
+		collection.AddColumn("custom_info", db.ConstTypeJSON, false)
 
 		collection, err = dbEngine.GetCollection(ConstCartItemsCollectionName)
 		if err != nil {
