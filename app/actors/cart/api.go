@@ -3,6 +3,7 @@ package cart
 import (
 	"fmt"
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
@@ -27,6 +28,7 @@ func setupAPI() error {
 }
 
 func handler(context api.InterfaceApplicationContext) (interface{}, error) {
+	fmt.Println("request")
 	// Check frequency
 	beforeDate, isEnabled := getConfigSendBefore()
 	if !isEnabled {
@@ -34,59 +36,44 @@ func handler(context api.InterfaceApplicationContext) (interface{}, error) {
 		return "endpoint not enabled", nil
 	}
 
-	// Get a list of carts that are:
-	// - active
-	// - were updated in our time frame
-	// - have not been sent an abandon cart email
-	dbEngine := db.GetDBEngine()
-	cartCollection, _ := dbEngine.GetCollection(ConstCartCollectionName)
-	cartCollection.AddFilter("active", "=", true)
-	// cartCollection.AddFilter("is_abandon_email_sent", "=", true)
-	cartCollection.AddFilter("updated_at", "<", beforeDate)
-	cartCollection.SetLimit(0, 2) //TODO: REMOVE
-	resultCarts, _ := cartCollection.Load()
+	resultCarts := getAbandonedCarts(beforeDate)
+	actionableCarts := getActionableCarts(resultCarts)
 
-	fmt.Println("carts found", len(resultCarts))
-	data := make(map[string]interface{})
-
-	// Determine which carts have an email we can use
-	for _, resultCart := range resultCarts {
-		// var email string
-		sessionID := utils.InterfaceToString(resultCart["session_id"])
-		visitorID := utils.InterfaceToString(resultCart["visitor_id"])
-
-		fmt.Println("vis:", visitorID)
-		fmt.Println("ses:", sessionID)
-
-		// try to get by visitor_id
-		if visitorID != "" {
-			vModel, _ := visitor.LoadVisitorByID(visitorID)
-			email = vModel.GetEmail()
-
-		} else if sessionID != "" {
-			// create := false
-			// session, err := *session.DefaultSessionService.Get(sessionID, false)
-			// thing := session.Get(checkout.ConstSessionKeyCurrentCheckout)
-
-			//todo: dump this and see what we have
+	for _, aCart := range actionableCarts {
+		err := sendAbandonEmail(aCart)
+		if err != nil {
+			continue
 		}
 
-		// if we don't have an email then flag this cart as don't update?
-
-		// success: add the cart, email address, and name to our email list
+		// Flag the cart as emailed
+		fmt.Println("then flag them")
 	}
 
-	// Get the cart items for the carts we are about to email
-	// cartItemsCollection, err := dbEngine.GetCollection(ConstCartItemsCollectionName)
-	// cartItemsCollection.AddFilter("cart_id", "=", it.GetID())
-	// cartItems, err := cartItemsCollection.Load()
-
-	// loop over our emailList
-	// compile email
-	// send email
-
-	return data, nil
+	return actionableCarts, nil
 }
+
+type AbandonCartEmailData struct {
+	Visitor AbandonVisitor
+	Cart    AbandonCart
+}
+
+type AbandonVisitor struct {
+	Email     string
+	FirstName string
+	LastName  string
+}
+
+type AbandonCart struct {
+	ID string
+	// Items []AbandonCartItem
+}
+
+// type AbandonCartItem struct {
+// 	Name  string
+// 	SKU   string
+// 	Price float64
+// 	Image string
+// }
 
 func getConfigSendBefore() (time.Time, bool) {
 	var isEnabled bool
@@ -103,6 +90,105 @@ func getConfigSendBefore() (time.Time, bool) {
 	beforeDate := time.Now().Add(beforeDuration)
 
 	return beforeDate, isEnabled
+}
+
+// Get the abandoned carts
+// - active
+// - were updated in our time frame
+// - have not been sent an abandon cart email
+func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
+	dbEngine := db.GetDBEngine()
+	cartCollection, _ := dbEngine.GetCollection(ConstCartCollectionName)
+	cartCollection.AddFilter("active", "=", true)
+	// cartCollection.AddFilter("is_abandon_email_sent", "=", true)
+	cartCollection.AddFilter("updated_at", "<", beforeDate)
+	cartCollection.AddSort("updated_at", true)
+	cartCollection.SetLimit(0, 1) //TODO: REMOVE
+	resultCarts, _ := cartCollection.Load()
+
+	fmt.Println("carts found", len(resultCarts)) //TODO: CLEANUP
+	return resultCarts
+}
+
+func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmailData {
+	allCartEmailData := []AbandonCartEmailData{}
+
+	// Determine which carts have an email we can use
+	for _, resultCart := range resultCarts {
+		var email, firstName, lastName string
+		cartID := utils.InterfaceToString(resultCart["_id"])
+		sessionID := utils.InterfaceToString(resultCart["session_id"])
+		visitorID := utils.InterfaceToString(resultCart["visitor_id"])
+
+		//TODO: CLEANUP
+		fmt.Println("cartid:", cartID)
+		fmt.Println("visit :", visitorID)
+		fmt.Println("sesh  :", sessionID)
+
+		// try to get by visitor_id
+		if visitorID != "" {
+			vModel, _ := visitor.LoadVisitorByID(visitorID)
+			email = vModel.GetEmail()
+			firstName = vModel.GetFirstName()
+			lastName = vModel.GetLastName()
+
+		} else if sessionID != "" {
+			// create := false
+			// session, err := *session.DefaultSessionService.Get(sessionID, false)
+			// thing := session.Get(checkout.ConstSessionKeyCurrentCheckout)
+
+			//todo: dump this and see what we have
+		}
+
+		// TODO: if we don't have an email then flag this cart as don't update?
+
+		// no email address for us to contact, move along
+		if email == "" {
+			continue
+		}
+
+		// Assemble the details needed for further actions
+		cartEmailData := AbandonCartEmailData{
+			Visitor: AbandonVisitor{
+				Email:     email,
+				FirstName: firstName,
+				LastName:  lastName,
+			},
+			Cart: AbandonCart{
+				ID: cartID,
+			},
+		}
+
+		// NOTE: In v1 we aren't including cart item details
+		// Get the cart items for the carts we are about to email
+		// cartItemsCollection, err := dbEngine.GetCollection(ConstCartItemsCollectionName)
+		// cartItemsCollection.AddFilter("cart_id", "=", it.GetID())
+		// cartItems, err := cartItemsCollection.Load()
+
+		allCartEmailData = append(allCartEmailData, cartEmailData)
+	}
+	return allCartEmailData
+}
+
+func sendAbandonEmail(emailData AbandonCartEmailData) error {
+	subject := "Hi there" //TODO:
+	template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCartAbandonEmailTemplate))
+	if template == "" {
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1756ec63-7cd7-4764-a8ff-64b142fc3f9f", "Abandon cart emails want to send but the template is empty"))
+	}
+
+	templateData := utils.InterfaceToMap(emailData)
+	body, err := utils.TextTemplate(template, templateData)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = app.SendMail(emailData.Visitor.Email, subject, body)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	return nil
 }
 
 // APICartInfo returns get cart related information
