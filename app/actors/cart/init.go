@@ -147,7 +147,6 @@ func (it *DefaultCart) setupDB() error {
 func scheduleAbandonCartEmails() error {
 	if scheduler := env.GetScheduler(); scheduler != nil {
 		scheduler.RegisterTask("abandonCartEmail", abandonCartTask)
-		//TODO: REVIEW CRON SCHEDULE
 		scheduler.ScheduleRepeat("0 * * * *", "abandonCartEmail", nil)
 	}
 
