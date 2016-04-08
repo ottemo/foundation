@@ -159,8 +159,6 @@ func abandonCartTask(params map[string]interface{}) error {
 	// Get config for time to send
 	beforeDate, isEnabled := getConfigSendBefore()
 	if !isEnabled {
-		// context.SetResponseStatusNotFound()
-		// return "endpoint not enabled", nil
 		return nil
 	}
 
@@ -179,7 +177,6 @@ func abandonCartTask(params map[string]interface{}) error {
 		flagCartAsEmailed(aCart.Cart.ID)
 	}
 
-	// return actionableCarts, nil
 	return nil
 }
 
