@@ -18,6 +18,9 @@ const (
 
 	ConstEventAPIAdd    = "api.cart.addToCart"
 	ConstEventAPIUpdate = "api.cart.update"
+
+	ConstConfigPathCartAbandonEmailSendTime = "general.checkout.abandonEmailSendTime"
+	ConstConfigPathCartAbandonEmailTemplate = "general.checkout.abandonEmailTemplate"
 )
 
 // DefaultCart is a default implementer of InterfaceCart

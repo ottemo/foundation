@@ -29,8 +29,12 @@ func init() {
 	db.RegisterOnDatabaseStart(instance.setupDB)
 
 	api.RegisterOnRestServiceStart(setupAPI)
+	env.RegisterOnConfigStart(setupConfig)
+
 	app.OnAppStart(setupEventListeners)
 	app.OnAppStart(cleanupGuestCarts)
+	//TODO:
+	// app.OnAppStart(scheduleAbandonCartEmails)
 }
 
 // setupEventListeners registers model related event listeners within system
@@ -132,6 +136,29 @@ func (it *DefaultCart) setupDB() error {
 	} else {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "33076d0b-5c65-41dd-aa84-e4b68e1efa5b", "Can't get database engine")
 	}
+
+	return nil
+}
+
+func scheduleAbandonCartEmails() error {
+	if scheduler := env.GetScheduler(); scheduler != nil {
+		scheduler.RegisterTask("abandonCartEmail", abandonCartTask)
+		//TODO: REVIEW CRON SCHEDULE
+		scheduler.ScheduleRepeat("0 9 * * *", "abandonCartEmail", nil)
+	}
+
+	return nil
+}
+
+func abandonCartTask(params map[string]interface{}) error {
+
+	// get carts
+	// - updated in that timeframe
+	// - that we haven't emailed
+	// - that have an email address
+
+	// send email to each cart
+	// - flag the cart as emailed?
 
 	return nil
 }
