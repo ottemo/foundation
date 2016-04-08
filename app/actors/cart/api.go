@@ -30,7 +30,7 @@ func setupAPI() error {
 }
 
 func testHandler(context api.InterfaceApplicationContext) (interface{}, error) {
-	fmt.Println("request")
+	fmt.Println("Abandon carts scheduler firing")
 
 	// Check frequency
 	beforeDate, isEnabled := getConfigSendBefore()
@@ -41,6 +41,9 @@ func testHandler(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	resultCarts := getAbandonedCarts(beforeDate)
 	actionableCarts := getActionableCarts(resultCarts)
+
+	fmt.Println("carts found in query:", len(resultCarts))
+	fmt.Println("carts that are actionable:", len(actionableCarts))
 
 	for _, aCart := range actionableCarts {
 		err := sendAbandonEmail(aCart)
@@ -105,10 +108,8 @@ func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
 	cartCollection.AddFilter("custom_info.is_abandon_email_sent", "!=", true)
 	cartCollection.AddFilter("updated_at", "<", beforeDate)
 	cartCollection.AddSort("updated_at", true)
-	cartCollection.SetLimit(0, 3) //TODO: REMOVE
 	resultCarts, _ := cartCollection.Load()
 
-	fmt.Println("abandoned carts found", len(resultCarts)) //TODO: CLEANUP
 	return resultCarts
 }
 
@@ -121,11 +122,6 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 		cartID := utils.InterfaceToString(resultCart["_id"])
 		sessionID := utils.InterfaceToString(resultCart["session_id"])
 		visitorID := utils.InterfaceToString(resultCart["visitor_id"])
-
-		//TODO: CLEANUP
-		fmt.Println("cartid:", cartID)
-		fmt.Println("visit :", visitorID)
-		fmt.Println("sesh  :", sessionID)
 
 		// try to get by visitor_id
 		if visitorID != "" {
@@ -143,8 +139,6 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 			email = utils.InterfaceToString(scInfo["customer_email"])
 			//NOTE: We have customer_name here as well, which we could split
 			//      or we could look to see if the address is filled out yet
-
-			// fmt.Println("info map:", scInfo) //TODO: CLEANUP
 		}
 
 		// TODO: if we don't have an email then flag this cart as don't update?
@@ -179,7 +173,7 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 }
 
 func sendAbandonEmail(emailData AbandonCartEmailData) error {
-	subject := "Hi there" //TODO:
+	subject := "It looks like you forgot something in your cart"
 	template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCartAbandonEmailTemplate))
 	if template == "" {
 		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1756ec63-7cd7-4764-a8ff-64b142fc3f9f", "Abandon cart emails want to send but the template is empty"))
@@ -209,8 +203,8 @@ func flagCartAsEmailed(cartID string) {
 	info := iCart.GetCustomInfo()
 	info["is_abandon_email_sent"] = true
 	info["abandon_email_sent_at"] = time.Now()
-	iCart.SetCustomInfo(info)
 
+	iCart.SetCustomInfo(info)
 	iCart.Save()
 }
 
