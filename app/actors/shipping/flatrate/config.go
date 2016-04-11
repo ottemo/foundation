@@ -94,9 +94,17 @@ func setupConfig() error {
 			}
 
 			// taking rules as array
-			newRatesArray, err := utils.DecodeJSONToArray(newRatesValues)
-			if err != nil {
-				return nil, err
+			var newRatesArray []interface{}
+			switch value := newRatesValues.(type) {
+			case string:
+				newRatesArray, err = utils.DecodeJSONToArray(value)
+				if err != nil {
+					return nil, err
+				}
+			case []interface{}:
+				newRatesArray = value
+			default:
+				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
 			}
 
 			methods := make(map[string]map[string]interface{})
@@ -137,7 +145,7 @@ func setupConfig() error {
 
 			additionalRates = rates
 
-			return utils.EncodeToJSONString(rates), nil
+			return rates, nil
 		}
 
 		// grouping rules config setup
