@@ -340,11 +340,10 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 		productInfo := productModel.ToHashMap()
 
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
-		if defaultImage != "" {
-			productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage, defaultImage)
-			if err != nil {
-				env.LogError(err)
-			}
+
+		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage, defaultImage)
+		if err != nil {
+			env.LogError(err)
 		}
 		result = append(result, productInfo)
 	}

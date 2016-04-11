@@ -15,10 +15,10 @@ func setupConfig() error {
 	// validateNewRules validate structure of new rules
 	validateNewRules := func(newRulesValues interface{}) (interface{}, error) {
 
+		var rules []interface{}
 		// taking rules as array
 		if newRulesValues != "" && newRulesValues != nil {
 
-			var rules []interface{}
 			var err error
 			switch value := newRulesValues.(type) {
 			case string:
@@ -57,7 +57,7 @@ func setupConfig() error {
 			currentRules = rules
 		}
 
-		return newRulesValues, nil
+		return rules, nil
 	}
 
 	// grouping rules config setup
