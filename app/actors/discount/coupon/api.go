@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -74,16 +73,14 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 	valueCode := utils.InterfaceToString(postValues["code"])
 	valueName := utils.InterfaceToString(postValues["name"])
 
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-
 	valueUntil := time.Now()
 	if value, present := postValues["until"]; present {
-		valueUntil, _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		valueUntil = utils.InterfaceToTime(value)
 	}
 
 	valueSince := time.Now()
 	if value, present := postValues["since"]; present {
-		valueSince, _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		valueSince = utils.InterfaceToTime(value)
 	}
 
 	valueLimits := make(map[string]interface{})
