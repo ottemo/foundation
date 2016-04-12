@@ -311,15 +311,15 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	writeLine([]byte("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"))
 
 	baseURL := app.GetStorefrontURL("")
-	pageType := ""
+	rewriteType := ""
 
 	// per database record iterator
 	iteratorFunc := func(record map[string]interface{}) bool {
 		pageURL := ""
-		if pageType == "" {
+		if rewriteType == "" {
 			pageURL = baseURL + utils.InterfaceToString(record["url"])
 		} else {
-			pageURL = baseURL + pageType + "/" + utils.InterfaceToString(record["_id"])
+			pageURL = baseURL + rewriteType + "/" + utils.InterfaceToString(record["_id"])
 		}
 
 		writeLine([]byte("  <url><loc>" + pageURL + "</loc></url>"))
@@ -335,8 +335,8 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	rewritesCollection.SetResultColumns("rewrite")
 
 	// Product pages
-	pageType = "product"
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewriteType = "product"
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	productCollectionModel, _ := product.GetProductCollectionModel()
 	dbProductCollection := productCollectionModel.GetDBCollection()
@@ -345,9 +345,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbProductCollection.Iterate(iteratorFunc)
 
 	// Category pages
-	pageType = "category"
+	rewriteType = "category"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	categoryCollectionModel, _ := category.GetCategoryCollectionModel()
 	dbCategoryCollection := categoryCollectionModel.GetDBCollection()
@@ -356,9 +356,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbCategoryCollection.Iterate(iteratorFunc)
 
 	// Cms pages
-	pageType = "cms"
+	rewriteType = "page"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	cmsPageCollectionModel, _ := cms.GetCMSPageCollectionModel()
 	dbCMSPageCollection := cmsPageCollectionModel.GetDBCollection()
