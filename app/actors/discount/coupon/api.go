@@ -55,18 +55,15 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 //   * "code" is the text visitors must enter to apply a coupon in checkout
 func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
 	// checking request context
 	//------------------------
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	if !utils.KeysInMapAndNotBlank(postValues, "code", "name") {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "842d3ba9-3354-4470-a85f-cbaf909c3827", "Required fields, 'code' and 'name', cannot be blank.")
 	}
 
@@ -98,18 +95,16 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection.AddFilter("code", "=", valueCode)
 	recordsNumber, err := collection.Count()
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 	if recordsNumber > 0 {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34cb6cfe-fba3-4c1f-afc5-1ff7266a9a86", "A Discount with the provided code: '"+valueCode+"', already exists.")
 	}
 
@@ -136,13 +131,11 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	newID, err := collection.Save(newRecord)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	newRecord["_id"] = newID
 
-	responseWriter.WriteHeader(http.StatusOK)
 	return newRecord, nil
 }
 
