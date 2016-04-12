@@ -286,7 +286,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 		if value, ok := result.([]byte); ok {
 			resp.Write(value)
-		} else {
+		} else if result != nil {
 			resp.Write([]byte(fmt.Sprint(result)))
 		}
 	}
