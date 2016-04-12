@@ -18,9 +18,9 @@ func (a ByUnitsSold) Swap(i, j int) {
 }
 
 func (a ByUnitsSold) Less(i, j int) bool {
-    if a[i].UnitsSold == a[j].UnitsSold {
-        return a[i].Name < a[j].Name
-    } else {
-        return a[i].UnitsSold > a[j].UnitsSold
-    }
+	if a[i].UnitsSold == a[j].UnitsSold {
+		return a[i].Name < a[j].Name
+	} else {
+		return a[i].UnitsSold > a[j].UnitsSold
+	}
 }

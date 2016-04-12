@@ -100,8 +100,8 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 	for _, orderResult := range oResults {
 		orderIds = append(orderIds, orderResult.GetID())
 	}
-    
-    oiResults := order.GetItemsForOrders(orderIds)
+
+	oiResults := order.GetItemsForOrders(orderIds)
 
 	// Assemble our response
 	response := &Orders{}

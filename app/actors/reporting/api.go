@@ -42,7 +42,7 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
 	}
 
-    foundOrders := order.GetOrdersCreatedBetween(startDate, endDate)
+	foundOrders := order.GetOrdersCreatedBetween(startDate, endDate)
 	foundOrderIds := getOrderIds(foundOrders)
 	foundOrderItems := order.GetItemsForOrders(foundOrderIds)
 	aggregatedResults := aggregateOrderItems(foundOrderItems)
@@ -50,8 +50,8 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 	totalSales := getTotalSales(foundOrderItems)
 
 	response := map[string]interface{}{
-		"total_orders":     len(foundOrders),
-		"total_items":      len(foundOrderItems),
+		"total_orders":    len(foundOrders),
+		"total_items":     len(foundOrderItems),
 		"total_sales":     totalSales,
 		"aggregate_items": aggregatedResults,
 	}
@@ -93,7 +93,7 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	var results []AggrOrderItems
 	for _, item := range keyedResults {
 		// @TODO: Round money is bad
-		item.GrossSales = utils.RoundPrice(item.GrossSales);
+		item.GrossSales = utils.RoundPrice(item.GrossSales)
 		results = append(results, item)
 	}
 

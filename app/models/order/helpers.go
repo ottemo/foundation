@@ -1,9 +1,9 @@
 package order
 
 import (
-    "time"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"time"
 )
 
 // GetOrderCollectionModel retrieves current InterfaceOrderCollection model implementation
@@ -89,7 +89,7 @@ func GetOrdersCreatedBetween(startDate time.Time, endDate time.Time) []models.St
 	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
 	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
 	oModel.ListAddExtraAttribute("created_at") // If you are filtering on created_at you probably want that too
-	foundOrders, _ := oModel.List() // This is the lite response StructListItem
+	foundOrders, _ := oModel.List()            // This is the lite response StructListItem
 
 	return foundOrders
 }
