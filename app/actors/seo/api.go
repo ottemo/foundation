@@ -1,6 +1,7 @@
 package seo
 
 import (
+	"github.com/ottemo/foundation/app"
 	"os"
 	"strings"
 	"time"
@@ -309,7 +310,7 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	writeLine([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"))
 	writeLine([]byte("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"))
 
-	baseURL := "http://dev.ottemo.io:8080/"
+	baseURL := app.GetStorefrontURL("")
 	pageType := ""
 
 	// per database record iterator
