@@ -51,35 +51,29 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return nil
 	}
 
-	trustPilotAPIKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
-	trustPilotAPISecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
+	apiKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
+	apiSecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
+	apiUsername := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotUsername))
+	apiPassword := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotPassword))
 	businessID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotBusinessUnitID))
-	trustPilotUsername := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotUsername))
-	trustPilotPassword := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotPassword))
 
 	// verification of configuration values
-	configs := []string{
-		trustPilotAPIKey,
-		trustPilotAPISecret,
-		businessID,
-		trustPilotUsername,
-		trustPilotPassword,
-	}
-
+	configs := []string{apiKey, apiSecret, apiUsername, apiPassword, businessID}
 	if hasEmpty(configs) {
 		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
 	}
 
 	// Init some variables
 	credentials := tpCredentials{
-		username:  trustPilotUsername,
-		password:  trustPilotPassword,
-		apiKey:    trustPilotAPIKey,
-		apiSecret: trustPilotAPISecret,
+		username:  apiUsername,
+		password:  apiPassword,
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
 	}
+
 	customerEmail := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 	customerName := utils.InterfaceToString(checkoutOrder.Get("customer_name"))
-	checkoutOrderID := checkoutOrder.GetID()
+	orderID := checkoutOrder.GetID()
 
 	// 1. Get the access token
 	accessToken, err := getAccessToken(credentials)
@@ -94,8 +88,8 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 			name:  customerName,
 		},
 		products:    buildProductInfo(currentCart),
-		referenceId: checkoutOrderID,
-		locale:      "en-US",
+		referenceId: orderID,
+		locale:      requestLocale,
 	}
 
 	reviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
@@ -103,14 +97,15 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return env.ErrorDispatch(err)
 	}
 
-	// 3. Generate service review invitation link
+	// 3. Generate service review invitation link, which will then redirect to the product review link
 	serviceReviewData := serviceReview{
-		referenceId: checkoutOrderID,
+		referenceId: orderID,
 		email:       customerEmail,
 		name:        customerName,
-		locale:      "en-US",
+		locale:      requestLocale,
 		redirectUri: reviewLink,
 	}
+
 	serviceReviewLink, err := getServiceReviewLink(serviceReviewData, businessID, accessToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -152,6 +147,7 @@ type tpCredentials struct {
 }
 
 const (
+	requestLocale    = "en-US"
 	accessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
 	serviceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
 	productReviewURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links"
