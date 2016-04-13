@@ -76,10 +76,15 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
 	}
 
-	/**
-	 * 1. Get the access token
-	 */
-	accessToken, err := getAccessToken(trustPilotUsername, trustPilotPassword, trustPilotAPIKey, trustPilotAPISecret, trustPilotAccessTokenURL)
+	credentials := tpCredentials{
+		username:  trustPilotUsername,
+		password:  trustPilotPassword,
+		apiKey:    trustPilotAPIKey,
+		apiSecret: trustPilotAPISecret,
+	}
+
+	// 1. Get the access token
+	accessToken, err := getAccessToken(credentials)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -97,7 +102,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 
 	requestData := make(map[string]interface{})
 	customerEmail := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
-	customerName := checkoutOrder.Get("customer_name")
+	customerName := utils.InterfaceToString(checkoutOrder.Get("customer_name"))
 	checkoutOrderID := checkoutOrder.GetID()
 
 	requestData["consumer"] = map[string]interface{}{
@@ -181,7 +186,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return env.ErrorDispatch(err)
 	}
 
-	reviewLink, ok := jsonResponse["reviewUrl"]
+	reviewLinkI, ok := jsonResponse["reviewUrl"]
 	if !ok {
 		errorMessage := "Review link empty, "
 		if jsonMessage, present := jsonResponse["message"]; present {
@@ -192,6 +197,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		env.LogError(env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
 		return nil
 	}
+	reviewLink := utils.InterfaceToString(reviewLinkI)
 
 	/**
 	 * 3. Generate service review invitation link
@@ -202,68 +208,21 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	 * parameter called redirectURI to take the user to a product review link after the user has left a
 	 * service review.
 	 */
-
-	// make service review link with the same token and product review link
-	requestData = map[string]interface{}{
-		"referenceId": checkoutOrderID,
-		"email":       customerEmail,
-		"name":        customerName,
-		"locale":      "en-US",
-		"redirectUri": reviewLink,
+	reviewRequestData := serviceReview{
+		referenceId: checkoutOrderID,
+		email:       customerEmail,
+		name:        customerName,
+		locale:      "en-US",
+		redirectUri: reviewLink,
 	}
-
-	// https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links
-	trustPilotServiceReviewURL = strings.Replace(trustPilotServiceReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
-
-	jsonString = utils.EncodeToJSONString(requestData)
-	buffer = bytes.NewBuffer([]byte(jsonString))
-
-	request, err = http.NewRequest("POST", trustPilotServiceReviewURL, buffer)
+	serviceReviewLink, err := getServiceReviewLink(reviewRequestData, trustPilotBusinessUnitID, accessToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-
-	response, err = client.Do(request)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	defer response.Body.Close()
-
-	responseBody, err = ioutil.ReadAll(response.Body)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	if response.StatusCode >= 300 {
-		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
-		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
-		return env.ErrorDispatch(err)
-	}
-
-	jsonResponse, err = utils.DecodeJSONToStringKeyMap(responseBody)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	serviceReviewLink, ok := jsonResponse["url"]
-	if !ok {
-		errorMessage := "Service review link empty, "
-		if jsonMessage, present := jsonResponse["message"]; present {
-			errorMessage += "error message: " + utils.InterfaceToString(jsonMessage)
-		} else {
-			errorMessage += "no error message provided"
-		}
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e528633c-9413-41b0-bfe8-8cee581a616c", errorMessage))
-		return nil
 	}
 
 	/**
 	 * 4. Update order with the service review link
 	 */
-
 	orderCustomInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
 	orderCustomInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
 	orderCustomInfo[ConstOrderCustomInfoSentKey] = false
@@ -291,19 +250,25 @@ func hasEmpty(testStrings []string) bool {
 	return false
 }
 
-// trustPilotUsername
-// trustPilotPassword
-// trustPilotAPIKey
-// trustPilotAPISecret
-// trustPilotAccessTokenURL
-func getAccessToken(trustPilotUsername string, trustPilotPassword string, trustPilotAPIKey string, trustPilotAPISecret string, trustPilotAccessTokenURL string) (string, error) {
-	bodyString := "grant_type=password&username=" + trustPilotUsername + "&password=" + trustPilotPassword
+type tpCredentials struct {
+	username  string
+	password  string
+	apiKey    string
+	apiSecret string
+}
+
+const (
+	trustPilotAccessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
+	trustPilotServiceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
+)
+
+func getAccessToken(cred tpCredentials) (string, error) {
+	bodyString := "grant_type=password&username=" + cred.username + "&password=" + cred.password
 	buffer := bytes.NewBuffer([]byte(bodyString))
 
-	valueAMIKeySecret := []byte(trustPilotAPIKey + ":" + trustPilotAPISecret)
+	valueAMIKeySecret := []byte(cred.apiKey + ":" + cred.apiSecret)
 	encodedString := base64.StdEncoding.EncodeToString(valueAMIKeySecret)
 
-	// https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken
 	request, err := http.NewRequest("POST", trustPilotAccessTokenURL, buffer)
 	if err != nil {
 		return "", err
@@ -341,4 +306,60 @@ func getAccessToken(trustPilotUsername string, trustPilotPassword string, trustP
 	}
 
 	return token, nil
+}
+
+//TODO: do i need to add json encoding instructions?
+type serviceReview struct {
+	referenceId string
+	email       string
+	name        string
+	locale      string
+	redirectUri string
+}
+
+func getServiceReviewLink(requestData serviceReview, trustPilotBusinessUnitID string, accessToken string) (string, error) {
+
+	reviewUrl := strings.Replace(trustPilotServiceReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
+
+	jsonString := utils.EncodeToJSONString(requestData)
+	buffer := bytes.NewBuffer([]byte(jsonString))
+
+	request, err := http.NewRequest("POST", reviewUrl, buffer)
+	if err != nil {
+		return "", err
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if response.StatusCode >= 300 {
+		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+		return "", err
+	}
+
+	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+	if err != nil {
+		return "", err
+	}
+
+	serviceReviewLinkI, ok := jsonResponse["url"]
+	if !ok {
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e528633c-9413-41b0-bfe8-8cee581a616c", "Service review link empty")
+	}
+	serviceReviewLink := utils.InterfaceToString(serviceReviewLinkI)
+
+	return serviceReviewLink, nil
 }
