@@ -56,9 +56,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	trustPilotBusinessUnitID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotBusinessUnitID))
 	trustPilotUsername := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotUsername))
 	trustPilotPassword := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotPassword))
-	trustPilotAccessTokenURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAccessTokenURL))
 	trustPilotProductReviewURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotProductReviewURL))
-	trustPilotServiceReviewURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotServiceReviewURL))
 
 	// verification of configuration values
 	configs := []string{
@@ -67,9 +65,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		trustPilotBusinessUnitID,
 		trustPilotUsername,
 		trustPilotPassword,
-		trustPilotAccessTokenURL,
 		trustPilotProductReviewURL,
-		trustPilotServiceReviewURL,
 	}
 
 	if hasEmpty(configs) {
@@ -199,15 +195,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	}
 	reviewLink := utils.InterfaceToString(reviewLinkI)
 
-	/**
-	 * 3. Generate service review invitation link
-	 *
-	 * https://developers.trustpilot.com/invitation-api#Generate service review invitation link
-	 *
-	 * Generate a unique invitation link that can be sent to a consumer by email or website. Use the request
-	 * parameter called redirectURI to take the user to a product review link after the user has left a
-	 * service review.
-	 */
+	// 3. Generate service review invitation link
 	reviewRequestData := serviceReview{
 		referenceId: checkoutOrderID,
 		email:       customerEmail,
@@ -220,9 +208,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return env.ErrorDispatch(err)
 	}
 
-	/**
-	 * 4. Update order with the service review link
-	 */
+	// 4. Update order with the service review link
 	orderCustomInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
 	orderCustomInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
 	orderCustomInfo[ConstOrderCustomInfoSentKey] = false
@@ -258,8 +244,8 @@ type tpCredentials struct {
 }
 
 const (
-	trustPilotAccessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
-	trustPilotServiceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
+	accessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
+	serviceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
 )
 
 func getAccessToken(cred tpCredentials) (string, error) {
@@ -269,7 +255,7 @@ func getAccessToken(cred tpCredentials) (string, error) {
 	valueAMIKeySecret := []byte(cred.apiKey + ":" + cred.apiSecret)
 	encodedString := base64.StdEncoding.EncodeToString(valueAMIKeySecret)
 
-	request, err := http.NewRequest("POST", trustPilotAccessTokenURL, buffer)
+	request, err := http.NewRequest("POST", accessTokenURL, buffer)
 	if err != nil {
 		return "", err
 	}
@@ -317,9 +303,18 @@ type serviceReview struct {
 	redirectUri string
 }
 
-func getServiceReviewLink(requestData serviceReview, trustPilotBusinessUnitID string, accessToken string) (string, error) {
+/**
+ * 3. Generate service review invitation link
+ *
+ * https://developers.trustpilot.com/invitation-api#Generate service review invitation link
+ *
+ * Generate a unique invitation link that can be sent to a consumer by email or website. Use the request
+ * parameter called redirectURI to take the user to a product review link after the user has left a
+ * service review.
+ */
+func getServiceReviewLink(requestData serviceReview, businessUnitID string, accessToken string) (string, error) {
 
-	reviewUrl := strings.Replace(trustPilotServiceReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
+	reviewUrl := strings.Replace(serviceReviewURL, "{businessUnitId}", businessUnitID, 1)
 
 	jsonString := utils.EncodeToJSONString(requestData)
 	buffer := bytes.NewBuffer([]byte(jsonString))
