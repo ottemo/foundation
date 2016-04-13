@@ -30,32 +30,32 @@ type tpCredentials struct {
 }
 
 type productReview struct {
-	referenceId string
-	locale      string
-	consumer    productReviewConsumer
-	products    []productReviewProduct
+	ReferenceID string                 `json:"referenceId"`
+	Locale      string                 `json:"locale"`
+	Consumer    productReviewConsumer  `json:"consumer"`
+	Products    []productReviewProduct `json:"products"`
 }
 
 type productReviewConsumer struct {
-	email string
-	name  string
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 type productReviewProduct struct {
-	productUrl string
-	imageUrl   string
-	name       string
-	sku        string
-	brand      string
+	ProductURL string `json:"productUrl"`
+	ImageURL   string `json:"imageUrl"`
+	Name       string `json:"name"`
+	Sku        string `json:"sku"`
+	Brand      string `json:"brand"`
 }
 
 //TODO: do i need to add json encoding instructions?
 type serviceReview struct {
-	referenceId string
-	email       string
-	name        string
-	locale      string
-	redirectUri string
+	ReferenceID string `json:"referenceId"`
+	Email       string `json:"email"`
+	Name        string `json:"name"`
+	Locale      string `json:"locale"`
+	RedirectURI string `json:"redirectUri"`
 }
 
 // checkoutSuccessHandler is a handler for checkout success event which sends order information to TrustPilot
@@ -124,13 +124,13 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 
 	// 2. Create product review invitation link
 	productReviewData := productReview{
-		consumer: productReviewConsumer{
-			email: customerEmail,
-			name:  customerName,
+		Consumer: productReviewConsumer{
+			Email: customerEmail,
+			Name:  customerName,
 		},
-		products:    buildProductInfo(currentCart),
-		referenceId: orderID,
-		locale:      requestLocale,
+		Products:    buildProductInfo(currentCart),
+		ReferenceID: orderID,
+		Locale:      requestLocale,
 	}
 
 	productReviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
@@ -140,11 +140,11 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 
 	// 3. Generate service review invitation link, which will then redirect to the product review link
 	serviceReviewData := serviceReview{
-		referenceId: orderID,
-		email:       customerEmail,
-		name:        customerName,
-		locale:      requestLocale,
-		redirectUri: productReviewLink, // product review link is daisy chained
+		ReferenceID: orderID,
+		Email:       customerEmail,
+		Name:        customerName,
+		Locale:      requestLocale,
+		RedirectURI: productReviewLink, // product review link is daisy chained
 	}
 
 	serviceReviewLink, err := getServiceReviewLink(serviceReviewData, businessID, accessToken)
@@ -352,11 +352,11 @@ func buildProductInfo(cCart cart.InterfaceCart) []productReviewProduct {
 		}
 
 		productInfo := productReviewProduct{
-			productUrl: app.GetStorefrontURL("product/" + pid),
-			imageUrl:   app.GetStorefrontURL(mediaPath + p.GetDefaultImage()),
-			name:       p.GetName(),
-			sku:        p.GetSku(),
-			brand:      productBrand,
+			ProductURL: app.GetStorefrontURL("product/" + pid),
+			ImageURL:   app.GetStorefrontURL(mediaPath + p.GetDefaultImage()),
+			Name:       p.GetName(),
+			Sku:        p.GetSku(),
+			Brand:      productBrand,
 		}
 
 		productsOrdered = append(productsOrdered, productInfo)
