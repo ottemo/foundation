@@ -82,11 +82,9 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	return true
 }
 
-// sendOrderInfo is a asynchronously calling request to TrustPilot
-// 1. get a token from trustpilot
-// 2. get a product review link
-// 3. get a service review link, and set the product review url as the redirect once they complete the service review
-// 4. set the service url on the order object
+// sendOrderInfo Makes requests to the trustpilot api to obtain an access token, then a product review url, then a
+// service review url. This last url is then saved to the order so that we can setup a cronjob to email customers
+// at any given time.
 func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.InterfaceCart) error {
 
 	isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotEnabled))
@@ -135,7 +133,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		locale:      requestLocale,
 	}
 
-	reviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
+	productReviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -146,7 +144,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		email:       customerEmail,
 		name:        customerName,
 		locale:      requestLocale,
-		redirectUri: reviewLink,
+		redirectUri: productReviewLink, // product review link is daisy chained
 	}
 
 	serviceReviewLink, err := getServiceReviewLink(serviceReviewData, businessID, accessToken)
