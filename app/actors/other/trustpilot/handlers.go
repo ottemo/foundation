@@ -29,19 +29,19 @@ type tpCredentials struct {
 	apiSecret string
 }
 
-type productReview struct {
+type ProductReview struct {
 	ReferenceID string                 `json:"referenceId"`
 	Locale      string                 `json:"locale"`
-	Consumer    productReviewConsumer  `json:"consumer"`
-	Products    []productReviewProduct `json:"products"`
+	Consumer    ProductReviewConsumer  `json:"consumer"`
+	Products    []ProductReviewProduct `json:"products"`
 }
 
-type productReviewConsumer struct {
+type ProductReviewConsumer struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 }
 
-type productReviewProduct struct {
+type ProductReviewProduct struct {
 	ProductURL string `json:"productUrl"`
 	ImageURL   string `json:"imageUrl"`
 	Name       string `json:"name"`
@@ -49,8 +49,7 @@ type productReviewProduct struct {
 	Brand      string `json:"brand"`
 }
 
-//TODO: do i need to add json encoding instructions?
-type serviceReview struct {
+type ServiceReview struct {
 	ReferenceID string `json:"referenceId"`
 	Email       string `json:"email"`
 	Name        string `json:"name"`
@@ -123,8 +122,8 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	}
 
 	// 2. Create product review invitation link
-	productReviewData := productReview{
-		Consumer: productReviewConsumer{
+	productReviewData := ProductReview{
+		Consumer: ProductReviewConsumer{
 			Email: customerEmail,
 			Name:  customerName,
 		},
@@ -139,7 +138,7 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	}
 
 	// 3. Generate service review invitation link, which will then redirect to the product review link
-	serviceReviewData := serviceReview{
+	serviceReviewData := ServiceReview{
 		ReferenceID: orderID,
 		Email:       customerEmail,
 		Name:        customerName,
@@ -231,7 +230,7 @@ func getAccessToken(cred tpCredentials) (string, error) {
  * Given information about the consumer and the product(s) purchased, get a link that can be sent to
  * the consumer to request reviews.
  */
-func getProductReviewLink(requestData productReview, businessID string, accessToken string) (string, error) {
+func getProductReviewLink(requestData ProductReview, businessID string, accessToken string) (string, error) {
 	reviewURL := strings.Replace(productReviewURL, "{businessUnitId}", businessID, 1)
 
 	jsonString := utils.EncodeToJSONString(requestData)
@@ -287,7 +286,7 @@ func getProductReviewLink(requestData productReview, businessID string, accessTo
  * parameter called redirectURI to take the user to a product review link after the user has left a
  * service review.
  */
-func getServiceReviewLink(requestData serviceReview, businessUnitID string, accessToken string) (string, error) {
+func getServiceReviewLink(requestData ServiceReview, businessUnitID string, accessToken string) (string, error) {
 
 	reviewUrl := strings.Replace(serviceReviewURL, "{businessUnitId}", businessUnitID, 1)
 
@@ -334,8 +333,8 @@ func getServiceReviewLink(requestData serviceReview, businessUnitID string, acce
 	return serviceReviewLink, nil
 }
 
-func buildProductInfo(cCart cart.InterfaceCart) []productReviewProduct {
-	var productsOrdered []productReviewProduct
+func buildProductInfo(cCart cart.InterfaceCart) []ProductReviewProduct {
+	var productsOrdered []ProductReviewProduct
 	mediaStorage, _ := media.GetMediaStorage()
 
 	cartItems := cCart.GetItems()
@@ -351,7 +350,7 @@ func buildProductInfo(cCart cart.InterfaceCart) []productReviewProduct {
 			productBrand = utils.InterfaceToString(brand)
 		}
 
-		productInfo := productReviewProduct{
+		productInfo := ProductReviewProduct{
 			ProductURL: app.GetStorefrontURL("product/" + pid),
 			ImageURL:   app.GetStorefrontURL(mediaPath + p.GetDefaultImage()),
 			Name:       p.GetName(),
