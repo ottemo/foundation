@@ -15,6 +15,49 @@ import (
 	"strings"
 )
 
+const (
+	requestLocale    = "en-US"
+	accessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
+	serviceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
+	productReviewURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links"
+)
+
+type tpCredentials struct {
+	username  string
+	password  string
+	apiKey    string
+	apiSecret string
+}
+
+type productReview struct {
+	referenceId string
+	locale      string
+	consumer    productReviewConsumer
+	products    []productReviewProduct
+}
+
+type productReviewConsumer struct {
+	email string
+	name  string
+}
+
+type productReviewProduct struct {
+	productUrl string
+	imageUrl   string
+	name       string
+	sku        string
+	brand      string
+}
+
+//TODO: do i need to add json encoding instructions?
+type serviceReview struct {
+	referenceId string
+	email       string
+	name        string
+	locale      string
+	redirectUri string
+}
+
 // checkoutSuccessHandler is a handler for checkout success event which sends order information to TrustPilot
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
@@ -136,20 +179,6 @@ func hasEmpty(testStrings []string) bool {
 	return false
 }
 
-type tpCredentials struct {
-	username  string
-	password  string
-	apiKey    string
-	apiSecret string
-}
-
-const (
-	requestLocale    = "en-US"
-	accessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
-	serviceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
-	productReviewURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links"
-)
-
 func getAccessToken(cred tpCredentials) (string, error) {
 	bodyString := "grant_type=password&username=" + cred.username + "&password=" + cred.password
 	buffer := bytes.NewBuffer([]byte(bodyString))
@@ -196,26 +225,6 @@ func getAccessToken(cred tpCredentials) (string, error) {
 	return token, nil
 }
 
-type productReview struct {
-	referenceId string
-	locale      string
-	consumer    productReviewConsumer
-	products    []productReviewProduct
-}
-
-type productReviewConsumer struct {
-	email string
-	name  string
-}
-
-type productReviewProduct struct {
-	productUrl string
-	imageUrl   string
-	name       string
-	sku        string
-	brand      string
-}
-
 /**
  * 2. Create product review invitation link
  *
@@ -225,8 +234,6 @@ type productReviewProduct struct {
  * the consumer to request reviews.
  */
 func getProductReviewLink(requestData productReview, businessID string, accessToken string) (string, error) {
-	var reviewLink string
-
 	reviewURL := strings.Replace(productReviewURL, "{businessUnitId}", businessID, 1)
 
 	jsonString := utils.EncodeToJSONString(requestData)
@@ -234,7 +241,7 @@ func getProductReviewLink(requestData productReview, businessID string, accessTo
 
 	request, err := http.NewRequest("POST", reviewURL, buffer)
 	if err != nil {
-		return reviewLink, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
@@ -243,43 +250,34 @@ func getProductReviewLink(requestData productReview, businessID string, accessTo
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return reviewLink, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 	defer response.Body.Close()
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return reviewLink, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 
 	if response.StatusCode >= 300 {
 		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
 		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
-		return reviewLink, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 
 	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 	if err != nil {
-		return reviewLink, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 
 	reviewLinkI, ok := jsonResponse["reviewUrl"]
 	if !ok {
 		errorMessage := "Review link empty"
-		return reviewLink, env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage)
+		return "", env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage)
 	}
-	reviewLink = utils.InterfaceToString(reviewLinkI)
+	reviewLink := utils.InterfaceToString(reviewLinkI)
 
 	return reviewLink, nil
-}
-
-//TODO: do i need to add json encoding instructions?
-type serviceReview struct {
-	referenceId string
-	email       string
-	name        string
-	locale      string
-	redirectUri string
 }
 
 /**
