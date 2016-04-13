@@ -53,31 +53,33 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 
 	trustPilotAPIKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
 	trustPilotAPISecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
-	trustPilotBusinessUnitID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotBusinessUnitID))
+	businessID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotBusinessUnitID))
 	trustPilotUsername := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotUsername))
 	trustPilotPassword := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotPassword))
-	trustPilotProductReviewURL := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotProductReviewURL))
 
 	// verification of configuration values
 	configs := []string{
 		trustPilotAPIKey,
 		trustPilotAPISecret,
-		trustPilotBusinessUnitID,
+		businessID,
 		trustPilotUsername,
 		trustPilotPassword,
-		trustPilotProductReviewURL,
 	}
 
 	if hasEmpty(configs) {
 		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
 	}
 
+	// Init some variables
 	credentials := tpCredentials{
 		username:  trustPilotUsername,
 		password:  trustPilotPassword,
 		apiKey:    trustPilotAPIKey,
 		apiSecret: trustPilotAPISecret,
 	}
+	customerEmail := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
+	customerName := utils.InterfaceToString(checkoutOrder.Get("customer_name"))
+	checkoutOrderID := checkoutOrder.GetID()
 
 	// 1. Get the access token
 	accessToken, err := getAccessToken(credentials)
@@ -85,125 +87,31 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 		return env.ErrorDispatch(err)
 	}
 
-	/**
-	 * 2. Create product review invitation link
-	 *
-	 * https://developers.trustpilot.com/product-reviews-api
-	 *
-	 * Given information about the consumer and the product(s) purchased, get a link that can be sent to
-	 * the consumer to request reviews.
-	 */
-
-	cartItems := currentCart.GetItems()
-
-	requestData := make(map[string]interface{})
-	customerEmail := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
-	customerName := utils.InterfaceToString(checkoutOrder.Get("customer_name"))
-	checkoutOrderID := checkoutOrder.GetID()
-
-	requestData["consumer"] = map[string]interface{}{
-		"email": customerEmail,
-		"name":  customerName,
+	// 2. Create product review invitation link
+	productReviewData := productReview{
+		consumer: productReviewConsumer{
+			email: customerEmail,
+			name:  customerName,
+		},
+		products:    buildProductInfo(currentCart),
+		referenceId: checkoutOrderID,
+		locale:      "en-US",
 	}
 
-	requestData["referenceId"] = checkoutOrderID
-	requestData["locale"] = "en-US"
-
-	mediaStorage, err := media.GetMediaStorage()
+	reviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-
-	var productsOrdered []map[string]string
-
-	// filling request with products information
-	for _, productItem := range cartItems {
-		currentProductID := productItem.GetProductID()
-		currentProduct := productItem.GetProduct()
-
-		mediaPath, err := mediaStorage.GetMediaPath("product", currentProductID, "image")
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		productOptions := productItem.GetOptions()
-		productBrand := ConstProductBrand
-		if brand, present := productOptions["brand"]; present {
-			productBrand = utils.InterfaceToString(brand)
-		}
-
-		productInfo := map[string]string{
-			"productUrl": app.GetStorefrontURL("product/" + currentProductID),
-			"imageUrl":   app.GetStorefrontURL(mediaPath + currentProduct.GetDefaultImage()),
-			"name":       currentProduct.GetName(),
-			"sku":        currentProduct.GetSku(),
-			"brand":      productBrand,
-		}
-
-		productsOrdered = append(productsOrdered, productInfo)
-	}
-
-	requestData["products"] = productsOrdered
-
-	// https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links
-	trustPilotProductReviewURL = strings.Replace(trustPilotProductReviewURL, "{businessUnitId}", trustPilotBusinessUnitID, 1)
-
-	jsonString := utils.EncodeToJSONString(requestData)
-	buffer := bytes.NewBuffer([]byte(jsonString))
-
-	request, err := http.NewRequest("POST", trustPilotProductReviewURL, buffer)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	defer response.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	if response.StatusCode >= 300 {
-		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
-		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
-		return env.ErrorDispatch(err)
-	}
-
-	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	reviewLinkI, ok := jsonResponse["reviewUrl"]
-	if !ok {
-		errorMessage := "Review link empty, "
-		if jsonMessage, present := jsonResponse["message"]; present {
-			errorMessage += "error message: " + utils.InterfaceToString(jsonMessage)
-		} else {
-			errorMessage += "no error message provided"
-		}
-		env.LogError(env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage))
-		return nil
-	}
-	reviewLink := utils.InterfaceToString(reviewLinkI)
 
 	// 3. Generate service review invitation link
-	reviewRequestData := serviceReview{
+	serviceReviewData := serviceReview{
 		referenceId: checkoutOrderID,
 		email:       customerEmail,
 		name:        customerName,
 		locale:      "en-US",
 		redirectUri: reviewLink,
 	}
-	serviceReviewLink, err := getServiceReviewLink(reviewRequestData, trustPilotBusinessUnitID, accessToken)
+	serviceReviewLink, err := getServiceReviewLink(serviceReviewData, businessID, accessToken)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -246,6 +154,7 @@ type tpCredentials struct {
 const (
 	accessTokenURL   = "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken"
 	serviceReviewURL = "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links"
+	productReviewURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links"
 )
 
 func getAccessToken(cred tpCredentials) (string, error) {
@@ -292,6 +201,83 @@ func getAccessToken(cred tpCredentials) (string, error) {
 	}
 
 	return token, nil
+}
+
+type productReview struct {
+	referenceId string
+	locale      string
+	consumer    productReviewConsumer
+	products    []productReviewProduct
+}
+
+type productReviewConsumer struct {
+	email string
+	name  string
+}
+
+type productReviewProduct struct {
+	productUrl string
+	imageUrl   string
+	name       string
+	sku        string
+	brand      string
+}
+
+/**
+ * 2. Create product review invitation link
+ *
+ * https://developers.trustpilot.com/product-reviews-api
+ *
+ * Given information about the consumer and the product(s) purchased, get a link that can be sent to
+ * the consumer to request reviews.
+ */
+func getProductReviewLink(requestData productReview, businessID string, accessToken string) (string, error) {
+	var reviewLink string
+
+	reviewURL := strings.Replace(productReviewURL, "{businessUnitId}", businessID, 1)
+
+	jsonString := utils.EncodeToJSONString(requestData)
+	buffer := bytes.NewBuffer([]byte(jsonString))
+
+	request, err := http.NewRequest("POST", reviewURL, buffer)
+	if err != nil {
+		return reviewLink, env.ErrorDispatch(err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return reviewLink, env.ErrorDispatch(err)
+	}
+	defer response.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return reviewLink, env.ErrorDispatch(err)
+	}
+
+	if response.StatusCode >= 300 {
+		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+		return reviewLink, env.ErrorDispatch(err)
+	}
+
+	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+	if err != nil {
+		return reviewLink, env.ErrorDispatch(err)
+	}
+
+	reviewLinkI, ok := jsonResponse["reviewUrl"]
+	if !ok {
+		errorMessage := "Review link empty"
+		return reviewLink, env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage)
+	}
+	reviewLink = utils.InterfaceToString(reviewLinkI)
+
+	return reviewLink, nil
 }
 
 //TODO: do i need to add json encoding instructions?
@@ -357,4 +343,35 @@ func getServiceReviewLink(requestData serviceReview, businessUnitID string, acce
 	serviceReviewLink := utils.InterfaceToString(serviceReviewLinkI)
 
 	return serviceReviewLink, nil
+}
+
+func buildProductInfo(cCart cart.InterfaceCart) []productReviewProduct {
+	var productsOrdered []productReviewProduct
+	mediaStorage, _ := media.GetMediaStorage()
+
+	cartItems := cCart.GetItems()
+	for _, productItem := range cartItems {
+		pid := productItem.GetProductID()
+		p := productItem.GetProduct()
+
+		mediaPath, _ := mediaStorage.GetMediaPath("product", pid, "image")
+
+		productOptions := productItem.GetOptions()
+		productBrand := ConstProductBrand
+		if brand, present := productOptions["brand"]; present {
+			productBrand = utils.InterfaceToString(brand)
+		}
+
+		productInfo := productReviewProduct{
+			productUrl: app.GetStorefrontURL("product/" + pid),
+			imageUrl:   app.GetStorefrontURL(mediaPath + p.GetDefaultImage()),
+			name:       p.GetName(),
+			sku:        p.GetSku(),
+			brand:      productBrand,
+		}
+
+		productsOrdered = append(productsOrdered, productInfo)
+	}
+
+	return productsOrdered
 }
