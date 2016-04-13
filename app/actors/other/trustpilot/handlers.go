@@ -112,14 +112,11 @@ func sendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	}
 
 	// 4. Update order with the service review link
-	orderCustomInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
-	orderCustomInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
-	orderCustomInfo[ConstOrderCustomInfoSentKey] = false
+	customInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
+	customInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
+	customInfo[ConstOrderCustomInfoSentKey] = false
 
-	err = checkoutOrder.Set("custom_info", orderCustomInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	checkoutOrder.Set("custom_info", customInfo)
 
 	err = checkoutOrder.Save()
 	if err != nil {
