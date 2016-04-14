@@ -7,34 +7,35 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// Init initializes helper before usage
-func (it *CustomAttributes) Init(model string, collection string) (*CustomAttributes, error) {
-	it.model = model
-	it.collection = collection
-	it.values = make(map[string]interface{})
+// CustomAttributes initializes helper instance before usage
+func CustomAttributes(model string, collection string) (*ModelCustomAttributes, error) {
+	result := new(ModelCustomAttributes)
 
-	globalCustomAttributesMutex.Lock()
+	result.model = model
+	result.collection = collection
+	result.values = make(map[string]interface{})
 
-	_, present := globalCustomAttributes[model]
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
 
-	if present {
-		it.attributes = globalCustomAttributes[model]
-	} else {
+	_, present := modelCustomAttributes[model]
 
-		it.attributes = make(map[string]models.StructAttributeInfo)
+	info, present := modelCustomAttributes[model]
+	if !present {
+		info = make(map[string]models.StructAttributeInfo)
 
 		// retrieving information from DB
 		//-------------------------------
 		customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 		if err != nil {
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
+			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
 		}
 
-		customAttributesCollection.AddFilter("model", "=", it.model)
+		customAttributesCollection.AddFilter("model", "=", result.model)
 		records, err := customAttributesCollection.Load()
 		if err != nil {
 			env.LogError(err)
-			return it, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+it.model+"'")
+			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91e0f7e5-7234-4a33-b94b-bec7437200a5", "Can't load custom attributes information for '"+result.model+"'")
 		}
 
 		// filling attribute info structure
@@ -74,20 +75,35 @@ func (it *CustomAttributes) Init(model string, collection string) (*CustomAttrib
 				}
 			}
 
-			it.attributes[attribute.Attribute] = attribute
+			info[attribute.Attribute] = attribute
 		}
 
-		globalCustomAttributes[it.model] = it.attributes
+		modelCustomAttributes[result.model] = info
 	}
 
-	globalCustomAttributesMutex.Unlock()
+	return result, nil
+}
 
-	return it, nil
+// --------------------------------------------------------------------------------------------
+// InterfaceCustomAttributes implementation (package "github.com/ottemo/foundation/app/models")
+// --------------------------------------------------------------------------------------------
+
+// GetInstance returns current instance delegate attached to
+func (it *ModelCustomAttributes) GetInstance() interface{} {
+	return it.instance
 }
 
 // EditAttribute modifies custom attribute for collection
-func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
-	customAttribute, present := it.attributes[attributeName]
+func (it *ModelCustomAttributes) EditAttribute(attributeName string, attributeValues models.StructAttributeInfo) error {
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
+
+	customAttributes, present := modelCustomAttributes[it.model]
+	if !present {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+	}
+
+	customAttribute, present := customAttributes[attributeName]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
@@ -140,16 +156,24 @@ func (it *CustomAttributes) EditAttribute(attributeName string, attributeValues 
 			return err
 		}
 
-		it.attributes[attributeName] = customAttribute
+		modelCustomAttributes[it.model][attributeName] = customAttribute
 	}
 
 	return nil
 }
 
 // RemoveAttribute removes custom attribute from collection
-func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
+func (it *ModelCustomAttributes) RemoveAttribute(attributeName string) error {
 
-	customAttribute, present := it.attributes[attributeName]
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
+
+	customAttributes, present := modelCustomAttributes[it.model]
+	if !present {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+	}
+
+	customAttribute, present := customAttributes[attributeName]
 	if !present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
@@ -169,9 +193,7 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "901ce41c-6802-4ecd-b654-93d96d34b361", "Can't remove attribute '"+attributeName+"' from collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
-	globalCustomAttributesMutex.Lock()
-	delete(globalCustomAttributes, it.model)
-	globalCustomAttributesMutex.Unlock()
+	delete(modelCustomAttributes, it.model)
 
 	customAttributesCollection.AddFilter("model", "=", customAttribute.Model)
 	customAttributesCollection.AddFilter("attribute", "=", attributeName)
@@ -184,14 +206,22 @@ func (it *CustomAttributes) RemoveAttribute(attributeName string) error {
 }
 
 // AddNewAttribute extends collection with new custom attribute
-func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
+func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttributeInfo) error {
 
-	if _, present := it.attributes[newAttribute.Attribute]; present {
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
+
+	customAttributes, present := modelCustomAttributes[it.model]
+	if !present {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+	}
+
+	if _, present := customAttributes[newAttribute.Attribute]; present {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "24aa5125-d8b3-4e55-b321-79eef3eeccb8", "There is already atribute '"+newAttribute.Attribute+"' for model '"+it.model+"'")
 	}
 
 	// getting collection where custom attribute information stores
-	customAttribuesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
+	customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 	if err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5fcc7f5e-d469-4315-acf2-1ec04391a7f5", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
 	}
@@ -236,7 +266,7 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	record["layered"] = newAttribute.IsLayered
 	record["public"] = newAttribute.IsPublic
 
-	newCustomAttributeID, err := customAttribuesCollection.Save(record)
+	newCustomAttributeID, err := customAttributesCollection.Save(record)
 
 	if err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ad98e5b0-7672-4d02-9744-e1beecb88922", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
@@ -245,17 +275,72 @@ func (it *CustomAttributes) AddNewAttribute(newAttribute models.StructAttributeI
 	// inserting new attribute to supposed location
 	err = modelCollection.AddColumn(newAttribute.Attribute, newAttribute.Type, false)
 	if err != nil {
-		customAttribuesCollection.DeleteByID(newCustomAttributeID)
+		customAttributesCollection.DeleteByID(newCustomAttributeID)
 
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c11b43b-ec29-4e08-b614-7a8ec8345c9b", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
 	}
 
-	it.attributes[newAttribute.Attribute] = newAttribute
+	customAttributes[newAttribute.Attribute] = newAttribute
 
 	return env.ErrorDispatch(err)
 }
 
-// GetCustomAttributeCollectionName returns collection name you can use to fill CustomAttributes struct
-func (it *CustomAttributes) GetCustomAttributeCollectionName() string {
+// GetCustomAttributeCollectionName returns collection name you can use to fill ModelCustomAttributes struct
+func (it *ModelCustomAttributes) GetCustomAttributeCollectionName() string {
 	return it.collection
+}
+
+// ----------------------------------------------------------------------------------
+// InterfaceObject implementation (package "github.com/ottemo/foundation/app/models")
+// ----------------------------------------------------------------------------------
+
+// Get returns object attribute value or nil
+func (it *ModelCustomAttributes) Get(attribute string) interface{} {
+	return it.values[attribute]
+}
+
+// Set sets attribute value to object or returns error
+func (it *ModelCustomAttributes) Set(attribute string, value interface{}) error {
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
+
+	customAttributes, present := modelCustomAttributes[it.model]
+	if !present {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+	}
+
+	if _, present := customAttributes[attribute]; present {
+		it.values[attribute] = value
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "154b03ed-0e75-416d-890b-8775fcd74063", "attribute '"+attribute+"' invalid")
+	}
+
+	return nil
+}
+
+// GetAttributesInfo represents object as map[string]interface{}
+func (it *ModelCustomAttributes) GetAttributesInfo() []models.StructAttributeInfo {
+	var result []models.StructAttributeInfo
+
+	modelCustomAttributesMutex.Lock()
+	defer modelCustomAttributesMutex.Unlock()
+
+	if customAttributes, present := modelCustomAttributes[it.model]; present {
+		for _, attribute := range customAttributes {
+			result = append(result, attribute)
+		}
+	}
+
+	return result
+}
+
+// FromHashMap represents object as map[string]interface{}
+func (it *ModelCustomAttributes) FromHashMap(input map[string]interface{}) error {
+	it.values = input
+	return nil
+}
+
+// ToHashMap fills object attributes from map[string]interface{}
+func (it *ModelCustomAttributes) ToHashMap() map[string]interface{} {
+	return it.values
 }
