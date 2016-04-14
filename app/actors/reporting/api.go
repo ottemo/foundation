@@ -117,6 +117,8 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 		limit = 20
 	}
 
+	sortArg := utils.InterfaceToString(context.GetRequestArgument("sort"))
+
 	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
 	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
 	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
@@ -151,6 +153,18 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 	foundOrders, _ := oModel.List()
 	aggregatedResults := aggregateCustomerActivity(foundOrders)
 	resultCount := len(aggregatedResults)
+
+	// Sorting
+	switch sortArg {
+	case "total_orders":
+		sort.Sort(CustomerActivityByOrders(aggregatedResults))
+	case "total_sales":
+		fallthrough
+	default:
+		sort.Sort(CustomerActivityBySales(aggregatedResults))
+	}
+
+	// Apply the limit
 	if resultCount > limit {
 		aggregatedResults = aggregatedResults[:limit]
 	}
@@ -202,7 +216,7 @@ func aggregateCustomerActivity(foundOrders []models.StructListItem) []CustomerAc
 	}
 
 	// map to slice
-	var results CustomerActivity
+	var results []CustomerActivityItem
 	for _, i := range keyedResults {
 		// Add in averaging stat now that aggregation is complete
 		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
@@ -213,8 +227,6 @@ func aggregateCustomerActivity(foundOrders []models.StructListItem) []CustomerAc
 
 		results = append(results, i)
 	}
-
-	sort.Sort(results)
 
 	return results
 }

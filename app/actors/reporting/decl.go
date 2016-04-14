@@ -39,20 +39,38 @@ type CustomerActivityItem struct {
 	LatestPurchase   time.Time `json:"latest_purchase"`
 }
 
-type CustomerActivity []CustomerActivityItem
+type CustomerActivityBySales []CustomerActivityItem
 
-func (a CustomerActivity) Len() int {
+func (a CustomerActivityBySales) Len() int {
 	return len(a)
 }
 
-func (a CustomerActivity) Swap(i, j int) {
+func (a CustomerActivityBySales) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func (a CustomerActivity) Less(i, j int) bool {
+func (a CustomerActivityBySales) Less(i, j int) bool {
 	if a[i].TotalSales == a[j].TotalSales {
 		return a[i].Email < a[j].Email
 	} else {
 		return a[i].TotalSales > a[j].TotalSales
+	}
+}
+
+type CustomerActivityByOrders []CustomerActivityItem
+
+func (a CustomerActivityByOrders) Len() int {
+	return len(a)
+}
+
+func (a CustomerActivityByOrders) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a CustomerActivityByOrders) Less(i, j int) bool {
+	if a[i].TotalOrders == a[j].TotalOrders {
+		return a[i].Email < a[j].Email
+	} else {
+		return a[i].TotalOrders > a[j].TotalOrders
 	}
 }
