@@ -24,9 +24,9 @@ func (a ProductPerf) Swap(i, j int) {
 func (a ProductPerf) Less(i, j int) bool {
 	if a[i].UnitsSold == a[j].UnitsSold {
 		return a[i].Name < a[j].Name
-	} else {
-		return a[i].UnitsSold > a[j].UnitsSold
 	}
+
+	return a[i].UnitsSold > a[j].UnitsSold
 }
 
 type CustomerActivityItem struct {
@@ -52,9 +52,9 @@ func (a CustomerActivityBySales) Swap(i, j int) {
 func (a CustomerActivityBySales) Less(i, j int) bool {
 	if a[i].TotalSales == a[j].TotalSales {
 		return a[i].Email < a[j].Email
-	} else {
-		return a[i].TotalSales > a[j].TotalSales
 	}
+
+	return a[i].TotalSales > a[j].TotalSales
 }
 
 type CustomerActivityByOrders []CustomerActivityItem
@@ -70,7 +70,8 @@ func (a CustomerActivityByOrders) Swap(i, j int) {
 func (a CustomerActivityByOrders) Less(i, j int) bool {
 	if a[i].TotalOrders == a[j].TotalOrders {
 		return a[i].Email < a[j].Email
-	} else {
-		return a[i].TotalOrders > a[j].TotalOrders
 	}
+
+	return a[i].TotalOrders > a[j].TotalOrders
+
 }
