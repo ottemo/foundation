@@ -66,8 +66,8 @@ func getOrderIds(foundOrders []models.StructListItem) []string {
 }
 
 // aggregateOrderItems Takes a list of order ids and aggregates their price / qty by their sku
-func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
-	keyedResults := make(map[string]AggrOrderItems)
+func aggregateOrderItems(oitems []map[string]interface{}) []ProductPerfItem {
+	keyedResults := make(map[string]ProductPerfItem)
 
 	// Aggregate by sku
 	for _, oitem := range oitems {
@@ -87,14 +87,14 @@ func aggregateOrderItems(oitems []map[string]interface{}) []AggrOrderItems {
 	}
 
 	// map to slice
-	var results []AggrOrderItems
+	var results ProductPerf
 	for _, item := range keyedResults {
 		// @TODO: Round money is bad
 		item.GrossSales = utils.RoundPrice(item.GrossSales)
 		results = append(results, item)
 	}
 
-	sort.Sort(ByUnitsSold(results))
+	sort.Sort(results)
 
 	return results
 }

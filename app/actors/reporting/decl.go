@@ -4,24 +4,24 @@ import (
 	"time"
 )
 
-type AggrOrderItems struct {
+type ProductPerfItem struct {
 	Name       string  `json:"name"`
 	Sku        string  `json:"sku"`
 	GrossSales float64 `json:"gross_sales"`
 	UnitsSold  int     `json:"units_sold"`
 }
 
-type ByUnitsSold []AggrOrderItems
+type ProductPerf []ProductPerfItem
 
-func (a ByUnitsSold) Len() int {
+func (a ProductPerf) Len() int {
 	return len(a)
 }
 
-func (a ByUnitsSold) Swap(i, j int) {
+func (a ProductPerf) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func (a ByUnitsSold) Less(i, j int) bool {
+func (a ProductPerf) Less(i, j int) bool {
 	if a[i].UnitsSold == a[j].UnitsSold {
 		return a[i].Name < a[j].Name
 	} else {
