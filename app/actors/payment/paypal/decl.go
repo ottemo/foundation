@@ -41,6 +41,7 @@ const (
 	// PayPal pro API constants
 
 	ConstPaymentPayPalPayflowCode = "paypal_payflow"
+	ConstPaymentPayPalPayflowName = "PayPal Payflow"
 
 	ConstConfigPathPayPalPayflowGroup = "payment.paypalpayflow"
 

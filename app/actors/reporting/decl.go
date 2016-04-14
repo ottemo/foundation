@@ -75,3 +75,11 @@ func (a CustomerActivityByOrders) Less(i, j int) bool {
 	return a[i].TotalOrders > a[j].TotalOrders
 
 }
+
+type PaymentMethodItem struct {
+	Key          string  `json:"key"`
+	Name         string  `json:"method_name"`
+	TotalSales   float64 `json:"total_sales"`
+	TotalOrders  int     `json:"total_orders"`
+	AverageSales float64 `json:"avg_sales"`
+}

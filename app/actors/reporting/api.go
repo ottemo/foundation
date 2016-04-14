@@ -2,6 +2,10 @@ package reporting
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/actors/payment/authorizenet"
+	"github.com/ottemo/foundation/app/actors/payment/checkmo"
+	"github.com/ottemo/foundation/app/actors/payment/paypal"
+	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
@@ -17,6 +21,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 	service.GET("reporting/product-performance", api.IsAdmin(listProductPerformance))
 	service.GET("reporting/customer-activity", api.IsAdmin(listCustomerActivity))
+	service.GET("reporting/payment-method", api.IsAdmin(listPaymentMethod))
 
 	return nil
 }
@@ -217,6 +222,99 @@ func aggregateCustomerActivity(foundOrders []models.StructListItem) []CustomerAc
 
 	// map to slice
 	var results []CustomerActivityItem
+	for _, i := range keyedResults {
+		// Add in averaging stat now that aggregation is complete
+		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
+
+		// Round money
+		i.TotalSales = utils.RoundPrice(i.TotalSales)
+		i.AverageSales = utils.RoundPrice(i.AverageSales)
+
+		results = append(results, i)
+	}
+
+	return results
+}
+
+func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		if startDate.IsZero() || endDate.IsZero() {
+			context.SetResponseStatusBadRequest()
+			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+		}
+		if startDate.After(endDate) || startDate.Equal(endDate) {
+			context.SetResponseStatusBadRequest()
+			msg := "the start_date must come before the end_date"
+			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+		}
+	}
+
+	// Fetch orders
+	oModel, _ := order.GetOrderCollectionModel()
+	oModel.ListAddExtraAttribute("created_at")
+	oModel.ListAddExtraAttribute("payment_method")
+	oModel.ListAddExtraAttribute("grand_total")
+	if hasDateRange {
+		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+	}
+
+	// This is the lite response StructListItem
+	foundOrders, _ := oModel.List()
+	aggregatedResults := aggregatePaymentMethod(foundOrders)
+
+	// Sorting
+	// 	sort.Sort(CustomerActivityByOrders(aggregatedResults))
+
+	response := map[string]interface{}{
+		"aggregate_items": aggregatedResults,
+		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+	return response, nil
+}
+
+func aggregatePaymentMethod(foundOrders []models.StructListItem) []PaymentMethodItem {
+
+	// Map of payment method key: name
+	paymentMethodNames := map[string]string{
+		authorizenet.ConstPaymentCodeDPM:     authorizenet.ConstPaymentNameDPM,
+		checkmo.ConstPaymentCode:             checkmo.ConstPaymentName,
+		paypal.ConstPaymentCode:              paypal.ConstPaymentName,
+		paypal.ConstPaymentPayPalPayflowCode: paypal.ConstPaymentPayPalPayflowName,
+		zeropay.ConstPaymentZeroPaymentCode:  zeropay.ConstPaymentName,
+	}
+
+	keyedResults := make(map[string]PaymentMethodItem)
+
+	for _, o := range foundOrders {
+		key := utils.InterfaceToString(o.Extra["payment_method"])
+		item, ok := keyedResults[key]
+
+		// First time, set some static props
+		if !ok {
+			item.Key = key
+			item.Name = paymentMethodNames[key]
+		}
+
+		// Aggregated props
+		item.TotalSales += utils.InterfaceToFloat64(o.Extra["grand_total"])
+		item.TotalOrders++
+
+		// Save
+		keyedResults[key] = item
+	}
+
+	// map to slice
+	var results []PaymentMethodItem
 	for _, i := range keyedResults {
 		// Add in averaging stat now that aggregation is complete
 		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
