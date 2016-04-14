@@ -1,18 +1,19 @@
 package seo
 
 import (
-	"github.com/ottemo/foundation/app"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/cms"
-	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/category"
+	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // setupAPI setups package related API endpoint routines
