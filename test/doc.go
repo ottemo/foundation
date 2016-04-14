@@ -1,7 +1,7 @@
 // Copyright 2014 The Ottemo Authors. All rights reserved.
 
 /*
-Package tests represents set of test writing helpers and global application tests. It provides a set of functions you can
+package test represents set of test writing helpers and global application tests. It provides a set of functions you can
 use for starting Ottemo application in a test mode, prepare randomized data, fill DB with sample data, which is use-full
 during GO tests writing.
 
@@ -12,4 +12,4 @@ In order to run them use:
 
 (refer to http://golang.org/pkg/testing/ for details)
 */
-package tests
+package test

@@ -47,7 +47,7 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 		return it.CreatedAt
 	}
 
-	return it.CustomAttributes.Get(attribute)
+	return it.ModelCustomAttributes.Get(attribute)
 }
 
 // Set will set attribute value of the Visitor to object or return an error
@@ -139,7 +139,7 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 		}
 
 	default:
-		err := it.CustomAttributes.Set(attribute, value)
+		err := it.ModelCustomAttributes.Set(attribute, value)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -163,7 +163,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 // ToHashMap represents Visitor object as map[string]interface{}
 func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
-	result := it.CustomAttributes.ToHashMap()
+	result := it.ModelCustomAttributes.ToHashMap()
 
 	result["_id"] = it.id
 
@@ -315,7 +315,7 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 	}
 
-	customAttributesInfo := it.CustomAttributes.GetAttributesInfo()
+	customAttributesInfo := it.ModelCustomAttributes.GetAttributesInfo()
 	for _, customAttribute := range customAttributesInfo {
 		result = append(result, customAttribute)
 	}
