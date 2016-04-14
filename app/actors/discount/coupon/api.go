@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -139,7 +140,7 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 	return newRecord, nil
 }
 
-// Apply will coupon code to the current checkout
+// Apply will add the coupon code to the current checkout
 //   - coupon code should be specified in "coupon" argument
 func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
