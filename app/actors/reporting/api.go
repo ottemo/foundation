@@ -273,7 +273,7 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	aggregatedResults := aggregatePaymentMethod(foundOrders)
 
 	// Sorting
-	// 	sort.Sort(CustomerActivityByOrders(aggregatedResults))
+	sort.Sort(PaymentMethodBySales(aggregatedResults))
 
 	response := map[string]interface{}{
 		"aggregate_items": aggregatedResults,
