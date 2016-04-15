@@ -89,8 +89,10 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
 	billingLastName := ""
+	billingFirstName := ""
 	if orderInstance != nil {
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
+		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
 	fmt.Println("2", billingLastName)
 
@@ -107,7 +109,8 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		"&ORIGID=" + utils.InterfaceToString(transactionID) +
 
 		// technically deprecated
-		"&LASTNAME=" + billingLastName +
+		"&BILLTOFIRSTNAME=" + billingFirstName +
+		"&BILLTOLASTNAME=" + billingLastName +
 
 		// Payment Details Fields
 		"&AMT=" + amount +
@@ -279,8 +282,10 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
 	billingLastName := ""
+	billingFirstName := ""
 	if orderInstance != nil {
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
+		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
 	fmt.Println("1", billingLastName)
 
@@ -298,7 +303,8 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		"&EXPDATE=" + ccExpirationDate +
 
 		// technically deprecated
-		"&LASTNAME=" + billingLastName +
+		"&BILLTOFIRSTNAME=" + billingFirstName +
+		"&BILLTOLASTNAME=" + billingLastName +
 
 		// Payment Details Fields
 		"&AMT=0" +
