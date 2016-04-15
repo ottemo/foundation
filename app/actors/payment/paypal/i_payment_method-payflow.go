@@ -168,6 +168,7 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 
 	env.Log("paypal.log", env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
 		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+		"LASTNAME - "+billingLastName+", "+
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
 		"TRANSACTIONID - "+orderTransactionID)
 
