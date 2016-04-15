@@ -53,22 +53,22 @@ func TestGoodCredentials(t *testing.T) {
 
 func TestProductReviewLink(t *testing.T) {
 	businessID := "ABC" // TODO: WHAT DO I DO FOR TESTING HERE
-	productReviewData := productReview{
-		consumer: productReviewConsumer{
-			email: "test@ottemo.io",
-			name:  "Jon Dough",
+	productReviewData := ProductReview{
+		Consumer: ProductReviewConsumer{
+			Email: "test@ottemo.io",
+			Name:  "Jon Dough",
 		},
-		products: []productReviewProduct{
-			productReviewProduct{
-				productUrl: "",
-				imageUrl:   "",
-				name:       "",
-				sku:        "",
-				brand:      "",
+		Products: []ProductReviewProduct{
+			ProductReviewProduct{
+				ProductURL: "",
+				ImageURL:   "",
+				Name:       "",
+				Sku:        "",
+				Brand:      "",
 			},
 		},
-		referenceId: "abc123",
-		locale:      requestLocale,
+		ReferenceID: "abc123",
+		Locale:      requestLocale,
 	}
 
 	// Testing bad credentials
