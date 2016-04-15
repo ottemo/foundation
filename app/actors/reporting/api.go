@@ -1,17 +1,19 @@
 package reporting
 
 import (
+	"sort"
+	"time"
+
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/app/actors/payment/authorizenet"
 	"github.com/ottemo/foundation/app/actors/payment/checkmo"
 	"github.com/ottemo/foundation/app/actors/payment/paypal"
 	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/order"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
-	"sort"
-	"time"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -119,7 +121,7 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 	// Limit results count, not the query
 	limit := utils.InterfaceToInt(context.GetRequestArgument("limit"))
 	if limit == 0 {
-		limit = 20
+		limit = 50
 	}
 
 	sortArg := utils.InterfaceToString(context.GetRequestArgument("sort"))
