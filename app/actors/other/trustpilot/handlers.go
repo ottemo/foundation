@@ -29,6 +29,7 @@ type tpCredentials struct {
 	apiSecret string
 }
 
+// ProductReview is a container for TrustPilot product reviews
 type ProductReview struct {
 	ReferenceID string                 `json:"referenceId"`
 	Locale      string                 `json:"locale"`
@@ -36,11 +37,14 @@ type ProductReview struct {
 	Products    []ProductReviewProduct `json:"products"`
 }
 
+// ProductReviewConsumer is a container for the TrustPilot reviewer's personal information
 type ProductReviewConsumer struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 }
 
+// ProductReviewProduct is a container object for a TrustPilot Product Review request based
+// on items purchased by the consumer.
 type ProductReviewProduct struct {
 	ProductURL string `json:"productUrl"`
 	ImageURL   string `json:"imageUrl"`
@@ -49,6 +53,8 @@ type ProductReviewProduct struct {
 	Brand      string `json:"brand"`
 }
 
+// ServiceReview is a container object for the TrustPilot Service Review.  This is the first
+// link the consumer will receive in an email request to review a TrustPilot registered service.
 type ServiceReview struct {
 	ReferenceID string `json:"referenceId"`
 	Email       string `json:"email"`
@@ -267,7 +273,7 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
 		return "", env.ErrorDispatch(err)
 	}
 
-	reviewLinkI, ok := jsonResponse["reviewUrl"]
+	reviewLinkI, ok := jsonResponse["reviewURL"]
 	if !ok {
 		errorMessage := "Review link empty"
 		return "", env.ErrorNew(ConstErrorModule, 1, "c53fd02f-2f5d-4111-8318-69a2cc2d2259", errorMessage)
@@ -288,12 +294,12 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
  */
 func getServiceReviewLink(requestData ServiceReview, businessUnitID string, accessToken string) (string, error) {
 
-	reviewUrl := strings.Replace(serviceReviewURL, "{businessUnitId}", businessUnitID, 1)
+	reviewURL := strings.Replace(serviceReviewURL, "{businessUnitId}", businessUnitID, 1)
 
 	jsonString := utils.EncodeToJSONString(requestData)
 	buffer := bytes.NewBuffer([]byte(jsonString))
 
-	request, err := http.NewRequest("POST", reviewUrl, buffer)
+	request, err := http.NewRequest("POST", reviewURL, buffer)
 	if err != nil {
 		return "", err
 	}
