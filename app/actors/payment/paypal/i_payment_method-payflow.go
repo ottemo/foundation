@@ -149,7 +149,6 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	}
 
 	responseValues, err := url.ParseQuery(string(responseBody))
-	fmt.Println(responseValues)
 	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b18cdcad-8c21-4acf-a2e0-56e0541103de", "payment unexpected response")
 	}
@@ -288,7 +287,6 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
 		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
-	fmt.Println("1", billingLastName)
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
@@ -340,7 +338,6 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	}
 
 	responseValues, err := url.ParseQuery(string(responseBody))
-	fmt.Println(responseValues)
 	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "550c824b-86cf-4c8d-a13e-73f92da15bde", checkout.ConstPaymentErrorTechnical+" Payment unexpected response")
 	}
