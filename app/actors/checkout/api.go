@@ -491,7 +491,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		visitorCardModel.Set("visitor_id", currentVisitorID)
 	}
 
-	// new cc are saved only if checked as save and for registered visitors
+	// save cc token if using appropriate payment adapter
 	if (visitorCardModel.GetID() != "" || currentVisitorID != "") &&
 		paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode {
 
