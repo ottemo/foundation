@@ -94,7 +94,6 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
 		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
-	fmt.Println("2", billingLastName)
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
@@ -108,7 +107,7 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		"&TENDER=C" +
 		"&ORIGID=" + utils.InterfaceToString(transactionID) +
 
-		// technically deprecated
+		"&LASTNAME=" + billingLastName + // technically deprecated
 		"&BILLTOFIRSTNAME=" + billingFirstName +
 		"&BILLTOLASTNAME=" + billingLastName +
 
@@ -301,7 +300,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		"&ACCT=" + utils.InterfaceToString(ccInfo["number"]) +
 		"&EXPDATE=" + ccExpirationDate +
 
-		// technically deprecated
+		"&LASTNAME=" + billingLastName + // technically deprecated
 		"&BILLTOFIRSTNAME=" + billingFirstName +
 		"&BILLTOLASTNAME=" + billingLastName +
 
@@ -412,7 +411,6 @@ func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.Inter
 		"&TENDER=C" +
 		"&ACCT=" + "$CC_NUM" +
 		"&EXPDATE=" + "$CC_MONTH$CC_YEAR" +
-		//TODO: WHAT DO I DO HERE
 
 		// Payment Details Fields
 		"&AMT=0" +
