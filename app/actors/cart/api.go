@@ -2,10 +2,11 @@ package cart
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/cart"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -18,33 +19,7 @@ func setupAPI() error {
 	service.PUT("cart/item/:itemIdx/:qty", APICartItemUpdate)
 	service.DELETE("cart/item/:itemIdx", APICartItemDelete)
 
-	service.GET("cart-abandon", testHandler)
-
 	return nil
-}
-
-func testHandler(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// Check config for sent time
-	beforeDate, isEnabled := getConfigSendBefore()
-	if !isEnabled {
-		context.SetResponseStatusNotFound()
-		return "endpoint not enabled", nil
-	}
-
-	resultCarts := getAbandonedCarts(beforeDate)
-	actionableCarts := getActionableCarts(resultCarts)
-
-	for _, aCart := range actionableCarts {
-		err := sendAbandonEmail(aCart)
-		if err != nil {
-			continue
-		}
-
-		flagCartAsEmailed(aCart.Cart.ID)
-	}
-
-	return actionableCarts, nil
 }
 
 // APICartInfo returns get cart related information

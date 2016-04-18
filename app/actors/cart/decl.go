@@ -3,9 +3,10 @@
 package cart
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
-	"time"
 )
 
 // Package global constants
@@ -51,3 +52,31 @@ type DefaultCartItem struct {
 
 	Cart *DefaultCart
 }
+
+// AbandonCartEmailData is a container for carts and visitors who have items in
+// their cart and still have a valid session.
+type AbandonCartEmailData struct {
+	Visitor AbandonVisitor
+	Cart    AbandonCart
+}
+
+// AbandonVisitor is a struct to hold the info needed to contact a visitor with
+// items in their cart who has not checked out yet.
+type AbandonVisitor struct {
+	Email     string
+	FirstName string
+	LastName  string
+}
+
+// AbandonCart is a struct holding the ID of the abandoned cart.
+type AbandonCart struct {
+	ID string
+	// Items []AbandonCartItem
+}
+
+// type AbandonCartItem struct {
+// 	Name  string
+// 	SKU   string
+// 	Price float64
+// 	Image string
+// }

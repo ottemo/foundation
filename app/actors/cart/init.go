@@ -2,16 +2,18 @@ package cart
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // init makes package self-initialization routine
@@ -180,29 +182,7 @@ func abandonCartTask(params map[string]interface{}) error {
 	return nil
 }
 
-type AbandonCartEmailData struct {
-	Visitor AbandonVisitor
-	Cart    AbandonCart
-}
-
-type AbandonVisitor struct {
-	Email     string
-	FirstName string
-	LastName  string
-}
-
-type AbandonCart struct {
-	ID string
-	// Items []AbandonCartItem
-}
-
-// type AbandonCartItem struct {
-// 	Name  string
-// 	SKU   string
-// 	Price float64
-// 	Image string
-// }
-
+// getConfigSendBefore will return the time to send out the abandoned cart emails
 func getConfigSendBefore() (time.Time, bool) {
 	var isEnabled bool
 	beforeConfig := utils.InterfaceToInt(env.ConfigGetValue(ConstConfigPathCartAbandonEmailSendTime))
@@ -236,6 +216,7 @@ func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
 	return resultCarts
 }
 
+// getActionableCarts will return all carts we can send abandoned cart emails to.
 func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmailData {
 	allCartEmailData := []AbandonCartEmailData{}
 
@@ -295,6 +276,8 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 	return allCartEmailData
 }
 
+// sendAbandonEmail will send an email reminder to all carts with valid sessions
+// and email addresses
 func sendAbandonEmail(emailData AbandonCartEmailData) error {
 	subject := "It looks like you forgot something in your cart"
 	template := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCartAbandonEmailTemplate))
@@ -320,6 +303,8 @@ func sendAbandonEmail(emailData AbandonCartEmailData) error {
 	return nil
 }
 
+// flagCartAsEmailed will set a flag on carts that have been sent an abandoned
+// cart email.
 func flagCartAsEmailed(cartID string) {
 	iCart, _ := cart.LoadCartByID(cartID)
 
