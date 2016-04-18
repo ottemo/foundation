@@ -102,9 +102,10 @@ func SendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	apiUsername := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotUsername))
 	apiPassword := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotPassword))
 	businessID := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotBusinessUnitID))
+	defaultProductBrand := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotProductBrand))
 
 	// verification of configuration values
-	configs := []string{apiKey, apiSecret, apiUsername, apiPassword, businessID}
+	configs := []string{apiKey, apiSecret, apiUsername, apiPassword, businessID, defaultProductBrand}
 	if hasEmpty(configs) {
 		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "22207d49-e001-4666-8501-26bf5ef0926b", "Some trustpilot settings are not configured"))
 	}
@@ -133,7 +134,7 @@ func SendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 			Email: customerEmail,
 			Name:  customerName,
 		},
-		Products:    buildProductInfo(currentCart),
+		Products:    buildProductInfo(currentCart, defaultProductBrand),
 		ReferenceID: orderID,
 		Locale:      requestLocale,
 	}
@@ -339,7 +340,7 @@ func getServiceReviewLink(requestData ServiceReview, businessUnitID string, acce
 	return serviceReviewLink, nil
 }
 
-func buildProductInfo(cCart cart.InterfaceCart) []ProductReviewProduct {
+func buildProductInfo(cCart cart.InterfaceCart, defaultBrand string) []ProductReviewProduct {
 	var productsOrdered []ProductReviewProduct
 	mediaStorage, _ := media.GetMediaStorage()
 
@@ -351,7 +352,8 @@ func buildProductInfo(cCart cart.InterfaceCart) []ProductReviewProduct {
 		mediaPath, _ := mediaStorage.GetMediaPath("product", pid, "image")
 
 		productOptions := productItem.GetOptions()
-		productBrand := ConstProductBrand
+
+		productBrand := defaultBrand
 		if brand, present := productOptions["brand"]; present {
 			productBrand = utils.InterfaceToString(brand)
 		}

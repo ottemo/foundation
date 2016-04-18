@@ -3,7 +3,6 @@ package trustpilot
 
 // Package global constants
 const (
-	ConstProductBrand = "Kari Gran" //TODO: ?
 	ConstEmailSubject = "Purchase feedback"
 
 	ConstErrorModule = "trustpilot"
@@ -20,4 +19,5 @@ const (
 	ConstConfigPathTrustPilotUsername       = "general.trustpilot.username"
 	ConstConfigPathTrustPilotPassword       = "general.trustpilot.password"
 	ConstConfigPathTrustPilotEmailTemplate  = "general.trustpilot.emailTemplate"
+	ConstConfigPathTrustPilotProductBrand   = "general.trustpilot.productBrand"
 )

@@ -35,7 +35,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Enabled Service Emails",
+		Label:       "Enable Service Emails",
 		Description: "",
 		Image:       "",
 	}, nil)
@@ -65,8 +65,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
-		Label:       "Trustpilot username",
-		Description: `Trustpilot b2b login email`,
+		Label:       "Username",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -80,8 +80,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeSecret,
 		Editor:      "password",
 		Options:     "",
-		Label:       "Trustpilot password",
-		Description: `Trustpilot b2b login password`,
+		Label:       "Password",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -122,14 +122,29 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path: ConstConfigPathTrustPilotEmailTemplate,
 		Value: `Dear {{.Visitor.name}},
-		please provide your feedback on recently purchase
-		<br />
-		{{.Visitor.link}}`,
+please provide your feedback on recently purchase
+<br />
+{{.Visitor.link}}`,
 		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "Trustpilot data send e-mail: ",
-		Description: "contents of email will be sent to customers two weeks after purchase",
+		Label:       "Service review e-mail template",
+		Description: "Contents of this email will be sent to customers two weeks after purchase",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathTrustPilotProductBrand,
+		Value:       "",
+		Type:        env.ConstConfigTypeText,
+		Editor:      "line_text",
+		Options:     "",
+		Label:       "Default Product Brand",
+		Description: "If the product has a brand attribute that will be used, otherwise the default value will be sent to TrustPilot",
 		Image:       "",
 	}, nil)
 
