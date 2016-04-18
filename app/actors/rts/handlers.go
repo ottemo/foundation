@@ -203,6 +203,25 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 				env.LogError(err)
 			}
 		}
+	} else {
+		if orderInstance, ok := eventData["order"].(order.InterfaceOrder); ok {
+			saleAmount := orderInstance.GetGrandTotal()
+
+			currentHour := time.Now().Truncate(time.Hour).Unix()
+			CheckHourUpdateForStatistic()
+
+			if _, present := statistic[currentHour]; present && statistic[currentHour] != nil {
+				statistic[currentHour].Sales++
+				statistic[currentHour].SalesAmount += saleAmount
+				monthStatistic.Sales++
+				monthStatistic.SalesAmount += saleAmount
+			}
+
+			err := SaveStatisticsData()
+			if err != nil {
+				env.LogError(err)
+			}
+		}
 	}
 
 	return true

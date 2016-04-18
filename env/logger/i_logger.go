@@ -1,11 +1,11 @@
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -40,12 +40,38 @@ func (it *DefaultLogger) LogError(err error) {
 
 // LogEvent Saves log details out to a file for logstash consumption
 func (it *DefaultLogger) LogEvent(fields env.LogFields, eventName string) {
-	f, err := os.OpenFile(baseDirectory+"events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	f, err := os.OpenFile(baseDirectory+"events.log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
-		it.LogError(err)
+		fmt.Println(err)
 	}
 	defer f.Close()
 
-	log.SetOutput(f)
-	log.WithFields(log.Fields(fields)).Info(eventName)
+	msg, err := logstashFormatter(fields, eventName)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	f.Write(msg)
+}
+
+func logstashFormatter(fields env.LogFields, eventName string) ([]byte, error) {
+	// Attach the message
+	fields["message"] = eventName
+
+	// Logstash required fields
+	fields["@version"] = 1
+	fields["@timestamp"] = time.Now().Format(time.RFC3339)
+
+	// default to info level
+	_, ok := fields["level"]
+	if !ok {
+		fields["level"] = "INFO"
+	}
+
+	serialized, err := json.Marshal(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(serialized, '\n'), nil
 }

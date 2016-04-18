@@ -1,14 +1,16 @@
 package checkout
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/payment/zeropay"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"time"
+	"github.com/ottemo/foundation/app/actors/payment/paypal"
+	"github.com/ottemo/foundation/app/actors/payment/zeropay"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -469,6 +471,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
 	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
 	creditCardInfo["token_updated"] = time.Now()
+	creditCardInfo["created_at"] = time.Now()
 
 	// filling new instance with request provided data
 	// TODO: check other places with such code:
@@ -486,8 +489,9 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		visitorCardModel.Set("visitor_id", currentVisitorID)
 	}
 
-	// new cc are saved only if checked as save and for registered visitors
-	if (visitorCardModel.GetID() != "" || currentVisitorID != "") && utils.InterfaceToBool(creditCardInfo["save"]) {
+	// save cc token if using appropriate payment adapter
+	if (visitorCardModel.GetID() != "" || currentVisitorID != "") &&
+		paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode {
 
 		err = visitorCardModel.Save()
 		if err != nil {

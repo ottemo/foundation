@@ -264,8 +264,9 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 			}
 
 			// XML encode
-			if resp.Header().Get("Content-Type") == "text/xml" {
-				result, _ = xml.Marshal(result)
+			if resp.Header().Get("Content-Type") == "text/xml" && result != nil {
+				xmlResult, _ := xml.MarshalIndent(result, "", "    ")
+				result = []byte(xml.Header + string(xmlResult))
 			}
 		}
 
@@ -285,7 +286,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 		if value, ok := result.([]byte); ok {
 			resp.Write(value)
-		} else {
+		} else if result != nil {
 			resp.Write([]byte(fmt.Sprint(result)))
 		}
 	}
@@ -293,6 +294,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 	return wrappedHandler
 }
 
+// GET is a wrapper for the HTTP GET verb
 func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.GET(path, it.wrappedHandler(handler))
@@ -300,6 +302,7 @@ func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {GET}")
 }
 
+// PUT is a wrapper for the HTTP PUT verb
 func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.PUT(path, it.wrappedHandler(handler))
@@ -307,6 +310,7 @@ func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {PUT}")
 }
 
+// POST is a wrapper for the HTTP POST verb
 func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.POST(path, it.wrappedHandler(handler))
@@ -314,6 +318,7 @@ func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) 
 	it.Handlers = append(it.Handlers, path+" {POST}")
 }
 
+// DELETE is a wrapper for the HTTP DELETE verb
 func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.DELETE(path, it.wrappedHandler(handler))

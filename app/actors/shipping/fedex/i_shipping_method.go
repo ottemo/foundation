@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"launchpad.net/xmlpath"
+	"gopkg.in/xmlpath.v1"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"

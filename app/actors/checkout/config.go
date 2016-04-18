@@ -44,7 +44,7 @@ Subtotal: ${{.Order.subtotal}}<br />
 Tax: ${{.Order.tax_amount}}<br />
 Shipping: ${{.Order.shipping_amount}}<br />
 Total: ${{.Order.grand_total}}<br />`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Order confirmation e-mail: ",

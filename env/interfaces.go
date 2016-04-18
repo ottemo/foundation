@@ -3,7 +3,6 @@ package env
 import (
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -19,6 +18,7 @@ const (
 	ConstConfigTypeFloat    = utils.ConstDataTypeFloat
 	ConstConfigTypeDatetime = utils.ConstDataTypeDatetime
 	ConstConfigTypeJSON     = utils.ConstDataTypeJSON
+	ConstConfigTypeHTML     = utils.ConstDataTypeHTML
 	ConstConfigTypeGroup    = "group"
 	ConstConfigTypeSecret   = "secret"
 
@@ -97,7 +97,7 @@ type InterfaceLogger interface {
 	LogEvent(f LogFields, eventName string)
 }
 
-type LogFields logrus.Fields
+type LogFields map[string]interface{}
 
 // InterfaceIniConfig is an interface to startup configuration predefined values service
 type InterfaceIniConfig interface {

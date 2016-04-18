@@ -47,8 +47,6 @@ func setupDB() error {
 // initListeners register event listeners
 func initListeners() error {
 
-	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
-
 	return nil
 }
 

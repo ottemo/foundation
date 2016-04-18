@@ -12,7 +12,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures package related API endpoint routines
 func setupAPI() error {
 
 	service := api.GetRestService()
@@ -46,23 +46,19 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 // APIGetReferrers returns list of unique referrers were registered
 func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
 	var result []map[string]interface{}
-	var resultArray []map[string]interface{}
 
 	for url, count := range referrers {
-		resultArray = append(resultArray, map[string]interface{}{
+		result = append(result, map[string]interface{}{
 			"url":   url,
 			"count": count,
 		})
-	}
 
-	resultArray = sortArrayOfMapByKey(resultArray, "count")
-
-	for _, value := range resultArray {
-		result = append(result, value)
 		if len(result) >= 20 {
 			break
 		}
 	}
+
+	result = utils.SortMapByKeys(result, true, "count", "url")
 
 	return result, nil
 }
@@ -416,9 +412,8 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 }
 
 // APIGetBestsellers returns information about bestsellers for some period
-// 	possible periods: "today", "yesterday", "week", "month"
+//     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
-	var result []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
 
@@ -427,7 +422,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	}
 
-	// get a hours pasted for local day and base from it
+	// get a hours passed for local day and base from it
 	todayTo := time.Now().Truncate(time.Hour).Add(time.Hour) // last hour of current day
 	todayFrom, _ := utils.MakeUTCOffsetTime(todayTo, timeZone)
 	if utils.IsZeroTime(todayFrom) {
@@ -458,7 +453,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	salesHistoryCollection.AddFilter("count", ">", 0)
@@ -467,19 +462,24 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	collectionRecords, err := salesHistoryCollection.Load()
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
-	productsSold := make(map[string]int)
+	// map  and arrays to hold sales data
+	productSales := make(map[string]int)
+	var productsToSort, bestSellers []map[string]interface{}
 
+	// count the products sales by product id
 	for _, item := range collectionRecords {
-		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
+		pid := utils.InterfaceToString(item["product_id"])
+		count := utils.InterfaceToInt(item["count"])
+		productSales[pid] = count + productSales[pid]
 	}
 
-	for productID, count := range productsSold {
-		productID := utils.InterfaceToString(productID)
+	// populate the bestseller data
+	for id, count := range productSales {
 
-		productInstance, err := product.LoadProductByID(productID)
+		productInstance, err := product.LoadProductByID(id)
 		if err != nil {
 			continue
 		}
@@ -490,25 +490,30 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		}
 
 		bestsellerItem := make(map[string]interface{})
+		bestsellerItem["pid"] = id
+		bestsellerItem["name"] = productInstance.GetName()
+		bestsellerItem["count"] = count
 
-		bestsellerItem["pid"] = productID
 		if productInstance.GetDefaultImage() != "" {
 			bestsellerItem["image"] = mediaPath + productInstance.GetDefaultImage()
 		}
 
-		bestsellerItem["name"] = productInstance.GetName()
-		bestsellerItem["count"] = count
-
-		result = append(result, bestsellerItem)
-
-		if len(result) >= 10 {
-			break
-		}
+		productsToSort = append(productsToSort, bestsellerItem)
 	}
 
-	result = sortArrayOfMapByKey(result, "count")
+	// sort list of products by sales
+	descending := true    // sort in descending order
+	bestsellerLimit := 12 // limit on returned bestsellers
+	productsSorted := utils.SortMapByKeys(productsToSort, descending, "count", "name")
 
-	return result, nil
+	// pass back only bestsellerLimit or less
+	if len(productsSorted) <= bestsellerLimit {
+		bestSellers = productsSorted
+	} else {
+		bestSellers = productsSorted[:bestsellerLimit]
+	}
+
+	return bestSellers, nil
 }
 
 // APIGetVisitsRealtime returns real-time information on current visits

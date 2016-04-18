@@ -1,6 +1,6 @@
 // +build memsession
 
-// "service_memsession.go" is a blank session storage - "memsession" build tag should be specified in order to use it
+// "service_memory.go" is a memory session storage - "memsession" build tag should be specified in order to use it
 // (session instances holds only on memory without flushing to longer term storage)
 
 package session

@@ -1,6 +1,7 @@
 package order
 
 import (
+    "time"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 )
@@ -80,4 +81,35 @@ func LoadOrderByID(orderID string) (InterfaceOrder, error) {
 	}
 
 	return orderModel, nil
+}
+
+// GetOrdersCreatedBetween Get the orders `created_at` a certain date range
+func GetOrdersCreatedBetween(startDate time.Time, endDate time.Time) []models.StructListItem {
+	oModel, _ := GetOrderCollectionModel()
+	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+	oModel.ListAddExtraAttribute("created_at") // If you are filtering on created_at you probably want that too
+	foundOrders, _ := oModel.List() // This is the lite response StructListItem
+
+	return foundOrders
+}
+
+// GetFullOrdersUpdatedBetween db query for getting all orders, with expensive details
+func GetFullOrdersUpdatedBetween(startDate time.Time, endDate time.Time) []InterfaceOrder {
+	oModel, _ := GetOrderCollectionModel()
+	oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
+	oModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
+	result := oModel.ListOrders()
+
+	return result
+}
+
+// GetItemsForOrders Get the relavent order items given a slice of orders
+func GetItemsForOrders(orderIds []string) []map[string]interface{} {
+	oiModel, _ := GetOrderItemCollectionModel()
+	oiDB := oiModel.GetDBCollection()
+	oiDB.AddFilter("order_id", "in", orderIds)
+	oiResults, _ := oiDB.Load()
+
+	return oiResults
 }

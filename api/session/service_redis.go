@@ -28,7 +28,7 @@ func init() {
 
 	redisService := new(RedisSessionService)
 	redisService.DefaultSessionService = InitDefaultSessionService()
-	redisService.DefaultSessionService.Storage = redisService
+	redisService.DefaultSessionService.storage = redisService
 
 	SessionService = redisService
 
@@ -77,6 +77,9 @@ func shutdown() error {
 	return nil
 }
 
+// InterfaceServiceStorage implementation
+// --------------------------------------
+
 // GetStorageName returns storage implementation name for a session service
 func (it *RedisSessionService) GetStorageName() string {
 	return "RedisSessionService"
@@ -86,8 +89,7 @@ func (it *RedisSessionService) GetStorageName() string {
 func (it *RedisSessionService) LoadSession(sessionID string) (*DefaultSessionContainer, error) {
 
 	// making new session holder instance
-	sessionInstance := new(DefaultSessionContainer)
-	sessionInstance.id = DefaultSession(sessionID)
+	sessionInstance := &DefaultSessionContainer{id: sessionID}
 
 	// checking existence
 	item, err := it.redisClient.Get(sessionID)
@@ -126,8 +128,8 @@ func (it *RedisSessionService) LoadSession(sessionID string) (*DefaultSessionCon
 // FlushSession stores serialized session on memcache server
 func (it *RedisSessionService) FlushSession(sessionID string) error {
 	// checking session existence
-	sessionInstance, present := it.Sessions[sessionID]
-	if !present {
+	sessionInstance := it.syncGet(sessionID)
+	if sessionInstance == nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
 	}
 
@@ -148,19 +150,21 @@ func (it *RedisSessionService) FlushSession(sessionID string) error {
 		}
 	}
 
+	sessionInstance.mutex.Lock()
 	jsonEncoder := json.NewEncoder(writer)
 	err = jsonEncoder.Encode(sessionInstance)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
+	value := buffer.String()
+	sessionInstance.mutex.Unlock()
+
 	// storing session item
-	it.redisClient.SetEx(sessionID, ConstSessionLifeTime, buffer.String())
+	it.redisClient.SetEx(sessionID, ConstSessionLifeTime, value)
 
 	// releasing application memory
-	it.sessionsMutex.Lock()
-	delete(it.Sessions, sessionID)
-	it.sessionsMutex.Unlock()
+	it.syncDel(sessionID)
 
 	return nil
 }
