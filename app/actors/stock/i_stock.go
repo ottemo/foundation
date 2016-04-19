@@ -78,11 +78,11 @@ func (it *DefaultStock) RemoveProductQty(productID string, options map[string]in
 	// collecting record ids to remove
 	var stockIDsToRemove []string
 	for _, dbRecord := range dbRecords {
-		if recordOptions, present := dbRecord["options"]; !present {
+		if recordOptions, present := dbRecord["options"]; present {
 			recordOptions, ok := recordOptions.(map[string]interface{})
 
 			// skipping un-matching records
-			if !ok || !utils.MatchMapAValuesToMapB(recordOptions, options) {
+			if !ok || !utils.MatchMapAValuesToMapB(options, recordOptions) {
 				continue
 			}
 
