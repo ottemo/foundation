@@ -54,3 +54,16 @@ func (it *Shipping) GetRates(currentCheckout checkout.InterfaceCheckout) []check
 
 	return result
 }
+
+func (it Shipping) GetAllRates() []checkout.StructShippingRate {
+
+	result := []checkout.StructShippingRate{
+		checkout.StructShippingRate{
+			Code:  "freeshipping",
+			Name:  "GiftCards",
+			Price: 0,
+		},
+	}
+
+	return result
+}

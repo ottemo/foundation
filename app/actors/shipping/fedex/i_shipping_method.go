@@ -231,3 +231,18 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 
 	return result
 }
+
+func (it FedEx) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+
+	for code, name := range ConstShippingMethods {
+		resultItem := checkout.StructShippingRate{
+			Code: code,
+			Name: name,
+		}
+
+		result = append(result, resultItem)
+	}
+
+	return result
+}

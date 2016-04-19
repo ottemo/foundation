@@ -204,3 +204,18 @@ func (it *USPS) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.S
 
 	return result
 }
+
+func (it USPS) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+
+	for code, name := range ConstShippingMethods {
+		resultItem := checkout.StructShippingRate{
+			Code: code,
+			Name: name,
+		}
+
+		result = append(result, resultItem)
+	}
+
+	return result
+}
