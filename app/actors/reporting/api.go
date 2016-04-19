@@ -279,7 +279,7 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	aggregatedResults := aggregatePaymentMethod(foundOrders)
 
 	// Sorting
-	sort.Sort(MethodBySales(aggregatedResults))
+	sort.Sort(StatsBySales(aggregatedResults))
 
 	// Calculate extra data points
 	var totalSales float64
@@ -296,7 +296,7 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	return response, nil
 }
 
-func aggregatePaymentMethod(foundOrders []models.StructListItem) []MethodItem {
+func aggregatePaymentMethod(foundOrders []models.StructListItem) []StatItem {
 
 	paymentMethodNames := map[string]string{
 		authorizenet.ConstPaymentCodeDPM:     authorizenet.ConstPaymentNameDPM,
@@ -311,7 +311,7 @@ func aggregatePaymentMethod(foundOrders []models.StructListItem) []MethodItem {
 	return aggregateGeneral(foundOrders, paymentMethodNames, aggregateKey)
 }
 
-func aggregateShippingMethod(foundOrders []models.StructListItem) []MethodItem {
+func aggregateShippingMethod(foundOrders []models.StructListItem) []StatItem {
 
 	keyNameMap := map[string]string{}
 	for _, method := range checkout.GetRegisteredShippingMethods() {
@@ -329,9 +329,9 @@ func aggregateShippingMethod(foundOrders []models.StructListItem) []MethodItem {
 	return aggregateGeneral(foundOrders, keyNameMap, aggregateKey)
 }
 
-func aggregateGeneral(foundOrders []models.StructListItem, keyNameMap map[string]string, aggregateKey string) []MethodItem {
+func aggregateGeneral(foundOrders []models.StructListItem, keyNameMap map[string]string, aggregateKey string) []StatItem {
 
-	keyedResults := make(map[string]MethodItem)
+	keyedResults := make(map[string]StatItem)
 
 	for _, o := range foundOrders {
 		key := utils.InterfaceToString(o.Extra[aggregateKey])
@@ -352,7 +352,7 @@ func aggregateGeneral(foundOrders []models.StructListItem, keyNameMap map[string
 	}
 
 	// map to slice
-	var results []MethodItem
+	var results []StatItem
 	for _, i := range keyedResults {
 		// Add in averaging stat now that aggregation is complete
 		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
@@ -404,7 +404,7 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 	aggregatedResults := aggregateShippingMethod(foundOrders)
 
 	// Sorting
-	sort.Sort(MethodBySales(aggregatedResults))
+	sort.Sort(StatsBySales(aggregatedResults))
 
 	// Calculate extra data points
 	var totalSales float64
@@ -458,7 +458,7 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 	aggregatedResults := aggregateLocationCountry(foundOrders)
 
 	// Sorting
-	sort.Sort(MethodBySales(aggregatedResults))
+	sort.Sort(StatsBySales(aggregatedResults))
 
 	// Calculate extra data points
 	var totalSales float64
@@ -475,16 +475,16 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 	return response, nil
 }
 
-func aggregateLocationCountry(foundOrders []models.StructListItem) []MethodItem {
+func aggregateLocationCountry(foundOrders []models.StructListItem) []StatItem {
 	return aggregateGeneralNested(foundOrders, "billing_address", "country")
 }
 
-func aggregateLocationUS(foundOrders []models.StructListItem) []MethodItem {
+func aggregateLocationUS(foundOrders []models.StructListItem) []StatItem {
 	return aggregateGeneralNested(foundOrders, "billing_address", "state")
 }
 
-func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer string, aggKey string) []MethodItem {
-	keyedResults := make(map[string]MethodItem)
+func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer string, aggKey string) []StatItem {
+	keyedResults := make(map[string]StatItem)
 
 	for _, o := range foundOrders {
 		container := utils.InterfaceToMap(o.Extra[aggKeyContainer])
@@ -504,7 +504,7 @@ func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer
 	}
 
 	// map to slice
-	var results []MethodItem
+	var results []StatItem
 	for _, i := range keyedResults {
 		// Add in averaging stat now that aggregation is complete
 		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
@@ -558,7 +558,7 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 	aggregatedResults := aggregateLocationUS(foundOrders)
 
 	// Sorting
-	sort.Sort(MethodBySales(aggregatedResults))
+	sort.Sort(StatsBySales(aggregatedResults))
 
 	// Calculate extra data points
 	var totalSales float64
