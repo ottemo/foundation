@@ -75,7 +75,7 @@ func (a CustomerActivityByOrders) Less(i, j int) bool {
 	return a[i].TotalOrders > a[j].TotalOrders
 }
 
-type PaymentMethodItem struct {
+type MethodItem struct {
 	Key          string  `json:"key"`
 	Name         string  `json:"method_name"`
 	TotalSales   float64 `json:"total_sales"`
@@ -83,17 +83,17 @@ type PaymentMethodItem struct {
 	AverageSales float64 `json:"avg_sales"`
 }
 
-type PaymentMethodBySales []PaymentMethodItem
+type MethodBySales []MethodItem
 
-func (a PaymentMethodBySales) Len() int {
+func (a MethodBySales) Len() int {
 	return len(a)
 }
 
-func (a PaymentMethodBySales) Swap(i, j int) {
+func (a MethodBySales) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func (a PaymentMethodBySales) Less(i, j int) bool {
+func (a MethodBySales) Less(i, j int) bool {
 	if a[i].TotalSales == a[j].TotalSales {
 		return a[i].Name < a[j].Name
 	}
