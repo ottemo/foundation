@@ -492,7 +492,7 @@ func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer
 
 		item, ok := keyedResults[key]
 		if !ok {
-			item.Key = key
+			item.Name = key
 		}
 
 		// Aggregate props

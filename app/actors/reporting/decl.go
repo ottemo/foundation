@@ -77,7 +77,7 @@ func (a CustomerActivityByOrders) Less(i, j int) bool {
 
 type MethodItem struct {
 	Key          string  `json:"key"`
-	Name         string  `json:"method_name"`
+	Name         string  `json:"name"`
 	TotalSales   float64 `json:"total_sales"`
 	TotalOrders  int     `json:"total_orders"`
 	AverageSales float64 `json:"avg_sales"`
