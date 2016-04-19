@@ -279,8 +279,16 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	// Sorting
 	sort.Sort(MethodBySales(aggregatedResults))
 
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
+
 	response := map[string]interface{}{
 		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
 		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
 	}
 	return response, nil
@@ -396,8 +404,16 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 	// Sorting
 	sort.Sort(MethodBySales(aggregatedResults))
 
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
+
 	response := map[string]interface{}{
 		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
 		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
 	}
 	return response, nil
