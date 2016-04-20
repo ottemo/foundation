@@ -9,7 +9,6 @@ import (
 // Package global constants
 const (
 	ConstSessionKeyCurrentRedemptions  = "current_redemption_codes"
-	ConstSessionKeyPreviousRedemptions = "previous_redemption_codes"
 	ConstCollectionNameCouponDiscounts = "coupon_discounts"
 
 	ConstConfigPathDiscounts             = "general.discounts"
@@ -24,3 +23,12 @@ type Coupon struct{}
 
 // usedCoupons contains used coupon codes with visitorsId's, initialize from orders and updated on checkout success
 var usedCoupons map[string][]string
+
+type discount struct {
+	Code     string
+	Name     string
+	Total    float64
+	Amount   float64
+	Percents float64
+	Qty      int
+}

@@ -1,14 +1,16 @@
 package checkout
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/payment/zeropay"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"time"
+	"github.com/ottemo/foundation/app/actors/payment/paypal"
+	"github.com/ottemo/foundation/app/actors/payment/zeropay"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -17,17 +19,24 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("checkout", APIGetCheckout)
-	service.GET("checkout/payment/methods", APIGetPaymentMethods)
-	service.GET("checkout/shipping/methods", APIGetShippingMethods)
+
+	// Addresses
 	service.PUT("checkout/shipping/address", APISetShippingAddress)
 	service.PUT("checkout/billing/address", APISetBillingAddress)
-	service.PUT("checkout/payment/method/:method", APISetPaymentMethod)
-	service.PUT("checkout/shipping/method/:method/:rate", APISetShippingMethod)
-	service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 
+	// Shipping method
+	service.GET("checkout/shipping/methods", APIGetShippingMethods)
+	service.PUT("checkout/shipping/method/:method/:rate", APISetShippingMethod)
+
+	// Payment method
+	service.GET("checkout/payment/methods", APIGetPaymentMethods)
+	service.PUT("checkout/payment/method/:method", APISetPaymentMethod)
+
+	// Finalize
 	service.PUT("checkout", APISetCheckoutInfo)
 	service.POST("checkout/submit", APISubmitCheckout)
 
+	// service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 	return nil
 }
 
@@ -93,28 +102,26 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 
 	if shippingRate := currentCheckout.GetShippingRate(); shippingRate != nil {
 		result["shipping_rate"] = shippingRate
-		result["shipping_amount"] = shippingRate.Price
 	}
 
+	result["grandtotal"] = currentCheckout.GetGrandTotal()
 	result["subtotal"] = currentCheckout.GetSubtotal()
 
-	result["grandtotal"] = currentCheckout.GetGrandTotal()
+	result["shipping_amount"] = currentCheckout.GetShippingAmount()
 
 	result["tax_amount"] = currentCheckout.GetTaxAmount()
 	result["taxes"] = currentCheckout.GetTaxes()
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
-	result["discounts"] = currentCheckout.GetAggregatedDiscounts()
+	result["discounts"] = currentCheckout.GetDiscounts()
 
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})
 
-	if currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID)); currentVisitorID == "" {
-		for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
-			// prevent from showing cc values in info
-			if key != "cc" {
-				infoMap[key] = value
-			}
+	for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
+		// prevent from showing cc values in info
+		if key != "cc" {
+			infoMap[key] = value
 		}
 	}
 
@@ -464,6 +471,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
 	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
 	creditCardInfo["token_updated"] = time.Now()
+	creditCardInfo["created_at"] = time.Now()
 
 	// filling new instance with request provided data
 	// TODO: check other places with such code:
@@ -481,8 +489,9 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		visitorCardModel.Set("visitor_id", currentVisitorID)
 	}
 
-	// new cc are saved only if checked as save and for registered visitors
-	if (visitorCardModel.GetID() != "" || currentVisitorID != "") && utils.InterfaceToBool(creditCardInfo["save"]) {
+	// save cc token if using appropriate payment adapter
+	if (visitorCardModel.GetID() != "" || currentVisitorID != "") &&
+		paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode {
 
 		err = visitorCardModel.Save()
 		if err != nil {
@@ -661,18 +670,11 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		}
 	}
 
-	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
-	if specifiedCreditCard == nil {
-		specifiedCreditCard = currentCheckout.GetInfo("cc")
-	}
-
-	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
-	if specifiedCreditCard != nil {
-		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
+	// Now that checkout is about to submit we want to see if we can turn our cc info into a token
+	// if this errors out, it just means that the criteria wasn't met to create a token. Which is ok
+	specifiedCreditCard := currentCheckout.GetInfo("cc")
+	creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
+	if err == nil {
 		currentCheckout.SetInfo("cc", creditCard)
 	}
 

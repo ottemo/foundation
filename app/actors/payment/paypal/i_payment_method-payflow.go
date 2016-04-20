@@ -88,6 +88,14 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
+	billingLastName := ""
+	billingFirstName := ""
+	if orderInstance != nil {
+		billingLastName = orderInstance.GetBillingAddress().GetLastName()
+		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
+	}
+	fmt.Println("2", billingLastName)
+
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
 		"&PWD=" + password +
@@ -99,6 +107,10 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		// Credit Card Details Fields
 		"&TENDER=C" +
 		"&ORIGID=" + utils.InterfaceToString(transactionID) +
+
+		// technically deprecated
+		"&BILLTOFIRSTNAME=" + billingFirstName +
+		"&BILLTOLASTNAME=" + billingLastName +
 
 		// Payment Details Fields
 		"&AMT=" + amount +
@@ -142,19 +154,20 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	}
 
 	if responseValues.Get("RESPMSG") != "Approved" {
-		env.Log("paypal.log", env.ConstLogPrefixInfo, "Redjected payment: "+fmt.Sprint(responseValues))
+		env.Log("paypal.log", env.ConstLogPrefixInfo, "Rejected payment: "+fmt.Sprint(responseValues))
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e48403bb-c15d-4302-8894-da7146b93260", checkout.ConstPaymentErrorDeclined+" Reason: "+responseValues.Get("RESPMSG")+", "+responseValues.Get("PREFPSMSG"))
 	}
 
 	// get info about transaction from payment response
 	orderTransactionID := utils.InterfaceToString(responseValues.Get("PNREF"))
 	if orderTransactionID == "" {
-		env.Log("paypal.log", env.ConstLogPrefixInfo, "Redjected payment: "+fmt.Sprint(responseValues))
+		env.Log("paypal.log", env.ConstLogPrefixInfo, "Rejected payment: "+fmt.Sprint(responseValues))
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d1d0a2d6-786a-4a29-abb1-3eb7667fbc3e", checkout.ConstPaymentErrorTechnical+" Reason: "+responseValues.Get("RESPMSG")+". "+responseValues.Get("PREFPSMSG"))
 	}
 
 	env.Log("paypal.log", env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
 		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+		"LASTNAME - "+billingLastName+", "+
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
 		"TRANSACTIONID - "+orderTransactionID)
 
@@ -268,6 +281,13 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
+	billingLastName := ""
+	billingFirstName := ""
+	if orderInstance != nil {
+		billingLastName = orderInstance.GetBillingAddress().GetLastName()
+		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
+	}
+
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
 		"&PWD=" + password +
@@ -280,6 +300,10 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		"&TENDER=C" +
 		"&ACCT=" + utils.InterfaceToString(ccInfo["number"]) +
 		"&EXPDATE=" + ccExpirationDate +
+
+		// technically deprecated
+		"&BILLTOFIRSTNAME=" + billingFirstName +
+		"&BILLTOLASTNAME=" + billingLastName +
 
 		// Payment Details Fields
 		"&AMT=0" +
@@ -388,6 +412,7 @@ func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.Inter
 		"&TENDER=C" +
 		"&ACCT=" + "$CC_NUM" +
 		"&EXPDATE=" + "$CC_MONTH$CC_YEAR" +
+		//TODO: WHAT DO I DO HERE
 
 		// Payment Details Fields
 		"&AMT=0" +

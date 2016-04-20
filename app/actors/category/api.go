@@ -21,25 +21,30 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
+	// Admin rights mix the response
 	service.GET("categories", APIListCategories)
 	service.GET("categories/tree", APIGetCategoriesTree)
 	service.GET("categories/attributes", APIGetCategoryAttributes)
 
-	service.POST("category", APICreateCategory)
-	service.PUT("category/:categoryID", APIUpdateCategory)
-	service.DELETE("category/:categoryID", APIDeleteCategory)
 	service.GET("category/:categoryID", APIGetCategory)
 	service.GET("category/:categoryID/layers", APIGetCategoryLayers)
 
 	service.GET("category/:categoryID/products", APIGetCategoryProducts)
-	service.POST("category/:categoryID/product/:productID", APIAddProductToCategory)
-	service.DELETE("category/:categoryID/product/:productID", APIRemoveProductFromCategory)
 
 	service.GET("category/:categoryID/media/:mediaType/:mediaName", APIGetMedia)
 	service.GET("category/:categoryID/media/:mediaType", APIListMedia)
-	service.POST("category/:categoryID/media/:mediaType/:mediaName", APIAddMediaForCategory)
-	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", APIRemoveMediaForCategory)
 	service.GET("category/:categoryID/mediapath/:mediaType", APIGetMediaPath)
+
+	// Admin Only
+	service.POST("category", api.IsAdmin(APICreateCategory))
+	service.PUT("category/:categoryID", api.IsAdmin(APIUpdateCategory))
+	service.DELETE("category/:categoryID", api.IsAdmin(APIDeleteCategory))
+
+	service.POST("category/:categoryID/product/:productID", api.IsAdmin(APIAddProductToCategory))
+	service.DELETE("category/:categoryID/product/:productID", api.IsAdmin(APIRemoveProductFromCategory))
+
+	service.POST("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForCategory))
+	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForCategory))
 
 	return nil
 }
@@ -142,11 +147,6 @@ func APICreateCategory(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "521b50d6-0d98-491a-8e3a-37678fbbccfe", "category name was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// create category operation
 	//-------------------------
 	categoryModel, err := category.GetCategoryModel()
@@ -180,11 +180,6 @@ func APIDeleteCategory(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f1507b00-337e-4903-8244-5cf959dde3a4", "category id was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// delete operation
 	//-----------------
 	categoryModel, err := category.GetCategoryModelAndSetID(categoryID)
@@ -214,11 +209,6 @@ func APIUpdateCategory(context api.InterfaceApplicationContext) (interface{}, er
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -376,11 +366,6 @@ func APIAddProductToCategory(context api.InterfaceApplicationContext) (interface
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "190a3d60-7769-4908-b383-80bc143128da", "product id was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// category product add operation
 	//-------------------------------
 	categoryModel, err := category.GetCategoryModelAndSetID(categoryID)
@@ -409,11 +394,6 @@ func APIRemoveProductFromCategory(context api.InterfaceApplicationContext) (inte
 	productID := context.GetRequestArgument("productID")
 	if productID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9ffd2626-4192-4726-849e-c7a2416fab3a", "product id was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// category product add operation
@@ -616,11 +596,6 @@ func APIAddMediaForCategory(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23fb7617-f19a-4505-b706-10f7898fd980", "media name was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// income file processing
 	//-----------------------
 	files := context.GetRequestFiles()
@@ -676,11 +651,6 @@ func APIRemoveMediaForCategory(context api.InterfaceApplicationContext) (interfa
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// list media operation

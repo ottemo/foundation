@@ -1,5 +1,8 @@
 package session
 
+// InterfaceSession implementation
+// -------------------------------
+
 // GetID returns current session id
 func (it DefaultSession) GetID() string {
 	return string(it)

@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // GetName returns the media storage name
@@ -335,6 +336,9 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 // included is image path, model object and the image name.
 func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error) {
 	mediaSet := make(map[string]string)
+	if mediaName == "" || model == "" || objID == "" || mediaType == "" {
+		return mediaSet, nil
+	}
 
 	path, err := it.GetMediaPath(model, objID, mediaType)
 	if err != nil {

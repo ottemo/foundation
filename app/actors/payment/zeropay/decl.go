@@ -9,6 +9,7 @@ import (
 // Package global constants
 const (
 	ConstPaymentZeroPaymentCode = "zeropay"
+	ConstPaymentName            = "Zero Pay"
 
 	ConstConfigPathGroup   = "payment.zeropay"
 	ConstConfigPathEnabled = "payment.zeropay.enabled"

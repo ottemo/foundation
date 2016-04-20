@@ -1,9 +1,11 @@
 package rest
 
 import (
+	"io"
+	"net/http"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/utils"
-	"io"
 )
 
 // GetRequest returns raw request object
@@ -110,6 +112,19 @@ func (it *DefaultRestApplicationContext) GetResponseSetting(name string) interfa
 func (it *DefaultRestApplicationContext) SetResponseSetting(name string, value interface{}) error {
 	it.ResponseWriter.Header().Set(name, utils.InterfaceToString(value))
 	return nil
+}
+
+func (it *DefaultRestApplicationContext) SetResponseStatus(code int) {
+	it.ResponseWriter.WriteHeader(code)
+}
+func (it *DefaultRestApplicationContext) SetResponseStatusBadRequest() {
+	it.SetResponseStatus(http.StatusBadRequest)
+}
+func (it *DefaultRestApplicationContext) SetResponseStatusForbidden() {
+	it.SetResponseStatus(http.StatusForbidden)
+}
+func (it *DefaultRestApplicationContext) SetResponseStatusNotFound() {
+	it.SetResponseStatus(http.StatusNotFound)
 }
 
 // GetResponseResult returns result going to be written to response writer

@@ -44,7 +44,7 @@ func setupConfig() error {
 <br />
 Your friend sent you an email:
 {{.content}}`,
-			Type:        env.ConstConfigTypeText,
+			Type:        env.ConstConfigTypeHTML,
 			Editor:      "multiline_text",
 			Options:     nil,
 			Label:       "Email Body",

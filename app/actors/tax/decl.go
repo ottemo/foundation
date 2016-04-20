@@ -14,5 +14,7 @@ const (
 	ConstPriorityValue = 2.50
 )
 
+var priority float64
+
 // DefaultTax is a default implementer of InterfaceTax
 type DefaultTax struct{}

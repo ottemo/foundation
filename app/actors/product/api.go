@@ -2,7 +2,6 @@ package product
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"mime"
 	"strings"
 	"time"
@@ -20,29 +19,30 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	// Products
+	// Public
 	service.GET("products", APIListProducts)
 	service.GET("product/:productID", APIGetProduct)
 
-	service.POST("product", APICreateProduct)
-	service.PUT("product/:productID", APIUpdateProduct)
-	service.DELETE("product/:productID", APIDeleteProduct)
-
-	// Attributes
 	service.GET("products/attributes", APIListProductAttributes)
-	service.POST("products/attribute", APICreateProductAttribute)
-	service.PUT("products/attribute/:attribute", APIUpdateProductAttribute)
-	service.DELETE("products/attribute/:attribute", APIDeleteProductsAttribute)
 
-	// Media
-	service.POST("product/:productID/media/:mediaType/:mediaName", APIAddMediaForProduct)
-	service.DELETE("product/:productID/media/:mediaType/:mediaName", APIRemoveMediaForProduct)
 	service.GET("product/:productID/media/:mediaType/:mediaName", APIGetMedia) // @DEPRECATED
 	service.GET("product/:productID/media/:mediaType", APIListMedia)           // @DEPRECATED
 	service.GET("product/:productID/mediapath/:mediaType", APIGetMediaPath)    // @DEPRECATED
 
 	// Related
 	service.GET("product/:productID/related", APIListRelatedProducts)
+
+	// Admin Only
+	service.POST("product", api.IsAdmin(APICreateProduct))
+	service.PUT("product/:productID", api.IsAdmin(APIUpdateProduct))
+	service.DELETE("product/:productID", api.IsAdmin(APIDeleteProduct))
+
+	service.POST("products/attribute", api.IsAdmin(APICreateProductAttribute))
+	service.PUT("products/attribute/:attribute", api.IsAdmin(APIUpdateProductAttribute))
+	service.DELETE("products/attribute/:attribute", api.IsAdmin(APIDeleteProductsAttribute))
+
+	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
 
 	return nil
 }
@@ -73,11 +73,6 @@ func APIUpdateProductAttribute(context api.InterfaceApplicationContext) (interfa
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	productModel, err := product.GetProductModel()
@@ -145,11 +140,6 @@ func APICreateProductAttribute(context api.InterfaceApplicationContext) (interfa
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "93457847-8e4d-4536-8985-43f340a1abc4", "attribute label was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// make product attribute operation
 	//---------------------------------
 	productModel, err := product.GetProductModel()
@@ -214,11 +204,6 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// remove attribute actions
@@ -313,11 +298,6 @@ func APICreateProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2a0cf2b0-215e-4b53-bf55-98fbfe22cd27", "product name and/or sku were not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// create product operation
 	//-------------------------
 	productModel, err := product.GetProductModel()
@@ -351,11 +331,6 @@ func APIDeleteProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f35af170-8172-4ec0-b30d-ab883231d222", "product id was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// delete operation
 	//-----------------
 	productModel, err := product.GetProductModelAndSetID(productID)
@@ -386,11 +361,6 @@ func APIUpdateProduct(context api.InterfaceApplicationContext) (interface{}, err
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fffccbad-455a-4fff-81d4-8919ae3a5c35", "unexpected request content")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// update operations
@@ -499,11 +469,6 @@ func APIAddMediaForProduct(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23fb7617-f19a-4505-b706-10f7898fd980", "media name was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// income file processing
 	//-----------------------
 	files := context.GetRequestFiles()
@@ -559,11 +524,6 @@ func APIRemoveMediaForProduct(context api.InterfaceApplicationContext) (interfac
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// list media operation
@@ -702,125 +662,45 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 // APIListRelatedProducts returns related products list for a given product
 func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
+	var result []map[string]interface{}
+
 	productID := context.GetRequestArgument("productID")
 	if productID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "55aa2eee-0407-4094-a90a-5d69d8c1efcc", "product id was not specified")
 	}
 
-	count := 5
-	if countValue := utils.InterfaceToInt(api.GetArgumentOrContentValue(context, "count")); countValue > 0 {
-		count = countValue
-	}
-
-	// load product operation
-	//-----------------------
 	productModel, err := product.LoadProductByID(productID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-
-	// result := make([]models.StructListItem, 0)
-	var result []models.StructListItem
-
 	relatedPids := utils.InterfaceToArray(productModel.Get("related_pids"))
 
-	if len(relatedPids) > count {
-		// indexes := make([]int, 0)
-		var indexes []int
-		for len(indexes) < count {
+	productsCollection, _ := product.GetProductCollectionModel()
+	productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids)
 
-			new := rand.Intn(len(relatedPids))
+	// if you aren't an admin the product must be enabled
+	if err := api.ValidateAdminRights(context); err != nil {
+		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+	}
 
-			inArray := false
-			for _, b := range indexes {
-				if utils.InterfaceToInt(b) == new {
-					inArray = true
-				}
-			}
-			if !inArray {
-				indexes = append(indexes, new)
-			}
+	// add a limit
+	productsCollection.ListLimit(models.GetListLimit(context))
+
+	mediaStorage, err := media.GetMediaStorage()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, relatedProduct := range productsCollection.ListProducts() {
+		productInfo := relatedProduct.ToHashMap()
+
+		defaultImage := utils.InterfaceToString(productInfo["default_image"])
+		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
+		if err != nil {
+			env.LogError(err)
 		}
-		for _, index := range indexes {
-			if productID := utils.InterfaceToString(relatedPids[index]); productID != "" {
-				if productModel, err := product.LoadProductByID(productID); err == nil {
 
-					// not allowing to see disabled products if not admin
-					if err := api.ValidateAdminRights(context); err != nil {
-						if productModel.GetEnabled() == false {
-							continue
-						}
-					}
-
-					if err == nil {
-						resultItem := new(models.StructListItem)
-
-						mediaPath, err := productModel.GetMediaPath("image")
-						if err != nil {
-							return result, env.ErrorDispatch(err)
-						}
-
-						resultItem.ID = productModel.GetID()
-						resultItem.Name = "[" + productModel.GetSku() + "] " + productModel.GetName()
-						resultItem.Image = ""
-						resultItem.Desc = productModel.GetShortDescription()
-
-						if productModel.GetDefaultImage() != "" {
-							resultItem.Image = mediaPath + productModel.GetDefaultImage()
-						}
-
-						extra := utils.InterfaceToString(api.GetArgumentOrContentValue(context, "extra"))
-						if extra != "" {
-							resultItem.Extra = make(map[string]interface{})
-							extra := utils.Explode(utils.InterfaceToString(extra), ",")
-							for _, value := range extra {
-								resultItem.Extra[value] = productModel.Get(value)
-							}
-						}
-
-						result = append(result, *resultItem)
-					}
-				}
-			}
-		}
-	} else {
-		for _, productID := range relatedPids {
-			if productID == "" {
-				continue
-			}
-
-			productModel, err := product.LoadProductByID(utils.InterfaceToString(productID))
-			if err == nil {
-				resultItem := new(models.StructListItem)
-
-				mediaPath, err := productModel.GetMediaPath("image")
-				if err != nil {
-					return result, env.ErrorDispatch(err)
-				}
-
-				resultItem.ID = productModel.GetID()
-				resultItem.Name = "[" + productModel.GetSku() + "] " + productModel.GetName()
-				resultItem.Image = ""
-				resultItem.Desc = productModel.GetShortDescription()
-
-				if productModel.GetDefaultImage() != "" {
-					resultItem.Image = mediaPath + productModel.GetDefaultImage()
-				}
-
-				extra := utils.InterfaceToString(api.GetArgumentOrContentValue(context, "extra"))
-				if extra != "" {
-					resultItem.Extra = make(map[string]interface{})
-					extra := utils.Explode(utils.InterfaceToString(extra), ",")
-					for _, value := range extra {
-						resultItem.Extra[value] = productModel.Get(value)
-					}
-				}
-
-				result = append(result, *resultItem)
-			}
-		}
+		result = append(result, productInfo)
 	}
 
 	return result, nil

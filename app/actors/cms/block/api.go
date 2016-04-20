@@ -15,11 +15,12 @@ func setupAPI() error {
 
 	service.GET("cms/blocks", APIListCMSBlocks)
 	service.GET("cms/blocks/attributes", APIListCMSBlockAttributes)
-
 	service.GET("cms/block/:blockID", APIGetCMSBlock)
-	service.POST("cms/block", APICreateCMSBlock)
-	service.PUT("cms/block/:blockID", APIUpdateCMSBlock)
-	service.DELETE("cms/block/:blockID", APIDeleteCMSBlock)
+
+	// Admin Only
+	service.POST("cms/block", api.IsAdmin(APICreateCMSBlock))
+	service.PUT("cms/block/:blockID", api.IsAdmin(APIUpdateCMSBlock))
+	service.DELETE("cms/block/:blockID", api.IsAdmin(APIDeleteCMSBlock))
 
 	return nil
 }
@@ -99,11 +100,6 @@ func APICreateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsBlockModel, err := cms.GetCMSBlockModel()
@@ -137,11 +133,6 @@ func APIUpdateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsBlockModel, err := cms.LoadCMSBlockByID(blockID)
@@ -168,11 +159,6 @@ func APIDeleteCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 	blockID := context.GetRequestArgument("blockID")
 	if blockID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8dd275d4-efaf-4e67-b24d-67b28acd74e5", "cms block id should be specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation

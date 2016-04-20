@@ -21,7 +21,7 @@ const (
 
 var (
 	subscriptionProducts = make([]string, 0) // stores id's of products that should be subscriptional
-	subscriptionEnabled = false
+	subscriptionEnabled  = false
 )
 
 // DefaultSubscription struct to hold subscription information and represent
