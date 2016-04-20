@@ -365,10 +365,10 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 	var totalPriceAdjustmentAmount float64
 	// main part is per items apply (we will handle Amount only if there was no per item value)
 	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
-		amount := priceAdjustment.Amount
+		amount := utils.RoundPrice(priceAdjustment.Amount)
 		if priceAdjustment.IsPercent {
 			// current grand total will be changed on some percentage
-			amount = it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * priceAdjustment.Amount / 100
+			amount = utils.RoundPrice(it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * priceAdjustment.Amount / 100)
 		}
 
 		// prevent negative values of grand total
@@ -389,9 +389,10 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 	} else {
 		for index, amount := range priceAdjustment.PerItem {
+			amount = utils.RoundPrice(amount)
 			currentItemTotal := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
 			if priceAdjustment.IsPercent {
-				amount = currentItemTotal * priceAdjustment.Amount / 100
+				amount = utils.RoundPrice(currentItemTotal * priceAdjustment.Amount / 100)
 			}
 
 			// prevent negative values of grand total per cart
