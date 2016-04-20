@@ -13,6 +13,7 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"strings"
 )
 
 // SetShippingAddress sets shipping address for checkout
@@ -248,6 +249,21 @@ func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
 		return currentCart.GetItems()
 	}
 
+	return nil
+}
+
+// GetDiscountableItems returns current cart items that can be discounted (not a gift cards)
+func (it *DefaultCheckout) GetDiscountableItems() []cart.InterfaceCartItem {
+	if items := it.GetItems(); items != nil {
+		var result []cart.InterfaceCartItem
+		for _, item := range items {
+			// this method should be updated to general product type usage
+			if !strings.Contains(item.GetProduct().GetSku(), checkout.GiftCardSkuElement) {
+				result = append(result, item)
+			}
+		}
+		return result
+	}
 	return nil
 }
 

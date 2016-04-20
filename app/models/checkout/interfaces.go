@@ -30,7 +30,9 @@ type InterfaceCheckout interface {
 	SetShippingRate(shippingRate StructShippingRate) error
 	GetShippingRate() *StructShippingRate
 
+	// positions in array are not equals to index used for specific total
 	GetItems() []cart.InterfaceCartItem
+	GetDiscountableItems() []cart.InterfaceCartItem
 
 	// GetItemSpecificTotal allows to obtain current item grand total
 	// idx - int or string of item index, 0 - cart

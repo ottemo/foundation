@@ -59,7 +59,6 @@ func onAppStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 	env.EventRegisterListener("order.proceed", orderProceedHandler)
 	env.EventRegisterListener("order.rollback", orderRollbackHandler)
-	env.EventRegisterListener("tax.amount", taxableAmountHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
 		scheduler.RegisterTask("sendGiftCards", SendTask)

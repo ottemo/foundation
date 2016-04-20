@@ -23,16 +23,22 @@ func (it *DefaultTax) GetPriority() []float64 {
 }
 
 // processRecords processes records from database collection
-func processRecords(name string, records []map[string]interface{}, result []checkout.StructPriceAdjustment) []checkout.StructPriceAdjustment {
+func (it *DefaultTax) processRecords(items []string, records []map[string]interface{}, result []checkout.StructPriceAdjustment) []checkout.StructPriceAdjustment {
 	for _, record := range records {
+		perItem := make(map[string]float64)
+		amount := utils.InterfaceToFloat64(record["rate"])
+		for _, item := range items {
+			perItem[item] = amount
+		}
+
 		taxRate := checkout.StructPriceAdjustment{
 			Code:      utils.InterfaceToString(record["code"]),
-			Name:      name,
-			Amount:    utils.InterfaceToFloat64(record["rate"]),
+			Name:      it.GetName(),
+			Amount:    amount,
 			IsPercent: true,
 			Priority:  priority,
 			Labels:    []string{checkout.ConstLabelTax},
-			PerItem:   nil,
+			PerItem:   perItem,
 		}
 
 		priority += float64(0.00001)
@@ -50,6 +56,12 @@ func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []ch
 	if shippingAddress := currentCheckout.GetShippingAddress(); shippingAddress != nil {
 		state := shippingAddress.GetState()
 		zip := shippingAddress.GetZipCode()
+		items := currentCheckout.GetDiscountableItems()
+		perItem := make([]string, 0)
+
+		for _, item := range items {
+			perItem = append(perItem, utils.InterfaceToString(item.GetIdx()))
+		}
 
 		if dbEngine := db.GetDBEngine(); dbEngine != nil {
 			if collection, err := dbEngine.GetCollection("Taxes"); err == nil {
@@ -57,7 +69,7 @@ func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []ch
 				collection.AddFilter("zip", "=", "*")
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, result)
+					result = it.processRecords(perItem, records, result)
 				}
 
 				collection.ClearFilters()
@@ -65,7 +77,7 @@ func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []ch
 				collection.AddFilter("zip", "=", "*")
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, result)
+					result = it.processRecords(perItem, records, result)
 				}
 
 				collection.ClearFilters()
@@ -73,7 +85,7 @@ func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout) []ch
 				collection.AddFilter("zip", "=", zip)
 
 				if records, err := collection.Load(); err == nil {
-					result = processRecords(it.GetName(), records, result)
+					result = it.processRecords(perItem, records, result)
 				}
 			}
 		}

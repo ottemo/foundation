@@ -61,3 +61,5 @@ const (
 	ConstErrorModule = "checkout"
 	ConstErrorLevel  = env.ConstErrorLevelModel
 )
+
+var GiftCardSkuElement = "gift-card"

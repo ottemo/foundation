@@ -164,7 +164,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []check
 			priceAdjustments := make(map[string]checkout.StructPriceAdjustment)
 
 			// adding to discounts the biggest applicable discount per product
-			for _, cartItem := range items {
+			for _, cartItem := range checkoutInstance.GetDiscountableItems() {
 				index := utils.InterfaceToString(cartItem.GetIdx())
 
 				if cartProduct := cartItem.GetProduct(); cartProduct != nil {
