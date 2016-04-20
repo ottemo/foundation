@@ -5,7 +5,6 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -134,31 +133,10 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 	case "description":
 		it.Description = utils.InterfaceToString(value)
 
-	case "products", "product_ids":
-		switch typedValue := value.(type) {
-
-		case []interface{}:
-			for _, listItem := range typedValue {
-				productID, ok := listItem.(string)
-				if ok {
-					productModel, err := product.LoadProductByID(productID)
-					if err != nil {
-						return env.ErrorDispatch(err)
-					}
-
-					it.ProductIds = append(it.ProductIds, productModel.GetID())
-				}
-			}
-
-		case []product.InterfaceProduct:
-			it.ProductIds = make([]string, 0)
-			for _, productItem := range typedValue {
-				it.ProductIds = append(it.ProductIds, productItem.GetID())
-			}
-
-		default:
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84284b03-0a29-4036-aa2d-b35768884b63", "unsupported 'products' value")
-		}
+	case "product_ids":
+		// this property is filled by a joint collection, so you aren't allowed to change it this way
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84284b03-0a29-4036-aa2d-b35768884b63", "unsupported 'products' value")
+		env.ErrorDispatch(err)
 	}
 	return nil
 }
@@ -280,7 +258,7 @@ func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
 		models.StructAttributeInfo{
 			Model:      category.ConstModelNameCategory,
 			Collection: ConstCollectionNameCategory,
-			Attribute:  "products",
+			Attribute:  "product_ids",
 			Type:       db.TypeArrayOf(db.ConstTypeID),
 			IsRequired: false,
 			IsStatic:   true,
