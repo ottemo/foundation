@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/cms"
-	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/category"
+	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -309,16 +311,16 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	writeLine([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"))
 	writeLine([]byte("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"))
 
-	baseURL := "http://dev.ottemo.io:8080/"
-	pageType := ""
+	baseURL := app.GetStorefrontURL("")
+	rewriteType := ""
 
 	// per database record iterator
 	iteratorFunc := func(record map[string]interface{}) bool {
 		pageURL := ""
-		if pageType == "" {
+		if rewriteType == "" {
 			pageURL = baseURL + utils.InterfaceToString(record["url"])
 		} else {
-			pageURL = baseURL + pageType + "/" + utils.InterfaceToString(record["_id"])
+			pageURL = baseURL + rewriteType + "/" + utils.InterfaceToString(record["_id"])
 		}
 
 		writeLine([]byte("  <url><loc>" + pageURL + "</loc></url>"))
@@ -334,8 +336,8 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	rewritesCollection.SetResultColumns("rewrite")
 
 	// Product pages
-	pageType = "product"
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewriteType = "product"
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	productCollectionModel, _ := product.GetProductCollectionModel()
 	dbProductCollection := productCollectionModel.GetDBCollection()
@@ -344,9 +346,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbProductCollection.Iterate(iteratorFunc)
 
 	// Category pages
-	pageType = "category"
+	rewriteType = "category"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	categoryCollectionModel, _ := category.GetCategoryCollectionModel()
 	dbCategoryCollection := categoryCollectionModel.GetDBCollection()
@@ -355,9 +357,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbCategoryCollection.Iterate(iteratorFunc)
 
 	// Cms pages
-	pageType = "cms"
+	rewriteType = "page"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	cmsPageCollectionModel, _ := cms.GetCMSPageCollectionModel()
 	dbCMSPageCollection := cmsPageCollectionModel.GetDBCollection()

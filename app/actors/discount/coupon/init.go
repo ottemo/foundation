@@ -13,8 +13,8 @@ import (
 // init makes package self-initialization routine
 func init() {
 	instance := new(Coupon)
-	var _ checkout.InterfaceDiscount = instance
-	checkout.RegisterDiscount(instance)
+	var _ checkout.InterfacePriceAdjustment = instance
+	checkout.RegisterPriceAdjustment(instance)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	env.RegisterOnConfigStart(setupConfig)

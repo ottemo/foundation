@@ -17,9 +17,19 @@ func (it *DefaultGiftcard) GetCode() string {
 	return "giftcard_discount"
 }
 
-// CalculateDiscount calculates and returns amount and set of applied gift card discounts to given checkout
-func (it *DefaultGiftcard) CalculateDiscount(checkoutInstance checkout.InterfaceCheckout) []checkout.StructDiscount {
-	var result []checkout.StructDiscount
+// GetPriority returns the code of the current coupon implementation
+func (it *DefaultGiftcard) GetPriority() []float64 {
+	// adding this first value of priority to make PA that will reduce GT of gift cards by 100% right after subtotal calculation
+	return []float64{checkout.ConstCalculateTargetSubtotal, utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathGiftCardApplyPriority))}
+}
+
+// Calculate calculates and returns amount and set of applied gift card discounts to given checkout
+func (it *DefaultGiftcard) Calculate(checkoutInstance checkout.InterfaceCheckout) []checkout.StructPriceAdjustment {
+	var result []checkout.StructPriceAdjustment
+
+	// TODO: First: discount cart items with gift card
+	// Second: Apply Gift Cart discount for grand total
+	// TODO: Third: Return gift card subtotal amount
 
 	// checking session for applied gift cards codes
 	if currentSession := checkoutInstance.GetSession(); currentSession != nil {
@@ -55,23 +65,23 @@ func (it *DefaultGiftcard) CalculateDiscount(checkoutInstance checkout.Interface
 
 			// applying gift card discount codes
 			for _, giftCardCode := range appliedCodes {
-				if giftCard, ok := giftCardCodes[giftCardCode]; ok {
+				giftCard, present := giftCardCodes[giftCardCode]
+				if !present {
+					continue
+				}
 
-					giftCardAmount := utils.InterfaceToFloat64(giftCard["amount"])
+				giftCardAmount := utils.InterfaceToFloat64(giftCard["amount"])
 
-					// to be applicable gift card should satisfy following conditions:
-					// have positive amount and we have amount that will be discounted
-					result = append(result, checkout.StructDiscount{
-						Name:      utils.InterfaceToString(giftCard["name"]),
+				if giftCardAmount > 0 {
+					result = append(result, checkout.StructPriceAdjustment{
 						Code:      utils.InterfaceToString(giftCard["code"]),
-						Amount:    giftCardAmount,
+						Name:      utils.InterfaceToString(giftCard["name"]),
+						Amount:    giftCardAmount * -1,
 						IsPercent: false,
 						Priority:  priorityValue,
-						Object:    checkout.ConstDiscountObjectCart,
-						Type:      it.GetCode(),
+						Labels:    []string{checkout.ConstLabelGiftCard},
 					})
 					priorityValue += float64(0.0001)
-
 				}
 			}
 		}

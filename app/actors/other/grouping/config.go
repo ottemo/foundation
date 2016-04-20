@@ -15,11 +15,21 @@ func setupConfig() error {
 	// validateNewRules validate structure of new rules
 	validateNewRules := func(newRulesValues interface{}) (interface{}, error) {
 
+		var rules []interface{}
 		// taking rules as array
-		if newRulesValues != "" {
-			rules, err := utils.DecodeJSONToArray(newRulesValues)
-			if err != nil {
-				return nil, err
+		if newRulesValues != "" && newRulesValues != nil {
+
+			var err error
+			switch value := newRulesValues.(type) {
+			case string:
+				rules, err = utils.DecodeJSONToArray(value)
+				if err != nil {
+					return nil, err
+				}
+			case []interface{}:
+				rules = value
+			default:
+				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
 			}
 
 			// checking rules array
@@ -47,7 +57,7 @@ func setupConfig() error {
 			currentRules = rules
 		}
 
-		return newRulesValues, nil
+		return rules, nil
 	}
 
 	// grouping rules config setup
