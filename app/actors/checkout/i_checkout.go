@@ -325,7 +325,7 @@ func (it *DefaultCheckout) GetItemSpecificTotal(idx interface{}, label string) f
 	return 0
 }
 
-// applyAmount applies amounts to checkout detail calculaltion map
+// applyAmount applies amounts to checkout detail calculation map
 func (it *DefaultCheckout) applyAmount(idx interface{}, label string, amount float64) {
 	amount = utils.RoundPrice(amount)
 	index := utils.InterfaceToInt(idx)
@@ -380,12 +380,12 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 			// prevent negative values of grand total per cart
 			if amount+it.calculateAmount < 0 {
-				amount = it.calculateAmount
+				amount = it.calculateAmount * -1
 			}
 
 			// prevent negative values of grand total per item
 			if amount+currentItemTotal < 0 {
-				amount = it.calculateAmount
+				amount = currentItemTotal * -1
 			}
 
 			// adding amount to grand total of current item and full cart
