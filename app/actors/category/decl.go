@@ -30,3 +30,9 @@ type DefaultCategory struct {
 	Path        string
 	ProductIds  []string
 }
+
+// DefaultCategoryCollection is a default implementer of InterfaceCategoryCollection
+type DefaultCategoryCollection struct {
+	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
+}

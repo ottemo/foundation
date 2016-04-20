@@ -13,12 +13,6 @@ import (
 	"github.com/ottemo/foundation/app/models/product"
 )
 
-// DefaultCategoryCollection is a default implementer of InterfaceCategoryCollection
-type DefaultCategoryCollection struct {
-	listCollection     db.InterfaceDBCollection
-	listExtraAtributes []string
-}
-
 // GetModelName returns model name
 func (it *DefaultCategory) GetModelName() string {
 	return category.ConstModelNameCategory
