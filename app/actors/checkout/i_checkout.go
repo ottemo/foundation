@@ -432,9 +432,10 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		it.calculationDetailTotals = make(map[int]map[string]float64)
 
 		var priceAdjustments []checkout.StructPriceAdjustment
+		priceAdjustmentCalls := make(map[float64]func(checkout.InterfaceCheckout, float64) []checkout.StructPriceAdjustment)
 		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
-			for _, priceAdjustmentElement := range priceAdjustment.Calculate(it) {
-				priceAdjustments = append(priceAdjustments, priceAdjustmentElement)
+			for _, priorityValue := range priceAdjustment.GetPriority() {
+				priceAdjustmentCalls[priorityValue] = priceAdjustment.Calculate
 			}
 		}
 
@@ -474,6 +475,23 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 				} else {
 					if priority == maxPriority {
 						it.applyPriceAdjustment(value())
+					}
+				}
+			}
+
+			// priceAdjustment calls lookup
+			for priority, priceAdjustmentCall := range priceAdjustmentCalls {
+
+				if searchMode {
+					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
+						maxPriority = priority
+						maxIsSet = true
+					}
+				} else {
+					if priority == maxPriority {
+						for _, priceAdjustment := range priceAdjustmentCall(it, priority) {
+							priceAdjustments = append(priceAdjustments, priceAdjustment)
+						}
 					}
 				}
 			}

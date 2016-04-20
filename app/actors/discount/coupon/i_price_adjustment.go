@@ -26,7 +26,7 @@ func (it *Coupon) GetPriority() []float64 {
 }
 
 // Calculate calculates and returns a set of coupons applied to the provided checkout
-func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout) []checkout.StructPriceAdjustment {
+func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, currentPriority float64) []checkout.StructPriceAdjustment {
 
 	var result []checkout.StructPriceAdjustment
 
