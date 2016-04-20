@@ -88,8 +88,9 @@ type InterfaceShippingMethod interface {
 
 // InterfacePaymentMethod represents interface to access business layer implementation of checkout payment method
 type InterfacePaymentMethod interface {
-	GetName() string
 	GetCode() string
+	GetInternalName() string
+	GetName() string
 	GetType() string
 
 	IsAllowed(checkoutInstance InterfaceCheckout) bool

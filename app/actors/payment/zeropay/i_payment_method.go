@@ -8,7 +8,12 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 )
 
-// GetName returns payment method name
+// GetInternalName returns the name of the payment method
+func (it ZeroAmountPayment) GetInternalName() string {
+	return ConstPaymentName
+}
+
+// GetName returns the user customized name of the payment method
 func (it *ZeroAmountPayment) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
 }

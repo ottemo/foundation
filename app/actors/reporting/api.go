@@ -6,10 +6,6 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/payment/authorizenet"
-	"github.com/ottemo/foundation/app/actors/payment/checkmo"
-	"github.com/ottemo/foundation/app/actors/payment/paypal"
-	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
@@ -298,12 +294,11 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 
 func aggregatePaymentMethod(foundOrders []models.StructListItem) []StatItem {
 
-	paymentMethodNames := map[string]string{
-		authorizenet.ConstPaymentCodeDPM:     authorizenet.ConstPaymentNameDPM,
-		checkmo.ConstPaymentCode:             checkmo.ConstPaymentName,
-		paypal.ConstPaymentCode:              paypal.ConstPaymentName,
-		paypal.ConstPaymentPayPalPayflowCode: paypal.ConstPaymentPayPalPayflowName,
-		zeropay.ConstPaymentZeroPaymentCode:  zeropay.ConstPaymentName,
+	paymentMethodNames := map[string]string{}
+
+	for _, m := range checkout.GetRegisteredPaymentMethods() {
+		code := m.GetCode()
+		paymentMethodNames[code] = m.GetInternalName()
 	}
 
 	aggregateKey := "payment_method"
