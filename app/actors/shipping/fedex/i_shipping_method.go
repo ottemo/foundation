@@ -232,6 +232,7 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	return result
 }
 
+// GetAllRates will return all the rates for the FedEx shipping method.
 func (it FedEx) GetAllRates() []checkout.StructShippingRate {
 	result := []checkout.StructShippingRate{}
 

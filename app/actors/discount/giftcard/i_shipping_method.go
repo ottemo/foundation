@@ -55,6 +55,7 @@ func (it *Shipping) GetRates(currentCheckout checkout.InterfaceCheckout) []check
 	return result
 }
 
+// GetAllRates returns all the shippmeng method rates available in the system.
 func (it Shipping) GetAllRates() []checkout.StructShippingRate {
 
 	result := []checkout.StructShippingRate{

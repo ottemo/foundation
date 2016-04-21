@@ -1,18 +1,16 @@
 package authorizenet
 
 import (
-	"fmt"
-	"time"
-
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
-
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/checkout"
