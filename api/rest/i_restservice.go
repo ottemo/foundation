@@ -260,7 +260,27 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 					}
 				}
 
-				result, _ = json.Marshal(map[string]interface{}{"result": result, "error": errorMsg, "redirect": redirectLocation})
+				response := map[string]interface{}{
+					"result":   result,
+					"error":    errorMsg,
+					"redirect": redirectLocation,
+				}
+
+				if ConstUseDebugLog {
+					responseTime := time.Now().Sub(startTime)
+					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+
+					logFields := env.LogFields{
+						"request_thread_id": debugRequestIdentifier,
+						"session_id":        currentSession.GetID(),
+						"uri":               req.RequestURI,
+						"resp_time":         responseTime,
+						"response":          response,
+					}
+					env.LogEvent(logFields, "response")
+				}
+
+				result, _ = json.Marshal(response)
 			}
 
 			// XML encode
@@ -268,20 +288,6 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 				xmlResult, _ := xml.MarshalIndent(result, "", "    ")
 				result = []byte(xml.Header + string(xmlResult))
 			}
-		}
-
-		if ConstUseDebugLog {
-			responseTime := time.Now().Sub(startTime)
-			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
-
-			env.LogEvent(env.LogFields{
-				"request_thread_id": debugRequestIdentifier,
-				"session_id":        currentSession.GetID(),
-
-				"uri":       req.RequestURI,
-				"resp_time": responseTime,
-				"response":  result,
-			}, "response")
 		}
 
 		if value, ok := result.([]byte); ok {
