@@ -343,7 +343,6 @@ func (it *DefaultCheckout) GetItemSpecificTotal(idx interface{}, label string) f
 
 // applyAmount applies amounts to checkout detail calculation map
 func (it *DefaultCheckout) applyAmount(idx interface{}, label string, amount float64) {
-	amount = utils.RoundPrice(amount)
 	index := utils.InterfaceToInt(idx)
 	if index != 0 {
 		it.getItemTotals(index)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(index, label))
@@ -365,20 +364,21 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 	var totalPriceAdjustmentAmount float64
 	// main part is per items apply (we will handle Amount only if there was no per item value)
 	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
-		amount := utils.RoundPrice(priceAdjustment.Amount)
+		amount := priceAdjustment.Amount
 		if priceAdjustment.IsPercent {
 			// current grand total will be changed on some percentage
-			amount = utils.RoundPrice(it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * priceAdjustment.Amount / 100)
+			amount = it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * amount / 100
 		}
 
 		// prevent negative values of grand total
-		if amount+it.calculateAmount < 0 {
-			amount = utils.RoundPrice(it.calculateAmount * -1)
+		if amount+it.calculateAmount < -0.001 {
+			amount = it.calculateAmount * -1
 		}
 
 		// affecting grand total of a cart
+		amount = utils.RoundPrice(amount)
 		it.applyAmount(0, checkout.ConstLabelGrandTotal, amount)
-		totalPriceAdjustmentAmount += utils.RoundPrice(amount)
+		totalPriceAdjustmentAmount += amount
 
 		// cart details show amount was applied by Types
 		for _, label := range priceAdjustment.Labels {
@@ -389,25 +389,25 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 
 	} else {
 		for index, amount := range priceAdjustment.PerItem {
-			amount = utils.RoundPrice(amount)
 			currentItemTotal := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
 			if priceAdjustment.IsPercent {
-				amount = utils.RoundPrice(currentItemTotal * priceAdjustment.Amount / 100)
+				amount = currentItemTotal * amount / 100
 			}
 
 			// prevent negative values of grand total per cart
-			if amount+it.calculateAmount < 0 {
-				amount = utils.RoundPrice(it.calculateAmount * -1)
+			if amount+it.calculateAmount < -0.001 {
+				amount = it.calculateAmount * -1
 			}
 
 			// prevent negative values of grand total per item
-			if amount+currentItemTotal < 0 {
-				amount = utils.RoundPrice(currentItemTotal * -1)
+			if amount+currentItemTotal < -0.001 {
+				amount = currentItemTotal * -1
 			}
 
 			// adding amount to grand total of current item and full cart
+			amount = utils.RoundPrice(amount)
 			it.applyAmount(index, checkout.ConstLabelGrandTotal, amount)
-			totalPriceAdjustmentAmount += utils.RoundPrice(amount)
+			totalPriceAdjustmentAmount += amount
 
 			for _, label := range priceAdjustment.Labels {
 				if label != checkout.ConstLabelGrandTotal {
