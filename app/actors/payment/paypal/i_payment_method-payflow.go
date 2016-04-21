@@ -99,7 +99,6 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
 		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
-	fmt.Println("2", billingLastName)
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
