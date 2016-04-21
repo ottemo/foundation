@@ -527,6 +527,7 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		}
 
 		it.SetInfo("calculation", infoDetails)
+		it.SetInfo("price_adjustments", it.priceAdjustments)
 
 		it.calculateFlag = false
 	}
