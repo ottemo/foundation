@@ -2,17 +2,15 @@ package reporting
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"github.com/ottemo/foundation/app/actors/payment/authorizenet"
-	"github.com/ottemo/foundation/app/actors/payment/checkmo"
-	"github.com/ottemo/foundation/app/actors/payment/paypal"
-	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 )
 
@@ -24,6 +22,9 @@ func setupAPI() error {
 	service.GET("reporting/product-performance", api.IsAdmin(listProductPerformance))
 	service.GET("reporting/customer-activity", api.IsAdmin(listCustomerActivity))
 	service.GET("reporting/payment-method", api.IsAdmin(listPaymentMethod))
+	service.GET("reporting/shipping-method", api.IsAdmin(listShippingMethod))
+	service.GET("reporting/location-country", api.IsAdmin(listLocationCountry))
+	service.GET("reporting/location-us", api.IsAdmin(listLocationUS))
 
 	return nil
 }
@@ -275,36 +276,67 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	aggregatedResults := aggregatePaymentMethod(foundOrders)
 
 	// Sorting
-	sort.Sort(PaymentMethodBySales(aggregatedResults))
+	sort.Sort(StatsBySales(aggregatedResults))
+
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
 
 	response := map[string]interface{}{
 		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
 		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
 	}
 	return response, nil
 }
 
-func aggregatePaymentMethod(foundOrders []models.StructListItem) []PaymentMethodItem {
+func aggregatePaymentMethod(foundOrders []models.StructListItem) []StatItem {
 
-	// Map of payment method key: name
-	paymentMethodNames := map[string]string{
-		authorizenet.ConstPaymentCodeDPM:     authorizenet.ConstPaymentNameDPM,
-		checkmo.ConstPaymentCode:             checkmo.ConstPaymentName,
-		paypal.ConstPaymentCode:              paypal.ConstPaymentName,
-		paypal.ConstPaymentPayPalPayflowCode: paypal.ConstPaymentPayPalPayflowName,
-		zeropay.ConstPaymentZeroPaymentCode:  zeropay.ConstPaymentName,
+	paymentMethodNames := map[string]string{}
+
+	for _, m := range checkout.GetRegisteredPaymentMethods() {
+		code := m.GetCode()
+		paymentMethodNames[code] = m.GetInternalName()
 	}
 
-	keyedResults := make(map[string]PaymentMethodItem)
+	aggregateKey := "payment_method"
+
+	return aggregateGeneral(foundOrders, paymentMethodNames, aggregateKey)
+}
+
+func aggregateShippingMethod(foundOrders []models.StructListItem) []StatItem {
+
+	keyNameMap := map[string]string{}
+	for _, method := range checkout.GetRegisteredShippingMethods() {
+		methodCode := strings.ToLower(method.GetCode())
+		methodName := method.GetName()
+		rates := method.GetAllRates()
+
+		for _, rate := range rates {
+			key := methodCode + "/" + rate.Code
+			keyNameMap[key] = methodName + " - " + rate.Name
+		}
+	}
+
+	aggregateKey := "shipping_method"
+	return aggregateGeneral(foundOrders, keyNameMap, aggregateKey)
+}
+
+func aggregateGeneral(foundOrders []models.StructListItem, keyNameMap map[string]string, aggregateKey string) []StatItem {
+
+	keyedResults := make(map[string]StatItem)
 
 	for _, o := range foundOrders {
-		key := utils.InterfaceToString(o.Extra["payment_method"])
+		key := utils.InterfaceToString(o.Extra[aggregateKey])
 		item, ok := keyedResults[key]
 
 		// First time, set some static props
 		if !ok {
 			item.Key = key
-			item.Name = paymentMethodNames[key]
+			item.Name = keyNameMap[key]
 		}
 
 		// Aggregated props
@@ -316,7 +348,7 @@ func aggregatePaymentMethod(foundOrders []models.StructListItem) []PaymentMethod
 	}
 
 	// map to slice
-	var results []PaymentMethodItem
+	var results []StatItem
 	for _, i := range keyedResults {
 		// Add in averaging stat now that aggregation is complete
 		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
@@ -329,4 +361,212 @@ func aggregatePaymentMethod(foundOrders []models.StructListItem) []PaymentMethod
 	}
 
 	return results
+}
+
+func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		if startDate.IsZero() || endDate.IsZero() {
+			context.SetResponseStatusBadRequest()
+			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+		}
+		if startDate.After(endDate) || startDate.Equal(endDate) {
+			context.SetResponseStatusBadRequest()
+			msg := "the start_date must come before the end_date"
+			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+		}
+	}
+
+	// Fetch orders
+	oModel, _ := order.GetOrderCollectionModel()
+	oModel.ListAddExtraAttribute("created_at")
+	oModel.ListAddExtraAttribute("shipping_method")
+	oModel.ListAddExtraAttribute("grand_total")
+	if hasDateRange {
+		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+	}
+
+	// This is the lite response StructListItem
+	foundOrders, _ := oModel.List()
+	aggregatedResults := aggregateShippingMethod(foundOrders)
+
+	// Sorting
+	sort.Sort(StatsBySales(aggregatedResults))
+
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
+
+	response := map[string]interface{}{
+		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
+		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+	return response, nil
+}
+
+func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		if startDate.IsZero() || endDate.IsZero() {
+			context.SetResponseStatusBadRequest()
+			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+		}
+		if startDate.After(endDate) || startDate.Equal(endDate) {
+			context.SetResponseStatusBadRequest()
+			msg := "the start_date must come before the end_date"
+			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+		}
+	}
+
+	// Fetch orders
+	oModel, _ := order.GetOrderCollectionModel()
+	oModel.ListAddExtraAttribute("created_at")
+	oModel.ListAddExtraAttribute("billing_address")
+	oModel.ListAddExtraAttribute("grand_total")
+	if hasDateRange {
+		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+	}
+
+	// This is the lite response StructListItem
+	foundOrders, _ := oModel.List()
+	aggregatedResults := aggregateLocationCountry(foundOrders)
+
+	// Sorting
+	sort.Sort(StatsBySales(aggregatedResults))
+
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
+
+	response := map[string]interface{}{
+		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
+		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+	return response, nil
+}
+
+func aggregateLocationCountry(foundOrders []models.StructListItem) []StatItem {
+	return aggregateGeneralNested(foundOrders, "billing_address", "country")
+}
+
+func aggregateLocationUS(foundOrders []models.StructListItem) []StatItem {
+	return aggregateGeneralNested(foundOrders, "billing_address", "state")
+}
+
+func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer string, aggKey string) []StatItem {
+	keyedResults := make(map[string]StatItem)
+
+	for _, o := range foundOrders {
+		container := utils.InterfaceToMap(o.Extra[aggKeyContainer])
+		key := utils.InterfaceToString(container[aggKey])
+
+		item, ok := keyedResults[key]
+		if !ok {
+			item.Name = key
+		}
+
+		// Aggregate props
+		item.TotalSales += utils.InterfaceToFloat64(o.Extra["grand_total"])
+		item.TotalOrders++
+
+		// Save
+		keyedResults[key] = item
+	}
+
+	// map to slice
+	var results []StatItem
+	for _, i := range keyedResults {
+		// Add in averaging stat now that aggregation is complete
+		i.AverageSales = i.TotalSales / float64(i.TotalOrders)
+
+		// Round money
+		i.TotalSales = utils.RoundPrice(i.TotalSales)
+		i.AverageSales = utils.RoundPrice(i.AverageSales)
+
+		results = append(results, i)
+	}
+
+	return results
+}
+
+// list aggregate sales by state for sales in the US
+func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		if startDate.IsZero() || endDate.IsZero() {
+			context.SetResponseStatusBadRequest()
+			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+		}
+		if startDate.After(endDate) || startDate.Equal(endDate) {
+			context.SetResponseStatusBadRequest()
+			msg := "the start_date must come before the end_date"
+			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+		}
+	}
+
+	// Fetch orders
+	oModel, _ := order.GetOrderCollectionModel()
+	oModel.ListAddExtraAttribute("created_at")
+	oModel.ListAddExtraAttribute("billing_address")
+	oModel.ListFilterAdd("billing_address.country", "=", "US")
+	oModel.ListAddExtraAttribute("grand_total")
+	if hasDateRange {
+		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
+		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+	}
+
+	// This is the lite response StructListItem
+	foundOrders, _ := oModel.List()
+	aggregatedResults := aggregateLocationUS(foundOrders)
+
+	// Sorting
+	sort.Sort(StatsBySales(aggregatedResults))
+
+	// Calculate extra data points
+	var totalSales float64
+	for _, m := range aggregatedResults {
+		totalSales += m.TotalSales
+	}
+	totalSales = utils.RoundPrice(totalSales)
+
+	response := map[string]interface{}{
+		"aggregate_items": aggregatedResults,
+		"total_sales":     totalSales,
+		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+	return response, nil
 }

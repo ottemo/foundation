@@ -85,12 +85,14 @@ type InterfaceShippingMethod interface {
 	IsAllowed(checkoutInstance InterfaceCheckout) bool
 
 	GetRates(checkoutInstance InterfaceCheckout) []StructShippingRate
+	GetAllRates() []StructShippingRate
 }
 
 // InterfacePaymentMethod represents interface to access business layer implementation of checkout payment method
 type InterfacePaymentMethod interface {
-	GetName() string
 	GetCode() string
+	GetInternalName() string
+	GetName() string
 	GetType() string
 
 	IsAllowed(checkoutInstance InterfaceCheckout) bool

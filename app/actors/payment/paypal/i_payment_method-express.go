@@ -2,22 +2,25 @@ package paypal
 
 import (
 	"fmt"
-
 	"io/ioutil"
-
 	"net/http"
 	"net/url"
 
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 )
 
-// GetName returns payment method name
+// GetInternalName returns the name of the payment method
+func (it Express) GetInternalName() string {
+	return ConstPaymentName
+}
+
+// GetName returns the user customized name of the payment method
 func (it *Express) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTitle))
 }

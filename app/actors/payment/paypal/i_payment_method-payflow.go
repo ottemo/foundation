@@ -16,7 +16,12 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// GetName returns config value "Title" of payment method
+// GetInternalName returns the name of the payment method
+func (it PayFlowAPI) GetInternalName() string {
+	return ConstPaymentPayPalPayflowName
+}
+
+// GetName returns the user customized name of the payment method
 func (it *PayFlowAPI) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowTitle))
 }
