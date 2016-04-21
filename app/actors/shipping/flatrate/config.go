@@ -142,10 +142,9 @@ func setupConfig() error {
 				rate["code"] = rateCode
 				rates = append(rates, rate)
 			}
-
 			additionalRates = rates
 
-			return rates, nil
+			return newRatesValues, nil
 		}
 
 		// grouping rules config setup
