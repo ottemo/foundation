@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -56,34 +56,29 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 //   * "code" is the text visitors must enter to apply a coupon in checkout
 func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
 	// checking request context
 	//------------------------
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	if !utils.KeysInMapAndNotBlank(postValues, "code", "name") {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "842d3ba9-3354-4470-a85f-cbaf909c3827", "Required fields, 'code' and 'name', cannot be blank.")
 	}
 
 	valueCode := utils.InterfaceToString(postValues["code"])
 	valueName := utils.InterfaceToString(postValues["name"])
 
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-
 	valueUntil := time.Now()
 	if value, present := postValues["until"]; present {
-		valueUntil, _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		valueUntil = utils.InterfaceToTime(value)
 	}
 
 	valueSince := time.Now()
 	if value, present := postValues["since"]; present {
-		valueSince, _ = utils.MakeUTCTime(utils.InterfaceToTime(value), timeZone)
+		valueSince = utils.InterfaceToTime(value)
 	}
 
 	valueLimits := make(map[string]interface{})
@@ -101,18 +96,16 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection.AddFilter("code", "=", valueCode)
 	recordsNumber, err := collection.Count()
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 	if recordsNumber > 0 {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34cb6cfe-fba3-4c1f-afc5-1ff7266a9a86", "A Discount with the provided code: '"+valueCode+"', already exists.")
 	}
 
@@ -139,17 +132,15 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	newID, err := collection.Save(newRecord)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	newRecord["_id"] = newID
 
-	responseWriter.WriteHeader(http.StatusOK)
 	return newRecord, nil
 }
 
-// Apply will coupon code to the current checkout
+// Apply will add the coupon code to the current checkout
 //   - coupon code should be specified in "coupon" argument
 func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 

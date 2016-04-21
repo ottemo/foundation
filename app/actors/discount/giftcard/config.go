@@ -1,7 +1,9 @@
 package giftcard
 
 import (
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupConfig setups package configuration values for a system
@@ -9,6 +11,17 @@ func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "15859fac-8fc0-4fbf-a801-b9cacf70d356", "Unable to obtain configuration for Gift Cards")
+	}
+
+	// giftCardSkuElement
+
+	giftCardSkuElementSet := func(value interface{}) (interface{}, error) {
+		newValue := utils.InterfaceToString(value)
+		if newValue == "" {
+			return value, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a625584-1f91-4416-86bb-b25d6b37c70d", "can't be empty string")
+		}
+		checkout.GiftCardSkuElement = newValue
+		return newValue, nil
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -20,7 +33,7 @@ func setupConfig() error {
 		Label:       "GiftCard SKU Identifier",
 		Description: "This value represents the product SKU for GiftCards and will act as a flag for gift card operations",
 		Image:       "",
-	}, nil)
+	}, giftCardSkuElementSet)
 
 	if err != nil {
 		return env.ErrorDispatch(err)

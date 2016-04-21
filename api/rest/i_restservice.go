@@ -260,7 +260,27 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 					}
 				}
 
-				result, _ = json.Marshal(map[string]interface{}{"result": result, "error": errorMsg, "redirect": redirectLocation})
+				response := map[string]interface{}{
+					"result":   result,
+					"error":    errorMsg,
+					"redirect": redirectLocation,
+				}
+
+				if ConstUseDebugLog {
+					responseTime := time.Now().Sub(startTime)
+					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+
+					logFields := env.LogFields{
+						"request_thread_id": debugRequestIdentifier,
+						"session_id":        currentSession.GetID(),
+						"uri":               req.RequestURI,
+						"resp_time":         responseTime,
+						"response":          response,
+					}
+					env.LogEvent(logFields, "response")
+				}
+
+				result, _ = json.Marshal(response)
 			}
 
 			// XML encode
@@ -270,23 +290,9 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 			}
 		}
 
-		if ConstUseDebugLog {
-			responseTime := time.Now().Sub(startTime)
-			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
-
-			env.LogEvent(env.LogFields{
-				"request_thread_id": debugRequestIdentifier,
-				"session_id":        currentSession.GetID(),
-
-				"uri":       req.RequestURI,
-				"resp_time": responseTime,
-				"response":  result,
-			}, "response")
-		}
-
 		if value, ok := result.([]byte); ok {
 			resp.Write(value)
-		} else {
+		} else if result != nil {
 			resp.Write([]byte(fmt.Sprint(result)))
 		}
 	}
@@ -294,6 +300,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 	return wrappedHandler
 }
 
+// GET is a wrapper for the HTTP GET verb
 func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.GET(path, it.wrappedHandler(handler))
@@ -301,6 +308,7 @@ func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {GET}")
 }
 
+// PUT is a wrapper for the HTTP PUT verb
 func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.PUT(path, it.wrappedHandler(handler))
@@ -308,6 +316,7 @@ func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {PUT}")
 }
 
+// POST is a wrapper for the HTTP POST verb
 func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.POST(path, it.wrappedHandler(handler))
@@ -315,6 +324,7 @@ func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) 
 	it.Handlers = append(it.Handlers, path+" {POST}")
 }
 
+// DELETE is a wrapper for the HTTP DELETE verb
 func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.DELETE(path, it.wrappedHandler(handler))

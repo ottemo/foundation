@@ -146,10 +146,18 @@ func Round(val float64, roundOn float64, places int) float64 {
 	_, div := math.Modf(digit)
 
 	var round float64
-	if div >= roundOn {
-		round = math.Ceil(digit)
+	if val > 0 {
+		if div >= roundOn {
+			round = math.Ceil(digit)
+		} else {
+			round = math.Floor(digit)
+		}
 	} else {
-		round = math.Floor(digit)
+		if div >= roundOn {
+			round = math.Floor(digit)
+		} else {
+			round = math.Ceil(digit)
+		}
 	}
 
 	return round / pow

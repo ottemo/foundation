@@ -46,3 +46,22 @@ func DecodeJSONToStringKeyMap(jsonData interface{}) (map[string]interface{}, err
 
 	return result, err
 }
+
+// DecodeJSONToInterface decodes json string to interface{} if it's possible
+func DecodeJSONToInterface(jsonData interface{}) (interface{}, error) {
+
+	var result interface{}
+
+	var err error
+
+	switch value := jsonData.(type) {
+	case string:
+		err = json.Unmarshal([]byte(value), &result)
+	case []byte:
+		err = json.Unmarshal(value, &result)
+	default:
+		err = errors.New("Unable to parse json, unsupported json type")
+	}
+
+	return result, err
+}

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -173,6 +174,16 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 		arrayValue := utils.InterfaceToArray(value)
 		for _, arrayItem := range arrayValue {
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
+				taxRate := order.StructTaxRate{
+					Name:   priceAdjustment.Name,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Taxes = append(it.Taxes, taxRate)
+				continue
+			}
+
 			mapValue := utils.InterfaceToMap(arrayItem)
 			taxRate := order.StructTaxRate{}
 
@@ -205,6 +216,17 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 		arrayValue := utils.InterfaceToArray(value)
 		for _, arrayItem := range arrayValue {
+
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
+				discount := order.StructDiscount{
+					Name:   priceAdjustment.Name,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Discounts = append(it.Discounts, discount)
+				continue
+			}
+
 			mapValue := utils.InterfaceToMap(arrayItem)
 			discount := order.StructDiscount{}
 

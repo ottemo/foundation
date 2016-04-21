@@ -279,6 +279,13 @@ func (it *DefaultCart) GetCartInfo() map[string]interface{} {
 	return it.Info
 }
 
+func (it *DefaultCart) SetCustomInfo(info map[string]interface{}) {
+	it.CustomInfo = info
+}
+func (it *DefaultCart) GetCustomInfo() map[string]interface{} {
+	return it.CustomInfo
+}
+
 // MakeCartForVisitor loads cart for given visitor from database or creates new one
 func (it *DefaultCart) MakeCartForVisitor(visitorID string) error {
 	dbEngine := db.GetDBEngine()
