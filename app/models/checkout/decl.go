@@ -47,12 +47,13 @@ const (
 	ConstCalculateTargetShipping   = 2.0
 	ConstCalculateTargetGrandTotal = 3.0
 
-	ConstLabelSubtotal   = "ST"
-	ConstLabelShipping   = "SP"
-	ConstLabelGrandTotal = "GT"
-	ConstLabelGiftCard   = "GC"
-	ConstLabelDiscount   = "D"
-	ConstLabelTax        = "T"
+	ConstLabelSubtotal           = "ST"
+	ConstLabelShipping           = "SP"
+	ConstLabelGrandTotal         = "GT"
+	ConstLabelGiftCard           = "GC"
+	ConstLabelGiftCardAdjustment = "GCA"
+	ConstLabelDiscount           = "D"
+	ConstLabelTax                = "T"
 
 	ConstDiscountObjectCart = "cart"
 

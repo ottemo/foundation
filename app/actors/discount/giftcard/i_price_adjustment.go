@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"strings"
 )
 
 // GetName returns name of current discount implementation
@@ -26,13 +27,56 @@ func (it *DefaultGiftcard) GetPriority() []float64 {
 // Calculate calculates and returns amount and set of applied gift card discounts to given checkout
 func (it *DefaultGiftcard) Calculate(checkoutInstance checkout.InterfaceCheckout, currentPriority float64) []checkout.StructPriceAdjustment {
 	var result []checkout.StructPriceAdjustment
+	giftCardSkuElement := checkout.GiftCardSkuElement
 
+	// discount gift cards on 100%, so they wouldn't be discounted or taxed
 	if currentPriority == checkout.ConstCalculateTargetSubtotal {
-		// discount gift cards on 100%
+		items := checkoutInstance.GetItems()
+		perItem := make(map[string]float64)
+		for _, item := range items {
+			if productItem := item.GetProduct(); productItem != nil && strings.Contains(productItem.GetSku(), giftCardSkuElement) {
+				perItem[utils.InterfaceToString(item.GetIdx())] = -100 // -100%
+			}
+		}
+		if perItem == nil || len(perItem) == 0 {
+			return result
+		}
+		result = append(result, checkout.StructPriceAdjustment{
+			Code:      it.GetCode(),
+			Name:      it.GetName(),
+			Amount:    -100,
+			IsPercent: true,
+			Priority:  checkout.ConstCalculateTargetSubtotal,
+			Labels:    []string{checkout.ConstLabelGiftCardAdjustment},
+			PerItem:   perItem,
+		})
+
 		return result
 	}
+	// restore gift cards amounts as they basic subtotal
 	if currentPriority == checkout.ConstCalculateTargetGrandTotal {
-		// return gift cards amount
+
+		items := checkoutInstance.GetItems()
+		perItem := make(map[string]float64)
+		for _, item := range items {
+			if productItem := item.GetProduct(); productItem != nil && strings.Contains(productItem.GetSku(), giftCardSkuElement) {
+				index := utils.InterfaceToString(item.GetIdx())
+				perItem[index] = checkoutInstance.GetItemSpecificTotal(index, checkout.ConstLabelSubtotal)
+			}
+		}
+		if perItem == nil || len(perItem) == 0 {
+			return result
+		}
+		result = append(result, checkout.StructPriceAdjustment{
+			Code:      it.GetCode(),
+			Name:      it.GetName(),
+			Amount:    0,
+			IsPercent: false,
+			Priority:  checkout.ConstCalculateTargetGrandTotal,
+			Labels:    []string{checkout.ConstLabelGiftCardAdjustment},
+			PerItem:   perItem,
+		})
+
 		return result
 	}
 
