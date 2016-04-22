@@ -139,20 +139,29 @@ func Explode(value string, separators string) []string {
 }
 
 // Round rounds value to given precision (roundOn=0.5 usual cases)
-func Round(val float64, roundOn float64, places int) float64 {
+func Round(value float64, round float64, precision int) float64 {
 
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-
-	var round float64
-	if div >= roundOn {
-		round = math.Ceil(digit)
-	} else {
-		round = math.Floor(digit)
+	negative := false
+	if negative = math.Signbit(value); negative {
+		value = -value;
 	}
 
-	return round / pow
+	precisionPart := math.Pow(10, float64(precision))
+	poweredValue := precisionPart * value
+	_, roundingPart := math.Modf(poweredValue)
+
+	var roundResult float64
+	if roundingPart >= round {
+		roundResult = math.Ceil(poweredValue)
+	} else {
+		roundResult = math.Floor(poweredValue)
+	}
+
+	if negative {
+		roundResult = -roundResult
+	}
+
+	return roundResult / precisionPart
 }
 
 // RoundPrice normalize price after calculations, so it rounds it to money precision

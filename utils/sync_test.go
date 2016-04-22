@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"testing"
-	"math/rand"
 	"fmt"
+	"math/rand"
+	"testing"
 )
 
 //func BenchmarkPtrMapAccess(b *testing.B) {
@@ -46,33 +46,32 @@ import (
 //	}
 //}
 
-
 // TestSyncSet validates SyncMutex type functionality
 //
 // (massive attack to the map from different go-routines which should generate
 // "fatal error: concurrent map read and map write", without synchronization)
 func TestMutex(t *testing.T) {
 	const concurrent = 9999
-	const scatter = 10;
+	const scatter = 10
 	x := make(map[int]map[int]float64)
 
 	// m := GetMutex("x")
 	// var m sync.Mutex
 
-	for i:=0; i<scatter; i++ {
+	for i := 0; i < scatter; i++ {
 		x[i] = make(map[int]float64)
-		for j:=0; j<scatter; j++ {
-			x[i][j] = 0.0;
+		for j := 0; j < scatter; j++ {
+			x[i][j] = 0.0
 		}
 	}
 
 	// test on mutex creation
 	finished := make(chan int)
 	routines := concurrent
-	for i:=0; i<routines; i++ {
+	for i := 0; i < routines; i++ {
 		go func(i int) {
 			acts := rand.Intn(999)
-			for j:=0; j<acts; j++ {
+			for j := 0; j < acts; j++ {
 				key1 := rand.Intn(scatter)
 				key2 := rand.Intn(scatter)
 
@@ -93,16 +92,16 @@ func TestMutex(t *testing.T) {
 	}
 
 	for routines > 0 {
-		<- finished
+		<-finished
 		routines--
 	}
 
 	// the similar test with SyncLock / SyncUnlock
 	routines = concurrent
-	for i:=0; i<routines; i++ {
+	for i := 0; i < routines; i++ {
 		go func(i int) {
 			acts := rand.Intn(999)
-			for j:=0; j<acts; j++ {
+			for j := 0; j < acts; j++ {
 				key1 := rand.Intn(scatter)
 				key2 := rand.Intn(scatter)
 
@@ -119,7 +118,7 @@ func TestMutex(t *testing.T) {
 	}
 
 	for routines > 0 {
-		<- finished
+		<-finished
 		routines--
 	}
 }
@@ -134,7 +133,7 @@ func TestSyncSet(t *testing.T) {
 	A := make([][]int, 0, 0)
 
 	routines := concurrent
-	for i:=0; i<routines; i++ {
+	for i := 0; i < routines; i++ {
 		go func(i int) {
 			err := SyncSet(&A, 1, -1, -1)
 			if err != nil {
@@ -145,7 +144,7 @@ func TestSyncSet(t *testing.T) {
 	}
 
 	for routines > 0 {
-		<- finished
+		<-finished
 		routines--
 	}
 
@@ -167,7 +166,7 @@ func TestSyncSet(t *testing.T) {
 	B := make(map[string]map[int]map[bool]int)
 
 	routines = concurrent
-	for i:=0; i<routines; i++ {
+	for i := 0; i < routines; i++ {
 		setter := func(old int) int {
 			return old + 1
 		}
@@ -188,7 +187,7 @@ func TestSyncSet(t *testing.T) {
 	}
 
 	for routines > 0 {
-		<- finished
+		<-finished
 		routines--
 	}
 
@@ -206,14 +205,14 @@ func TestSyncSet(t *testing.T) {
 
 	// SyncGet test
 	routines = concurrent
-	for i:=0; i<routines; i++ {
+	for i := 0; i < routines; i++ {
 		go func(i int) {
 			value, err := SyncGet(B, false, "a", i, true)
 			if err != nil {
 				t.Error(err)
 			}
 			if value != 1 {
-				t.Error("unexpected value B[\"a\"][",i,"][true] =", value, " should be 1")
+				t.Error("unexpected value B[\"a\"][", i, "][true] =", value, " should be 1")
 			}
 
 			finished <- i
@@ -221,7 +220,7 @@ func TestSyncSet(t *testing.T) {
 	}
 
 	for routines > 0 {
-		<- finished
+		<-finished
 		routines--
 	}
 }
