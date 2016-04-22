@@ -49,13 +49,9 @@ func (it *PayFlowAPI) IsAllowed(checkoutInstance checkout.InterfaceCheckout) boo
 // Authorize makes payment method authorize operation (currently it's a Authorize zero amount + Sale operations)
 func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
-	// make only authorize zero amount procedure to obtain and return it's token with additional payment info
+	// authorize the card & create a token with a zero dollar amount first time through
 	if value, present := paymentInfo[checkout.ConstPaymentActionTypeKey]; present && utils.InterfaceToString(value) == checkout.ConstPaymentActionTypeCreateToken {
 		return it.AuthorizeZeroAmount(orderInstance, paymentInfo)
-
-		// currently we will do request directly from foundation side but our next step is to do it just create request content
-		// and make post from storefront
-		//		return it.CreateAuthorizeZeroAmountRequest(orderInstance, paymentInfo)
 	}
 
 	var transactionID string
@@ -89,16 +85,15 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	grandTotal := orderInstance.GetGrandTotal()
 	amount := fmt.Sprintf("%.2f", grandTotal)
 
+	// paypal credentials
 	user := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowUser))
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
-	billingLastName := ""
-	billingFirstName := ""
-	if orderInstance != nil {
-		billingLastName = orderInstance.GetBillingAddress().GetLastName()
-		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
-	}
+	// populate visitor order data
+	email := utils.InterfaceToString(orderInstance.Get("customer_email"))
+	billingLastName := orderInstance.GetBillingAddress().GetLastName()
+	billingFirstName := orderInstance.GetBillingAddress().GetFirstName()
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
@@ -112,7 +107,8 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		"&TENDER=C" +
 		"&ORIGID=" + utils.InterfaceToString(transactionID) +
 
-		// technically deprecated
+		// Payer Information Fields
+		"&EMAIL=" + email +
 		"&BILLTOFIRSTNAME=" + billingFirstName +
 		"&BILLTOLASTNAME=" + billingLastName +
 
@@ -281,13 +277,17 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	// getting order information
 	//--------------------------
 
+	// Paypal credentials
 	user := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowUser))
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
+	// populate visitor order data
+	email := ""
 	billingLastName := ""
 	billingFirstName := ""
 	if orderInstance != nil {
+		email = utils.InterfaceToString(orderInstance.Get("customer_email"))
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
 		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
@@ -305,7 +305,8 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		"&ACCT=" + utils.InterfaceToString(ccInfo["number"]) +
 		"&EXPDATE=" + ccExpirationDate +
 
-		// technically deprecated
+		// Payer Information Fields
+		"&EMAIL=" + email +
 		"&BILLTOFIRSTNAME=" + billingFirstName +
 		"&BILLTOLASTNAME=" + billingLastName +
 
@@ -400,9 +401,20 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 // CreateAuthorizeZeroAmountRequest will do Account Verification and return transaction ID for refer transaction if all info is valid
 func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
+	// PayPal credentials
 	user := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowUser))
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
+
+	// populate visitor order data
+	email := ""
+	billingLastName := ""
+	billingFirstName := ""
+	if orderInstance != nil {
+		email = utils.InterfaceToString(orderInstance.Get("customer_email"))
+		billingLastName = orderInstance.GetBillingAddress().GetLastName()
+		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
+	}
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
@@ -416,7 +428,11 @@ func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.Inter
 		"&TENDER=C" +
 		"&ACCT=" + "$CC_NUM" +
 		"&EXPDATE=" + "$CC_MONTH$CC_YEAR" +
-		//TODO: WHAT DO I DO HERE
+
+		// Payer Information Fields
+		"&EMAIL=" + email +
+		"&BILLTOFIRSTNAME=" + billingFirstName +
+		"&BILLTOLASTNAME=" + billingLastName +
 
 		// Payment Details Fields
 		"&AMT=0" +
