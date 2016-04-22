@@ -47,10 +47,10 @@ func TestRoundPrice(t *testing.T) {
 		t.Error("incorect result:", x)
 	}
 
-	if x := 1-RoundPrice(0.000000000000009); x != 1 {
+	if x := 1 - RoundPrice(0.000000000000009); x != 1 {
 		t.Error("incorect result:", x)
 	}
-	if x := RoundPrice(0.000000000000009)-1; x != -1 {
+	if x := RoundPrice(0.000000000000009) - 1; x != -1 {
 		t.Error("incorect result:", x)
 	}
 }

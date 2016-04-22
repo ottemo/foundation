@@ -1,7 +1,6 @@
 package cart
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -156,7 +155,6 @@ func scheduleAbandonCartEmails() error {
 }
 
 func abandonCartTask(params map[string]interface{}) error {
-	fmt.Println("Abandon carts scheduler firing")
 
 	// Get config for time to send
 	beforeDate, isEnabled := getConfigSendBefore()
@@ -167,8 +165,7 @@ func abandonCartTask(params map[string]interface{}) error {
 	resultCarts := getAbandonedCarts(beforeDate)
 	actionableCarts := getActionableCarts(resultCarts)
 
-	fmt.Println("carts found in query:", len(resultCarts))
-	fmt.Println("carts that are actionable:", len(actionableCarts))
+	env.LogEvent(env.LogFields{"abandonCartCount": len(resultCarts), "actionableCartCount": len(actionableCarts)}, "abandon-cart-task")
 
 	for _, aCart := range actionableCarts {
 		err := sendAbandonEmail(aCart)
@@ -230,10 +227,13 @@ func getActionableCarts(resultCarts []map[string]interface{}) []AbandonCartEmail
 		// try to get by visitor_id
 		if visitorID != "" {
 			vModel, _ := visitor.LoadVisitorByID(visitorID)
-			email = vModel.GetEmail()
-			firstName = vModel.GetFirstName()
-			lastName = vModel.GetLastName()
-
+			// TODO: handle this a better way or cleanse carts with nil visitorIDs
+			// for now, ignore nil visitors
+			if vModel != nil {
+				email = vModel.GetEmail()
+				firstName = vModel.GetFirstName()
+				lastName = vModel.GetLastName()
+			}
 		} else if sessionID != "" {
 			create := false
 			sessionWrapper, _ := api.GetSessionService().Get(sessionID, create)

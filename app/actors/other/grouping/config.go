@@ -57,7 +57,7 @@ func setupConfig() error {
 			currentRules = rules
 		}
 
-		return rules, nil
+		return newRulesValues, nil
 	}
 
 	// grouping rules config setup

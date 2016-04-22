@@ -143,7 +143,7 @@ func Round(value float64, round float64, precision int) float64 {
 
 	negative := false
 	if negative = math.Signbit(value); negative {
-		value = -value;
+		value = -value
 	}
 
 	precisionPart := math.Pow(10, float64(precision))
