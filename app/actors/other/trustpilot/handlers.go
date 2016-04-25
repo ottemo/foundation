@@ -1,6 +1,7 @@
 package trustpilot
 
 import (
+	"fmt"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/order"
@@ -266,6 +267,13 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
 	if response.StatusCode >= 300 {
 		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
 		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+		fields := env.LogFields{
+			"jsonString-request": jsonString,
+			"accessToken":        accessToken,
+			"businessID":         businessID,
+			"responseBody":       responseBody,
+		}
+		env.LogEvent(fields, "trustpilot-product-review-error")
 		return "", env.ErrorDispatch(err)
 	}
 

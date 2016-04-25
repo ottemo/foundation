@@ -1,16 +1,17 @@
 package trustpilot
 
 import (
+	"fmt"
 	"testing"
 )
 
 func getGoodCredentials() (tpCredentials, bool) {
-	isValidCredentials := false
+	isValidCredentials := true
 	goodCredentials := tpCredentials{
-		username:  "",
-		password:  "",
-		apiKey:    "",
-		apiSecret: "",
+		username:  "engineering@ottemo.io",
+		password:  "Ottemo2016!",
+		apiKey:    "8N3P9QOvhrC4ej2PawPRoRD6O4BjjsWM",
+		apiSecret: "LeiZXj9t7kf16dDG",
 	}
 	return goodCredentials, isValidCredentials
 }
@@ -52,19 +53,19 @@ func TestGoodCredentials(t *testing.T) {
 }
 
 func TestProductReviewLink(t *testing.T) {
-	businessID := "ABC" // TODO: WHAT DO I DO FOR TESTING HERE
+	businessID := "54f078980000ff00057db649" // TODO: WHAT DO I DO FOR TESTING HERE
 	productReviewData := ProductReview{
 		Consumer: ProductReviewConsumer{
-			Email: "test@ottemo.io",
+			Email: "adam+tp-test@ottemo.io",
 			Name:  "Jon Dough",
 		},
 		Products: []ProductReviewProduct{
 			ProductReviewProduct{
-				ProductURL: "",
-				ImageURL:   "",
-				Name:       "",
-				Sku:        "",
-				Brand:      "",
+				ProductURL: "https://karigran.com/facial-oil/the-system",
+				ImageURL:   "https://karigran.com/media/image/Product/5511ff1cd4a2560a1400000e/Kari-Gran-Facial-Oil-The-KG-System-Product-Desktop_1448658076_515x515.png",
+				Name:       "The KG System",
+				Sku:        "KGSYS",
+				Brand:      "Karigran",
 			},
 		},
 		ReferenceID: "abc123",
@@ -72,19 +73,22 @@ func TestProductReviewLink(t *testing.T) {
 	}
 
 	// Testing bad credentials
-	badToken := "badToken"
-	productReviewLink, err := getProductReviewLink(productReviewData, businessID, badToken)
-	errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:401 Unauthorized"
-	if productReviewLink != "" || err.Error() != errMsg {
-		t.Error("expected an authorization error when testing product review link with a bad token, businessID")
-	}
+	// badToken := "badToken"
+	// productReviewLink, err := getProductReviewLink(productReviewData, businessID, badToken)
+	// errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:401 Unauthorized"
+	// if productReviewLink != "" || err.Error() != errMsg {
+	// 	t.Error("expected an authorization error when testing product review link with a bad token, businessID")
+	// }
 
 	// Testing good credentials
-	// cred, haveCreds := getGoodCredentials()
-	// if !haveCreds {
-	// 	return
-	// }
-	// token, _ = getAccessToken(cred)
-	// productReviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
-
+	cred, haveCreds := getGoodCredentials()
+	if !haveCreds {
+		return
+	}
+	accessToken, _ := getAccessToken(cred)
+	productReviewLink, err := getProductReviewLink(productReviewData, businessID, accessToken)
+	fmt.Println(productReviewLink, err)
+	if err != nil {
+		t.Error("expected a product review link back: ")
+	}
 }
