@@ -1,7 +1,6 @@
 package trustpilot
 
 import (
-	"fmt"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/order"
