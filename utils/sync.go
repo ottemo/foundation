@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"sync"
-	"reflect"
 	"errors"
+	"reflect"
+	"sync"
 )
 
 var (
-	locks = make(map[uintptr]*syncMutex)
+	locks      = make(map[uintptr]*syncMutex)
 	locksMutex sync.Mutex
 )
 
@@ -186,7 +186,7 @@ func (it *pathItem) Update(newSubject reflect.Value) {
 	}
 
 	// updating pathItem references
-	for i := len(stack)-1; i > 0; i-- {
+	for i := len(stack) - 1; i > 0; i-- {
 		oldValue := stack[i-1].value
 
 		switch stack[i].value.Kind() {
@@ -377,7 +377,7 @@ func getPathItem(subject interface{}, path []interface{}, initBlank bool, lockLe
 	rSubjectType := rSubject.Type()
 
 	// initializing result item
-	pathItem := &pathItem {
+	pathItem := &pathItem{
 		parent: parent,
 		value:  rSubject,
 		mutex:  nil,
@@ -436,7 +436,7 @@ func getPathItem(subject interface{}, path []interface{}, initBlank bool, lockLe
 		if rKeyType != rSubjectType.Key() {
 			unlock()
 			return nil, errors.New("invalid path item type " +
-			rKeyType.String() + " != " + rSubjectType.Key().String())
+				rKeyType.String() + " != " + rSubjectType.Key().String())
 		}
 
 		// taking subject key item
@@ -459,7 +459,7 @@ func getPathItem(subject interface{}, path []interface{}, initBlank bool, lockLe
 		if rKey.Kind() != reflect.Int {
 			unlock()
 			return nil, errors.New("invalid path item type: " +
-			rKey.Kind().String() + " != Int")
+				rKey.Kind().String() + " != Int")
 		}
 		idx := int(rKey.Int())
 
@@ -486,7 +486,7 @@ func getPathItem(subject interface{}, path []interface{}, initBlank bool, lockLe
 			rSubject = rSubjectItem
 		} else {
 			// checking if new item creation was specified, and we can create it
-			if (!initBlank) {
+			if !initBlank {
 				unlock()
 				return nil, errors.New("invalid index -1 as initBlank = false")
 			}
