@@ -371,12 +371,13 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 		}
 
 		// prevent negative values of grand total
-		if amount+it.calculateAmount < -0.001 {
+		if amount+it.calculateAmount < 0.0 {
 			amount = 0.0 - it.calculateAmount
 		}
 
 		// affecting grand total of a cart
 		amount = utils.RoundPrice(amount)
+
 		it.applyAmount(0, checkout.ConstLabelGrandTotal, amount)
 		totalPriceAdjustmentAmount += amount
 
@@ -395,12 +396,12 @@ func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructP
 			}
 
 			// prevent negative values of grand total per cart
-			if amount+it.calculateAmount < -0.001 {
+			if amount+it.calculateAmount < 0.0 {
 				amount = 0.0 - it.calculateAmount
 			}
 
 			// prevent negative values of grand total per item
-			if amount+currentItemTotal < -0.001 {
+			if amount+currentItemTotal < 0.0 {
 				amount = 0.0 - currentItemTotal
 			}
 
