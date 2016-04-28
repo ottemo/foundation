@@ -68,3 +68,11 @@ func setupConfig() error {
 
 	return nil
 }
+
+func (it Payment) ConfigIsEnabled() bool {
+	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
+}
+
+func (it Payment) ConfigAPIKey() string {
+	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
+}
