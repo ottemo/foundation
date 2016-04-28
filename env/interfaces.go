@@ -173,3 +173,10 @@ type StructConfigItem struct {
 
 	Image string
 }
+
+type ConfigItem struct {
+	Config    StructConfigItem
+	Validator FuncConfigValueValidator
+}
+
+type ConfigList []ConfigItem
