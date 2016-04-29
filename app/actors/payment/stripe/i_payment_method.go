@@ -42,15 +42,17 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
 		Currency: "usd",
 	}
+
+	// Store the email in meta data in case we need to track it later
 	email := utils.InterfaceToString(orderInstance.Get("customer_email"))
 	chargeParams.AddMeta("email", email)
 
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
 	ccNumber := utils.InterfaceToString(ccInfo["number"])
 	ccMonth := utils.InterfaceToString(ccInfo["expire_month"])
 	ccYear := utils.InterfaceToString(ccInfo["expire_year"])
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
+	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
 
 	cardParams := stripe.CardParams{
 		Number: ccNumber,
@@ -68,11 +70,11 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	ch, err := charge.New(chargeParams)
 	if err != nil {
-		env.LogEvent(env.LogFields{"err": err}, "charge error") //TODO: CLEANUP
+		// env.LogEvent(env.LogFields{"err": err}, "charge error") //TODO: CLEANUP
 		return nil, env.ErrorDispatch(err)
 	}
 
-	env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response") //TODO: CLEANUP
+	// env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response") //TODO: CLEANUP
 
 	// Assemble the response information
 	orderPaymentInfo := map[string]interface{}{
