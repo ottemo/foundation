@@ -131,7 +131,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 		if refillAmount, present := ordersUsage[orderID]; present {
 
-			newAmount := utils.InterfaceToFloat64(refillAmount) + utils.InterfaceToFloat64(record["amount"])
+			newAmount := utils.InterfaceToFloat64(record["amount"]) - utils.InterfaceToFloat64(refillAmount)
 
 			// refill gift card amount, change status and orders_used information
 			delete(ordersUsage, orderID)
