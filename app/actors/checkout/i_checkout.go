@@ -697,7 +697,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
 	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
-	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetName()
+	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetInternalName()
 	paymentInfo["gift_cards_charged_amount"] = it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
 	checkoutOrder.Set("payment_info", paymentInfo)
 

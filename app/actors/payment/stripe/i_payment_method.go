@@ -36,62 +36,53 @@ func (it *Payment) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool
 func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	stripe.Key = it.ConfigAPIKey()
 
-	// Create a charge https://stripe.com/docs/api/go#create_charge
+	// Create a charge
+	// https://stripe.com/docs/api/go#create_charge
 	chargeParams := &stripe.ChargeParams{
-		// Amount is in cents
-		Amount:   uint64(orderInstance.GetGrandTotal() * 100),
+		Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
 		Currency: "usd",
-
-		//TODO: Recommendation to pass in the customer email
-		// Meta: map[string]string{
-		// 	email: utils.InterfaceToString(orderInstance.Get("customer_email")),
-		// },
 	}
+	email := utils.InterfaceToString(orderInstance.Get("customer_email"))
+	chargeParams.AddMeta("email", email)
 
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
+	ccNumber := utils.InterfaceToString(ccInfo["number"])
 	ccMonth := utils.InterfaceToString(ccInfo["expire_month"])
 	ccYear := utils.InterfaceToString(ccInfo["expire_year"])
-	ccNumber := utils.InterfaceToString(ccInfo["number"])
-	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
+	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 
 	cardParams := stripe.CardParams{
+		Number: ccNumber,
 		Month:  ccMonth,
 		Year:   ccYear,
-		Number: ccNumber,
-		Name:   ccName,
-		// CVC: "", // Optional, highly recommended, not currently passed up
+		CVC:    ccCVC,  // Optional, highly recommended
+		Name:   ccName, // Optional
 
-		// Address1: "",
-		// Address2: "",
-		// City:     "",
-		// State:    "",
-		// Zip:      "",
-		// Country:  "",
+		// Address fields can be passed here as well to aid in fraud prevention
 	}
 
 	// Must attach either `customer` or `source` to charge
+	// source can be either a `token` or `cardParams`
 	chargeParams.SetSource(&cardParams)
 
 	ch, err := charge.New(chargeParams)
 	if err != nil {
-		env.LogEvent(env.LogFields{"err": err}, "charge error")
-		return nil, err
+		env.LogEvent(env.LogFields{"err": err}, "charge error") //TODO: CLEANUP
+		return nil, env.ErrorDispatch(err)
 	}
 
-	//TODO: comment out?
-	env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response")
+	env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response") //TODO: CLEANUP
 
 	// Assemble the response information
-	//TODO: Normalize keys, and values
 	orderPaymentInfo := map[string]interface{}{
 		"transactionID": ch.ID,
 		"ccLastFour":    ch.Source.Card.LastFour,
 		"ccMonth":       ch.Source.Card.Month,
 		"ccYear":        ch.Source.Card.Year,
-		"ccBrand":       ch.Source.Card.Brand,
+		"ccBrand":       getCCBrand(string(ch.Source.Card.Brand)),
 	}
 
-	// return the response
 	return orderPaymentInfo, nil
 }
 
