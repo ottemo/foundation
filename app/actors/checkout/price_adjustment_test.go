@@ -35,9 +35,9 @@ func TestPriceAdjustments(t *testing.T) {
 		// buy one get one - 150 amount for one product2
 		checkout.StructPriceAdjustment{
 			Code:     "Free item",
-			Name:     checkout.ConstLabelSubtotal,
+			Name:     "one free item",
 			Priority: checkout.ConstCalculateTargetSubtotal,
-			Labels:   []string{checkout.ConstLabelSubtotal},
+			Labels:   []string{checkout.ConstLabelDiscount},
 			PerItem: map[string]float64{
 				"2": -150,
 			},
