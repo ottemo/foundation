@@ -63,7 +63,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 				giftCard := records[0]
 
 				// calculate the amount that will be on cart after apply and add order used record with orderID and amount
-				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) - orderAppliedDiscount.Amount
+				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) + orderAppliedDiscount.Amount
 
 				ordersGiftCardUsedMap := utils.InterfaceToMap(giftCard["orders_used"])
 				ordersGiftCardUsedMap[orderID] = orderAppliedDiscount.Amount
