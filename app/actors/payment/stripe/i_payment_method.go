@@ -5,7 +5,8 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	// stripe "github.com/stripe/stripe-go"
+	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/charge"
 )
 
 func (it *Payment) GetCode() string {
@@ -21,9 +22,7 @@ func (it *Payment) GetName() string {
 }
 
 func (it *Payment) GetType() string {
-	// TODO: NOT SURE
-	// checkout.ConstPaymentTypeCreditCard
-	return ""
+	return checkout.ConstPaymentTypeCreditCard
 }
 
 func (it *Payment) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
@@ -35,7 +34,65 @@ func (it *Payment) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool
 }
 
 func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, nil
+	stripe.Key = it.ConfigAPIKey()
+
+	// Create a charge https://stripe.com/docs/api/go#create_charge
+	chargeParams := &stripe.ChargeParams{
+		// Amount is in cents
+		Amount:   uint64(orderInstance.GetGrandTotal() * 100),
+		Currency: "usd",
+
+		//TODO: Recommendation to pass in the customer email
+		// Meta: map[string]string{
+		// 	email: utils.InterfaceToString(orderInstance.Get("customer_email")),
+		// },
+	}
+
+	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	ccMonth := utils.InterfaceToString(ccInfo["expire_month"])
+	ccYear := utils.InterfaceToString(ccInfo["expire_year"])
+	ccNumber := utils.InterfaceToString(ccInfo["number"])
+	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
+
+	cardParams := stripe.CardParams{
+		Month:  ccMonth,
+		Year:   ccYear,
+		Number: ccNumber,
+		Name:   ccName,
+		// CVC: "", // Optional, highly recommended, not currently passed up
+
+		// Address1: "",
+		// Address2: "",
+		// City:     "",
+		// State:    "",
+		// Zip:      "",
+		// Country:  "",
+	}
+
+	// Must attach either `customer` or `source` to charge
+	chargeParams.SetSource(&cardParams)
+
+	ch, err := charge.New(chargeParams)
+	if err != nil {
+		env.LogEvent(env.LogFields{"err": err}, "charge error")
+		return nil, err
+	}
+
+	//TODO: comment out?
+	env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response")
+
+	// Assemble the response information
+	//TODO: Normalize keys, and values
+	orderPaymentInfo := map[string]interface{}{
+		"transactionID": ch.ID,
+		"ccLastFour":    ch.Source.Card.LastFour,
+		"ccMonth":       ch.Source.Card.Month,
+		"ccYear":        ch.Source.Card.Year,
+		"ccBrand":       ch.Source.Card.Brand,
+	}
+
+	// return the response
+	return orderPaymentInfo, nil
 }
 
 func (it *Payment) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
