@@ -18,7 +18,7 @@ func (it *Payment) GetInternalName() string {
 }
 
 func (it *Payment) GetName() string {
-	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
+	return it.ConfigNameInCheckout()
 }
 
 func (it *Payment) GetType() string {
@@ -54,6 +54,12 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 	ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
 
+	// We are enforcing cvc
+	if ccCVC == "" {
+		err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		return nil, env.ErrorDispatch(err)
+	}
+
 	cardParams := stripe.CardParams{
 		Number: ccNumber,
 		Month:  ccMonth,
@@ -70,11 +76,11 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	ch, err := charge.New(chargeParams)
 	if err != nil {
-		// env.LogEvent(env.LogFields{"err": err}, "charge error") //TODO: CLEANUP
+		// env.LogEvent(env.LogFields{"err": err}, "charge error")
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response") //TODO: CLEANUP
+	// env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response")
 
 	// Assemble the response information
 	orderPaymentInfo := map[string]interface{}{

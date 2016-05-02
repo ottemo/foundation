@@ -76,3 +76,7 @@ func (it Payment) ConfigIsEnabled() bool {
 func (it Payment) ConfigAPIKey() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
 }
+
+func (it Payment) ConfigNameInCheckout() string {
+	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
+}
