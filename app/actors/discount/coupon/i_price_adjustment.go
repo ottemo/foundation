@@ -105,6 +105,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 						}
 					}
 					currentSession.Set(ConstSessionKeyCurrentRedemptions, newRedemptions)
+					continue
 				}
 
 				discountTarget := utils.InterfaceToString(discountCoupon["target"])
@@ -230,7 +231,6 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 						// add this amount to already existing PA (with the same coupon code) or creating new
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 							priceAdjustment.PerItem[index] = utils.RoundPrice(priceAdjustment.PerItem[index] + amount)
-							//							priceAdjustment.Name = updateLabel(priceAdjustment.Name, biggestAppliedDiscount)
 							priceAdjustments[biggestAppliedDiscount.Code] = priceAdjustment
 						} else {
 							couponPriorityValue += float64(0.000001)
@@ -318,7 +318,7 @@ func getCouponApplyQty(productsInCart map[string]int, couponDiscount map[string]
 					result = limitingQty
 				}
 				if result == -1 && limitingQty == -1 {
-					result = 999
+					result = 9999
 				}
 			}
 		}
@@ -351,103 +351,4 @@ func isValidEnd(end interface{}) bool {
 	isValidEnd := (utils.IsZeroTime(couponEnd) || couponEnd.Unix() >= currentTime.Unix())
 
 	return isValidEnd
-}
-
-// getLabel should be used to make good description for label
-// example 'name |20%x3&15$x3|'
-func getLabel(discount discount) string {
-
-	result := discount.Name
-	qty := utils.InterfaceToString(discount.Qty)
-	flag := false
-
-	if discount.Percents != 0 {
-		flag = true
-		result += " |" + utils.InterfaceToString(utils.RoundPrice(discount.Percents)) + "%x" + qty
-	}
-
-	if discount.Amount != 0 {
-		if flag {
-			result += "&"
-		} else {
-			result += " |"
-		}
-
-		result += utils.InterfaceToString(utils.RoundPrice(discount.Amount)) + "$x" + qty
-		flag = true
-	}
-
-	if flag {
-		result += "|"
-	}
-
-	return result
-}
-
-// updateLabel should update label and attach details of discount
-func updateLabel(existingLabel string, discount discount) string {
-
-	if len(existingLabel) == 0 || !strings.Contains(existingLabel, "|") {
-		return getLabel(discount)
-	}
-
-	labelParts := strings.Split(existingLabel, "|")
-
-	if len(labelParts) >= 3 {
-		valuePart := labelParts[len(labelParts)-2]
-
-		if multiplier := strings.Index(valuePart, "x"); multiplier < 0 {
-			return getLabel(discount)
-		}
-
-		dollarAmount := ""
-		percentAmount := ""
-		dollarQty := 0
-		percentQty := 0
-
-		separator := strings.Index(valuePart, "&")
-
-		if index := strings.Index(valuePart, "$x"); index > 0 {
-			dollarQty += utils.InterfaceToInt(valuePart[index:])
-			dollarAmount = valuePart[0 : index+2]
-			if separator > 0 {
-				dollarAmount = valuePart[separator+1 : index+2]
-			}
-		}
-
-		if index := strings.Index(valuePart, "%x"); index > 0 {
-			percentAmount = valuePart[0 : index+2]
-			if separator > index {
-				percentQty += utils.InterfaceToInt(valuePart[index+2 : separator])
-			} else {
-				percentQty += utils.InterfaceToInt(valuePart[index+2:])
-			}
-		}
-
-		if discount.Percents != 0 {
-			percentQty += discount.Qty
-			if percentAmount == "" {
-				percentAmount = utils.InterfaceToString(discount.Percents) + "%x"
-			}
-		}
-
-		if discount.Amount != 0 {
-			dollarQty += discount.Qty
-			if dollarAmount == "" {
-				dollarAmount = utils.InterfaceToString(discount.Amount) + "$x"
-			}
-		}
-
-		if percentAmount != "" && dollarAmount != "" {
-			labelParts[len(labelParts)-2] = percentAmount + utils.InterfaceToString(percentQty) + "&" + dollarAmount + utils.InterfaceToString(dollarQty)
-		} else if percentAmount != "" {
-			labelParts[len(labelParts)-2] = percentAmount + utils.InterfaceToString(percentQty)
-		} else if dollarAmount != "" {
-			labelParts[len(labelParts)-2] = dollarAmount + utils.InterfaceToString(dollarQty)
-		}
-
-		return strings.Join(labelParts, "|")
-	}
-
-	return getLabel(discount)
 }
