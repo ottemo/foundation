@@ -204,13 +204,14 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 						}
 
 						// update used discount and change qty of chosen discount to number of usage
-						discountUsed := 1
-						productDiscounts[biggestAppliedDiscountIndex].Qty--
-						for i < productQty && productDiscounts[biggestAppliedDiscountIndex].Qty > 0 {
-							i++
-							productDiscounts[biggestAppliedDiscountIndex].Qty--
-							discountUsed++
+						discountUsed := productDiscounts[biggestAppliedDiscountIndex].Qty
+						if discountableProductsQty := productQty - i; discountableProductsQty < discountUsed {
+							discountUsed = discountableProductsQty
 						}
+						i += discountUsed - 1
+
+						productDiscounts[biggestAppliedDiscountIndex].Qty -= discountUsed
+
 						biggestAppliedDiscount.Qty = discountUsed
 
 						// remove fully used discount from discounts list
@@ -312,8 +313,12 @@ func getCouponApplyQty(productsInCart map[string]int, couponDiscount map[string]
 			} // end of loop
 
 			if maxLimitValue, present := limitations["max_usage_qty"]; present {
-				if limitingQty := utils.InterfaceToInt(maxLimitValue); limitingQty >= 1 && result > limitingQty {
+				limitingQty := utils.InterfaceToInt(maxLimitValue)
+				if limitingQty > 0 && (result > limitingQty || result == -1) {
 					result = limitingQty
+				}
+				if result == -1 && limitingQty == -1 {
+					result = 999
 				}
 			}
 		}
