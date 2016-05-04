@@ -1,6 +1,7 @@
 package checkout
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -500,38 +501,38 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 }
 
 // APISetPaymentDetails specifies payment details for a current checkout
-func APISetPaymentDetails(context api.InterfaceApplicationContext) (interface{}, error) {
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
+// func APISetPaymentDetails(context api.InterfaceApplicationContext) (interface{}, error) {
+// 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+// 	if err != nil {
+// 		return nil, env.ErrorDispatch(err)
+// 	}
 
-	requestContents, err := api.GetRequestContentAsMap(context)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
+// 	requestContents, err := api.GetRequestContentAsMap(context)
+// 	if err != nil {
+// 		return nil, env.ErrorDispatch(err)
+// 	}
 
-	creditCard, err := checkoutObtainToken(currentCheckout, requestContents)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
+// 	creditCard, err := checkoutObtainToken(currentCheckout, requestContents)
+// 	if err != nil {
+// 		return nil, env.ErrorDispatch(err)
+// 	}
 
-	currentCheckout.SetInfo("cc", creditCard)
+// 	currentCheckout.SetInfo("cc", creditCard)
 
-	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
+// 	// updating session
+// 	checkout.SetCurrentCheckout(context, currentCheckout)
 
-	var result map[string]interface{}
+// 	var result map[string]interface{}
 
-	// hide token ID
-	for key, value := range creditCard.ToHashMap() {
-		if key != "token" {
-			result[key] = value
-		}
-	}
+// 	// hide token ID
+// 	for key, value := range creditCard.ToHashMap() {
+// 		if key != "token" {
+// 			result[key] = value
+// 		}
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
 // APISubmitCheckout submits current checkout and creates a new order base on it
 func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -671,15 +672,20 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	// cc info can be used directly from post body
 	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
 	if specifiedCreditCard == nil {
+		fmt.Println("/submit : cc info is not posted up")
+
 		specifiedCreditCard = currentCheckout.GetInfo("cc")
 		// if credit card was already handled and saved to cc info, we will pass this handling
 		if creditCard, ok := specifiedCreditCard.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
 			specifiedCreditCard = nil
 		}
+		fmt.Println("fetch cc from currentCheckout", specifiedCreditCard)
 	}
 
 	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
 	if specifiedCreditCard != nil {
+		fmt.Println("about to get into obtain token logic")
+
 		// credit card wouldn't be saved to checkout if it's not response to current visitor/payment
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
