@@ -84,11 +84,10 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	// Assemble the response information
 	orderPaymentInfo := map[string]interface{}{
-		"transactionID": ch.ID,
-		"ccLastFour":    ch.Source.Card.LastFour,
-		"ccMonth":       ch.Source.Card.Month,
-		"ccYear":        ch.Source.Card.Year,
-		"ccBrand":       getCCBrand(string(ch.Source.Card.Brand)),
+		"transactionID":     ch.ID,
+		"creditCardNumbers": ch.Source.Card.LastFour,
+		"creditCardExp":     ccMonth + utils.InterfaceToString(ch.Source.Card.Year)[:2], // format mmyy
+		"creditCardType":    getCCBrand(string(ch.Source.Card.Brand)),
 	}
 
 	return orderPaymentInfo, nil
