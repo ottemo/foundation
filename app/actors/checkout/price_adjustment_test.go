@@ -36,7 +36,7 @@ func TestPriceAdjustments(t *testing.T) {
 		checkout.StructPriceAdjustment{
 			Code:     "Free item",
 			Name:     "one free item",
-			Priority: checkout.ConstCalculateTargetSubtotal,
+			Priority: 2.1,
 			Labels:   []string{checkout.ConstLabelDiscount},
 			PerItem: map[string]float64{
 				"2": -150,
@@ -80,8 +80,10 @@ func TestPriceAdjustments(t *testing.T) {
 	debug := false // allows to print values
 
 	currentCheckout := new(DefaultCheckout)
-	// this 'make' prevents from executing of calculate execution
+
+	// prevent from executing of calculate function
 	currentCheckout.calculationDetailTotals = make(map[int]map[string]float64)
+	currentCheckout.calculateFlag = true
 
 	for index, priceAdjustment := range priceAdjustments {
 		currentCheckout.applyPriceAdjustment(priceAdjustment)
@@ -99,6 +101,18 @@ func TestPriceAdjustments(t *testing.T) {
 	}
 	if debug {
 		fmt.Println(currentCheckout.GetPriceAdjustments(""))
+		fmt.Println("Subtotal: ", currentCheckout.GetSubtotal())
+		fmt.Println("Shipping: ", currentCheckout.GetShippingAmount())
+		fmt.Println("Discount: ", currentCheckout.GetDiscountAmount())
+		fmt.Println("Tax: ", currentCheckout.GetTaxAmount())
+
+		fmt.Println("Grandtotal: ", currentCheckout.GetGrandTotal())
+
+	}
+
+	total := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount() + currentCheckout.GetDiscountAmount() + currentCheckout.GetTaxAmount()
+	if total != currentCheckout.GetGrandTotal() {
+		t.Error("Total obteined from adding part elements is not equal to grandtotal")
 	}
 
 	if currentCheckout.calculateAmount < 0 {
