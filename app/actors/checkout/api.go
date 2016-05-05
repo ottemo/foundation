@@ -689,10 +689,12 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		// credit card wouldn't be saved to checkout if it's not response to current visitor/payment
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
+			fmt.Println("checkoutObtainToken - err, just try cc")
 			// in  this case raw cc will be set to checkout info and used by payment method
 			currentCheckout.SetInfo("cc", specifiedCreditCard)
 			env.LogError(err)
 		} else {
+			fmt.Println("checkoutObtainToken - no err, save token")
 			currentCheckout.SetInfo("cc", creditCard)
 		}
 	}
