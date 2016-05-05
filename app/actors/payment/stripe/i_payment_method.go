@@ -49,7 +49,7 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		// NOTE orderInstance = nil when creating a token
 		fmt.Println("Authorize - isCreateToken", isCreateToken)
 
-		c, err := getCustomer(paymentInfo)
+		c, err := createCustomer(paymentInfo)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -114,7 +114,7 @@ func formatCardExp(c stripe.Card) string {
 	return ccExp
 }
 
-func getCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error) {
+func createCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error) {
 
 	// Assemble card params
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
