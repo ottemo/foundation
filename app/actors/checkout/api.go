@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/actors/payment/paypal"
+	"github.com/ottemo/foundation/app/actors/payment/stripe"
 	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
@@ -487,9 +488,14 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		visitorCardModel.Set("visitor_id", currentVisitorID)
 	}
 
+	//TODO: This whole condition should be up top, or maybe even scrapped
+	//
 	// save cc token if using appropriate payment adapter
-	if (visitorCardModel.GetID() != "" || currentVisitorID != "") &&
-		paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode {
+	isPayFlow := paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode
+	isStripe := paymentMethod.GetCode() == stripe.ConstPaymentCode
+	hasOldCard := visitorCardModel.GetID() != ""
+	isLoggedIn := currentVisitorID != "" // TODO: already has a short circuit above
+	if (hasOldCard || isLoggedIn) && (isPayFlow || isStripe) {
 
 		err = visitorCardModel.Save()
 		if err != nil {
@@ -689,7 +695,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		// credit card wouldn't be saved to checkout if it's not response to current visitor/payment
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
-			fmt.Println("checkoutObtainToken - err, just try cc")
+			fmt.Println("checkoutObtainToken - err, just try cc", err)
 			// in  this case raw cc will be set to checkout info and used by payment method
 			currentCheckout.SetInfo("cc", specifiedCreditCard)
 			env.LogError(err)
