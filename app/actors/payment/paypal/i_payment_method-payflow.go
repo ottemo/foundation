@@ -171,15 +171,11 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
 		"TRANSACTIONID - "+orderTransactionID)
 
-	// comes back as `mmyy`
-	ccMonth, _ := utils.StringToInteger(responseValues.Get("EXPDATE")[:2])
-	ccYear, _ := utils.StringToInteger("20" + responseValues.Get("EXPDATE")[2:])
 	orderPaymentInfo := map[string]interface{}{
-		"transactionID": orderTransactionID,
-		"ccLastFour":    responseValues.Get("ACCT"),
-		"ccMonth":       ccMonth,
-		"ccYear":        ccYear,
-		"ccBrand":       getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE"))),
+		"transactionID":     orderTransactionID,
+		"creditCardNumbers": responseValues.Get("ACCT"),
+		"creditCardExp":     responseValues.Get("EXPDATE"), // format: mmyy
+		"creditCardType":    getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE"))),
 	}
 
 	// id presense in credit card means it was saved so we can update token for it
