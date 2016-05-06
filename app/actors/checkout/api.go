@@ -445,6 +445,11 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
+		"extra": map[string]interface{}{
+			"email":             currentVisitor.GetEmail(),
+			"billing_full_name": "adam KNOX", //TODO:
+			"visitor_id":        currentVisitorID,
+		},
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
@@ -469,9 +474,10 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	// TODO: payment should have interface method that return predefined struct for 0 authorize
 	creditCardInfo["token_id"] = authorizeCardResult["transactionID"]
 	creditCardInfo["payment"] = paymentMethod.GetCode()
+	creditCardInfo["customer_id"] = authorizeCardResult["customerID"]
 	creditCardInfo["type"] = authorizeCardResult["creditCardType"]
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
-	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
+	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"] // mmyy
 	creditCardInfo["token_updated"] = time.Now()
 	creditCardInfo["created_at"] = time.Now()
 

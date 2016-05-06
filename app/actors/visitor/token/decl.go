@@ -33,7 +33,8 @@ type DefaultVisitorCard struct {
 	CreatedAt    time.Time
 	TokenUpdated time.Time
 
-	tokenID string
+	tokenID    string
+	customerID string
 }
 
 // DefaultVisitorCardCollection is a default implementer of InterfaceVisitorCardCollection

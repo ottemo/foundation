@@ -193,6 +193,25 @@ func LoadVisitorCardByID(visitorCardID string) (InterfaceVisitorCard, error) {
 	return visitorCardModel, nil
 }
 
+// LoadByVID returns a list based on ottemo.visitor_id
+func LoadByVID(vid string) []models.StructListItem {
+	model, _ := GetVisitorCardCollectionModel()
+	model.ListFilterAdd("visitor_id", "=", vid)
+
+	// 3rd party customer identifier, used by stripe
+	err := model.ListAddExtraAttribute("customer_id")
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	resp, err := model.List()
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	return resp
+}
+
 // GetVisitorCardModelAndSetID retrieves current InterfaceVisitorCard model implementation and sets its ID
 func GetVisitorCardModelAndSetID(visitorCardID string) (InterfaceVisitorCard, error) {
 

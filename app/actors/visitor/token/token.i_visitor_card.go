@@ -45,6 +45,11 @@ func (it *DefaultVisitorCard) GetToken() string {
 	return it.tokenID
 }
 
+// GetCustomerID will return the customer_id field of the Visitor Card
+func (it *DefaultVisitorCard) GetCustomerID() string {
+	return it.customerID
+}
+
 // IsExpired will return Expired status of the Visitor Card
 func (it *DefaultVisitorCard) IsExpired() bool {
 	current := time.Now()

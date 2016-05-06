@@ -17,6 +17,8 @@ func (it *DefaultVisitorCard) Get(attribute string) interface{} {
 		return it.visitorID
 	case "token_id":
 		return it.tokenID
+	case "customer_id":
+		return it.customerID
 	case "holder":
 		return it.Holder
 	case "payment":
@@ -47,6 +49,9 @@ func (it *DefaultVisitorCard) Set(attribute string, value interface{}) error {
 
 	case "token_id":
 		it.tokenID = utils.InterfaceToString(value)
+
+	case "customer_id":
+		it.customerID = utils.InterfaceToString(value)
 
 	case "holder":
 		it.Holder = utils.InterfaceToString(value)
@@ -96,7 +101,6 @@ func (it *DefaultVisitorCard) ToHashMap() map[string]interface{} {
 	result := make(map[string]interface{})
 
 	result["_id"] = it.id
-
 	result["visitor_id"] = it.visitorID
 
 	result["holder"] = it.Holder
@@ -104,9 +108,11 @@ func (it *DefaultVisitorCard) ToHashMap() map[string]interface{} {
 	result["type"] = it.Type
 	result["number"] = it.Number
 	result["expiration_date"] = it.ExpirationDate
-	result["token_id"] = it.tokenID
 	result["created_at"] = it.CreatedAt
 	result["token_updated"] = it.TokenUpdated
+
+	result["token_id"] = it.tokenID
+	result["customer_id"] = it.customerID
 
 	return result
 }
