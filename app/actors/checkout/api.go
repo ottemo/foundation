@@ -446,9 +446,8 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
 		"extra": map[string]interface{}{
-			"email":             currentVisitor.GetEmail(),
-			"billing_full_name": "adam KNOX", //TODO:
-			"visitor_id":        currentVisitorID,
+			"email":      currentVisitor.GetEmail(),
+			"visitor_id": currentVisitorID,
 		},
 	}
 

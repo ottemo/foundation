@@ -1,16 +1,17 @@
 package stripe
 
 import (
-	"fmt"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/card"
 	"github.com/stripe/stripe-go/charge"
 	"github.com/stripe/stripe-go/customer"
+
 	"strings"
 )
 
@@ -35,9 +36,7 @@ func (it *Payment) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 }
 
 func (it *Payment) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
-	isTokenable := true
-	fmt.Println("stripe - isTokenable called", isTokenable)
-	return isTokenable
+	return true
 }
 
 func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
@@ -91,7 +90,6 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		if creditCard, ok := ccInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
 			cardID = creditCard.GetToken()
 			stripeCID = creditCard.GetCustomerID()
-			fmt.Println("cardID: ", cardID, "stripeCID: ", stripeCID)
 		}
 	}
 	if cardID == "" || stripeCID == "" {
@@ -104,7 +102,6 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		Currency: "usd",
 		Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
 		Customer: stripeCID,                                   // Mandatory
-		Email:    utils.InterfaceToString(orderInstance.Get("customer_email")),
 	}
 	chParams.SetSource(cardID)
 	ch, err := charge.New(&chParams)
@@ -153,15 +150,15 @@ func createCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error)
 }
 
 func createCard(stripeCID string, paymentInfo map[string]interface{}) (stripe.Card, error) {
-
 	// Assemble card params
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	// extra := utils.InterfaceToMap(paymentInfo["extra"])
+
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 	if ccCVC == "" {
 		err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
 		return stripe.Card{}, err
 	}
-	// ccName := orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
 
 	c, err := card.New(&stripe.CardParams{
 		Customer: stripeCID,
@@ -169,7 +166,7 @@ func createCard(stripeCID string, paymentInfo map[string]interface{}) (stripe.Ca
 		Month:    utils.InterfaceToString(ccInfo["expire_month"]),
 		Year:     utils.InterfaceToString(ccInfo["expire_year"]),
 		CVC:      ccCVC, // Optional, highly recommended
-		// Name:   ccName, // Optional
+		// Name:     ,   // Optional
 		// Address fields can be passed here as well to aid in fraud prevention
 	})
 	if err != nil {
