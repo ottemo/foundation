@@ -56,7 +56,10 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		if stripeCID == "" {
 
 			// 2. We don't have a stripe id on file, make a new customer
-			c, err := createCustomer(paymentInfo)
+			c, err := customer.New(&stripe.CustomerParams{
+				Email: utils.InterfaceToString(extra["email"]),
+				// TODO: coupons?
+			})
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
@@ -173,22 +176,10 @@ func formatCardExp(c stripe.Card) string {
 	return ccExp
 }
 
-func createCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error) {
-	extra := utils.InterfaceToMap(paymentInfo["extra"])
-
-	c, err := customer.New(&stripe.CustomerParams{
-		Email: utils.InterfaceToString(extra["email"]),
-		// TODO: coupons?
-	})
-	if err != nil {
-		return stripe.Customer{}, err
-	}
-
-	// env.LogEvent(env.LogFields{"api_response": c}, "customer") // TODO: COMMENT OUT
-
-	return *c, nil
-}
-
+// getCardParams Assemble the stripe.CardParams based on the ccInfo we have
+// - validates cvc
+// - optionally sets customer id
+// - optionally sets name from ccInfo["billing_name"]
 func getCardParams(ccInfo map[string]interface{}, stripeCID string) (*stripe.CardParams, error) {
 
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
@@ -213,6 +204,10 @@ func getCardParams(ccInfo map[string]interface{}, stripeCID string) (*stripe.Car
 	return cp, nil
 }
 
+// getStripeCustomerToken We attach customer tokens to card tokens in the visitor_token table
+// - the customer token is sensitive data because you can make a charge with it alone
+// - if you are going to make a charge against a card that is attached to a customer though,
+//   you must attach the customer id
 func getStripeCustomerToken(vid string) string {
 	const customerTokenPrefix = "cus"
 
