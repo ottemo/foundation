@@ -7,8 +7,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"github.com/ottemo/foundation/app/actors/payment/paypal"
-	"github.com/ottemo/foundation/app/actors/payment/stripe"
 	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
@@ -412,6 +410,7 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 // checkoutObtainToken is an internal usage function used to create or load credit card for visitor
 func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardInfo map[string]interface{}) (visitor.InterfaceVisitorCard, error) {
 
+	// make sure we have a visitor
 	currentVisitor := currentCheckout.GetVisitor()
 	currentVisitorID := ""
 	if currentVisitor != nil {
@@ -422,8 +421,8 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return nil, err
 	}
 
-	// checking for address id was specified, if it was - making sure it correct
-	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); currentVisitorID != "" && creditCardID != nil {
+	// if we were passed a token rowID, make sure it belongs to the user
+	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); creditCardID != nil {
 
 		// loading specified credit card by id
 		visitorCard, err := visitor.LoadVisitorCardByID(utils.InterfaceToString(creditCardID))
@@ -439,6 +438,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return visitorCard, nil
 	}
 
+	// we weren't passed a token, start generating one
 	paymentMethod := currentCheckout.GetPaymentMethod()
 	if !paymentMethod.IsTokenable(currentCheckout) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5b05cc24-2184-47cc-b2dc-77cb41035698", "for selected payment method credit card can't be saved")
@@ -498,23 +498,11 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	}
 
 	// setting credit card owner to current visitor (for sure)
-	if currentVisitorID != "" {
-		visitorCardModel.Set("visitor_id", currentVisitorID)
-	}
+	visitorCardModel.Set("visitor_id", currentVisitorID)
 
-	//TODO: This whole condition should be up top, or maybe even scrapped
-	//
-	// save cc token if using appropriate payment adapter
-	isPayFlow := paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode
-	isStripe := paymentMethod.GetCode() == stripe.ConstPaymentCode
-	hasOldCard := visitorCardModel.GetID() != ""
-	isLoggedIn := currentVisitorID != "" // TODO: already has a short circuit above
-	if (hasOldCard || isLoggedIn) && (isPayFlow || isStripe) {
-
-		err = visitorCardModel.Save()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	err = visitorCardModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return visitorCardModel, nil
