@@ -21,6 +21,7 @@ func setupAPI() error {
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
+	service.GET("order/:orderID/sendStatusEmail", api.IsAdmin(APISendStatusEmail))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitOrders)
@@ -92,6 +93,20 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	result["items"] = orderModel.GetItems()
 	return result, nil
+}
+
+func APISendStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
+	orderID := context.GetRequestArgument("orderID")
+	orderModel, err := order.LoadOrderByID(orderID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	err = orderModel.SendShippingStatusUpdateEmail()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return "sent", nil
 }
 
 // APIUpdateOrder update existing purchase order
