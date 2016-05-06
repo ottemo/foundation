@@ -65,7 +65,14 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		}
 
 		// 3. Create a card
-		ca, err := createCard(stripeCID, paymentInfo)
+		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+		cp, err := getCardParams(ccInfo, stripeCID)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		ca, err := card.New(cp)
+		env.LogEvent(env.LogFields{"api_response": ca, "err": err}, "card")
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -76,40 +83,73 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 			"transactionID":      ca.ID,                        // token_id
 			"creditCardLastFour": ca.LastFour,                  // number
 			"creditCardType":     getCCBrand(string(ca.Brand)), // type
-			"creditCardExp":      formatCardExp(ca),            // expiration_date
+			"creditCardExp":      formatCardExp(*ca),           // expiration_date
 			"customerID":         stripeCID,                    // customer_id
 		}
 
 		return result, nil
 	}
 
-	// We are not creating a token, so we are charging against a token
-	cardID := ""
-	stripeCID := ""
-	if ccInfo, present := paymentInfo["cc"]; present {
-		if creditCard, ok := ccInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
-			cardID = creditCard.GetToken()
-			stripeCID = creditCard.GetCustomerID()
+	// Charging: https://stripe.com/docs/api/go#create_charge
+	var ch *stripe.Charge
+	ccInfo := paymentInfo["cc"]
+
+	// Token Charge
+	// - we have a Customer, and a Card
+	// - create a Charge with the Card as the Source
+	// - must reference Customer
+	// - email is stored on the Customer
+	if creditCard, ok := ccInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
+		var err error
+		cardID := creditCard.GetToken()
+		stripeCID := creditCard.GetCustomerID()
+
+		if cardID == "" || stripeCID == "" {
+			err := env.ErrorNew(ConstErrorModule, 1, "02128bc6-83d6-4c12-ae90-900a94adb3ad", "looks like we want to charge a token, but we don't have the fields we need")
+			return nil, env.ErrorDispatch(err)
+		}
+
+		chParams := stripe.ChargeParams{
+			Currency: "usd",
+			Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
+			Customer: stripeCID,                                   // Mandatory
+		}
+		chParams.SetSource(cardID)
+
+		ch, err = charge.New(&chParams)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+	} else {
+		// Regular Charge
+		// - don't create a customer, or store a token
+		// - email is stored on the charge's meta hashmap
+		var err error
+		chargeParams := stripe.ChargeParams{
+			Currency: "usd",
+			Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
+		}
+		chargeParams.AddMeta("email", utils.InterfaceToString(orderInstance.Get("customer_email")))
+
+		// Must attach either `customer` or `source` to charge
+		// source can be either a `token` or `cardParams`
+		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+		ccInfo["billing_name"] = orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
+
+		cp, err := getCardParams(ccInfo, "")
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+		chargeParams.SetSource(cp)
+
+		ch, err = charge.New(&chargeParams)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
 	}
-	if cardID == "" || stripeCID == "" {
-		err := env.ErrorNew(ConstErrorModule, 1, "02128bc6-83d6-4c12-ae90-900a94adb3ad", "Stripe Authorize called without valid tokens")
-		return nil, env.ErrorDispatch(err)
-	}
 
-	// Assemble charge - https://stripe.com/docs/api/go#create_charge
-	chParams := stripe.ChargeParams{
-		Currency: "usd",
-		Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
-		Customer: stripeCID,                                   // Mandatory
-	}
-	chParams.SetSource(cardID)
-	ch, err := charge.New(&chParams)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// env.LogEvent(env.LogFields{"api_response": ch}, "charge")
+	env.LogEvent(env.LogFields{"api_response": ch}, "charge")
 
 	// Assemble the response
 	orderPaymentInfo := map[string]interface{}{
@@ -149,34 +189,28 @@ func createCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error)
 	return *c, nil
 }
 
-func createCard(stripeCID string, paymentInfo map[string]interface{}) (stripe.Card, error) {
-	// Assemble card params
-	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-	// extra := utils.InterfaceToMap(paymentInfo["extra"])
+func getCardParams(ccInfo map[string]interface{}, stripeCID string) (*stripe.CardParams, error) {
 
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 	if ccCVC == "" {
 		err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
-		return stripe.Card{}, err
+		return &stripe.CardParams{}, err
 	}
 
-	c, err := card.New(&stripe.CardParams{
+	cp := &stripe.CardParams{
+		Number: utils.InterfaceToString(ccInfo["number"]),
+		Month:  utils.InterfaceToString(ccInfo["expire_month"]),
+		Year:   utils.InterfaceToString(ccInfo["expire_year"]),
+		CVC:    ccCVC, // Optional, highly recommended
+
+		// might not be passed in
 		Customer: stripeCID,
-		Number:   utils.InterfaceToString(ccInfo["number"]),
-		Month:    utils.InterfaceToString(ccInfo["expire_month"]),
-		Year:     utils.InterfaceToString(ccInfo["expire_year"]),
-		CVC:      ccCVC, // Optional, highly recommended
-		// Name:     ,   // Optional
+		Name:     utils.InterfaceToString(ccInfo["billing_name"]), // Optional
+
 		// Address fields can be passed here as well to aid in fraud prevention
-	})
-	if err != nil {
-		return stripe.Card{}, err
 	}
 
-	env.LogEvent(env.LogFields{"api_response": c}, "card")
-
-	// dereference the pointer
-	return *c, nil
+	return cp, nil
 }
 
 func getStripeCustomerToken(vid string) string {

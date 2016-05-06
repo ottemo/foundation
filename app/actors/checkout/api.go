@@ -418,6 +418,10 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	if currentVisitor != nil {
 		currentVisitorID = currentVisitor.GetID()
 	}
+	if currentVisitorID == "" {
+		err := env.ErrorNew(ConstErrorModule, 10, "c9e46525-77f6-4add-b286-efeb8a63f4d1", "user not logged in, don't attempt to save a token")
+		return nil, err
+	}
 
 	// checking for address id was specified, if it was - making sure it correct
 	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); currentVisitorID != "" && creditCardID != nil {
