@@ -1,7 +1,6 @@
 package checkout
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -687,29 +686,22 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	// cc info can be used directly from post body
 	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
 	if specifiedCreditCard == nil {
-		fmt.Println("/submit : cc info is not posted up")
-
 		specifiedCreditCard = currentCheckout.GetInfo("cc")
 		// if credit card was already handled and saved to cc info, we will pass this handling
 		if creditCard, ok := specifiedCreditCard.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
 			specifiedCreditCard = nil
 		}
-		fmt.Println("fetch cc from currentCheckout", specifiedCreditCard)
 	}
 
 	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
 	if specifiedCreditCard != nil {
-		fmt.Println("about to get into obtain token logic")
-
 		// credit card wouldn't be saved to checkout if it's not response to current visitor/payment
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
-			fmt.Println("checkoutObtainToken - err, just try cc", err)
 			// in  this case raw cc will be set to checkout info and used by payment method
 			currentCheckout.SetInfo("cc", specifiedCreditCard)
 			env.LogError(err)
 		} else {
-			fmt.Println("checkoutObtainToken - no err, save token")
 			currentCheckout.SetInfo("cc", creditCard)
 		}
 	}

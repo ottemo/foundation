@@ -72,7 +72,7 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		}
 
 		ca, err := card.New(cp)
-		env.LogEvent(env.LogFields{"api_response": ca, "err": err}, "card")
+		// env.LogEvent(env.LogFields{"api_response": ca, "err": err}, "card")
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -149,7 +149,7 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		}
 	}
 
-	env.LogEvent(env.LogFields{"api_response": ch}, "charge")
+	// env.LogEvent(env.LogFields{"api_response": ch}, "charge")
 
 	// Assemble the response
 	orderPaymentInfo := map[string]interface{}{
@@ -184,7 +184,7 @@ func createCustomer(paymentInfo map[string]interface{}) (stripe.Customer, error)
 		return stripe.Customer{}, err
 	}
 
-	env.LogEvent(env.LogFields{"api_response": c}, "customer") // TODO: COMMENT OUT
+	// env.LogEvent(env.LogFields{"api_response": c}, "customer") // TODO: COMMENT OUT
 
 	return *c, nil
 }
@@ -222,7 +222,7 @@ func getStripeCustomerToken(vid string) string {
 	}
 
 	tokens := visitor.LoadByVID(vid)
-	env.LogEvent(env.LogFields{"token_list": tokens, "vid": vid}, "get customer token")
+	// env.LogEvent(env.LogFields{"token_list": tokens, "vid": vid}, "get customer token")
 	for _, t := range tokens {
 		ts := utils.InterfaceToString(t.Extra["customer_id"])
 
