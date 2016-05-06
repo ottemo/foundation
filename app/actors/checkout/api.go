@@ -444,13 +444,19 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5b05cc24-2184-47cc-b2dc-77cb41035698", "for selected payment method credit card can't be saved")
 	}
 
+	billingName := ""
+	if add := currentCheckout.GetBillingAddress(); add != nil {
+		billingName = add.GetFirstName() + " " + add.GetLastName()
+	}
+
 	// put required key to create token from payment method using only zero amount authorize
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
 		"extra": map[string]interface{}{
-			"email":      currentVisitor.GetEmail(),
-			"visitor_id": currentVisitorID,
+			"email":        currentVisitor.GetEmail(),
+			"visitor_id":   currentVisitorID,
+			"billing_name": billingName,
 		},
 	}
 

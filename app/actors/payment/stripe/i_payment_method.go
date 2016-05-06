@@ -69,6 +69,7 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 		// 3. Create a card
 		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+		ccInfo["billing_name"] = extra["billing_name"]
 		cp, err := getCardParams(ccInfo, stripeCID)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
