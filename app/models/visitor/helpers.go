@@ -193,8 +193,11 @@ func LoadVisitorCardByID(visitorCardID string) (InterfaceVisitorCard, error) {
 	return visitorCardModel, nil
 }
 
-// LoadByVID returns a list based on ottemo.visitor_id
-func LoadByVID(vid string) []models.StructListItem {
+// LoadVisitorCardByVID returns a list of cards belonging to the visitor
+// includes the `customer_id` field, which is a customer token
+// that can be used to charge the default card associated with the customer
+// in stripe
+func LoadVisitorCardByVID(vid string) []models.StructListItem {
 	model, _ := GetVisitorCardCollectionModel()
 	model.ListFilterAdd("visitor_id", "=", vid)
 

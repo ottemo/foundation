@@ -230,7 +230,7 @@ func getStripeCustomerToken(vid string) string {
 		return ""
 	}
 
-	tokens := visitor.LoadByVID(vid)
+	tokens := visitor.LoadVisitorCardByVID(vid)
 	// env.LogEvent(env.LogFields{"token_list": tokens, "vid": vid}, "get customer token")
 	for _, t := range tokens {
 		ts := utils.InterfaceToString(t.Extra["customer_id"])
