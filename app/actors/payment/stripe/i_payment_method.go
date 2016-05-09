@@ -139,7 +139,10 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		// Must attach either `customer` or `source` to charge
 		// source can be either a `token` or `cardParams`
 		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-		ccInfo["billing_name"] = orderInstance.GetBillingAddress().GetFirstName() + " " + orderInstance.GetBillingAddress().GetLastName()
+
+		if ba := orderInstance.GetBillingAddress(); ba != nil {
+			ccInfo["billing_name"] = ba.GetFirstName() + " " + ba.GetLastName()
+		}
 
 		cp, err := getCardParams(ccInfo, "")
 		if err != nil {
