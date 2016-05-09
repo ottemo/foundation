@@ -169,15 +169,25 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	return orderPaymentInfo, nil
 }
 
-// returns mmyy
+// returns string of mmyy
 func formatCardExp(c stripe.Card) string {
-	ccExp := utils.InterfaceToString(c.Month)
-	if c.Month < 10 {
-		ccExp = "0" + ccExp
-	}
-	ccExp = ccExp + utils.InterfaceToString(c.Year)[:2]
+	exp := utils.InterfaceToString(c.Month)
 
-	return ccExp
+	// pad with a zero
+	if c.Month < 10 {
+		exp = "0" + exp
+	}
+
+	// append the last two year digits
+	y := utils.InterfaceToString(c.Year)
+	if len(y) == 4 {
+		exp = exp + y[:2]
+	} else {
+		err := env.ErrorNew(ConstErrorModule, 1, "0a17b25a-4155-487a-82ad-dfb4b654eba8", "unexpected year length coming back from stripe "+y)
+		env.ErrorDispatch(err)
+	}
+
+	return exp
 }
 
 // getCardParams Assemble the stripe.CardParams based on the ccInfo we have
