@@ -76,11 +76,8 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	ch, err := charge.New(chargeParams)
 	if err != nil {
-		// env.LogEvent(env.LogFields{"err": err}, "charge error")
 		return nil, env.ErrorDispatch(err)
 	}
-
-	// env.LogEvent(env.LogFields{"chargeResponse": ch}, "charge response")
 
 	// Assemble the response information
 	orderPaymentInfo := map[string]interface{}{
