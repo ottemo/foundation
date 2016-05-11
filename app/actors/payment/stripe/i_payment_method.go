@@ -237,8 +237,20 @@ func getStripeCustomerToken(vid string) string {
 		return ""
 	}
 
-	tokens := visitor.LoadVisitorCardByVID(vid)
-	// env.LogEvent(env.LogFields{"token_list": tokens, "vid": vid}, "get customer token")
+	model, _ := visitor.GetVisitorCardCollectionModel()
+	model.ListFilterAdd("visitor_id", "=", vid)
+
+	// 3rd party customer identifier, used by stripe
+	err := model.ListAddExtraAttribute("customer_id")
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	tokens, err := model.List()
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
 	for _, t := range tokens {
 		ts := utils.InterfaceToString(t.Extra["customer_id"])
 

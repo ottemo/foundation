@@ -193,28 +193,6 @@ func LoadVisitorCardByID(visitorCardID string) (InterfaceVisitorCard, error) {
 	return visitorCardModel, nil
 }
 
-// LoadVisitorCardByVID returns a list of cards belonging to the visitor
-// includes the `customer_id` field, which is a customer token
-// that can be used to charge the default card associated with the customer
-// in stripe
-func LoadVisitorCardByVID(vid string) []models.StructListItem {
-	model, _ := GetVisitorCardCollectionModel()
-	model.ListFilterAdd("visitor_id", "=", vid)
-
-	// 3rd party customer identifier, used by stripe
-	err := model.ListAddExtraAttribute("customer_id")
-	if err != nil {
-		env.ErrorDispatch(err)
-	}
-
-	resp, err := model.List()
-	if err != nil {
-		env.ErrorDispatch(err)
-	}
-
-	return resp
-}
-
 // GetVisitorCardModelAndSetID retrieves current InterfaceVisitorCard model implementation and sets its ID
 func GetVisitorCardModelAndSetID(visitorCardID string) (InterfaceVisitorCard, error) {
 
