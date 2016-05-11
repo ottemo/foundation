@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -13,7 +14,6 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"strings"
 )
 
 // SetShippingAddress sets shipping address for checkout

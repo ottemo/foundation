@@ -219,15 +219,29 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 		return false
 	}
 
-	if len(mapA) == 0 {
-		return true
-	}
-
 	for key, valueA := range mapA {
 		if valueB, present := mapB[key]; present {
 			switch valueA.(type) {
-			case string, int, int32, int64, float32, float64, uint, uint32, uint64, complex64, complex128:
-				return valueA == valueB
+			case []interface{}:
+				typedValueA, okA := valueA.([]interface{})
+				typedValueB, okB := valueB.([]interface{})
+
+				if okA && okB {
+					for _, itemA := range typedValueA {
+						found := false
+						for _, itemB := range typedValueB {
+							if itemA == itemB {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return false
+						}
+					}
+					return true
+				}
+				return false
 
 			case map[string]interface{}:
 				typedValueA, okA := valueA.(map[string]interface{})
@@ -239,14 +253,16 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 				return false
 
 			default:
-				return valueA == valueB
+				if valueA != valueB {
+					return false
+				}
 			}
 		} else {
-			break
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 // EscapeRegexSpecials returns regular expression special characters escaped value

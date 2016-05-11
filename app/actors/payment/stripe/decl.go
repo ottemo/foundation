@@ -1,5 +1,6 @@
 package stripe
 
+// Stripe package constants
 const (
 	ConstPaymentCode = "stripe"
 	ConstPaymentName = "Stripe"
@@ -12,4 +13,5 @@ const (
 	ConstErrorModule = "payment/stripe"
 )
 
+// Payment is the struct to hold the payment information for a visitor's order
 type Payment struct{}

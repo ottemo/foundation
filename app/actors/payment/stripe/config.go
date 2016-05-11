@@ -63,14 +63,17 @@ func setupConfig() error {
 	return nil
 }
 
+// ConfigIsEnabled is a flag to enable/disable this payment module
 func (it Payment) ConfigIsEnabled() bool {
 	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
 }
 
+// ConfigAPIKey is a method that returns the API Key from the db
 func (it Payment) ConfigAPIKey() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
 }
 
+// ConfigNameInCheckout is a method that returns the payment method name to be used in checkout
 func (it Payment) ConfigNameInCheckout() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
 }
