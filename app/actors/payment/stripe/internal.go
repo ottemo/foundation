@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// getCCBrand Standardize the cc brand
 func getCCBrand(ccBrand string) string {
 	switch ccBrand {
 	case "Visa":
