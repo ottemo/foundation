@@ -35,7 +35,6 @@ func setupAPI() error {
 	service.PUT("checkout", APISetCheckoutInfo)
 	service.POST("checkout/submit", APISubmitCheckout)
 
-	// service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 	return nil
 }
 
@@ -507,40 +506,6 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 
 	return visitorCardModel, nil
 }
-
-// APISetPaymentDetails specifies payment details for a current checkout
-// func APISetPaymentDetails(context api.InterfaceApplicationContext) (interface{}, error) {
-// 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
-// 	if err != nil {
-// 		return nil, env.ErrorDispatch(err)
-// 	}
-
-// 	requestContents, err := api.GetRequestContentAsMap(context)
-// 	if err != nil {
-// 		return nil, env.ErrorDispatch(err)
-// 	}
-
-// 	creditCard, err := checkoutObtainToken(currentCheckout, requestContents)
-// 	if err != nil {
-// 		return nil, env.ErrorDispatch(err)
-// 	}
-
-// 	currentCheckout.SetInfo("cc", creditCard)
-
-// 	// updating session
-// 	checkout.SetCurrentCheckout(context, currentCheckout)
-
-// 	var result map[string]interface{}
-
-// 	// hide token ID
-// 	for key, value := range creditCard.ToHashMap() {
-// 		if key != "token" {
-// 			result[key] = value
-// 		}
-// 	}
-
-// 	return result, nil
-// }
 
 // APISubmitCheckout submits current checkout and creates a new order base on it
 func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, error) {
