@@ -1,5 +1,12 @@
 package stripe
 
+import (
+	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+	"strings"
+)
+
 func getCCBrand(ccBrand string) string {
 	switch ccBrand {
 	case "Visa":
