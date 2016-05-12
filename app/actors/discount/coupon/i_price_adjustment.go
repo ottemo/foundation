@@ -184,25 +184,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 						var biggestAppliedDiscountIndex int
 
 						// looking for biggest applicable discount for current item
-						for index, productDiscount := range productDiscounts {
-							if (productDiscount.Qty) > 0 {
-								productDiscountableAmount := productDiscount.Amount + productPrice*productDiscount.Percents/100
-
-								// if we have discount that is bigger then a price we will apply it
-								if productDiscountableAmount > productPrice {
-									biggestAppliedDiscount = productDiscount
-									biggestAppliedDiscount.Total = productPrice
-									biggestAppliedDiscountIndex = index
-									break
-								}
-
-								if biggestAppliedDiscount.Total < productDiscountableAmount {
-									biggestAppliedDiscount = productDiscount
-									biggestAppliedDiscount.Total = productDiscountableAmount
-									biggestAppliedDiscountIndex = index
-								}
-							}
-						}
+						biggestAppliedDiscount, biggestAppliedDiscountIndex = findBiggestDiscount(productDiscounts, productPrice)
 
 						// update used discount and change qty of chosen discount to number of usage
 						discountUsed := productDiscounts[biggestAppliedDiscountIndex].Qty
@@ -258,6 +240,36 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 	}
 
 	return result
+}
+
+//finds biggest discount amount if applied more than one coupon
+func findBiggestDiscount(discounts []discount, total float64) (discount, int){
+
+	var biggestAppliedDiscount discount
+	var biggestAppliedDiscountIndex int
+
+	// looking for biggest applicable discount for current item
+	for index, discount := range discounts {
+		if (discount.Qty) > 0 {
+			productDiscountableAmount := discount.Amount + total*discount.Percents/100
+
+			// if we have discount that is bigger then a price we will apply it
+			if productDiscountableAmount > total {
+				biggestAppliedDiscount = discount
+				biggestAppliedDiscount.Total = total
+				biggestAppliedDiscountIndex = index
+				break
+			}
+
+			if biggestAppliedDiscount.Total < productDiscountableAmount {
+				biggestAppliedDiscount = discount
+				biggestAppliedDiscount.Total = productDiscountableAmount
+				biggestAppliedDiscountIndex = index
+			}
+		}
+	}
+
+	return biggestAppliedDiscount, biggestAppliedDiscountIndex
 }
 
 // check coupon limitation parameters for correspondence to current checkout values
