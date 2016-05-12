@@ -5,7 +5,7 @@ import "github.com/ottemo/foundation/env"
 // Package constants for Whatcounts module
 const (
 	ConstErrorModule = "whatcounts"
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	ConstErrorLevel  = env.ConstErrorLevelStartStop
 
 	ConstWhatcountsSubscribeStatus = "subscribed"
 
