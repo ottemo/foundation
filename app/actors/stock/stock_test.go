@@ -1,10 +1,10 @@
 package stock_test
 
 import (
-	"github.com/ottemo/foundation/tests"
-	"github.com/ottemo/foundation/utils"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/tests"
+	"github.com/ottemo/foundation/utils"
 
 	"testing"
 )
@@ -13,15 +13,15 @@ func TestStock(t *testing.T) {
 	err := tests.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
-		return;
+		return
 	}
 
 	if config := env.GetConfig(); config != nil {
 		if config.GetValue("general.stock.enabled") != true {
-			err := env.GetConfig().SetValue("general.stock.enabled", true);
+			err := env.GetConfig().SetValue("general.stock.enabled", true)
 			if err != nil {
 				t.Error(err)
-				return;
+				return
 			}
 		}
 	}
@@ -58,50 +58,50 @@ func TestStock(t *testing.T) {
 	}`)
 	if err != nil {
 		t.Error(err)
-		return;
+		return
 	}
 
 	productModel, err := product.GetProductModel()
 	if err != nil {
 		t.Error(err)
-		return;
+		return
 	}
 
 	err = productModel.FromHashMap(productData)
 	if err != nil {
 		t.Error(err)
-		return;
+		return
 	}
 
 	err = productModel.Save()
 	if err != nil {
 		t.Error(err)
-		return;
+		return
 	}
 	// defer productModel.Delete()
 
 	productID := productModel.GetID()
 
 	productTestModel, _ := product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{} {"color": "black", "size": "s"})
+	productTestModel.ApplyOptions(map[string]interface{}{"color": "black", "size": "s"})
 	if qty := productTestModel.GetQty(); qty != 1 {
 		t.Error("The black,s color qty should be 1 and not", qty)
-		return;
+		return
 	}
 
 	// TODO: find out why second ApplyOptions call to existing model have no effect
 	productTestModel, _ = product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{} {"color": "blue", "size": "s"})
+	productTestModel.ApplyOptions(map[string]interface{}{"color": "blue", "size": "s"})
 	if qty := productTestModel.GetQty(); qty != 5 {
 		t.Error("The blue,s color qty should be 5 and not", qty)
-		return;
+		return
 	}
 
 	productTestModel, _ = product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{} {"color": "green", "size": "xl"})
+	productTestModel.ApplyOptions(map[string]interface{}{"color": "green", "size": "xl"})
 	if qty := productTestModel.GetQty(); qty != 10 {
 		t.Error("The green,xl color qty should be 10 and not", qty)
-		return;
+		return
 	}
 
 }
