@@ -42,6 +42,21 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathWhatcountsRealm,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "WhatCounts Realm",
+		Description: "Enter your WhatCounts Realm",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathWhatcountsAPIKey,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
@@ -148,5 +163,36 @@ func setupConfig() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathWhatcountsNoConfirm,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Override Confirmation - 0 for Yes, 1 for No ",
+		Description: "0 - send confirmation email, 1 - do not send confirmation email",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathWhatcountsForceSub,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Force Subscribe to List",
+		Description: "0 - do not force add to list, 1 - force add to list",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }
