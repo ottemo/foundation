@@ -48,12 +48,7 @@ func processOrder(order order.InterfaceOrder) error {
 
 	// load the trigger SKUs
 	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsSKU)); triggerSKU == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Whatcounts Trigger SKU list may not be empty.")
-	}
-
-	// load the whatcounts list id
-	if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsList)); listID == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9b5aefcc-b50b-11e5-9689-28cfe917b6c7", "Whatcounts List ID may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "99bcf407-7a24-45b7-b2e0-610decffd7ce", "Whatcounts Trigger SKU list may not be empty.")
 	}
 
 	// inspect for sku
@@ -61,18 +56,15 @@ func processOrder(order order.InterfaceOrder) error {
 
 		var registration Registration
 		registration.EmailAddress = utils.InterfaceToString(order.Get("customer_email"))
-		registration.Status = ConstWhatcountsSubscribeStatus
 
 		// split Order.CustomerName into sub-parts
 		customerName := utils.InterfaceToString(order.Get("customer_name"))
 		firstName, lastName := splitName(customerName)
-		registration.MergeFields = map[string]string{
-			"FNAME": firstName,
-			"LNAME": lastName,
-		}
+		registration.FirstName = firstName
+		registration.LastName = lastName
 
 		// subscribe to specified list
-		if err := Subscribe(listID, registration); err != nil {
+		if err := Subscribe(registration); err != nil {
 			return env.ErrorDispatch(err)
 		}
 	}
@@ -104,7 +96,7 @@ func splitName(name string) (string, string) {
 //Subscribe a user to a MailChimp list when passed:
 //    -- listID string - a MailChimp list id
 //    -- registration Registration - a struct to holded needed data to subscribe to a list
-func Subscribe(listID string, registration Registration) error {
+func Subscribe(registration Registration) error {
 
 	var payload []byte
 	var baseURL string
@@ -112,7 +104,12 @@ func Subscribe(listID string, registration Registration) error {
 
 	// load the base url
 	if baseURL = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsBaseURL)); baseURL == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d314122-b50f-11e5-8846-28cfe917b6c7", "MailChimp Base URL may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0221bf42-b4b1-4d44-824f-17a9b4c22d76", "MailChimp Base URL may not be empty.")
+	}
+
+	// load the whatcounts list id
+	if listID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsList)); listID == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b08e7d67-1b75-4d27-9c46-4234eb47ed90", "Whatcounts List ID may not be empty.")
 	}
 
 	// marshal the json payload
@@ -154,7 +151,7 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 	// load the api key
 	if apiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsAPIKey)); apiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "415B50E2-E469-44F4-A179-67C72F3D9631", "MailChimp API key may not be empty.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a4bef3b9-e1c2-43ce-b2e2-11f1b08a5682", "MailChimp API key may not be empty.")
 	}
 
 	buf := bytes.NewBuffer([]byte(payload))
@@ -178,7 +175,7 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 			status = response.Status
 		}
 
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc1dc0ce-0918-4eff-a6ce-575985a1bc58", "Unable to subscribe visitor to MailChimp list, response code returned was "+status)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a600d0d-fad4-4927-ad4d-20acb464d7b1", "Unable to subscribe visitor to MailChimp list, response code returned was "+status)
 	}
 	defer response.Body.Close()
 
@@ -203,17 +200,17 @@ func sendEmail(payload []byte) error {
 
 	// populate the email template
 	if emailTemplate = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsEmailTemplate)); emailTemplate == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6ce922b1-2fe7-4451-9621-1ecd3dc0e45c", "Whatcounts Email template may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "901a60b4-a18f-46a1-992b-094724aa0407", "Whatcounts Email template may not be empty.")
 	}
 
 	// configure the email address to send errors when adding visitor email addresses to MailChimp
 	if supportAddress = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsSupportAddress)); supportAddress == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2869ffed-fee9-4e03-9e0f-1be31ffef093", "Whatcounts Support Email address may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f47cecad-3584-4bdf-a02a-ed73647e9c39", "Whatcounts Support Email address may not be empty.")
 	}
 
 	// configure the subject of the email for MailChimp errrors
 	if subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsSubjectLine)); subjectLine == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a1cb487-484f-4b0c-b4c4-815d5313ff68", "MailChimp Support Email Subject may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ee67da86-97b1-43ef-aee3-aa5290a0f1e3", "MailChimp Support Email Subject may not be empty.")
 	}
 
 	var registration map[string]interface{}
