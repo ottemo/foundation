@@ -17,8 +17,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeGroup,
 		Editor:      "",
 		Options:     nil,
-		Label:       "MailChimp",
-		Description: "MailChimp Settings",
+		Label:       "WhatCounts",
+		Description: "WhatCounts Settings",
 		Image:       "",
 	}, nil)
 
@@ -32,8 +32,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "MailChimp Enabled",
-		Description: "Enable MailChimp integration(defaults to false)",
+		Label:       "WhatCounts Enabled",
+		Description: "Enable WhatCounts integration(defaults to false)",
 		Image:       "",
 	}, nil)
 
@@ -47,8 +47,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "MailChimp API Key",
-		Description: "Enter your MailChimp API Key",
+		Label:       "WhatCounts API Key",
+		Description: "Enter your WhatCounts API Key",
 		Image:       "",
 	}, nil)
 
@@ -62,7 +62,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "MailChimp Base URL",
+		Label:       "WhatCounts Base URL",
 		Description: "Defines the base url for this account",
 		Image:       "",
 	}, nil)
@@ -126,8 +126,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "MailChimp List ID",
-		Description: "Enter your MailChimp List ID",
+		Label:       "WhatCounts List ID",
+		Description: "Enter your WhatCounts List ID",
 		Image:       "",
 	}, nil)
 
