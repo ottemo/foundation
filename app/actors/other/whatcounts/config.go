@@ -166,9 +166,9 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathWhatcountsNoConfirm,
-		Value:       nil,
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
+		Value:       true,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
 		Options:     nil,
 		Label:       "Override Confirmation - 0 for Yes, 1 for No ",
 		Description: "0 - send confirmation email, 1 - do not send confirmation email",
@@ -181,9 +181,9 @@ func setupConfig() error {
 
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathWhatcountsForceSub,
-		Value:       nil,
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
+		Value:       true,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
 		Options:     nil,
 		Label:       "Force Subscribe to List",
 		Description: "0 - do not force add to list, 1 - force add to list",

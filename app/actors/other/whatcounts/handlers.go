@@ -104,7 +104,12 @@ func Subscribe(registration Registration) error {
 
 	// load the base url
 	if baseURL = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsBaseURL)); baseURL == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0221bf42-b4b1-4d44-824f-17a9b4c22d76", "MailChimp Base URL may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0221bf42-b4b1-4d44-824f-17a9b4c22d76", "WhatCounts Base URL may not be empty.")
+	}
+
+	// load the realm
+	if baseURL = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsRealm)); baseURL == "" {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cd9e37e9-6322-4534-9cd5-63f806a4f00e", "WhatCounts Base URL may not be empty.")
 	}
 
 	// load the whatcounts list id
@@ -112,13 +117,19 @@ func Subscribe(registration Registration) error {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b08e7d67-1b75-4d27-9c46-4234eb47ed90", "Whatcounts List ID may not be empty.")
 	}
 
+	// flag to send a confirmation email
+	noConfirmation = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsNoConfirm))
+
+	// flag to force subscribe to whatcounts list
+	forceSubscribe = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsForceSub))
+
 	// marshal the json payload
 	if payload, err = json.Marshal(registration); err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	// subscribe to whatcounts
-	if _, err = sendRequest(fmt.Sprintf(baseURL+"/lists/%s/members", listID), payload); err != nil {
+	if _, err = sendRequest(fmt.Sprintf(baseURL+"/bin/api_web?", listID), payload); err != nil {
 		sendEmail(payload)
 		return env.ErrorDispatch(err)
 	}
@@ -175,7 +186,7 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 			status = response.Status
 		}
 
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a600d0d-fad4-4927-ad4d-20acb464d7b1", "Unable to subscribe visitor to MailChimp list, response code returned was "+status)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a600d0d-fad4-4927-ad4d-20acb464d7b1", "Unable to subscribe visitor to WhatCounts list, response code returned was "+status)
 	}
 	defer response.Body.Close()
 
@@ -210,7 +221,7 @@ func sendEmail(payload []byte) error {
 
 	// configure the subject of the email for MailChimp errrors
 	if subjectLine := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsSubjectLine)); subjectLine == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ee67da86-97b1-43ef-aee3-aa5290a0f1e3", "MailChimp Support Email Subject may not be empty.")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ee67da86-97b1-43ef-aee3-aa5290a0f1e3", "WhatCounts Support Email Subject may not be empty.")
 	}
 
 	var registration map[string]interface{}
