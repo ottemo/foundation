@@ -1,6 +1,7 @@
 package flatrate
 
 import (
+	"fmt"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"regexp"
@@ -87,6 +88,7 @@ func setupConfig() error {
 
 		// validateNewRates validate structure of new shipping rates
 		validateNewRates := func(newRatesValues interface{}) (interface{}, error) {
+			fmt.Println("flat rate validation firing", newRatesValues)
 
 			if utils.InterfaceToString(newRatesValues) == "[]" || newRatesValues == nil || utils.InterfaceToString(newRatesValues) == "" {
 				additionalRates = make([]interface{}, 0)
@@ -157,10 +159,13 @@ func setupConfig() error {
 			Options: "",
 			Label:   "Additional rates",
 			Description: `flat rate additional shipping rates, pattern:
-   [{"title": "State Shipping", "code": "State", "price": 4.99},
-   {"title": "Expedited Shipping", "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
-   {"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},    ... ]
-    make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
+[
+	{"title": "State Shipping",         "code": "State", "price": 4.99},
+	{"title": "Expedited Shipping",     "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
+	{"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},
+	...
+]
+make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
 			Image: "",
 		}, env.FuncConfigValueValidator(validateNewRates))
 
