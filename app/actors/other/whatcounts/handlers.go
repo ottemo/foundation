@@ -178,7 +178,7 @@ func sendRequest(url string) (string, error) {
 
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return "", env.ErrorDispatch(err)
 	}
 
 	client := &http.Client{}
@@ -202,5 +202,5 @@ func sendRequest(url string) (string, error) {
 		return "", env.ErrorDispatch(err)
 	}
 
-	return jsonResponse, nil
+	return responseBody, nil
 }
