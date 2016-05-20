@@ -41,7 +41,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 // order
 func processOrder(order order.InterfaceOrder) error {
 
-	var triggerSKU, listID string
+	var triggerSKU string
 
 	// load the trigger SKUs
 	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathWhatcountsSKU)); triggerSKU == "" {
@@ -202,5 +202,5 @@ func sendRequest(url string) (string, error) {
 		return "", env.ErrorDispatch(err)
 	}
 
-	return responseBody, nil
+	return string(responseBody), nil
 }
