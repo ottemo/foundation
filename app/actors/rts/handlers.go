@@ -18,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := api.GetContentValue(context, "referrer").(string)
+			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
 			if xReferrer == "" {
 				return true
 			}
@@ -294,7 +294,7 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 		if event == "api.rts.visit" {
 			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				referrer = api.GetContentValue(context, "referrer").(string)
+				referrer = utils.InterfaceToString(api.GetContentValue(context, "referrer"))
 			}
 		}
 
