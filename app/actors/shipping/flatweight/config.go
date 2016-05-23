@@ -32,7 +32,7 @@ func setupConfig() error {
 	config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathRates,
 		Value:       `[]`,
-		Type:        env.ConstConfigTypeJSON,
+		Type:        env.ConstConfigTypeText,
 		Editor:      "multiline_text",
 		Label:       "Rates",
 		Description: `Configuration format: [{"title": "Standard Shipping",  "code": "std_1", "price": 1.99,  "weight_from": 0.0, "weight_to": 5.0}]`,
