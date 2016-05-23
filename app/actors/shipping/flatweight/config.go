@@ -1,7 +1,6 @@
 package flatweight
 
 import (
-	"fmt"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -27,8 +26,7 @@ func setupConfig() error {
 	}, nil)
 
 	// Rates
-	// demo json
-	// [{"title": "Standard Shipping","code": "std_1","price": 1.99,"weight_from": 0.0,"weight_to": 5.0}]
+	// demo json [{"title": "Standard Shipping","code": "std_1","price": 1.99,"weight_from": 0.0,"weight_to": 5.0}]
 	config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathRates,
 		Value:       `[]`,
@@ -43,7 +41,6 @@ func setupConfig() error {
 
 // validateAndApplyRates validate rates and convert to Rates type
 func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
-	fmt.Println("validating raw rates", rawRates)
 
 	// Allow empty
 	rawRatesString := utils.InterfaceToString(rawRates)
@@ -51,9 +48,8 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 	isEmptyArray := rawRatesString == "[]"
 	isEmptyObj := rawRatesString == "{}"
 	if isEmptyString || isEmptyArray || isEmptyObj {
-		fmt.Println("found this to be empty", rawRates)
 		rawRates = ""
-		rates = make(Rates, 0)
+		rates = make(Rates, 0) // global var
 		return rawRates, nil
 	}
 

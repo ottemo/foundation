@@ -1,7 +1,6 @@
 package flatrate
 
 import (
-	"fmt"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"regexp"
@@ -88,7 +87,6 @@ func setupConfig() error {
 
 		// validateNewRates validate structure of new shipping rates
 		validateNewRates := func(newRatesValues interface{}) (interface{}, error) {
-			fmt.Println("flat rate validation firing", newRatesValues)
 
 			if utils.InterfaceToString(newRatesValues) == "[]" || newRatesValues == nil || utils.InterfaceToString(newRatesValues) == "" {
 				additionalRates = make([]interface{}, 0)

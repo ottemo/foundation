@@ -1,6 +1,7 @@
 package flatweight
 
 import (
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -32,4 +33,16 @@ type Rate struct {
 	Price      float64
 	WeightFrom float64
 	WeightTo   float64
+}
+
+func (it Rate) validForWeight(weight float64) bool {
+	return weight >= it.WeightFrom && weight < it.WeightTo
+}
+
+func (it Rate) toCheckoutStruct() checkout.StructShippingRate {
+	return checkout.StructShippingRate{
+		Code:  it.Code,
+		Name:  it.Title,
+		Price: it.Price,
+	}
 }
