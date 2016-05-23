@@ -48,8 +48,9 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 	isEmptyArray := rawRatesString == "[]"
 	isEmptyObj := rawRatesString == "{}"
 	if isEmptyString || isEmptyArray || isEmptyObj {
+		// Reset our global variable
+		rates = make(Rates, 0)
 		rawRates = ""
-		rates = make(Rates, 0) // global var
 		return rawRates, nil
 	}
 
@@ -58,6 +59,8 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 		return nil, err
 	}
 
+	// Validate each new rate
+	validRates = make(Rates, 0)
 	for _, rawRate := range parsedRates {
 		parsedRate := utils.InterfaceToMap(rawRate)
 
@@ -75,9 +78,11 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 			WeightTo:   utils.InterfaceToFloat64(parsedRate["weight_to"]),
 		}
 
-		// Update global variable
-		rates = append(rates, rate)
+		validRates = append(validRates, rate)
 	}
+
+	// We didn't hit any validation errors, update our global var
+	rates = validRates
 
 	return rawRates, nil
 }
