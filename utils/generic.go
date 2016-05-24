@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 // KeysInMapAndNotBlank checks presence of non blank values for keys in map
@@ -310,4 +311,37 @@ func Clone(subject interface{}) interface{} {
 	}
 
 	return result
+}
+
+// Convert string to snake_case format
+func StrToSnakeCase(str string) string {
+
+	str = strings.TrimSpace(str)
+
+	// split camelCase words by space
+	reg := regexp.MustCompile("(\\w+?)([A-Z]{1}[^A-Z][^\\W+])")
+	str1 := reg.ReplaceAllString(str, "$1 $2")
+
+	// remove all spacial symbols around "-"
+	escapeSpaceInMinus := regexp.MustCompile("(-)\\W")
+	str2 := escapeSpaceInMinus.ReplaceAllString(str1, "$1")
+
+	// replace all spacial symbols except "-" on "_"
+	nonSymbolReg := regexp.MustCompile("[^\\w^-]+")
+	str3 := nonSymbolReg.ReplaceAllString(str2, "_")
+
+	return strings.ToLower(str3)
+}
+
+// Convert string to snake case format
+func StrToCamelCase(str string) string {
+
+	re := regexp.MustCompile("_")
+	str = strings.Title(re.ReplaceAllString(str, " "))
+
+	str = strings.Replace(str, " ", "", -1)
+	//first character to lower case
+	s := []rune(str)
+	s[0] = unicode.ToLower(s[0])
+	return string(s)
 }
