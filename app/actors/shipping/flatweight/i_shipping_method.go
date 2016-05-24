@@ -2,7 +2,6 @@ package flatweight
 
 import (
 	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/utils"
 )
 
 // GetName return the internal name of the shipping method
