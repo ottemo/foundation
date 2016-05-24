@@ -60,7 +60,7 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 	}
 
 	// Validate each new rate
-	validRates = make(Rates, 0)
+	validRates := make(Rates, 0)
 	for _, rawRate := range parsedRates {
 		parsedRate := utils.InterfaceToMap(rawRate)
 
