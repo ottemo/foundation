@@ -2,6 +2,7 @@ package flatweight
 
 import (
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/utils"
 )
 
 // GetName return the internal name of the shipping method
@@ -30,10 +31,10 @@ func (it ShippingMethod) GetRates(checkoutInstance checkout.InterfaceCheckout) [
 
 	// Calculate order weight
 	var orderWeight float64
-	for _, item := range checkoutInstance.GetItems() {
-		p := item.GetProduct()
-		if p != nil {
-			orderWeight += p.GetWeight()
+	for _, cartItem := range checkoutInstance.GetItems() {
+		p := cartItem.GetProduct()
+		if p != nil { // returns an interface which could be nil
+			orderWeight += p.GetWeight() * float64(cartItem.GetQty())
 		}
 	}
 
