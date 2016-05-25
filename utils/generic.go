@@ -316,21 +316,23 @@ func Clone(subject interface{}) interface{} {
 // Convert string to snake_case format
 func StrToSnakeCase(str string) string {
 
-	str = strings.TrimSpace(str)
+	// change all aA->a_A
+	re := regexp.MustCompile("([a-z])([A-Z])")
+	str = re.ReplaceAllString(str, "${1}_${2}")
 
-	// split camelCase words by space
-	reg := regexp.MustCompile("(\\w+?)([A-Z]{1}[^A-Z][^\\W+])")
-	str1 := reg.ReplaceAllString(str, "$1 $2")
+	// remove all special symbols from start
+	re = regexp.MustCompile("^[!@#$%^':&|\\[\\]*=+><()\\s]+")
+	str = re.ReplaceAllString(str, "")
 
-	// remove all spacial symbols around "-"
-	escapeSpaceInMinus := regexp.MustCompile("(-)\\W")
-	str2 := escapeSpaceInMinus.ReplaceAllString(str1, "$1")
+	// remove all special symbols from end
+	re = regexp.MustCompile("[!@#$%^':&|\\[\\]*=+><()\\s]+$")
+	str = re.ReplaceAllString(str, "")
 
-	// replace all spacial symbols except "-" on "_"
-	nonSymbolReg := regexp.MustCompile("[^\\w^-]+")
-	str3 := nonSymbolReg.ReplaceAllString(str2, "_")
+	// replace all special symbols to "_"
+	re = regexp.MustCompile("[!@#$%^':&|\\[\\]*=+><()\\s]+")
+	str = re.ReplaceAllString(str, "_")
 
-	return strings.ToLower(str3)
+	return strings.ToLower(str)
 }
 
 // Convert string to snake case format

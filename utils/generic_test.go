@@ -78,7 +78,6 @@ func TestConvertString(t *testing.T) {
 	// Check StrToSnakeCase
 	str := "Product Size "
 	if StrToSnakeCase(str) != "product_size" {
-
 		t.Error("case 1 fail")
 	}
 
@@ -93,17 +92,19 @@ func TestConvertString(t *testing.T) {
 	}
 
 	str = " - 101"
-	if StrToSnakeCase(str) != "-101" {
+	fmt.Printf(StrToSnakeCase(str))
+	if StrToSnakeCase(str) != "-_101" {
 		t.Error("case 4 fail")
 	}
 
 	str = " - 101 Discount Amount"
-	if StrToSnakeCase(str) != "-101_discount_amount" {
+
+	if StrToSnakeCase(str) != "-_101_discount_amount" {
 		t.Error("case 5 fail")
 	}
 
 	str = "subtract - 101 from Discount Amount"
-	if StrToSnakeCase(str) != "subtract_-101_from_discount_amount" {
+	if StrToSnakeCase(str) != "subtract_-_101_from_discount_amount" {
 		t.Error("case 6 fail")
 	}
 
@@ -128,7 +129,6 @@ func TestConvertString(t *testing.T) {
 	}
 
 	str = "Size: XLARGE + @'-3'Num of  *&*&&^^^^()($##$A"
-	fmt.Printf(StrToSnakeCase(str))
 	if StrToSnakeCase(str) != "size_xlarge_-3_num_of_a" {
 		t.Error("case 11 fail")
 	}
