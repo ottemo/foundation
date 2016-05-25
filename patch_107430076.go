@@ -38,8 +38,6 @@ func mainProductOptonsUpdate() {
 
 	// update products option
 	for _, currentProduct := range productCollection.ListProducts() {
-//		newOptions := productActor.UpdateProductOptions(currentProduct)
-//		currentProduct.Set("options", newOptions)
 		err := currentProduct.Save()
 		if err != nil {
 			fmt.Println(env.ErrorDispatch(err))

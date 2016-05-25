@@ -2,7 +2,6 @@ package utils
 
 import (
 	"testing"
-	"fmt"
 )
 
 func TestMatchMapAValuesToMapB(t *testing.T) {
@@ -92,7 +91,6 @@ func TestConvertString(t *testing.T) {
 	}
 
 	str = " - 101"
-	fmt.Printf(StrToSnakeCase(str))
 	if StrToSnakeCase(str) != "-_101" {
 		t.Error("case 4 fail")
 	}
