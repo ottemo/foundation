@@ -34,24 +34,21 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1202fcfb-da3f-4a0f-9a2e-92f288fd3881", "customer email for order is not set")
 		}
 
-		orderId := utils.InterfaceToString(checkoutOrder.Get("_id"))
-		if orderId == "" {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "61a63dbd-10b9-4d4e-a359-0c27f0ddf13d", "id for order is not set")
-		}
+		orderID := checkoutOrder.GetID()
 
 		storeName := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName))
 		if storeName == "" {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "00e37332-19e6-493e-9eec-bec3be124f43", "store name is set in config")
 		}
 
-		subjectId := "Your " + storeName + " Order, #" + orderId
+		subject := "Your " + storeName + " Order, #" + orderID
 
 		visitorMap := make(map[string]interface{})
 		if visitorModel := it.GetVisitor(); visitorModel != nil {
 			visitorMap = visitorModel.ToHashMap()
 		} else {
 			visitorMap["first_name"] = checkoutOrder.Get("customer_name")
-			visitorMap["email"] = checkoutOrder.Get("customer_email")
+			visitorMap["email"] = email
 		}
 
 		orderMap := checkoutOrder.ToHashMap()
@@ -110,7 +107,7 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 			return env.ErrorDispatch(err)
 		}
 
-		err = app.SendMail(email, subjectId, confirmationEmail)
+		err = app.SendMail(email, subject, confirmationEmail)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
