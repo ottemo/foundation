@@ -70,7 +70,6 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.updatedQty = append(it.updatedQty, map[string]interface{}{"": it.Qty})
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
-		it.checkOptionsForQty()
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
 

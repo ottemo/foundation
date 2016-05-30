@@ -277,20 +277,19 @@ func (it *DefaultOrder) Proceed() error {
 		for _, orderItem := range it.GetItems() {
 			options := orderItem.GetOptions()
 
+			currProductOptions := make(map[string]interface{})
 			for optionName, optionValue := range options {
 				if optionValue, ok := optionValue.(map[string]interface{}); ok {
 					if value, present := optionValue["value"]; present {
-						options := map[string]interface{}{optionName: value}
-
-						err := stockManager.UpdateProductQty(orderItem.GetProductID(), options, -1*orderItem.GetQty())
-						if err != nil {
-							return env.ErrorDispatch(err)
-						}
-
+						currProductOptions[optionName] = value
 					}
 				}
 			}
 
+			err := stockManager.UpdateProductQty(orderItem.GetProductID(), currProductOptions, -1*orderItem.GetQty())
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
 		}
 	}
 
