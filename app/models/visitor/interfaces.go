@@ -117,6 +117,7 @@ type InterfaceVisitorCard interface {
 	GetExpirationDate() string
 
 	GetToken() string
+	GetCustomerID() string
 
 	IsExpired() bool
 

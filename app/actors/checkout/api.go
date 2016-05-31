@@ -7,7 +7,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"github.com/ottemo/foundation/app/actors/payment/paypal"
 	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
@@ -36,7 +35,6 @@ func setupAPI() error {
 	service.PUT("checkout", APISetCheckoutInfo)
 	service.POST("checkout/submit", APISubmitCheckout)
 
-	// service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 	return nil
 }
 
@@ -411,14 +409,19 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 // checkoutObtainToken is an internal usage function used to create or load credit card for visitor
 func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardInfo map[string]interface{}) (visitor.InterfaceVisitorCard, error) {
 
+	// make sure we have a visitor
 	currentVisitor := currentCheckout.GetVisitor()
 	currentVisitorID := ""
 	if currentVisitor != nil {
 		currentVisitorID = currentVisitor.GetID()
 	}
+	if currentVisitorID == "" {
+		err := env.ErrorNew(ConstErrorModule, 10, "c9e46525-77f6-4add-b286-efeb8a63f4d1", "user not logged in, don't attempt to save a token")
+		return nil, err
+	}
 
-	// checking for address id was specified, if it was - making sure it correct
-	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); currentVisitorID != "" && creditCardID != nil {
+	// if we were passed a token rowID, make sure it belongs to the user
+	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); creditCardID != nil {
 
 		// loading specified credit card by id
 		visitorCard, err := visitor.LoadVisitorCardByID(utils.InterfaceToString(creditCardID))
@@ -434,15 +437,26 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return visitorCard, nil
 	}
 
+	// we weren't passed a token, start generating one
 	paymentMethod := currentCheckout.GetPaymentMethod()
 	if !paymentMethod.IsTokenable(currentCheckout) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5b05cc24-2184-47cc-b2dc-77cb41035698", "for selected payment method credit card can't be saved")
+	}
+
+	billingName := ""
+	if add := currentCheckout.GetBillingAddress(); add != nil {
+		billingName = add.GetFirstName() + " " + add.GetLastName()
 	}
 
 	// put required key to create token from payment method using only zero amount authorize
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
+		"extra": map[string]interface{}{
+			"email":        currentVisitor.GetEmail(),
+			"visitor_id":   currentVisitorID,
+			"billing_name": billingName,
+		},
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
@@ -467,9 +481,10 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	// TODO: payment should have interface method that return predefined struct for 0 authorize
 	creditCardInfo["token_id"] = authorizeCardResult["transactionID"]
 	creditCardInfo["payment"] = paymentMethod.GetCode()
+	creditCardInfo["customer_id"] = authorizeCardResult["customerID"]
 	creditCardInfo["type"] = authorizeCardResult["creditCardType"]
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
-	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
+	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"] // mmyy
 	creditCardInfo["token_updated"] = time.Now()
 	creditCardInfo["created_at"] = time.Now()
 
@@ -482,55 +497,14 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	}
 
 	// setting credit card owner to current visitor (for sure)
-	if currentVisitorID != "" {
-		visitorCardModel.Set("visitor_id", currentVisitorID)
-	}
+	visitorCardModel.Set("visitor_id", currentVisitorID)
 
-	// save cc token if using appropriate payment adapter
-	if (visitorCardModel.GetID() != "" || currentVisitorID != "") &&
-		paymentMethod.GetCode() == paypal.ConstPaymentPayPalPayflowCode {
-
-		err = visitorCardModel.Save()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	err = visitorCardModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return visitorCardModel, nil
-}
-
-// APISetPaymentDetails specifies payment details for a current checkout
-func APISetPaymentDetails(context api.InterfaceApplicationContext) (interface{}, error) {
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	requestContents, err := api.GetRequestContentAsMap(context)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	creditCard, err := checkoutObtainToken(currentCheckout, requestContents)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	currentCheckout.SetInfo("cc", creditCard)
-
-	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
-
-	var result map[string]interface{}
-
-	// hide token ID
-	for key, value := range creditCard.ToHashMap() {
-		if key != "token" {
-			result[key] = value
-		}
-	}
-
-	return result, nil
 }
 
 // APISubmitCheckout submits current checkout and creates a new order base on it

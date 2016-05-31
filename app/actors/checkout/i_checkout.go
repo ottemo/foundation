@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -13,7 +14,6 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"strings"
 )
 
 // SetShippingAddress sets shipping address for checkout
@@ -697,7 +697,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
 	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
-	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetName()
+	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetInternalName()
 	paymentInfo["gift_cards_charged_amount"] = it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
 	checkoutOrder.Set("payment_info", paymentInfo)
 

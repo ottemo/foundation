@@ -174,7 +174,7 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	orderPaymentInfo := map[string]interface{}{
 		"transactionID":     orderTransactionID,
 		"creditCardNumbers": responseValues.Get("ACCT"),
-		"creditCardExp":     responseValues.Get("EXPDATE"),
+		"creditCardExp":     responseValues.Get("EXPDATE"), // format: mmyy
 		"creditCardType":    getCreditCardName(utils.InterfaceToString(responseValues.Get("CARDTYPE"))),
 	}
 
