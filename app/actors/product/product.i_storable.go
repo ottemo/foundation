@@ -70,7 +70,7 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ac7cd02e-0722-4ac8-bbe0-ffa74d091a94", "sku and name should be specified")
 	}
 
-	newOptions := UpdateProductOptions(it)
+	newOptions := updateProductOptions(it)
 	err = it.Set("options", newOptions)
 	if err != nil {
 		return env.ErrorDispatch(err)

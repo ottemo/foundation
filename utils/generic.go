@@ -5,7 +5,11 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"unicode"
+)
+
+var (
+	regexpAnyToSnakeCase   = regexp.MustCompile("[!@#$%^':;&|\\[\\]*=+><()\\s]+|([^\\s_-])([A-Z][a-z])")
+	regexpSnakeToCamelCase = regexp.MustCompile("_[a-z-\\d]")
 )
 
 // KeysInMapAndNotBlank checks presence of non blank values for keys in map
@@ -315,35 +319,21 @@ func Clone(subject interface{}) interface{} {
 
 // Convert string to snake_case format
 func StrToSnakeCase(str string) string {
-
-	// change all aA->a_A
-	re := regexp.MustCompile("([a-z])([A-Z])")
-	str = re.ReplaceAllString(str, "${1}_${2}")
-
-	// remove all special symbols from start
-	re = regexp.MustCompile("^[!@#$%^':&|\\[\\]*=+><()\\s]+")
-	str = re.ReplaceAllString(str, "")
-
-	// remove all special symbols from end
-	re = regexp.MustCompile("[!@#$%^':&|\\[\\]*=+><()\\s]+$")
-	str = re.ReplaceAllString(str, "")
-
-	// replace all special symbols to "_"
-	re = regexp.MustCompile("[!@#$%^':&|\\[\\]*=+><()\\s]+")
-	str = re.ReplaceAllString(str, "_")
+	str = regexpAnyToSnakeCase.ReplaceAllString(str, "${1}_${2}")
+	str = strings.Trim(str, "_")
 
 	return strings.ToLower(str)
 }
 
-// Convert string to snake case format
+// Convert string from snake_case to camelCase format
 func StrToCamelCase(str string) string {
+	operator := func(matchedStr string) string {
+		matchedStr = strings.Trim(matchedStr, "_")
 
-	re := regexp.MustCompile("_")
-	str = strings.Title(re.ReplaceAllString(str, " "))
+		return strings.ToUpper(matchedStr)
+	}
 
-	str = strings.Replace(str, " ", "", -1)
-	//first character to lower case
-	s := []rune(str)
-	s[0] = unicode.ToLower(s[0])
-	return string(s)
+	str = regexpSnakeToCamelCase.ReplaceAllStringFunc(str, operator)
+
+	return str
 }

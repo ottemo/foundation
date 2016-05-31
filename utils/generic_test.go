@@ -72,9 +72,8 @@ func TestMatchMapAValuesToMapB(t *testing.T) {
 	}
 }
 
-func TestConvertString(t *testing.T) {
+func TestStrToSnakeCase(t *testing.T) {
 
-	// Check StrToSnakeCase
 	str := "Product Size "
 	if StrToSnakeCase(str) != "product_size" {
 		t.Error("case 1 fail")
@@ -106,40 +105,41 @@ func TestConvertString(t *testing.T) {
 		t.Error("case 6 fail")
 	}
 
-	str = "LARGE"
+	str = ";LARGE"
 	if StrToSnakeCase(str) != "large" {
 		t.Error("case 8 fail")
 	}
 
-	str = "XLARGE"
-	if StrToSnakeCase(str) != "xlarge" {
+	str = "XLarge"
+	if StrToSnakeCase(str) != "x_large" {
 		t.Error("case 9 fail")
 	}
 
-	str = "Size XLARGE"
-	if StrToSnakeCase(str) != "size_xlarge" {
+	str = "X-Large"
+	if StrToSnakeCase(str) != "x-large" {
 		t.Error("case 10 fail")
 	}
 
-	str = "Size XLARGE"
+	str = "Size (*^*%^$$@XLARGE"
 	if StrToSnakeCase(str) != "size_xlarge" {
 		t.Error("case 11 fail")
 	}
 
-	str = "Size: XLARGE + @'-3'Num of  *&*&&^^^^()($##$A"
+	str = "     Size: XLARGE + @'-3'Num of  *&*&&^^^^()($##$A   ; "
 	if StrToSnakeCase(str) != "size_xlarge_-3_num_of_a" {
-		t.Error("case 11 fail")
+		t.Error("case 12 fail")
+	}
+}
+
+func TestStrToCamelCase(t *testing.T) {
+
+	str := "product_size_xlarge"
+	if StrToCamelCase(str) != "productSizeXlarge" {
+		t.Error("case 1 fail")
 	}
 
-	// Check StrToCamelCase
-	str = "size_xlarge"
-	if StrToCamelCase(str) != "sizeXlarge" {
-		t.Error("case 13 fail")
-	}
-
-	str = "subtract_-101_discount_amount"
+	str = "subtract_-_101_discount_amount"
 	if StrToCamelCase(str) != "subtract-101DiscountAmount" {
-		t.Error("case 14 fail")
+		t.Error("case 2 fail")
 	}
-
 }
