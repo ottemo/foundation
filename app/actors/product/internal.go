@@ -6,7 +6,7 @@ import (
 )
 
 // updates option keys for product to case_snake
-func updateProductOptions(product product.InterfaceProduct) map[string]interface{} {
+func ConvertProductOptionsToSnakeCase(product product.InterfaceProduct) map[string]interface{} {
 
 	newOptions := make(map[string]interface{})
 

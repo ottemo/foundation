@@ -11,7 +11,7 @@ import (
 	_ "github.com/ottemo/foundation/basebuild"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/app/models/product"
-	//productActor "github.com/ottemo/foundation/app/actors/product"
+	productActor "github.com/ottemo/foundation/app/actors/product"
 )
 
 func init() {
@@ -20,7 +20,7 @@ func init() {
 }
 
 // executable file start point
-func mainProductOptonsUpdate() {
+func main() {
 	defer app.End() // application close event
 
 	// application start event
@@ -38,6 +38,12 @@ func mainProductOptonsUpdate() {
 
 	// update products option
 	for _, currentProduct := range productCollection.ListProducts() {
+		newOptions := productActor.ConvertProductOptionsToSnakeCase(currentProduct)
+		err = currentProduct.Set("options", newOptions)
+		if err != nil {
+			fmt.Println(env.ErrorDispatch(err))
+		}
+
 		err := currentProduct.Save()
 		if err != nil {
 			fmt.Println(env.ErrorDispatch(err))

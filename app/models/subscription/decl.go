@@ -12,7 +12,7 @@ const (
 	ConstErrorModule = "subscription"
 	ConstErrorLevel  = env.ConstErrorLevelModel
 
-	ConstSubscriptionOptionName = "Subscription"
+	ConstSubscriptionOptionName = "subscription"
 
 	ConstConfigPathSubscription        = "general.subscription"
 	ConstConfigPathSubscriptionEnabled = "general.subscription.enabled"

@@ -217,11 +217,11 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 			"order":    1,
 			"label":    "Subscription",
 			"options": map[string]interface{}{
-				"Just Once": map[string]interface{}{"order": 1, "label": "Just Once"},
-				"30 days":   map[string]interface{}{"order": 2, "label": "30 days"},
-				"60 days":   map[string]interface{}{"order": 3, "label": "60 days"},
-				"90 days":   map[string]interface{}{"order": 4, "label": "90 days"},
-				"120 days":  map[string]interface{}{"order": 5, "label": "120 days"},
+				"just_once": map[string]interface{}{"order": 1, "label": "Just Once"},
+				"30_days":   map[string]interface{}{"order": 2, "label": "30 days"},
+				"60_days":   map[string]interface{}{"order": 3, "label": "60 days"},
+				"90_days":   map[string]interface{}{"order": 4, "label": "90 days"},
+				"120_days":  map[string]interface{}{"order": 5, "label": "120 days"},
 			},
 		}
 

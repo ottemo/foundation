@@ -120,14 +120,19 @@ func TestStrToSnakeCase(t *testing.T) {
 		t.Error("case 10 fail")
 	}
 
-	str = "Size (*^*%^$$@XLARGE"
-	if StrToSnakeCase(str) != "size_xlarge" {
+	str = "$20 X-LARGE"
+	if StrToSnakeCase(str) != "$20_x-large" {
 		t.Error("case 11 fail")
 	}
 
-	str = "     Size: XLARGE + @'-3'Num of  *&*&&^^^^()($##$A   ; "
-	if StrToSnakeCase(str) != "size_xlarge_-3_num_of_a" {
+	str = "Size (*^*%^@XLARGE"
+	if StrToSnakeCase(str) != "size_xlarge" {
 		t.Error("case 12 fail")
+	}
+
+	str = "     Size: XLARGE + @'-3'Num of  *&*&&^^^^()(##A   ; "
+	if StrToSnakeCase(str) != "size_xlarge_-3_num_of_a" {
+		t.Error("case 13 fail")
 	}
 }
 

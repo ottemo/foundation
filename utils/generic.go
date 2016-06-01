@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	regexpAnyToSnakeCase   = regexp.MustCompile("[!@#$%^':;&|\\[\\]*=+><()\\s]+|([^\\s_-])([A-Z][a-z])")
+	regexpAnyToSnakeCase   = regexp.MustCompile("[!@#%^':;&|\\[\\]*=+><()\\s]+|([^\\s_$-])([A-Z][a-z])")
 	regexpSnakeToCamelCase = regexp.MustCompile("_[a-z-\\d]")
 )
 
