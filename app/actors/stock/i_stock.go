@@ -56,6 +56,33 @@ func (it *DefaultStock) GetProductQty(productID string, options map[string]inter
 	return minQty
 }
 
+// GetProductOptions
+func (it *DefaultStock) GetProductOptions(productID string,) []map[string]interface{} {
+
+	// receiving database information
+	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
+	if err != nil {
+		env.LogError(err)
+	}
+
+	err = dbCollection.AddFilter("product_id", "=", productID)
+	if err != nil {
+		env.LogError(err)
+	}
+
+	err = dbCollection.AddFilter("options", "!=", make(map[string]interface{}))
+	if err != nil {
+		env.LogError(err)
+	}
+
+	productOptions, err := dbCollection.Load()
+	if err != nil {
+		env.LogError(err)
+	}
+
+	return productOptions
+}
+
 // RemoveProductQty removes database records matching given product-options pair
 func (it *DefaultStock) RemoveProductQty(productID string, options map[string]interface{}) error {
 

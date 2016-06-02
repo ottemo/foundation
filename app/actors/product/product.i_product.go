@@ -87,6 +87,7 @@ func (it *DefaultProduct) GetQty() int {
 	if stockManager := product.GetRegisteredStock(); it.Qty == 0 && stockManager != nil {
 		it.Qty = stockManager.GetProductQty(it.GetID(), it.GetAppliedOptions())
 	}
+
 	return it.Qty
 }
 
@@ -96,6 +97,14 @@ func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 		return it.appliedOptions
 	}
 	return make(map[string]interface{})
+}
+
+func (it *DefaultProduct) GetInventory() []map[string]interface{} {
+	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+		it.Inventory = stockManager.GetProductOptions(it.GetID())
+	}
+
+	return it.Inventory
 }
 
 // ApplyOptions updates current product attributes according to given product options,

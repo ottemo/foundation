@@ -36,7 +36,10 @@ type DefaultProduct struct {
 
 	Weight float64
 
+	//Qty int
 	Qty int
+
+	Inventory []map[string]interface{}
 
 	Options map[string]interface{}
 

@@ -249,7 +249,10 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// get product
 	result := productModel.ToHashMap()
+	// get inventory/stock
+	result["inventory"] =  productModel.Get("inventory")
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
 	if err != nil {
