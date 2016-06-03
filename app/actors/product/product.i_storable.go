@@ -98,15 +98,14 @@ func (it *DefaultProduct) Save() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-		if it.Qty > 0 {
-			for _, productOptions := range it.Inventory {
-				options := utils.InterfaceToMap(productOptions["options"])
-				qty := utils.InterfaceToInt(productOptions["qty"])
 
-				err = stockManager.SetProductQty(it.id, options, qty)
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
+		for _, productOptions := range it.Inventory {
+			options := utils.InterfaceToMap(productOptions["options"])
+			qty := utils.InterfaceToInt(productOptions["qty"])
+
+			err = stockManager.SetProductQty(it.id, options, qty)
+			if err != nil {
+				return env.ErrorDispatch(err)
 			}
 		}
 	}
