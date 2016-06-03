@@ -48,9 +48,6 @@ type DefaultProduct struct {
 	// appliedOptions tracks options were applied to current instance
 	appliedOptions map[string]interface{}
 
-	// updatedQty holds qty should be updated during save operation ("" item holds qty value)
-	updatedQty []map[string]interface{}
-
 	*attributes.CustomAttributes
 }
 

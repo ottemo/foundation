@@ -96,9 +96,11 @@ func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 	if it.appliedOptions != nil {
 		return it.appliedOptions
 	}
+
 	return make(map[string]interface{})
 }
 
+// GetInventory returns product inventory for current instance by id
 func (it *DefaultProduct) GetInventory() []map[string]interface{} {
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
 		it.Inventory = stockManager.GetProductOptions(it.GetID())

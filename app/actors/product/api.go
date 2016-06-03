@@ -251,8 +251,6 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// get product
 	result := productModel.ToHashMap()
-	// get inventory/stock
-	result["inventory"] =  productModel.Get("inventory")
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
 	if err != nil {
@@ -281,6 +279,8 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	result["images"] = itemImages
+	// get inventory/stock
+	result["inventory"] = productModel.GetInventory()
 
 	return result, nil
 }
@@ -385,7 +385,10 @@ func APIUpdateProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return productModel.ToHashMap(), nil
+	result := productModel.ToHashMap()
+	result["inventory"] = productModel.GetInventory()
+
+	return result, nil
 }
 
 // APIGetMediaPath returns relative path to product media files within media library

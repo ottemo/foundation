@@ -86,17 +86,27 @@ func (it *DefaultProduct) Save() error {
 
 	// stock managementInventory stuff
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+
+		// remove current stock
+		err = stockManager.RemoveProductQty(it.id, make(map[string]interface{}))
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		// set new stock
 		err = stockManager.SetProductQty(it.id, make(map[string]interface{}), it.Qty)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-		for _, productOptions := range it.Inventory {
-			options := utils.InterfaceToMap(productOptions["options"])
-			qty := utils.InterfaceToInt(productOptions["qty"])
+		if it.Qty > 0 {
+			for _, productOptions := range it.Inventory {
+				options := utils.InterfaceToMap(productOptions["options"])
+				qty := utils.InterfaceToInt(productOptions["qty"])
 
-			err = stockManager.SetProductQty(it.id, options, qty)
-			if err != nil {
-				return env.ErrorDispatch(err)
+				err = stockManager.SetProductQty(it.id, options, qty)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
 			}
 		}
 	}

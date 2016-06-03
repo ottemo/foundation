@@ -69,7 +69,6 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.Weight = utils.InterfaceToFloat64(value)
 	case "qty":
 		it.Qty = utils.InterfaceToInt(value)
-		//it.updatedQty = append(it.updatedQty, map[string]interface{}{"": it.Qty})
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
 	case "inventory":
@@ -183,7 +182,7 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 // GetAttributesInfo returns the requested object attributes
 func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 	result := []models.StructAttributeInfo{
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "_id",
@@ -196,7 +195,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "enabled",
@@ -209,7 +208,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "sku",
@@ -223,7 +222,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 			Validators: "sku",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "name",
@@ -236,7 +235,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "short_description",
@@ -249,7 +248,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "description",
@@ -262,7 +261,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "default_image",
@@ -275,7 +274,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "price",
@@ -289,7 +288,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 			Validators: "price",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "weight",
@@ -303,7 +302,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 			Validators: "numeric positive",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "options",
@@ -316,7 +315,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      product.ConstModelNameProduct,
 			Collection: ConstCollectionNameProduct,
 			Attribute:  "related_pids",
@@ -356,43 +355,3 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 
 	return result
 }
-
-// checkOptionsForQty looking for specified qty attribute for options, removes it and passes for stock management
-//func (it *DefaultProduct) checkOptionsForQty() {
-//
-//	for productOptionName, productOption := range it.GetOptions() {
-//		if productOption, ok := productOption.(map[string]interface{}); ok {
-//
-//			// checking options for specified qty
-//			if qtyValue, present := productOption["qty"]; present {
-//				qty := utils.InterfaceToInt(qtyValue)
-//				options := map[string]interface{}{productOptionName: nil, "": qty}
-//				it.updatedQty = append(it.updatedQty, options)
-//
-//				// qty should not be stored with options
-//				delete(productOption, "qty")
-//			}
-//
-//			// checking option values for specified qty
-//			if productOptionValues, present := productOption["options"]; present {
-//				if productOptionValues, ok := productOptionValues.(map[string]interface{}); ok {
-//
-//					for productOptionValueName, productOptionValue := range productOptionValues {
-//						if productOptionValue, ok := productOptionValue.(map[string]interface{}); ok {
-//							if qtyValue, present := productOptionValue["qty"]; present {
-//								qty := utils.InterfaceToInt(qtyValue)
-//								options := map[string]interface{}{productOptionName: productOptionValueName, "": qty}
-//								it.updatedQty = append(it.updatedQty, options)
-//
-//								// qty should not be stored with options values
-//								delete(productOptionValue, "qty")
-//							}
-//						}
-//					}
-//
-//				}
-//			}
-//
-//		}
-//	}
-//}

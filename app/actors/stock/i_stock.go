@@ -56,8 +56,8 @@ func (it *DefaultStock) GetProductQty(productID string, options map[string]inter
 	return minQty
 }
 
-// GetProductOptions
-func (it *DefaultStock) GetProductOptions(productID string,) []map[string]interface{} {
+// GetProductOptions returns list of existing product options
+func (it *DefaultStock) GetProductOptions(productID string) []map[string]interface{} {
 
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
@@ -70,14 +70,19 @@ func (it *DefaultStock) GetProductOptions(productID string,) []map[string]interf
 		env.LogError(err)
 	}
 
-	err = dbCollection.AddFilter("options", "!=", make(map[string]interface{}))
+	productOptions, err := dbCollection.Load()
 	if err != nil {
 		env.LogError(err)
 	}
 
-	productOptions, err := dbCollection.Load()
-	if err != nil {
-		env.LogError(err)
+	for _, productOption := range productOptions {
+		if _, present := productOption["_id"]; present {
+			delete(productOption, "_id")
+		}
+		if _, present := productOption["product_id"]; present {
+			delete(productOption, "product_id")
+		}
+
 	}
 
 	return productOptions
