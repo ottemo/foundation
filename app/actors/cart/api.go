@@ -69,7 +69,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 
 				item["product"] = productData

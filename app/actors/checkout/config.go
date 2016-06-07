@@ -11,7 +11,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "701e85e4-b63c-48f4-a990-673ba0ed6a2a", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "701e85e4-b63c-48f4-a990-673ba0ed6a2a", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	// Checkout
@@ -31,7 +32,7 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path: checkout.ConstConfigPathConfirmationEmail,
 		Value: `Dear {{.Visitor.last_name}} {{.Visitor.first_name}}
 <br />
@@ -300,7 +301,7 @@ Total: ${{.Order.grand_total}}<br />`,
 		return env.ErrorDispatch(err)
 	}
 
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        checkout.ConstConfigPathOversell,
 		Value:       false,
 		Type:        env.ConstConfigTypeBoolean,
