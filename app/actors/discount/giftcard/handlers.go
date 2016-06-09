@@ -23,7 +23,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -33,7 +33,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderGiftCardApplying, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -46,15 +46,15 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		for _, orderAppliedDiscount := range orderAppliedDiscounts {
 
 			if err := giftCardCollection.ClearFilters(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			if err := giftCardCollection.AddFilter("code", "=", orderAppliedDiscount.Code); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			records, err := giftCardCollection.Load()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 
@@ -85,7 +85,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 				_, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					continue
 				}
 			}
@@ -107,7 +107,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -115,12 +115,12 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 	orderID := rollbackOrder.GetID()
 
 	if err := giftCardCollection.AddFilter("orders_used", "LIKE", orderID); err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	records, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -142,7 +142,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 			_, err := giftCardCollection.Save(record)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 		}
@@ -162,7 +162,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -265,7 +265,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 				giftCardID, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					return false
 				}
 				if deliveryDate.Truncate(time.Hour).Before(currentTime) {

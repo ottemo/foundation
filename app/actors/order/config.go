@@ -14,6 +14,10 @@ const (
 // setupConfig setups package configuration values for a system
 func setupConfig() error {
 	config := env.GetConfig()
+	if config == nil {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "9028114d-cfee-46b5-bdf1-dac0db954d22", "Unable to obtain configuration for Order")
+		return env.ErrorDispatch(err)
+	}
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathLastIncrementID,
@@ -64,7 +68,7 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathShippingEmailTemplate,
 		Value:       "",
 		Type:        env.ConstConfigTypeText,

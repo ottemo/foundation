@@ -22,7 +22,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathFriendMailEmailSubject,
 			Value:       "Email friend",
 			Type:        env.ConstConfigTypeVarchar,
@@ -37,7 +37,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path: ConstConfigPathFriendMailEmailTemplate,
 			Value: `Dear {{.friend_name}}
 <br />
@@ -55,6 +55,9 @@ Your friend sent you an email:
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+	} else {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "81e49a2f-906d-40ed-9a47-bb2b9c5e8f40", "Unable to obtain configuration for Friend Mail")
+		return env.ErrorDispatch(err)
 	}
 
 	return nil

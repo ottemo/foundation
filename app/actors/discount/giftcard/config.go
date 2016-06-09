@@ -10,7 +10,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "15859fac-8fc0-4fbf-a801-b9cacf70d356", "Unable to obtain configuration for Gift Cards")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "15859fac-8fc0-4fbf-a801-b9cacf70d356", "Unable to obtain configuration for Gift Cards")
+		return env.ErrorDispatch(err)
 	}
 
 	// giftCardSkuElement
@@ -18,7 +19,8 @@ func setupConfig() error {
 	giftCardSkuElementSet := func(value interface{}) (interface{}, error) {
 		newValue := utils.InterfaceToString(value)
 		if newValue == "" {
-			return value, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a625584-1f91-4416-86bb-b25d6b37c70d", "can't be empty string")
+			err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a625584-1f91-4416-86bb-b25d6b37c70d", "can't be empty string")
+			return value, env.ErrorDispatch(err)
 		}
 		checkout.GiftCardSkuElement = newValue
 		return newValue, nil
