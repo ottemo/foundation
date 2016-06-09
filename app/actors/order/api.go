@@ -102,6 +102,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	return result, nil
 }
 
+// APISendStatusEmail will send the visitor a shipping confirmation email
 func APISendStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
 	orderID := context.GetRequestArgument("orderID")
 	orderModel, err := order.LoadOrderByID(orderID)
