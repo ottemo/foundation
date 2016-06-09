@@ -3,12 +3,11 @@ package order
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"strings"
 
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
@@ -276,6 +275,7 @@ func (it *DefaultOrder) Proceed() error {
 	stockManager := product.GetRegisteredStock()
 	if stockManager != nil {
 		for _, orderItem := range it.GetItems() {
+			options := orderItem.GetOptions()
 
 			currProductOptions := make(map[string]interface{})
 			for optionName, optionValue := range options {
@@ -290,6 +290,7 @@ func (it *DefaultOrder) Proceed() error {
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
+
 		}
 	}
 
