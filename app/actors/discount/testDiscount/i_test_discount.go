@@ -23,24 +23,20 @@ func (it *DefaultTestDiscount) CalculateDiscount(checkoutInstance checkout.Inter
 
 	// checking
 	in := map[string]interface{}{
-			"Cart": map[string]interface{}{
-				"cartAmount": checkoutInstance.GetGrandTotal(),
-				"visitorIsLogin": checkoutInstance.GetVisitor() != nil,
-			},
-			//		"vsitor": map[string]interface{}{
-			//			"is_admin": checkoutInstance.GetGrandTotal(),
-			//		},
+		"Cart": map[string]interface{}{
+			"cartAmount":     checkoutInstance.GetGrandTotal(),
+			"visitorIsLogin": checkoutInstance.GetVisitor() != nil,
+		},
 	}
 
-//	in := checkoutInstance.GetCart();
 	rule := utils.InterfaceToMap(env.ConfigGetValue(ConstConfigPathTestDiscountRule))
 	action := utils.InterfaceToMap(env.ConfigGetValue(ConstConfigPathTestDiscountAction))
 
 	for _, object := range rule {
-		rule = utils.InterfaceToMap(object);
+		rule = utils.InterfaceToMap(object)
 	}
 	for _, object := range action {
-		action = utils.InterfaceToMap(object);
+		action = utils.InterfaceToMap(object)
 	}
 
 	check, err := composer.GetComposer().Check(in, rule)

@@ -7,22 +7,12 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("testDiscount/CreateTestRule", api.ConstRESTOperationCreate, CreateTestRule)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("testDiscount/CreateTestAction", api.ConstRESTOperationCreate, CreateTestAction)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("testDiscount/GetConfigForTestDiscount", api.ConstRESTOperationGet, GetConfigForTestDiscount)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("testDiscount/CreateTestRule", CreateTestRule)
+	service.POST("testDiscount/CreateTestAction", CreateTestAction)
+	service.GET("testDiscount/GetConfigForTestDiscount", GetConfigForTestDiscount)
 
 	return nil
 }
@@ -65,15 +55,14 @@ func GetConfigForTestDiscount(context api.InterfaceApplicationContext) (interfac
 	config := env.GetConfig()
 
 	rule := make(map[string]interface{})
-	rule["type"]   = "DiscountRule"
-	rule["json"]   = config.GetValue(ConstConfigPathTestDiscountRule)
+	rule["type"] = "DiscountRule"
+	rule["json"] = config.GetValue(ConstConfigPathTestDiscountRule)
 	result["rule"] = rule
 
 	action := make(map[string]interface{})
-	action["type"]   = "DiscountAction"
-	action["json"]   = config.GetValue(ConstConfigPathTestDiscountAction)
+	action["type"] = "DiscountAction"
+	action["json"] = config.GetValue(ConstConfigPathTestDiscountAction)
 	result["action"] = action
 
 	return result, nil
 }
-
