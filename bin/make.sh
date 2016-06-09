@@ -4,11 +4,19 @@ WORKDIR=`pwd`
 OTTEMODIR="$(cd "$(dirname "$0")" && pwd)"
 OTTEMOPKG="github.com/ottemo/foundation"
 
-BRANCH=`git -C $OTTEMODIR rev-parse --abbrev-ref HEAD`
-BUILD=`git -C $OTTEMODIR rev-list origin/develop --count`
-DATE=`date`
-HASH=`git -C $OTTEMODIR rev-parse --short --verify HEAD`
+if [[ "$OSTYPE" == "darwin"*  ]]; then
+    AWK=gawk
+else
+    AWK=awk
+fi
+
+DATE=`${AWK} 'BEGIN{ print gensub(/(..)$/, ":\\\1", "g", strftime("%Y-%m-%dT%H:%M:%S%z")); exit }'`
 TAGS=""
+BUILD=`git -C $OTTEMODIR rev-list origin/develop --count`
+BRANCH=`git -C $OTTEMODIR rev-parse --abbrev-ref HEAD`
+HASH=`git -C $OTTEMODIR rev-parse --short --verify HEAD`
+
+GOVERSION=`go version | ${AWK} '{print $3}' | awk '{sub(/go/,""); print}'`
 
 while test $# -gt 0; do
         case "$1" in
@@ -36,13 +44,18 @@ done
 
 cd $WORKDIR
 
-LDFLAGS="-ldflags \""
-LDFLAGS+="-X github.com/ottemo/foundation/app.buildDate '$DATE' "
-LDFLAGS+="-X github.com/ottemo/foundation/app.buildTags '$TAGS' "
-LDFLAGS+="-X github.com/ottemo/foundation/app.buildNumber '$BUILD' "
-LDFLAGS+="-X github.com/ottemo/foundation/app.buildBranch '$BRANCH'"
-LDFLAGS+="-X github.com/ottemo/foundation/app.buildHash '$HASH'"
-LDFLAGS+="\""
+LDFLAGS="-ldflags '"
+LDFLAGS+="-X \"github.com/ottemo/foundation/app.buildDate=$DATE\" "
+LDFLAGS+="-X \"github.com/ottemo/foundation/app.buildTags=$TAGS\" "
+LDFLAGS+="-X \"github.com/ottemo/foundation/app.buildNumber=$BUILD\" "
+LDFLAGS+="-X \"github.com/ottemo/foundation/app.buildBranch=$BRANCH\" "
+LDFLAGS+="-X \"github.com/ottemo/foundation/app.buildHash=$HASH\" "
+LDFLAGS+="'"
+
+# need to convert GOVERSION string to number
+if [ "`${AWK} "BEGIN{ if (($GOVERSION +0) < 1.5) print 1 }"`" == "1" ]; then
+  LDFLAGS=${LDFLAGS//=/\" \"}
+fi
 
 if [ -z "$GOPATH" ]; then 
 REPLACE="/src/$OTTEMOPKG"

@@ -111,18 +111,19 @@ func GetCurrentCart(context api.InterfaceApplicationContext, createNew bool) (In
 		}
 	}
 
-	if createNew {
-		// no cart id was in session, trying to get cart for visitor
-		if visitorID != nil {
-			currentCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
-			context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
-
-			return currentCart, nil
+	// no cart id was in session, trying to get cart for visitor
+	if visitorID != nil {
+		currentCart, err := GetCartForVisitor(utils.InterfaceToString(visitorID))
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
+
+		context.GetSession().Set(ConstSessionKeyCurrentCart, currentCart.GetID())
+
+		return currentCart, nil
+	}
+
+	if createNew {
 
 		// making new cart for guest if allowed
 		if app.ConstAllowGuest {

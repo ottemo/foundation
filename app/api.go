@@ -13,40 +13,17 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("app/email", api.ConstRESTOperationCreate, restSendEmail)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationGet, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/login", api.ConstRESTOperationCreate, restLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/logout", api.ConstRESTOperationGet, restLogout)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/rights", api.ConstRESTOperationGet, restRightsInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/status", api.ConstRESTOperationGet, restStatusInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationCreate, setSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("app/location", api.ConstRESTOperationGet, getSessionTimeZone)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+
+	service.POST("app/email", restSendEmail)
+	service.GET("app/login", restLogin)
+	service.POST("app/login", restLogin)
+	service.GET("app/logout", restLogout)
+	service.GET("app/rights", restRightsInfo)
+	service.GET("app/status", restStatusInfo)
+	service.POST("app/location", setSessionTimeZone)
+	service.GET("app/location", getSessionTimeZone)
 
 	return nil
 }
@@ -116,14 +93,26 @@ func restSendEmail(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// create body of email
 	var body bytes.Buffer
+
 	body.WriteString("The form contained the following information: <br><br>")
 	for key, val := range requestData {
 		body.WriteString(key + ": " + utils.InterfaceToString(val) + "<br>")
 	}
 
-	err = SendMail(recipient,
-		"New Message from Form: "+frmLocation,
-		body.String())
+	headers := map[string]string{
+		"To": recipient,
+	}
+
+	if replyToEmail, present := requestData["email"]; present {
+		headers["Reply-To"] = utils.InterfaceToString(replyToEmail)
+	}
+
+	emailContext := map[string]interface{}{
+		"Subject": "New Message from Form: " + frmLocation,
+	}
+
+	err = SendMailEx(headers, body.String(), emailContext)
+
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -140,14 +129,33 @@ func restRightsInfo(context api.InterfaceApplicationContext) (interface{}, error
 	return result, nil
 }
 
-// WEB REST API function to get info about current rights
+// WEB REST API function to get info about current application status
 func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 	result := make(map[string]interface{})
 
 	result["Ottemo"] = GetVerboseVersion()
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
-		result["Ottemo.DBEngine"] = dbEngine.GetName()
+		dbEngineName := dbEngine.GetName()
+		result["Ottemo.DBEngine"] = dbEngineName
+
+		if iniConfig := env.GetIniConfig(); iniConfig != nil {
+
+			iniConfigDBKey := "mongodb.db"
+			switch dbEngineName {
+			case "Sqlite3":
+				iniConfigDBKey = "db.sqlite3.uri"
+				break
+			case "MySQL":
+				iniConfigDBKey = "db.mysql.db"
+				break
+			}
+
+			if iniValue := iniConfig.GetValue(iniConfigDBKey, "ottemo"); iniValue != "" {
+				result["Ottemo.DBName"] = iniValue
+			}
+		}
 	}
+
 	result["Ottemo.VersionMajor"] = ConstVersionMajor
 	result["Ottemo.VersionMinor"] = ConstVersionMinor
 	result["Ottemo.BuildTags"] = buildTags

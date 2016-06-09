@@ -6,9 +6,10 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 
-	"github.com/ottemo/foundation/env"
 	"sync"
 	"time"
+
+	"github.com/ottemo/foundation/env"
 )
 
 // Package global variables
@@ -59,6 +60,7 @@ type DefaultOrder struct {
 	IncrementID string
 	Status      string
 
+	SessionID string
 	VisitorID string
 	CartID    string
 

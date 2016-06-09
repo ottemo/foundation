@@ -40,19 +40,16 @@ func IncreaseOnline(typeCounter int) {
 		if OnlineDirect > OnlineDirectMax {
 			OnlineDirectMax = OnlineDirect
 		}
-		break
 	case ConstReferrerTypeSearch:
 		OnlineSearch++
 		if OnlineSearch > OnlineSearchMax {
 			OnlineSearchMax = OnlineSearch
 		}
-		break
 	case ConstReferrerTypeSite:
 		OnlineSite++
 		if OnlineSite > OnlineSiteMax {
 			OnlineSiteMax = OnlineSite
 		}
-		break
 	}
 }
 
@@ -63,18 +60,14 @@ func DecreaseOnline(typeCounter int) {
 		if OnlineDirect != 0 {
 			OnlineDirect--
 		}
-		break
 	case ConstReferrerTypeSearch:
 		if OnlineSearch != 0 {
 			OnlineSearch--
 		}
-
-		break
 	case ConstReferrerTypeSite:
 		if OnlineSite != 0 {
 			OnlineSite--
 		}
-		break
 	}
 }
 
@@ -224,22 +217,26 @@ func initSalesHistory() error {
 
 // GetRangeStats returns stats for range
 func GetRangeStats(dateFrom, dateTo time.Time) (ActionsMade, error) {
+	var result ActionsMade
 
-	var stats ActionsMade
+	// making minimal offset to include dateTo timestamp,
+	// dateFrom timestamp includes by default in time.Before() function
+	dateTo = dateTo.Add(time.Nanosecond)
 
-	// Go thru period and summarise a visits
-	for dateFrom.Before(dateTo.Add(time.Nanosecond)) {
-		if actions, present := statistic[dateFrom.Unix()]; present {
-			stats.Visit = actions.Visit + stats.Visit
-			stats.Sales = actions.Sales + stats.Sales
-			stats.Cart = actions.Cart + stats.Cart
-			stats.TotalVisits = actions.TotalVisits + stats.TotalVisits
-			stats.SalesAmount = actions.SalesAmount + stats.SalesAmount
+	// Go through period and summarise counters
+	for dateFrom.Before(dateTo) {
+		timestamp := dateFrom.Unix()
+		if statisticValue, present := statistic[timestamp]; present {
+			result.Visit += statisticValue.Visit
+			result.Sales += statisticValue.Sales
+			result.Cart += statisticValue.Cart
+			result.TotalVisits += statisticValue.TotalVisits
+			result.SalesAmount += statisticValue.SalesAmount
 		}
 
 		dateFrom = dateFrom.Add(time.Hour)
 	}
-	return stats, nil
+	return result, nil
 }
 
 // initStatistic get info from visitor database for 60 hours
@@ -270,16 +267,42 @@ func initStatistic() error {
 	for _, item := range dbRecords {
 		timeIterator = utils.InterfaceToTime(item["day"]).Unix()
 		if _, present := statistic[timeIterator]; !present {
-			statistic[timeIterator] = new(ActionsMade)
+			updateSync.Lock()
+			statistic[timeIterator] = &ActionsMade{}
+			updateSync.Unlock()
 		}
 		// add info to hour
-		statistic[timeIterator].TotalVisits = statistic[timeIterator].TotalVisits + utils.InterfaceToInt(item["total_visits"])
-		statistic[timeIterator].SalesAmount = statistic[timeIterator].SalesAmount + utils.InterfaceToFloat64(item["sales_amount"])
-		statistic[timeIterator].Visit = statistic[timeIterator].Visit + utils.InterfaceToInt(item["visitors"])
-		statistic[timeIterator].Sales = statistic[timeIterator].Sales + utils.InterfaceToInt(item["sales"])
-		statistic[timeIterator].VisitCheckout = statistic[timeIterator].VisitCheckout + utils.InterfaceToInt(item["visit_checkout"])
-		statistic[timeIterator].SetPayment = statistic[timeIterator].SetPayment + utils.InterfaceToInt(item["set_payment"])
-		statistic[timeIterator].Cart = statistic[timeIterator].Cart + utils.InterfaceToInt(item["cart"])
+		statistic[timeIterator].TotalVisits += utils.InterfaceToInt(item["total_visits"])
+		statistic[timeIterator].SalesAmount += utils.InterfaceToFloat64(item["sales_amount"])
+		statistic[timeIterator].Visit += utils.InterfaceToInt(item["visitors"])
+		statistic[timeIterator].Sales += utils.InterfaceToInt(item["sales"])
+		statistic[timeIterator].VisitCheckout += utils.InterfaceToInt(item["visit_checkout"])
+		statistic[timeIterator].SetPayment += utils.InterfaceToInt(item["set_payment"])
+		statistic[timeIterator].Cart += utils.InterfaceToInt(item["cart"])
+	}
+
+	dateTo = time.Now()
+	// beginning of current month
+	dateFrom = time.Date(dateTo.Year(), dateTo.Month(), 0, 0, 0, 0, 0, time.UTC)
+
+	visitorInfoCollection.ClearFilters()
+	visitorInfoCollection.AddFilter("day", "<", dateTo)
+	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
+
+	dbRecords, err = visitorInfoCollection.Load()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	for _, item := range dbRecords {
+		monthStatistic.TotalVisits += utils.InterfaceToInt(item["total_visits"])
+		monthStatistic.SalesAmount += utils.InterfaceToFloat64(item["sales_amount"])
+		monthStatistic.Visit += utils.InterfaceToInt(item["visitors"])
+		monthStatistic.Sales += utils.InterfaceToInt(item["sales"])
+		monthStatistic.VisitCheckout += utils.InterfaceToInt(item["visit_checkout"])
+		monthStatistic.SetPayment += utils.InterfaceToInt(item["set_payment"])
+		monthStatistic.Cart += utils.InterfaceToInt(item["cart"])
+
 	}
 
 	return nil
@@ -333,10 +356,25 @@ func SaveStatisticsData() error {
 // CheckHourUpdateForStatistic if it's a new hour action we need renew all session as a new in this hour
 // and remove old record from statistic
 func CheckHourUpdateForStatistic() {
-	currentHour := time.Now().Truncate(time.Hour).Unix()
+	currentTime := time.Now()
+	currentHour := currentTime.Truncate(time.Hour).Unix()
 	durationWeek := time.Hour * 168
 
 	lastHour := time.Now().Add(-durationWeek).Truncate(time.Hour).Unix()
+
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+	currentServerTime, _ := utils.MakeTZTime(currentTime, timeZone)
+	lastServerTime, _ := utils.MakeTZTime(lastUpdate, timeZone)
+
+	if currentServerTime.Month() > lastServerTime.Month() {
+		monthStatistic.Visit = 0
+		monthStatistic.Cart = 0
+		monthStatistic.Sales = 0
+		monthStatistic.TotalVisits = 0
+		monthStatistic.SalesAmount = 0
+		monthStatistic.VisitCheckout = 0
+		monthStatistic.SetPayment = 0
+	}
 
 	// if last our not present in statistic we need to update visitState
 	// if it's a new day so we make clear a visitor state stats
@@ -355,14 +393,19 @@ func CheckHourUpdateForStatistic() {
 			}
 			visitState = cartCreatedPersons
 		}
-		statistic[currentHour] = new(ActionsMade)
+
+		updateSync.Lock()
+		statistic[currentHour] = &ActionsMade{}
+		updateSync.Unlock()
 	}
 
+	updateSync.Lock()
 	for timeIn := range statistic {
 		if timeIn < lastHour {
 			delete(statistic, timeIn)
 		}
 	}
+	updateSync.Unlock()
 
 	lastUpdate = time.Now()
 }
@@ -412,30 +455,11 @@ func initReferrals() error {
 		return env.ErrorDispatch(err)
 	}
 
+	updateSync.Lock()
 	for _, record := range dbRecords {
 		referrers[utils.InterfaceToString(record["referral"])] = utils.InterfaceToInt(record["count"])
 	}
+	updateSync.Unlock()
 
 	return nil
-}
-
-// sortArrayOfMapByKey sort array from biggest to lowest value of map[key] element
-func sortArrayOfMapByKey(data []map[string]interface{}, key string) []map[string]interface{} {
-
-	var result []map[string]interface{}
-	var indexOfMaxValueItem int
-	var maxValue float64
-
-	for len(data) > 0 {
-		for index, item := range data {
-			if utils.InterfaceToFloat64(item[key]) > maxValue {
-				maxValue = utils.InterfaceToFloat64(item[key])
-				indexOfMaxValueItem = index
-			}
-		}
-		result = append(result, data[indexOfMaxValueItem])
-		data = append(data[:indexOfMaxValueItem], data[indexOfMaxValueItem+1:]...)
-		maxValue = 0
-	}
-	return result
 }

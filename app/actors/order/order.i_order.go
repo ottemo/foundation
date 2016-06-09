@@ -8,9 +8,12 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models/cart"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"strings"
 )
 
 // GetItems returns order items for current order
@@ -151,19 +154,20 @@ func (it *DefaultOrder) SetIncrementID(incrementID string) error {
 // CalculateTotals recalculates order Subtotal and GrandTotal
 func (it *DefaultOrder) CalculateTotals() error {
 
-	var subtotal float64
-	for _, orderItem := range it.Items {
-		subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
-	}
-	it.Subtotal = utils.RoundPrice(subtotal)
-
-	it.GrandTotal = utils.RoundPrice(it.Subtotal + it.ShippingAmount + it.TaxAmount - it.Discount)
+	it.GrandTotal = utils.RoundPrice(it.GetSubtotal() + it.GetShippingAmount() + it.GetTaxAmount() + it.GetDiscountAmount())
 
 	return nil
 }
 
 // GetSubtotal returns subtotal of order
 func (it *DefaultOrder) GetSubtotal() float64 {
+	if it.Subtotal == 0 {
+		var subtotal float64
+		for _, orderItem := range it.Items {
+			subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
+		}
+		it.Subtotal = utils.RoundPrice(subtotal)
+	}
 	return it.Subtotal
 }
 
@@ -242,17 +246,17 @@ func (it *DefaultOrder) SetStatus(newStatus string) error {
 	oldStatus := it.Status
 	it.Status = newStatus
 
-	// if order new status is "new" or "canceled" - returning items to stock, otherwise taking them from
-	if newStatus == order.ConstOrderStatusCancelled || newStatus == order.ConstOrderStatusNew {
+	// if order new status is "new" or "declined" - returning items to stock, otherwise taking them from
+	if newStatus == order.ConstOrderStatusDeclined || newStatus == order.ConstOrderStatusNew {
 
-		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusCancelled && oldStatus != "" {
+		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusDeclined && oldStatus != "" {
 			err = it.Rollback()
 		}
 
 	} else {
 
 		// taking items from stock
-		if oldStatus == order.ConstOrderStatusCancelled || oldStatus == order.ConstOrderStatusNew || oldStatus == "" {
+		if oldStatus == order.ConstOrderStatusDeclined || oldStatus == order.ConstOrderStatusNew || oldStatus == "" {
 			err = it.Proceed()
 		}
 	}
@@ -271,22 +275,12 @@ func (it *DefaultOrder) Proceed() error {
 	stockManager := product.GetRegisteredStock()
 	if stockManager != nil {
 		for _, orderItem := range it.GetItems() {
-			options := orderItem.GetOptions()
 
-			for optionName, optionValue := range options {
-				if optionValue, ok := optionValue.(map[string]interface{}); ok {
-					if value, present := optionValue["value"]; present {
-						options := map[string]interface{}{optionName: value}
-
-						err := stockManager.UpdateProductQty(orderItem.GetProductID(), options, -1*orderItem.GetQty())
-						if err != nil {
-							return env.ErrorDispatch(err)
-						}
-
-					}
-				}
+			// Pass in the full option configurations
+			err := stockManager.UpdateProductQty(orderItem.GetProductID(), orderItem.GetOptions(), -1*orderItem.GetQty())
+			if err != nil {
+				return env.ErrorDispatch(err)
 			}
-
 		}
 	}
 
@@ -309,11 +303,12 @@ func (it *DefaultOrder) Proceed() error {
 	return nil
 }
 
-// Rollback returns order items to stock, changing order status to canceled if status was not set yet, saves order
+// Rollback returns order items to stock, modifieds the order status to declined
+// if status was not set yet, then saves order
 func (it *DefaultOrder) Rollback() error {
 
 	if it.Status == "" {
-		it.Status = order.ConstOrderStatusCancelled
+		it.Status = order.ConstOrderStatusDeclined
 	}
 
 	var err error
@@ -348,4 +343,125 @@ func (it *DefaultOrder) Rollback() error {
 	env.Event("order.rollback", eventData)
 
 	return nil
+}
+
+// DuplicateOrder used to create checkout from order with changing params
+// main params for duplication: sessionID, paymentMethod, shippingMethod
+func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface{}, error) {
+
+	duplicateCheckout, err := checkout.GetCheckoutModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// set visitor basic info
+	visitorID := it.Get("visitor_id")
+	if visitorID != "" {
+		duplicateCheckout.Set("VisitorID", visitorID)
+	}
+
+	duplicateCheckout.SetInfo("customer_email", it.Get("customer_email"))
+	duplicateCheckout.SetInfo("customer_name", it.Get("customer_name"))
+
+	// set billing and shipping address
+	shippingAddress := it.GetShippingAddress().ToHashMap()
+	duplicateCheckout.Set("ShippingAddress", shippingAddress)
+
+	billingAddress := it.GetBillingAddress().ToHashMap()
+	duplicateCheckout.Set("BillingAddress", billingAddress)
+
+	// convert order Item object to cart
+	currentCart, err := cart.GetCartModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, orderItem := range it.GetItems() {
+		itemOptions := make(map[string]interface{})
+
+		for option, value := range orderItem.GetOptions() {
+			optionMap := utils.InterfaceToMap(value)
+			if optionValue, present := optionMap["value"]; present {
+				itemOptions[option] = optionValue
+			}
+		}
+
+		_, err = currentCart.AddItem(orderItem.GetProductID(), orderItem.GetQty(), itemOptions)
+		if err != nil {
+			env.ErrorDispatch(err)
+		}
+	}
+
+	err = currentCart.ValidateCart()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = currentCart.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = duplicateCheckout.SetCart(currentCart)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check shipping method for availability
+	var methodFind, rateFind bool
+
+	orderShipping := strings.Split(it.GetShippingMethod(), "/")
+	for _, shippingMethod := range checkout.GetRegisteredShippingMethods() {
+		if orderShipping[0] == shippingMethod.GetCode() {
+			if shippingMethod.IsAllowed(duplicateCheckout) {
+				methodFind = true
+
+				for _, shippingRates := range shippingMethod.GetRates(duplicateCheckout) {
+					if orderShipping[1] == shippingRates.Code {
+						err := duplicateCheckout.SetShippingRate(shippingRates)
+						if err != nil {
+							env.ErrorDispatch(err)
+							continue
+						}
+
+						err = duplicateCheckout.SetShippingMethod(shippingMethod)
+						if err != nil {
+							env.ErrorDispatch(err)
+							methodFind = false
+							continue
+						}
+
+						rateFind = true
+						break
+					}
+				}
+			}
+		}
+		if methodFind && rateFind {
+			break
+		}
+	}
+
+	// check payment method for availability
+	orderPayment := it.GetPaymentMethod()
+	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
+		if orderPayment == paymentMethod.GetCode() {
+			if paymentMethod.IsAllowed(duplicateCheckout) {
+				err := duplicateCheckout.SetPaymentMethod(paymentMethod)
+				if err != nil {
+					env.ErrorDispatch(err)
+					continue
+				}
+
+				break
+			}
+		}
+	}
+
+	err = duplicateCheckout.SetInfo("cc", it.Get("payment_info"))
+	if err != nil {
+		env.ErrorDispatch(err)
+	}
+
+	return duplicateCheckout, nil
 }

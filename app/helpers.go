@@ -105,6 +105,87 @@ Content-Type: text/html
 	return env.ErrorDispatch(err)
 }
 
+// SendMailEx sends mail via smtp server specified in config
+// - use nil context and/or headers for default values
+func SendMailEx(headers map[string]string, body string, context map[string]interface{}) error {
+
+	userName := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailUser))
+	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailPassword))
+
+	mailServer := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailServer))
+	mailPort := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailPort))
+	if mailPort != "" && mailPort != "0" {
+		mailPort = ":" + mailPort
+	} else {
+		return nil
+	}
+
+	if context == nil {
+		context = make(map[string]interface{})
+	}
+
+	emailTo, present := headers["To"]
+	if !present {
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelHelper, "d76f17be-407c-4e3d-acb7-74dc1d77f329", "send To email not specified in headers"))
+	}
+
+	if _, present := context["From"]; !present {
+		context["From"] = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailFrom))
+	}
+
+	if _, present := context["Signature"]; !present {
+		context["Signature"] = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMailSignature))
+	}
+
+	if _, present := context["Subject"]; !present {
+		context["Subject"] = "Ottemo email"
+	}
+
+	emailTemplateBody := `From: {{.From}}
+To: ` + emailTo + `
+Subject: {{.Subject}}`
+
+	for key, value := range headers {
+		if _, present := context[key]; !present {
+			context[key] = value
+		}
+
+		if !utils.IsAmongStr(key, "From", "To", "Subject") {
+			newHeaderLine := `
+` + key + ": " + value
+
+			emailTemplateBody = emailTemplateBody + newHeaderLine
+		}
+	}
+
+	emailTemplateBody = emailTemplateBody + `
+Content-Type: text/html
+
+<p>` + body + `</p>
+
+<p>{{.Signature}}</p>`
+
+	emailTemplate := template.New("emailTemplate")
+	emailTemplate, err := emailTemplate.Parse(emailTemplateBody)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	var doc bytes.Buffer
+	err = emailTemplate.Execute(&doc, context)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	var auth smtp.Auth
+	if userName != "" {
+		auth = smtp.PlainAuth("", userName, password, mailServer)
+	}
+
+	err = smtp.SendMail(mailServer+mailPort, auth, userName, []string{emailTo}, doc.Bytes())
+	return env.ErrorDispatch(err)
+}
+
 // GetSessionTimeZone - return time zone of session
 func GetSessionTimeZone(session api.InterfaceSession) (string, error) {
 

@@ -2,23 +2,20 @@ package usps
 
 import (
 	"bytes"
-
 	"html"
-	"regexp"
-	"text/template"
-
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
+	"text/template"
 
-	"io/ioutil"
-
-	"github.com/ottemo/foundation/app/models/checkout"
+	"gopkg.in/xmlpath.v1"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"launchpad.net/xmlpath"
-	"strings"
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // GetName returns name of shipping method
@@ -200,6 +197,22 @@ func (it *USPS) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.S
 					Price: utils.InterfaceToFloat64(stringRate),
 				})
 		}
+	}
+
+	return result
+}
+
+// GetAllRates returns all the shipping rates for the USPS Shipping method.
+func (it USPS) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+
+	for code, name := range ConstShippingMethods {
+		resultItem := checkout.StructShippingRate{
+			Code: code,
+			Name: name,
+		}
+
+		result = append(result, resultItem)
 	}
 
 	return result

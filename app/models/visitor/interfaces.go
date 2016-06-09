@@ -14,6 +14,8 @@ const (
 	ConstModelNameVisitorCollection        = "VisitorCollection"
 	ConstModelNameVisitorAddress           = "VisitorAddress"
 	ConstModelNameVisitorAddressCollection = "VisitorAddressCollection"
+	ConstModelNameVisitorCard              = "VisitorCard"
+	ConstModelNameVisitorCardCollection    = "VisitorCardCollection"
 
 	ConstSessionKeyVisitorID = "visitor_id"
 
@@ -43,10 +45,13 @@ type InterfaceVisitor interface {
 	CheckPassword(passwd string) bool
 	GenerateNewPassword() error
 
+	ResetPassword() error
+	UpdateResetPassword(key string, passwd string) error
+
 	IsAdmin() bool
 	IsGuest() bool
 
-	IsVerfied() bool
+	IsVerified() bool
 	Invalidate() error
 	Validate(key string) error
 
@@ -96,6 +101,33 @@ type InterfaceVisitorAddress interface {
 // InterfaceVisitorAddressCollection represents interface to access business layer implementation of visitor address collection
 type InterfaceVisitorAddressCollection interface {
 	ListVisitorsAddresses() []InterfaceVisitorAddress
+
+	models.InterfaceCollection
+}
+
+// InterfaceVisitorCard represents interface to access business layer implementation of visitor card object
+type InterfaceVisitorCard interface {
+	GetVisitorID() string
+	GetPaymentMethodCode() string
+
+	GetToken() string
+	GetCustomerID() string
+
+	GetHolderName() string
+	GetType() string
+	GetNumber() string
+	GetExpirationDate() string
+
+	IsExpired() bool
+
+	models.InterfaceModel
+	models.InterfaceObject
+	models.InterfaceStorable
+}
+
+// InterfaceVisitorCardCollection represents interface to access business layer implementation of visitor card collection
+type InterfaceVisitorCardCollection interface {
+	ListVisitorsCards() []InterfaceVisitorCard
 
 	models.InterfaceCollection
 }

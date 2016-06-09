@@ -63,7 +63,7 @@ func setupConfig() error {
 			Value:       ConstDPMActionAuthorizeOnly,
 			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "select",
-			Options:     map[string]string{ConstDPMActionAuthorizeOnly: "Authorize Only", ConstDPMActionAuthorizeAndCapture: "Authorize & Capture"},
+			Options:     map[string]string{ConstDPMActionAuthorizeOnly: "Authorize Only", ConstDPMActionAuthorizeAndCapture: "Authorize and Capture"},
 			Label:       "Action",
 			Description: "specifies action on checkout submit",
 			Image:       "",
@@ -97,8 +97,8 @@ func setupConfig() error {
 		config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMKey,
 			Value:       "",
-			Type:        env.ConstConfigTypeSecret,
-			Editor:      "password",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Transaction Key",
 			Description: "account transaction key",
@@ -164,6 +164,66 @@ func setupConfig() error {
 			Description: "use the custom relay page on checkout",
 			Image:       "",
 		}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+		if err != nil {
+			return err
+		}
+
+		config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathDPMReceiptURL,
+			Value:       "",
+			Type:        env.ConstConfigTypeText,
+			Editor:      "line_text",
+			Options:     nil,
+			Label:       "Relay response receipt redirect URL",
+			Description: "URL for approved transactions, default value: StorefrontURL/account/order/:orderID",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return err
+		}
+
+		config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathDPMDeclineURL,
+			Value:       "",
+			Type:        env.ConstConfigTypeText,
+			Editor:      "line_text",
+			Options:     nil,
+			Label:       "Relay response decline redirect URL",
+			Description: "URL for declined transactions, default value: StorefrontURL/checkout",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return err
+		}
+
+		config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathDPMReceiptHTML,
+			Value:       ConstDefaultReceiptTemplate,
+			Type:        env.ConstConfigTypeText,
+			Editor:      "multiline_text",
+			Options:     nil,
+			Label:       "Relay response receipt HTML",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return err
+		}
+
+		config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathDPMDeclineHTML,
+			Value:       ConstDefaultDeclineTemplate,
+			Type:        env.ConstConfigTypeText,
+			Editor:      "multiline_text",
+			Options:     nil,
+			Label:       "Relay response decline HTML",
+			Description: "",
+			Image:       "",
+		}, nil)
 
 		if err != nil {
 			return err

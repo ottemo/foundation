@@ -3,6 +3,7 @@ package fsmedia
 import (
 	"fmt"
 	"image"
+	"image/jpeg"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -242,9 +243,15 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 			}
 		}
 
-		err = imaging.Save(resizedImage, destinationFileName)
+		file, err := os.Create(destinationFileName)
 		if err != nil {
 			return env.ErrorDispatch(err)
+		}
+		defer file.Close()
+
+		err = jpeg.Encode(file, resizedImage, &jpeg.Options{Quality: 80})
+		if err != nil {
+			env.ErrorDispatch(err)
 		}
 	}
 

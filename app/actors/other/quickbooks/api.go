@@ -2,6 +2,7 @@ package quickbooks
 
 import (
 	"encoding/csv"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,12 +14,9 @@ import (
 
 // setupAPI configures the package related API endpoints
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("export/quickbooks", api.ConstRESTOperationCreate, APIExportOrders)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
+	service.POST("export/quickbooks", APIExportOrders)
 
 	return nil
 }
@@ -36,7 +34,7 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	if !utils.KeysInMapAndNotBlank(requestData, "orders") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f2602f73-7cae-4525-8405-9e470681c20e", "at least one order need to be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f2602f73-7cae-4525-8405-9e470681c20e", "Specifiy a minimum of one order in the orders parameter.")
 	}
 
 	orderItemsCollectionModel, err := order.GetOrderItemCollectionModel()
@@ -64,12 +62,16 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	if len(ordersRecords) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "28eac91b-39ec-4034-b664-4004e940a6d1", "none from requested orders finded")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "28eac91b-39ec-4034-b664-4004e940a6d1", "No orders were found.")
 	}
 
 	for _, columnsHeaders := range orderFields {
 		itemCSVRecords = append(itemCSVRecords, columnsHeaders)
 	}
+
+	// WebGility importer bombs out on some characters even if they are properly
+	// escaped in a csv: . , \ / ( )
+	regexCleaner, _ := regexp.Compile(`[.,\/\\()]`)
 
 	for _, orderRecord := range ordersRecords {
 
@@ -106,28 +108,18 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 							break
 
 						case strings.HasPrefix(cellValue, "shipping."):
-							cellValue = utils.InterfaceToString(shippingAddress[strings.Replace(cellValue, "shipping.", "", 1)])
+							addressKey := strings.Replace(cellValue, "shipping.", "", 1)
+							cellValue = utils.InterfaceToString(shippingAddress[addressKey])
+							cellValue = regexCleaner.ReplaceAllString(cellValue, "")
 							break
 
 						case strings.HasPrefix(cellValue, "billing."):
-							cellValue = utils.InterfaceToString(billingAddress[strings.Replace(cellValue, "billing.", "", 1)])
+							addressKey := strings.Replace(cellValue, "billing.", "", 1)
+							cellValue = utils.InterfaceToString(billingAddress[addressKey])
+							cellValue = regexCleaner.ReplaceAllString(cellValue, "")
 							break
 						}
-
 						break
-
-						//					if strings.Index(typedValue, "$") == 0 {
-						//						cellValue = utils.InterfaceToString(orderRecord[strings.Replace(typedValue, "$", "", 1)])
-						//						break
-						//					}
-						//
-						//					if strings.HasPrefix(typedValue, "items.") {
-						//						cellValue = utils.InterfaceToString(orderItemsRecords[0][strings.Replace(typedValue, "items.", "", 1)])
-						//						break
-						//					}
-						//
-						//					cellValue = typedValue
-						//					break
 
 					case func(record map[string]interface{}) string:
 						cellValue = typedValue(orderRecord)
@@ -160,5 +152,5 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 	csvWriter.Flush()
 
-	return nil, nil
+	return "", nil
 }

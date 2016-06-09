@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -11,6 +12,7 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
@@ -129,6 +131,7 @@ func (it *DefaultCheckout) GetShippingRate() *checkout.StructShippingRate {
 func (it *DefaultCheckout) SetCart(checkoutCart cart.InterfaceCart) error {
 	if checkoutCart != nil {
 		it.CartID = checkoutCart.GetID()
+		it.cart = checkoutCart
 	} else {
 		it.CartID = ""
 	}
@@ -138,12 +141,18 @@ func (it *DefaultCheckout) SetCart(checkoutCart cart.InterfaceCart) error {
 
 // GetCart returns a shopping cart
 func (it *DefaultCheckout) GetCart() cart.InterfaceCart {
-	if it.CartID == "" {
-		return nil
+	if it.cart != nil {
+		return it.cart
 	}
 
-	cartInstance, _ := cart.LoadCartByID(it.CartID)
-	return cartInstance
+	if it.CartID != "" {
+		if cartInstance, err := cart.LoadCartByID(it.CartID); err == nil {
+			it.cart = cartInstance
+			return it.cart
+		}
+	}
+
+	return nil
 }
 
 // SetVisitor sets visitor for checkout
@@ -189,70 +198,229 @@ func (it *DefaultCheckout) GetSession() api.InterfaceSession {
 
 // GetTaxAmount returns total amount of taxes for current checkout
 func (it *DefaultCheckout) GetTaxAmount() float64 {
-
-	return it.taxesAmount
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelTax)
 }
 
 // GetDiscountAmount returns total amount of discounts applied for current checkout
 func (it *DefaultCheckout) GetDiscountAmount() float64 {
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount) + it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
+}
 
-	return it.discountsAmount
+// GetPriceAdjustments collects price adjustments applied for current checkout
+func (it *DefaultCheckout) GetPriceAdjustments(label string) []checkout.StructPriceAdjustment {
+	it.GetItemSpecificTotal(0, label) // this function will do initial calculation of checkout if it wasn't done
+	var result []checkout.StructPriceAdjustment
+
+	for _, priceAdjustment := range it.priceAdjustments {
+		if label == "" || utils.IsInListStr(label, priceAdjustment.Labels) {
+			result = append(result, priceAdjustment)
+		}
+	}
+
+	return result
 }
 
 // GetTaxes collects taxes applied for current checkout
-func (it *DefaultCheckout) GetTaxes() []checkout.StructTaxRate {
+func (it *DefaultCheckout) GetTaxes() []checkout.StructPriceAdjustment {
 
-	if !it.taxesCalculateFlag && it.calculateFlag {
-		it.taxesCalculateFlag = true
-
-		it.Taxes = make([]checkout.StructTaxRate, 0)
-		for _, tax := range checkout.GetRegisteredTaxes() {
-			for _, taxRate := range tax.CalculateTax(it) {
-				it.Taxes = append(it.Taxes, taxRate)
-			}
-		}
-
-		it.taxesCalculateFlag = false
-	}
-
-	return it.Taxes
+	return it.GetPriceAdjustments(checkout.ConstLabelTax)
 }
 
 // GetDiscounts collects discounts applied for current checkout
-func (it *DefaultCheckout) GetDiscounts() []checkout.StructDiscount {
+func (it *DefaultCheckout) GetDiscounts() []checkout.StructPriceAdjustment {
 
-	if !it.discountsCalculateFlag && it.calculateFlag {
-		it.discountsCalculateFlag = true
-
-		it.Discounts = make([]checkout.StructDiscount, 0)
-		for _, discount := range checkout.GetRegisteredDiscounts() {
-			for _, discountValue := range discount.CalculateDiscount(it) {
-				it.Discounts = append(it.Discounts, discountValue)
-			}
-		}
-
-		it.discountsCalculateFlag = false
+	// currently we will include GC to discount
+	result := it.GetPriceAdjustments(checkout.ConstLabelDiscount)
+	for _, giftCardPA := range it.GetPriceAdjustments(checkout.ConstLabelGiftCard) {
+		result = append(result, giftCardPA)
 	}
 
-	return it.Discounts
+	return result
 }
 
 // GetSubtotal returns subtotal total for current checkout
 func (it *DefaultCheckout) GetSubtotal() float64 {
-	currentCart := it.GetCart()
-	if currentCart != nil {
-		return currentCart.GetSubtotal()
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelSubtotal)
+}
+
+// GetItems returns current cart items
+func (it *DefaultCheckout) GetItems() []cart.InterfaceCartItem {
+	if currentCart := it.GetCart(); currentCart != nil {
+		return currentCart.GetItems()
+	}
+
+	return nil
+}
+
+// GetDiscountableItems returns current cart items that can be discounted (not a gift cards)
+func (it *DefaultCheckout) GetDiscountableItems() []cart.InterfaceCartItem {
+	if items := it.GetItems(); items != nil {
+		var result []cart.InterfaceCartItem
+		for _, item := range items {
+			// this method should be updated to general product type usage
+			if !strings.Contains(item.GetProduct().GetSku(), checkout.GiftCardSkuElement) {
+				result = append(result, item)
+			}
+		}
+		return result
+	}
+	return nil
+}
+
+// GetShippingAmount returns shipping price for current checkout
+func (it *DefaultCheckout) GetShippingAmount() float64 {
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelShipping)
+}
+
+// calculateSubtotal it's an element of calculation that provides subtotal amounts
+func (it *DefaultCheckout) calculateSubtotal() checkout.StructPriceAdjustment {
+
+	items := it.GetItems()
+	result := checkout.StructPriceAdjustment{
+		Code:      checkout.ConstLabelSubtotal,
+		Name:      checkout.ConstLabelSubtotal,
+		Amount:    0,
+		IsPercent: false,
+		Priority:  checkout.ConstCalculateTargetSubtotal,
+		Labels:    []string{checkout.ConstLabelSubtotal},
+		PerItem:   map[string]float64{},
+	}
+
+	for _, cartItem := range items {
+		if cartProduct := cartItem.GetProduct(); cartProduct != nil {
+			result.PerItem[utils.InterfaceToString(cartItem.GetIdx())] = utils.RoundPrice(cartProduct.GetPrice() * float64(cartItem.GetQty()))
+		}
+	}
+
+	return result
+}
+
+// calculateShipping it's an element of calculation that provides shipping amounts
+func (it *DefaultCheckout) calculateShipping() checkout.StructPriceAdjustment {
+
+	if shippingRate := it.GetShippingRate(); shippingRate != nil {
+		return checkout.StructPriceAdjustment{
+			Code:      shippingRate.Code,
+			Name:      shippingRate.Name,
+			Amount:    shippingRate.Price,
+			IsPercent: false,
+			Priority:  checkout.ConstCalculateTargetShipping,
+			Labels:    []string{checkout.ConstLabelShipping},
+			PerItem:   nil,
+		}
+	}
+
+	return checkout.StructPriceAdjustment{}
+}
+
+// GetItemTotals return details about totals per item (0 is a cart)
+func (it *DefaultCheckout) getItemTotals(idx interface{}) map[string]float64 {
+	index := utils.InterfaceToInt(idx)
+
+	// in this case we don't started calculation process so it will be executed first
+	if it.calculationDetailTotals == nil {
+		it.CalculateAmount(0)
+	}
+
+	itemTotals, present := it.calculationDetailTotals[index]
+	if !present {
+
+		itemTotals = make(map[string]float64)
+		it.calculationDetailTotals[index] = itemTotals
+	}
+
+	return itemTotals
+}
+
+// GetItemSpecificTotal return current amount value for given item index and label (0 is a cart)
+func (it *DefaultCheckout) GetItemSpecificTotal(idx interface{}, label string) float64 {
+	if value, present := it.getItemTotals(idx)[label]; present {
+		return value
 	}
 
 	return 0
 }
 
-// GetShippingAmount returns shipping price for current checkout
-func (it *DefaultCheckout) GetShippingAmount() float64 {
-	if shippingRate := it.GetShippingRate(); shippingRate != nil {
-		return shippingRate.Price
+// applyAmount applies amounts to checkout detail calculation map
+func (it *DefaultCheckout) applyAmount(idx interface{}, label string, amount float64) {
+	index := utils.InterfaceToInt(idx)
+	if index != 0 {
+		it.getItemTotals(index)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(index, label))
 	}
-	return 0
+
+	it.getItemTotals(0)[label] = utils.RoundPrice(amount + it.GetItemSpecificTotal(0, label))
+
+	if label == checkout.ConstLabelGrandTotal {
+		it.calculateAmount = utils.RoundPrice(amount + it.calculateAmount)
+	}
+}
+
+// applyPriceAdjustment used to handle calculation of changes from price adjustment
+// and storing to all points with details
+func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructPriceAdjustment) {
+	if priceAdjustment.Code == "" {
+		return
+	}
+	var totalPriceAdjustmentAmount float64
+	// main part is per items apply (we will handle Amount only if there was no per item value)
+	if priceAdjustment.PerItem == nil || len(priceAdjustment.PerItem) == 0 {
+		amount := priceAdjustment.Amount
+		if priceAdjustment.IsPercent {
+			// current grand total will be changed on some percentage
+			amount = it.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal) * amount / 100.0
+		}
+
+		// prevent negative values of grand total
+		if amount+it.calculateAmount < 0.0 {
+			amount = 0.0 - it.calculateAmount
+		}
+
+		// affecting grand total of a cart
+		amount = utils.RoundPrice(amount)
+
+		it.applyAmount(0, checkout.ConstLabelGrandTotal, amount)
+		totalPriceAdjustmentAmount += amount
+
+		// cart details show amount was applied by Types
+		for _, label := range priceAdjustment.Labels {
+			if label != checkout.ConstLabelGrandTotal {
+				it.applyAmount(0, label, amount)
+			}
+		}
+
+	} else {
+		for index, amount := range priceAdjustment.PerItem {
+			currentItemTotal := it.GetItemSpecificTotal(index, checkout.ConstLabelGrandTotal)
+			if priceAdjustment.IsPercent {
+				amount = currentItemTotal * amount / 100.0
+			}
+
+			// prevent negative values of grand total per cart
+			if amount+it.calculateAmount < 0.0 {
+				amount = 0.0 - it.calculateAmount
+			}
+
+			// prevent negative values of grand total per item
+			if amount+currentItemTotal < 0.0 {
+				amount = 0.0 - currentItemTotal
+			}
+
+			// adding amount to grand total of current item and full cart
+			amount = utils.RoundPrice(amount)
+			it.applyAmount(index, checkout.ConstLabelGrandTotal, amount)
+			totalPriceAdjustmentAmount += amount
+
+			for _, label := range priceAdjustment.Labels {
+				if label != checkout.ConstLabelGrandTotal {
+					it.applyAmount(index, label, amount)
+				}
+			}
+		}
+
+	}
+
+	priceAdjustment.Amount = totalPriceAdjustmentAmount
+	it.priceAdjustments = append(it.priceAdjustments, priceAdjustment)
 }
 
 // CalculateAmount do a calculation of all amounts for checkout
@@ -261,19 +429,22 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 
 	if !it.calculateFlag {
 		it.calculateFlag = true
+		it.calculateAmount = 0
+		it.priceAdjustments = make([]checkout.StructPriceAdjustment, 0)
+		it.calculationDetailTotals = make(map[int]map[string]float64)
 
-		discounts := it.GetDiscounts()
-		taxes := it.GetTaxes()
-
-		basePoints := map[float64]func() float64{
-			checkout.ConstCalculateTargetSubtotal:   func() float64 { return it.GetSubtotal() },
-			checkout.ConstCalculateTargetShipping:   func() float64 { return it.GetShippingAmount() },
-			checkout.ConstCalculateTargetGrandTotal: func() float64 { return 0 },
+		var priceAdjustments []checkout.StructPriceAdjustment
+		priceAdjustmentCalls := make(map[float64]func(checkout.InterfaceCheckout, float64) []checkout.StructPriceAdjustment)
+		for _, priceAdjustment := range checkout.GetRegisteredPriceAdjustments() {
+			for _, priorityValue := range priceAdjustment.GetPriority() {
+				priceAdjustmentCalls[priorityValue] = priceAdjustment.Calculate
+			}
 		}
 
-		it.calculateAmount = 0
-		it.discountsAmount = 0
-		it.taxesAmount = 0
+		basePoints := map[float64]func() checkout.StructPriceAdjustment{
+			checkout.ConstCalculateTargetSubtotal: func() checkout.StructPriceAdjustment { return it.calculateSubtotal() },
+			checkout.ConstCalculateTargetShipping: func() checkout.StructPriceAdjustment { return it.calculateShipping() },
+		}
 
 		var minPriority float64
 		var maxPriority float64
@@ -305,61 +476,40 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 					}
 				} else {
 					if priority == maxPriority {
-						it.calculateAmount += value()
+						it.applyPriceAdjustment(value())
 					}
 				}
 			}
 
-			// discounts lookup
-			for index, discount := range discounts {
+			// priceAdjustment calls lookup
+			for priority, priceAdjustmentCall := range priceAdjustmentCalls {
 
 				if searchMode {
-					priority := discount.Priority
 					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
-						maxPriority = discount.Priority
+						maxPriority = priority
 						maxIsSet = true
 					}
 				} else {
-					if discount.Priority == maxPriority {
-						amount := discount.Amount
-						if discount.IsPercent {
-							amount = it.calculateAmount * discount.Amount / 100
+					if priority == maxPriority {
+						for _, priceAdjustment := range priceAdjustmentCall(it, priority) {
+							priceAdjustments = append(priceAdjustments, priceAdjustment)
 						}
-
-						// prevent negative values for grand total subtract
-						if amount > it.calculateAmount {
-							amount = it.calculateAmount
-						}
-
-						// round amount add it to calculating amounts and set to discount amount
-						amount = utils.RoundPrice(amount)
-						discounts[index].Amount = amount
-						it.discountsAmount += amount
-						it.calculateAmount -= amount
 					}
 				}
 			}
 
-			// taxes lookup
-			for index, tax := range taxes {
+			// priceAdjustment lookup
+			for _, priceAdjustment := range priceAdjustments {
+
 				if searchMode {
-					priority := tax.Priority
+					priority := priceAdjustment.Priority
 					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
-						maxPriority = tax.Priority
+						maxPriority = priceAdjustment.Priority
 						maxIsSet = true
 					}
 				} else {
-					if tax.Priority == maxPriority {
-						amount := tax.Amount
-						if tax.IsPercent {
-							amount = it.calculateAmount * tax.Amount / 100
-						}
-
-						// round amount add it to calculating amounts and set to taxes amount
-						amount = utils.RoundPrice(amount)
-						taxes[index].Amount = amount
-						it.taxesAmount += amount
-						it.calculateAmount += amount
+					if priceAdjustment.Priority == maxPriority {
+						it.applyPriceAdjustment(priceAdjustment)
 					}
 				}
 			}
@@ -372,12 +522,13 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			}
 		}
 
-		it.Discounts = discounts
-		it.Taxes = taxes
+		infoDetails := map[string]interface{}{}
+		for index, details := range it.calculationDetailTotals {
+			infoDetails[utils.InterfaceToString(index)] = details
+		}
 
-		it.calculateAmount = utils.RoundPrice(it.calculateAmount)
-		it.taxesAmount = utils.RoundPrice(it.taxesAmount)
-		it.discountsAmount = utils.RoundPrice(it.discountsAmount)
+		it.SetInfo("calculation", infoDetails)
+		it.SetInfo("price_adjustments", it.priceAdjustments)
 
 		it.calculateFlag = false
 	}
@@ -385,7 +536,7 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 	return it.calculateAmount
 }
 
-// GetGrandTotal returns grand total for current checkout: [cart subtotal] + [shipping rate] + [taxes] - [discounts]
+// GetGrandTotal returns grand total for current checkout
 func (it *DefaultCheckout) GetGrandTotal() float64 {
 	return it.CalculateAmount(0)
 }
@@ -432,6 +583,11 @@ func (it *DefaultCheckout) GetOrder() order.InterfaceOrder {
 		}
 	}
 	return nil
+}
+
+// IsSubscription provide a flag if there subscription items in it
+func (it *DefaultCheckout) IsSubscription() bool {
+	return subscription.ContainsSubscriptionItems(it)
 }
 
 // Submit creates the order with provided information
@@ -490,24 +646,27 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	// updating order information
 	//---------------------------
+	checkoutOrder.Set("session_id", it.GetInfo("session_id"))
 	checkoutOrder.Set("updated_at", currentTime)
 
 	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
 
+	// If the visitor is logged in that should dictate the email and name
 	if currentVisitor != nil {
 		checkoutOrder.Set("visitor_id", currentVisitor.GetID())
 
 		checkoutOrder.Set("customer_email", currentVisitor.GetEmail())
 		checkoutOrder.Set("customer_name", currentVisitor.GetFullName())
-	}
-
-	if it.GetInfo("customer_email") != nil {
-		orderCustomerEmail := utils.InterfaceToString(it.GetInfo("customer_email"))
-		checkoutOrder.Set("customer_email", orderCustomerEmail)
-	}
-	if it.GetInfo("customer_name") != nil {
-		orderCustomerName := utils.InterfaceToString(it.GetInfo("customer_name"))
-		checkoutOrder.Set("customer_name", orderCustomerName)
+	} else {
+		// Visitor is not logged in, maybe we were passed some extra data
+		if it.GetInfo("customer_email") != nil {
+			orderCustomerEmail := utils.InterfaceToString(it.GetInfo("customer_email"))
+			checkoutOrder.Set("customer_email", orderCustomerEmail)
+		}
+		if it.GetInfo("customer_name") != nil {
+			orderCustomerName := utils.InterfaceToString(it.GetInfo("customer_name"))
+			checkoutOrder.Set("customer_name", orderCustomerName)
+		}
 	}
 
 	billingAddress := it.GetBillingAddress().ToHashMap()
@@ -528,13 +687,18 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	paymentMethod := it.GetPaymentMethod()
 
+	// call for recalculating of all amounts including taxes and discounts
+	// cause they can be not calculated at this point in case of direct post
+	it.CalculateAmount(checkout.ConstCalculateTargetGrandTotal)
+
 	if !paymentMethod.IsAllowed(it) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a5490ee-daa3-42b4-a84a-dade12d103e8", "Payment method not allowed")
 	}
 
 	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
 	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
-	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetName()
+	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetInternalName()
+	paymentInfo["gift_cards_charged_amount"] = it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
 	checkoutOrder.Set("payment_info", paymentInfo)
 
 	discounts := it.GetDiscounts()
@@ -547,7 +711,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	checkoutOrder.Set("tax_amount", taxAmount)
 	checkoutOrder.Set("taxes", taxes)
 
-	checkoutOrder.Set("shipping_amount", it.GetShippingRate().Price)
+	checkoutOrder.Set("shipping_amount", it.GetShippingAmount())
 
 	// remove order items, and add new from current cart with new description
 	for index := range checkoutOrder.GetItems() {
@@ -591,29 +755,27 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	// trying to process payment
 	//--------------------------
-	if checkoutOrder.GetGrandTotal() > 0 {
-		paymentInfo := make(map[string]interface{})
-		if currentSession := it.GetSession(); currentSession != nil {
-			paymentInfo["sessionID"] = currentSession.GetID()
-		}
-		paymentInfo["cc"] = it.GetInfo("cc")
+	paymentDetails := make(map[string]interface{})
+	if currentSession := it.GetSession(); currentSession != nil {
+		paymentDetails["sessionID"] = currentSession.GetID()
+	}
+	paymentDetails["cc"] = it.GetInfo("cc")
 
-		result, err := paymentMethod.Authorize(checkoutOrder, paymentInfo)
-		if err != nil {
-			checkoutOrder.SetStatus(order.ConstOrderStatusNew)
-			return nil, env.ErrorDispatch(err)
-		}
+	result, err := paymentMethod.Authorize(checkoutOrder, paymentDetails)
+	if err != nil {
+		checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+		return nil, env.ErrorDispatch(err)
+	}
 
-		// Payment method require to return as a result:
-		// redirect (with completing of checkout after payment processing)
-		// or payment info for order
-		switch value := result.(type) {
-		case api.StructRestRedirect:
-			return result, nil
+	// Payment method require to return as a result:
+	// redirect (with completing of checkout after payment processing)
+	// or payment info for order
+	switch value := result.(type) {
+	case api.StructRestRedirect:
+		return result, nil
 
-		case map[string]interface{}:
-			return it.SubmitFinish(value)
-		}
+	case map[string]interface{}:
+		return it.SubmitFinish(value)
 	}
 
 	return it.SubmitFinish(nil)
@@ -627,8 +789,11 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372e487-7d43-4da7-a08d-a4d743baa83c", "Order not present in checkout")
 	}
 
+	// track for order status to prevent double executing of checkout success
+	previousOrderStatus := checkoutOrder.GetStatus()
 	checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
 
+	// updating payment info of order with info given from payment method
 	if paymentInfo != nil {
 		currentPaymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
 		for key, value := range paymentInfo {
@@ -636,6 +801,11 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 		}
 
 		checkoutOrder.Set("payment_info", currentPaymentInfo)
+	}
+
+	checkoutOrder.Set("created_at", time.Now())
+	if utils.InterfaceToString(checkoutOrder.Get("session_id")) == "" {
+		checkoutOrder.Set("session_id", it.GetInfo("session_id"))
 	}
 
 	err := checkoutOrder.Save()
@@ -662,6 +832,11 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 	}
 
 	result["items"] = orderItems
+
+	// return order in map if order has already been processed or marked completed by merchant
+	if previousOrderStatus == order.ConstOrderStatusProcessed || previousOrderStatus == order.ConstOrderStatusCancelled {
+		return result, nil
+	}
 
 	return result, it.CheckoutSuccess(checkoutOrder, it.GetSession())
 }

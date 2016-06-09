@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
+	"strings"
 )
 
 var (
@@ -142,4 +145,74 @@ func EncryptWriter(rawWriter io.Writer) (io.Writer, error) {
 	stream := cipher.NewOFB(cipherBlock, iv)
 
 	return &cipher.StreamWriter{S: stream, W: rawWriter}, nil
+}
+
+// CryptToURLString encrypts given string with base64 and hex encoding
+func CryptToURLString(raw []byte) string {
+	result := hex.EncodeToString([]byte(base64.StdEncoding.EncodeToString(raw)))
+
+	return result
+}
+
+// CryptAsURLString encrypts given string with base64 and hex encoding
+func CryptAsURLString(rawString string) string {
+	result := hex.EncodeToString([]byte(base64.StdEncoding.EncodeToString([]byte(rawString))))
+
+	return result
+}
+
+// DecryptURLString decode given encoded string and returns decoded value
+func DecryptURLString(encodedString string) (string, error) {
+
+	var result string
+
+	data, err := hex.DecodeString(encodedString)
+	if err != nil {
+		return result, err
+	}
+
+	data, err = base64.StdEncoding.DecodeString(string(data))
+	if err != nil {
+		return result, err
+	}
+
+	if data != nil {
+		result = string(data)
+	}
+
+	return result, nil
+}
+
+// PasswordEncode encode inputed password with using salt, if no salt it will use default one
+func PasswordEncode(password string, salt string) string {
+
+	hasher := md5.New()
+	if salt == "" {
+		salt := ":"
+		if len(password) > 2 {
+			salt += password[0:1]
+		}
+		hasher.Write([]byte(password + salt))
+	} else {
+		hasher.Write([]byte(salt + password))
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+// PasswordCheck compare inputed password with stored one
+func PasswordCheck(password string, input string) bool {
+
+	password = strings.TrimSpace(password)
+	input = strings.TrimSpace(input)
+
+	salt := ""
+
+	tmp := strings.Split(password, ":")
+	if len(tmp) == 2 {
+		password = tmp[0]
+		salt = tmp[1]
+	}
+
+	return PasswordEncode(input, salt) == password
 }

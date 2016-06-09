@@ -1,32 +1,43 @@
 language: go
 go:
-    - 1.4
+    - 1.5.3
+
 env:
     global:
         - SLACK_ORG=Ottemo PROJECT=Foundation
-        - secure: IgdstVqJgSEKc/DjAhAiySFT43+GFxnm5Vejtb2fToZtMO+D1CFxn3tmFk3DOlHqBlBQPm6ADgW9lUbg/x1G7Kn2RyfMvbV2AkzRJzqfaHc5lXfUw+d5dniVyqcet/nC3Lul5C2fEsuHLsB1dTKunzGXJowHMTU/ZG4BdcgA9zM6h7XuGWO6euJylDpNfZ9nz9V9r14Wbxx2ndeaXgVtWXNpSdu85R1DaAKRzmuObtYmsnoKS5F6mL+v6UuM2A/4q08DRtD52jZwavrVOksAZynmLgjm2/wB2Ew6lZgPlRfCGdzRzCgIP5RenJd7jfrW2Q9tNrOGPpP8BEGjjBg7KQ==
-before_install:
-    - shippable_retry sudo apt-get update
-    - shippable_retry sudo apt-get install -y bzr
-    - export GOPATH=$HOME/workspace
-    - export PATH=$PATH:$GOPATH/bin
+        - secure: T2ImzTpns/H12TPzWD+/XYWBJzvLdIdBj2rzO7EgCezxBRk3EcixCCcj6ImXKxk7kyCMHJR/fALjoE7u7elHG9Y+TmtR7useu95TMVekO66RD702jrEu4LA7tUGvDfBzTw8Dr4PVeCjr0NFQlJ/z1XHk9knrsHEXydHRtQ4ciN/DTw4M1yVImp3VXYMpOePCGIfjcYA20M8/ZvTZA9Nv5f/eBcGZbPLsNCdvMasUEekWwpZzJvXycX7tS7EYc5kUZdqzpHpToY1/HYLtcLm4qmILUahWiaMKAYloA0nT/FCUcPpZLCOf0hhm9nNaEuE1YfA/3anAhBu89rqqSPzM5Q==
 
-install:
-    - cd $GOPATH/src/github.com/ottemo/foundation
-    - go get -t
-    - go get -t gopkg.in/mgo.v2 && go get -t github.com/Pallinder/go-randomdata && go get -t github.com/drhodes/golorem
-    - go get -t github.com/mxk/go-sqlite/sqlite3 && go get -t github.com/gorhill/cronexpr
+build:
 
-script:
-    - go version
-    - go build -tags mongo
+    ci:
+        - sudo apt-get install bzr -y
+        - go version
 
-after_failure:
-    - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN
+    on_failure:
+        - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN
 
-after_success:
-    - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s
-    - REMOTE_HOST=blitz.ottemo.io sh bin/deploy.sh
-    - REMOTE_HOST=urbanity.ottemo.io sh bin/deploy.sh
-    - REMOTE_HOST=richkids.dev.ottemo.io sh bin/deploy.sh
-    - REMOTE_HOST=kg.dev.ottemo.io sh bin/deploy.sh
+    on_success:
+        - REMOTE_HOST=rk.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=kg.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=mp.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=demo.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=sb.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=scs.staging.ottemo.io bash bin/deploy.sh
+        - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s
+
+
+# only build develop
+branches:
+
+    only:
+        - develop
+
+integrations:
+
+    notifications:
+
+        - integrationName: email
+          type: email
+          on_success: never
+          on_failure: never
+          on_pull_request: never

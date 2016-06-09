@@ -2,7 +2,7 @@
 package quickbooks
 
 import (
-	//	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -38,10 +38,18 @@ var (
 		{
 			"$increment_id",
 			func(record map[string]interface{}) string {
-				return utils.InterfaceToTime(record["created_at"]).Format("01/02/2006")
+				timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+
+				createdAt := utils.InterfaceToTime(record["created_at"])
+				convertedDate, _ := utils.MakeUTCOffsetTime(createdAt, timeZone)
+				return convertedDate.Format("01/02/2006")
 			},
 			func(record map[string]interface{}) string {
-				return utils.InterfaceToTime(record["created_at"]).Format("15:04:05")
+				timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+
+				createdAt := utils.InterfaceToTime(record["created_at"])
+				convertedDate, _ := utils.MakeUTCOffsetTime(createdAt, timeZone)
+				return convertedDate.Format("15:04:05")
 			},
 
 			"$customer_email", "$status", "$status", "$discount", "$subtotal", "$shipping_amount", "$tax_amount", "$grand_total",

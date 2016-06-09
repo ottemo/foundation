@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -142,7 +144,7 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 	}
 
 	if count == 0 {
-		_, err = dbCollection.Save(map[string]interface{}{"model": model, "object": objID, "type": mediaType, "media": mediaName})
+		_, err = dbCollection.Save(map[string]interface{}{"model": model, "object": objID, "type": mediaType, "media": mediaName, "created_at": time.Now()})
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -245,6 +247,49 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 	return result, env.ErrorDispatch(err)
 }
 
+// ListMediaDetail returns the list with media details of given type media entities for a given model object
+func (it *FilesystemMediaStorage) ListMediaDetail(model string, objID string, mediaType string) ([]map[string]interface{}, error) {
+	var result []map[string]interface{}
+
+	dbEngine := db.GetDBEngine()
+	if dbEngine == nil {
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel,
+			"07ba2560-3d2d-4cbd-8fc7-a52cadc01b96",
+			"Unable fo find database engine in order to return the current list of media.")
+	}
+
+	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
+	if err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+
+	dbCollection.AddFilter("model", "=", model)
+	dbCollection.AddFilter("object", "=", objID)
+	dbCollection.AddFilter("type", "=", mediaType)
+
+	records, err := dbCollection.Load()
+	if err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+
+	path, _ := it.GetMediaPath(model, objID, mediaType)
+	path = mediaBasePath + "/" + path
+
+	for _, record := range records {
+		name := utils.InterfaceToString(record["media"])
+		mediaObject := map[string]interface{}{
+			"id":         record["_id"],
+			"name":       name,
+			"url":        path + name,
+			"created_at": record["created_at"],
+		}
+
+		result = append(result, mediaObject)
+	}
+
+	return result, env.ErrorDispatch(err)
+}
+
 // GetAllSizes returns a list of all image sizes in a []map[string], included is
 // the path and type of media.
 func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaType string) ([]map[string]string, error) {
@@ -291,13 +336,15 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 // included is image path, model object and the image name.
 func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType string, mediaName string) (map[string]string, error) {
 	mediaSet := make(map[string]string)
+	if mediaName == "" || model == "" || objID == "" || mediaType == "" {
+		return mediaSet, nil
+	}
 
 	path, err := it.GetMediaPath(model, objID, mediaType)
 	if err != nil {
 		return mediaSet, env.ErrorDispatch(err)
 	}
 
-	mediaBasePath := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
 	path = mediaBasePath + "/" + path
 
 	// Loop over the sizes we support

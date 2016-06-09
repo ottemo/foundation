@@ -16,6 +16,8 @@ const (
 
 	ConstEmailVerifyExpire = 60 * 60 * 24
 
+	ConstEmailPasswordResetExpire = 30 * 60
+
 	ConstErrorModule = "visitor"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 )

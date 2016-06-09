@@ -1,12 +1,13 @@
 package mongo
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"sort"
-	"strings"
 )
 
 // converts value from GO representation to DB before usage in queries
@@ -34,6 +35,8 @@ func (it *DBCollection) convertValueToType(columnType string, value interface{})
 			return utils.InterfaceToFloat64(value)
 		case strings.Contains(columnType, "time") || strings.Contains(columnType, "date"):
 			return utils.InterfaceToTime(value)
+		case columnType == "bool" || columnType == "boolean":
+			return utils.InterfaceToBool(value)
 		}
 	}
 

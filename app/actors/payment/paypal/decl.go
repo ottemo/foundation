@@ -3,8 +3,9 @@
 package paypal
 
 import (
-	"github.com/ottemo/foundation/env"
 	"sync"
+
+	"github.com/ottemo/foundation/env"
 )
 
 // Package global constants
@@ -38,14 +39,16 @@ const (
 	ConstConfigPathSignature = "payment.paypal.signature"
 	ConstConfigPathAction    = "payment.paypal.action"
 
-	// PayPal pro API constants
+	// PayPal PayFlow Pro API constants
 
 	ConstPaymentPayPalPayflowCode = "paypal_payflow"
+	ConstPaymentPayPalPayflowName = "PayPal Payflow"
 
 	ConstConfigPathPayPalPayflowGroup = "payment.paypalpayflow"
 
-	ConstConfigPathPayPalPayflowEnabled = "payment.paypalpayflow.enabled"
-	ConstConfigPathPayPalPayflowTitle   = "payment.paypalpayflow.title"
+	ConstConfigPathPayPalPayflowEnabled   = "payment.paypalpayflow.enabled"
+	ConstConfigPathPayPalPayflowTokenable = "payment.paypalpayflow.tokanable"
+	ConstConfigPathPayPalPayflowTitle     = "payment.paypalpayflow.title"
 
 	ConstConfigPathPayPalPayflowURL  = "payment.paypalpayflow.url"
 	ConstConfigPathPayPalPayflowHost = "payment.paypalpayflow.host"

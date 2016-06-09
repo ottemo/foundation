@@ -12,17 +12,11 @@ import (
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationGet, APIDownloadTaxCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("taxes/csv", api.ConstRESTOperationCreate, APIUploadTaxCSV)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("taxes/csv", api.IsAdmin(APIDownloadTaxCSV))
+	service.POST("taxes/csv", api.IsAdmin(APIUploadTaxCSV))
 
 	return nil
 }
@@ -30,11 +24,6 @@ func setupAPI() error {
 // APIDownloadTaxCSV returns csv file with currently used tax rates
 //   - returns not a JSON, but csv file
 func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	csvWriter := csv.NewWriter(context.GetResponseWriter())
 
@@ -74,11 +63,6 @@ func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, er
 // APIUploadTaxCSV replaces currently used discount coupons with data from provided in csv file
 //   - csv file should be provided in "file" field
 func APIUploadTaxCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	csvFile := context.GetRequestFile("file")
 	if csvFile == nil {

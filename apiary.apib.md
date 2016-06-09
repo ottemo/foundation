@@ -2,8 +2,8 @@ FORMAT: 1A
 HOST: http://dev.ottemo.io:3000
 
 # Ottemo Foundation API
-Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/), 
-a rediculously fast eCommerce solution.
+Foundation is the api that powers the [Ottemo Storefront](http://www.ottemo.io/),
+a ridiculously fast eCommerce solution.
 
 
 # Group Products
@@ -24,8 +24,6 @@ app/actors/product/api.go
 - [POST]     products/attribute
 - [PUT]      products/attribute/:attribute
 - [DELETE]   products/attribute/:attribute
-- [GET]      products/shop
-- [GET]      products/shop/layers
 
 app/actors/product/review/api.go
 
@@ -55,6 +53,59 @@ app/actors/category/api.go
 - [DELETE]   category/:categoryID/media/:mediaType/:mediaName
 - [GET]      category/:categoryID/mediapath/:mediaType
 
+# Group CMS
+
+## Blocks
+app/actors/cms/block/api.go
+
+- [GET]      cms/blocks
+- [GET]      cms/block/:id
+- [POST]     cms/block
+- [PUT]      cms/block/:id
+- [DELETE]   cms/block/:id
+- [GET]      cms/blocks/attributes
+
+## Pages
+app/actors/cms/page/api.go
+
+- [GET]      cms/pages
+- [GET]      cms/page/:id
+- [POST]     cms/page
+- [PUT]      cms/page/:id
+- [DELETE]   cms/page/:id
+- [GET]      cms/pages/attributes
+
+## Images
+app/actors/cms/images/api.go
+
+- [GET]      cms/images
+- [POST]     cms/images
+- [DELETE]   cms/images/:id
+
+# Group Discounts
+This refers to all capabilities to reduce the price of a product or cart at checkout.
+
+## Coupons
+app/actors/discount/coupon/api.go
+
+- [GET]      coupons
+- [POST]     coupons
+- [GET]      csv/coupons
+- [POST]     csv/coupons
+- [POST]     cart/coupons
+- [DELETE]   cart/coupons/:code
+- [GET]      coupons/:id
+- [PUT]      coupons/:id
+- [DELETE]   coupons/:id
+
+## Gift Cards
+app/actors/discount/giftcard/api.go
+
+- [GET]      giftcards
+- [GET]      giftcards/:giftcode
+- [GET]      giftcards/:giftcode/apply
+- [GET]      giftcards/:giftcode/neglect
+
 # Group Unsorted
 
 ## app/actors/payment/authorizenet/api.go
@@ -79,12 +130,6 @@ app/actors/category/api.go
 - [PUT]      checkout
 - [POST]     checkout/submit
 
-## app/actors/discount/api.go
-
-- [GET]      discount/:coupon/apply
-- [GET]      discount/:coupon/neglect
-- [GET]      discounts/csv
-- [POST]     discounts/csv
 
 ## app/actors/order/api.go
 
@@ -100,31 +145,6 @@ app/actors/category/api.go
 - [GET]      taxes/csv
 - [POST]     taxes/csv
 
-## app/actors/cms/gallery/api.go
-
-- [GET]      cms/gallery/image/:mediaName
-- [GET]      cms/gallery/images
-- [POST]     cms/gallery/image/:mediaName
-- [DELETE]   cms/gallery/image/:mediaName
-- [GET]      cms/gallery/path
-
-## app/actors/cms/block/api.go
-
-- [GET]      cms/blocks
-- [GET]      cms/blocks/attributes
-- [GET]      cms/block/:blockID
-- [POST]     cms/block
-- [PUT]      cms/block/:blockID
-- [DELETE]   cms/block/:blockID
-
-## app/actors/cms/page/api.go
-
-- [GET]      cms/pages
-- [GET]      cms/pages/attributes
-- [GET]      cms/page/:pageID
-- [POST]     cms/page
-- [PUT]      cms/page/:pageID
-- [DELETE]   cms/page/:pageID
 
 ## app/actors/stock/api.go
 
@@ -329,3 +349,31 @@ app/actors/category/api.go
 - [POST]     config/value/:path
 - [PUT]      config/value/:path
 - [DELETE]   config/value/:path
+
+# Group Cron
+Cron is a utility to schedule tasks.  These tasks maybe scheduled for
+a specific time, they may be repeatable or intended to be run immediately.
+
+It is important to understand several concepts.
+
+<b>Task</b> - a job which can be scheduled to run at a specific time
+<b>Schedule</b> - a listing of all active tasks, when they will be executed and their respective metadata
+
+The API allows you to:
+        * Obtain a list of the currently scheduled tasks
+        * Create a task to be run on a schedule
+        * Obtain a list of possible tasks to be scheduled
+        * Enable a task to be run on a schedule
+        * Disable a task
+        * Update the specified task
+        * Run the specified task now
+
+## env/cron/api.go
+
+- [GET]     cron/schedule
+- [POST]    cron/task
+- [GET]     cron/task
+- [GET]     cron/task/enable/:taskIndex
+- [GET]     cron/task/disable/:taskIndex
+- [PUT]     cron/task/:taskIndex
+- [GET]     cron/task/run/:taskIndex

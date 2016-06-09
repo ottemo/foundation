@@ -8,7 +8,12 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 )
 
-// GetName returns payment method name
+// GetInternalName returns the name of the payment method
+func (it CheckMoneyOrder) GetInternalName() string {
+	return ConstPaymentName
+}
+
+// GetName returns the user customized name of the payment method
 func (it *CheckMoneyOrder) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTitle))
 }
@@ -21,6 +26,11 @@ func (it *CheckMoneyOrder) GetCode() string {
 // GetType returns type of payment method
 func (it *CheckMoneyOrder) GetType() string {
 	return checkout.ConstPaymentTypeSimple
+}
+
+// IsTokenable checks for method applicability
+func (it *CheckMoneyOrder) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
 }
 
 // IsAllowed checks for method applicability

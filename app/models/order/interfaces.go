@@ -14,11 +14,12 @@ const (
 
 	ConstModelNameOrderItemCollection = "OrderItemCollection"
 
-	ConstOrderStatusCancelled = "cancelled" // means that order was created and then declined
-	ConstOrderStatusNew       = "new"       // means that order created but not payed
-	ConstOrderStatusPending   = "pending"   // means that order was submitted and currently in processing
-	ConstOrderStatusProcessed = "processed" // means that order was payed
-	ConstOrderStatusCompleted = "completed" // means that order was completed
+	ConstOrderStatusDeclined  = "declined"  // order was created and then declined
+	ConstOrderStatusNew       = "new"       // order created but not paid
+	ConstOrderStatusPending   = "pending"   // order was submitted and currently in processing
+	ConstOrderStatusProcessed = "processed" // order was authorized and funds collected
+	ConstOrderStatusCompleted = "completed" // order was completed by retailer
+	ConstOrderStatusCancelled = "cancelled" // order was cancelled by retailer
 
 	ConstErrorModule = "order"
 	ConstErrorLevel  = env.ConstErrorLevelModel
@@ -80,6 +81,9 @@ type InterfaceOrder interface {
 
 	Proceed() error
 	Rollback() error
+
+	DuplicateOrder(params map[string]interface{}) (interface{}, error)
+	SendShippingStatusUpdateEmail() error
 
 	models.InterfaceModel
 	models.InterfaceObject

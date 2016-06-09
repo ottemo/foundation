@@ -50,10 +50,15 @@ func (it *DefaultCartItem) GetProductID() string {
 
 // GetProduct returns product instance which cart item represents
 func (it *DefaultCartItem) GetProduct() product.InterfaceProduct {
+	if it.product != nil {
+		return it.product
+	}
 	if it.ProductID != "" {
-		product, err := product.LoadProductByID(it.ProductID)
+		cartProduct, err := product.LoadProductByID(it.ProductID)
 		if err == nil {
-			return product
+			cartProduct.ApplyOptions(it.GetOptions())
+			it.product = cartProduct
+			return cartProduct
 		}
 	}
 	return nil
@@ -138,7 +143,14 @@ func (it *DefaultCartItem) ValidateProduct() error {
 	allowOversell := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathOversell))
 	if !allowOversell && product.GetRegisteredStock() != nil {
 		if qty := cartProduct.GetQty(); qty < it.GetQty() {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b-6968-43b9-b9ad-42bc385105a6", "Item is out of stock")
+			var msg string
+			if qty == 0 {
+				msg = "No "
+			} else {
+				msg = "Only " + utils.InterfaceToString(qty) + " "
+			}
+			msg += cartProduct.GetName() + " are left in stock."
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b-6968-43b9-b9ad-42bc385105a6", msg)
 		}
 	}
 

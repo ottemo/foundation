@@ -12,6 +12,8 @@ import (
 var (
 	// StaticTypeRegexp is a regular expression used to parse datatype
 	StaticTypeRegexp = regexp.MustCompile(`^\s*(\[\])?(\w+)\s*(?:\(\s*(\d+)?\s*(?:\)|,\s*(\d+)\s*\)))?$`)
+	// StaticTimezoneRegexp is a regular expression used to parse time zone
+	StaticTimezoneRegexp = regexp.MustCompile(`((?: [A-Za-z]+[ ]?[+-]?|Z| [+-])(?:[0-9]{1,2}(?::?[0-9]{1,2})?)?)([ ]*[A-Za-z]+)?`)
 )
 
 // set of known data types
@@ -26,6 +28,7 @@ const (
 	ConstDataTypeFloat    = "float"
 	ConstDataTypeDatetime = "datetime"
 	ConstDataTypeJSON     = "json"
+	ConstDataTypeHTML     = "html"
 )
 
 // DataType represents data type details
@@ -73,7 +76,7 @@ func DataTypeIsFloat(dataType string) bool {
 // DataTypeIsString returns true if dataType representation for GO language is string type
 func DataTypeIsString(dataType string) bool {
 	parsedType := DataTypeParse(dataType)
-	if IsAmongStr(parsedType.Name, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeJSON) {
+	if IsAmongStr(parsedType.Name, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeJSON, ConstDataTypeHTML) {
 		return true
 	}
 
@@ -89,7 +92,7 @@ func DataTypeIsArray(dataType string) bool {
 // DataTypeArrayOf adds array modifier to given dataType, returns "" for unknown types
 func DataTypeArrayOf(dataType string) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -105,7 +108,7 @@ func DataTypeArrayBaseType(dataType string) string {
 // DataTypeWPrecision adds precision modifier to given dataType, returns "" for unknown types
 func DataTypeWPrecision(dataType string, precision int) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -116,7 +119,7 @@ func DataTypeWPrecision(dataType string, precision int) string {
 // DataTypeWPrecisionAndScale adds precision and scale modifier to given dataType, returns "" for unknown types
 func DataTypeWPrecisionAndScale(dataType string, precision int, scale int) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -141,34 +144,34 @@ func DataTypeParse(typeName string) DataType {
 		result.Scale, _ = StringToInteger(regexpGroups[4])
 	}
 
-	if !IsAmongStr(result.Name, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+	switch {
+	case IsAmongStr(result.Name, "b", "bool", "boolean"):
+		result.Name = ConstDataTypeBoolean
+		result.IsKnown = true
 
-		switch {
-		case IsAmongStr(result.Name, "b", "boolean"):
-			result.Name = ConstDataTypeBoolean
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "i", "int", "integer", "single"):
+		result.Name = ConstDataTypeInteger
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "i", "integer", "single"):
-			result.Name = ConstDataTypeInteger
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double", "decimal", "money"):
+		result.Name = ConstDataTypeFloat
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double"):
-			result.Name = ConstDataTypeFloat
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "str", "string", "text"):
+		result.Name = ConstDataTypeText
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "str", "string"):
-			result.Name = ConstDataTypeText
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "time", "date", "calendar", "datetime"):
+		result.Name = ConstDataTypeDatetime
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "time", "date", "calendar"):
-			result.Name = ConstDataTypeDatetime
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "struct", "json"):
+		result.Name = ConstDataTypeJSON
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "struct"):
-			result.Name = ConstDataTypeJSON
-			result.IsKnown = true
-		}
+	case IsAmongStr(result.Name, "html"):
+		result.Name = ConstDataTypeHTML
+		result.IsKnown = true
 	}
 
 	return result
@@ -517,7 +520,6 @@ func InterfaceToTime(value interface{}) time.Time {
 	case time.Time:
 		return typedValue
 	case string:
-
 		tryFirst := []string{time.RFC3339, time.UnixDate}
 
 		for _, currentFormat := range tryFirst {
@@ -529,7 +531,7 @@ func InterfaceToTime(value interface{}) time.Time {
 
 		dateFormats := []string{"02/01/2006", "02/01/06", "2006-01-02", "2006-Jan-_2", "_2 Jan 2006", "01.02.2006"}
 		timeFormats := []string{"", " 3:04PM", " 15:04", " 15:04:05", "T15:04:05"}
-		zoneFormats := []string{"", " MST-07", " MST", " MST-0700", " -0700", "Z07:00"}
+		zoneFormats := []string{"", " MST-07", " MST", " MST-0700", " -0700", " -0700MST", " -0700 MST", "Z07:00"}
 
 		for _, zoneFormat := range zoneFormats {
 			for _, timeFormat := range timeFormats {
@@ -537,10 +539,25 @@ func InterfaceToTime(value interface{}) time.Time {
 					currentFormat := dateFormat + timeFormat + zoneFormat
 					newValue, err := time.Parse(currentFormat, typedValue)
 					if err == nil {
+						if zoneFormat != "" {
+							str := newValue.Format(dateFormat) + newValue.Format(dateFormat)
+							if matches := StaticTimezoneRegexp.FindStringSubmatch(str); len(matches) > 0 {
+								newValue, _ = MakeUTCTime(newValue, matches[0])
+								if len(matches) == 2 && matches[1] != "" {
+									SetTimeZoneName(newValue, matches[1])
+								}
+							}
+						}
 						return newValue
 					}
 				}
 			}
+		}
+
+		// convert to time from string of unix timestamp
+		newValue, err := strconv.ParseInt(typedValue, 10, 64)
+		if err == nil {
+			return time.Unix(newValue, 0)
 		}
 	}
 

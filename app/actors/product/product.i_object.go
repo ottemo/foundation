@@ -34,7 +34,7 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 	case "qty":
 		return it.GetQty()
 	case "options":
-		return it.Options
+		return it.GetOptions()
 	case "related_pids":
 		return it.GetRelatedProductIds()
 	}
@@ -163,7 +163,7 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	result["price"] = it.Price
 	result["weight"] = it.Weight
 
-	result["options"] = it.Options
+	result["options"] = it.GetOptions()
 
 	result["related_pids"] = it.Get("related_pids")
 
@@ -354,7 +354,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 // checkOptionsForQty looking for specified qty attribute for options, removes it and passes for stock management
 func (it *DefaultProduct) checkOptionsForQty() {
 
-	for productOptionName, productOption := range it.Options {
+	for productOptionName, productOption := range it.GetOptions() {
 		if productOption, ok := productOption.(map[string]interface{}); ok {
 
 			// checking options for specified qty

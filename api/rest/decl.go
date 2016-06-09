@@ -23,7 +23,7 @@ const (
 type DefaultRestService struct {
 	ListenOn string
 	Router   *httprouter.Router
-	Handlers map[string]httprouter.Handle
+	Handlers []string
 }
 
 // DefaultRestApplicationContext is a structure to hold API request related information

@@ -28,7 +28,6 @@ func init() {
 	env.RegisterOnConfigStart(setupConfig)
 
 	api.RegisterOnRestServiceStart(setupAPI)
-	// api.RegisterOnRestServiceStart(setupAPI)
 }
 
 // setupDB prepares system database for package usage
@@ -44,6 +43,7 @@ func setupDB() error {
 		collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), true)
 
 		collection.AddColumn("visitor_id", db.ConstTypeID, true)
+		collection.AddColumn("session_id", db.ConstTypeVarchar, true)
 		collection.AddColumn("cart_id", db.ConstTypeID, true)
 
 		collection.AddColumn("billing_address", db.ConstTypeJSON, true)

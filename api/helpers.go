@@ -136,6 +136,19 @@ func ValidateAdminRights(context InterfaceApplicationContext) error {
 	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0bc07b3d-1443-4594-af82-9d15211ed179", "no admin rights")
 }
 
+func IsAdmin(next FuncAPIHandler) FuncAPIHandler {
+	return func(context InterfaceApplicationContext) (interface{}, error) {
+		isAdminErr := ValidateAdminRights(context)
+
+		if isAdminErr != nil {
+			context.SetResponseStatusForbidden()
+			return nil, isAdminErr
+		}
+
+		return next(context)
+	}
+}
+
 // GetRequestContentAsMap tries to represent HTTP request content in map[string]interface{} format
 func GetRequestContentAsMap(context InterfaceApplicationContext) (map[string]interface{}, error) {
 

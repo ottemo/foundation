@@ -9,8 +9,7 @@ var (
 	registeredShippingMethods = make([]InterfaceShippingMethod, 0)
 	registeredPaymentMethods  = make([]InterfacePaymentMethod, 0)
 
-	registeredTaxes     = make([]InterfaceTax, 0)
-	registeredDiscounts = make([]InterfaceDiscount, 0)
+	registeredPriceAdjustments = make([]InterfacePriceAdjustment, 0)
 )
 
 // RegisterShippingMethod registers given shipping method in system
@@ -39,28 +38,15 @@ func RegisterPaymentMethod(paymentMethod InterfacePaymentMethod) error {
 	return nil
 }
 
-// RegisterTax registers given tax calculator in system
-func RegisterTax(tax InterfaceTax) error {
-	for _, registeredTax := range registeredTaxes {
-		if registeredTax == tax {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "355841ed-700e-4c8f-bc8d-a2d95844d393", "tax already registered")
+// RegisterPriceAdjustment registers given discount calculator in system
+func RegisterPriceAdjustment(priceAdjustment InterfacePriceAdjustment) error {
+	for _, registeredDiscount := range registeredPriceAdjustments {
+		if registeredDiscount == priceAdjustment {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "23665533-10f0-43db-a243-729aac842c85", "price adjustment already registered")
 		}
 	}
 
-	registeredTaxes = append(registeredTaxes, tax)
-
-	return nil
-}
-
-// RegisterDiscount registers given discount calculator in system
-func RegisterDiscount(discount InterfaceDiscount) error {
-	for _, registeredDiscount := range registeredDiscounts {
-		if registeredDiscount == discount {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "56234554-d230-403c-b21b-8393e7e138d4", "discount already registered")
-		}
-	}
-
-	registeredDiscounts = append(registeredDiscounts, discount)
+	registeredPriceAdjustments = append(registeredPriceAdjustments, priceAdjustment)
 
 	return nil
 }
@@ -75,12 +61,7 @@ func GetRegisteredPaymentMethods() []InterfacePaymentMethod {
 	return registeredPaymentMethods
 }
 
-// GetRegisteredTaxes returns list of registered tax calculators
-func GetRegisteredTaxes() []InterfaceTax {
-	return registeredTaxes
-}
-
-// GetRegisteredDiscounts returns list of registered tax calculators
-func GetRegisteredDiscounts() []InterfaceDiscount {
-	return registeredDiscounts
+// GetRegisteredPriceAdjustments returns list of registered price adjustments
+func GetRegisteredPriceAdjustments() []InterfacePriceAdjustment {
+	return registeredPriceAdjustments
 }

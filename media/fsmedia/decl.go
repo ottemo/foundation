@@ -30,6 +30,7 @@ const (
 // resizeImagesOnFly can be specified in ini config file by key "media.resize.images.onfly", false by default
 var (
 	resizeImagesOnFly bool
+	mediaBasePath     = "media"
 )
 
 // FilesystemMediaStorage is a filesystem based implementer of InterfaceMediaStorage

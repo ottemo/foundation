@@ -20,6 +20,7 @@ type InterfaceMediaStorage interface {
 	Remove(model string, objID string, mediaType string, mediaName string) error
 
 	ListMedia(model string, objID string, mediaType string) ([]string, error)
+	ListMediaDetail(model string, objID string, mediaType string) ([]map[string]interface{}, error)
 
 	GetMediaPath(model string, objID string, mediaType string) (string, error)
 

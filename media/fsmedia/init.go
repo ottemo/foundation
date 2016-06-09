@@ -92,7 +92,7 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 	dbCollection.AddColumn("object", db.ConstTypeVarchar, true)
 	dbCollection.AddColumn("type", db.ConstTypeVarchar, true)
 	dbCollection.AddColumn("media", db.ConstTypeVarchar, false)
-
+	dbCollection.AddColumn("created_at", db.ConstTypeDatetime, false)
 	it.setupCheckDone()
 
 	return nil

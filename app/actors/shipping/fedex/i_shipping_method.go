@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"text/template"
 
-	"launchpad.net/xmlpath"
+	"gopkg.in/xmlpath.v1"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
@@ -25,7 +25,7 @@ func (it *FedEx) GetCode() string {
 
 // IsAllowed checks for method applicability
 func (it *FedEx) IsAllowed(checkout checkout.InterfaceCheckout) bool {
-	return true
+	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
 }
 
 // GetRates returns rates allowed by shipping method for a given checkout
@@ -227,6 +227,22 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 				})
 		}
 
+	}
+
+	return result
+}
+
+// GetAllRates will return all the rates for the FedEx shipping method.
+func (it FedEx) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+
+	for code, name := range ConstShippingMethods {
+		resultItem := checkout.StructShippingRate{
+			Code: code,
+			Name: name,
+		}
+
+		result = append(result, resultItem)
 	}
 
 	return result

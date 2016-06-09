@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -138,20 +139,29 @@ func Explode(value string, separators string) []string {
 }
 
 // Round rounds value to given precision (roundOn=0.5 usual cases)
-func Round(val float64, roundOn float64, places int) float64 {
+func Round(value float64, round float64, precision int) float64 {
 
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-
-	var round float64
-	if div >= roundOn {
-		round = math.Ceil(digit)
-	} else {
-		round = math.Floor(digit)
+	negative := false
+	if negative = math.Signbit(value); negative {
+		value = -value
 	}
 
-	return round / pow
+	precisionPart := math.Pow(10, float64(precision))
+	poweredValue := precisionPart * value
+	_, roundingPart := math.Modf(poweredValue)
+
+	var roundResult float64
+	if roundingPart >= round {
+		roundResult = math.Ceil(poweredValue)
+	} else {
+		roundResult = math.Floor(poweredValue)
+	}
+
+	if negative {
+		roundResult = -roundResult
+	}
+
+	return roundResult / precisionPart
 }
 
 // RoundPrice normalize price after calculations, so it rounds it to money precision
@@ -209,15 +219,29 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 		return false
 	}
 
-	if len(mapA) == 0 {
-		return true
-	}
-
 	for key, valueA := range mapA {
 		if valueB, present := mapB[key]; present {
 			switch valueA.(type) {
-			case string, int, int32, int64, float32, float64, uint, uint32, uint64, complex64, complex128:
-				return valueA == valueB
+			case []interface{}:
+				typedValueA, okA := valueA.([]interface{})
+				typedValueB, okB := valueB.([]interface{})
+
+				if okA && okB {
+					for _, itemA := range typedValueA {
+						found := false
+						for _, itemB := range typedValueB {
+							if itemA == itemB {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return false
+						}
+					}
+					return true
+				}
+				return false
 
 			case map[string]interface{}:
 				typedValueA, okA := valueA.(map[string]interface{})
@@ -229,14 +253,16 @@ func MatchMapAValuesToMapB(mapA map[string]interface{}, mapB map[string]interfac
 				return false
 
 			default:
-				return valueA == valueB
+				if valueA != valueB {
+					return false
+				}
 			}
 		} else {
-			break
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 // EscapeRegexSpecials returns regular expression special characters escaped value
@@ -254,6 +280,34 @@ func EscapeRegexSpecials(value string) string {
 // - returns true if email address is in a valid format
 // - returns false if email address is not in a valid format
 func ValidEmailAddress(email string) bool {
-	re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,4}$`)
 	return re.MatchString(email)
+}
+
+// Clone will create a replica for a given object
+func Clone(subject interface{}) interface{} {
+	result := subject
+
+	subjectValue := reflect.ValueOf(subject)
+	subjectKind := subjectValue.Kind()
+
+	if subjectKind == reflect.Array || subjectKind == reflect.Slice {
+		len := subjectValue.Len()
+		newValue := reflect.MakeSlice(subjectValue.Type(), len, len)
+		for idx := 0; idx < subjectValue.Len(); idx++ {
+			value := Clone(subjectValue.Index(idx).Interface())
+			newValue.Index(idx).Set(reflect.ValueOf(value))
+		}
+		result = newValue.Interface()
+	} else if subjectKind == reflect.Map {
+		newValue := reflect.MakeMap(subjectValue.Type())
+		mapKeys := subjectValue.MapKeys()
+		for _, key := range mapKeys {
+			value := Clone(subjectValue.MapIndex(key).Interface())
+			newValue.SetMapIndex(key, reflect.ValueOf(value))
+		}
+		result = newValue.Interface()
+	}
+
+	return result
 }

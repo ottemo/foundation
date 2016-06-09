@@ -8,9 +8,9 @@ import (
 
 // Package global constants
 const (
-	ConstVersionMajor = 0
-	ConstVersionMinor = 9
-	ConstSprintNumber = 8
+	ConstVersionMajor = 1
+	ConstVersionMinor = 1
+	ConstSprintNumber = 23
 
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"

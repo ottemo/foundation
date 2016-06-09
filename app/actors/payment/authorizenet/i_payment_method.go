@@ -1,25 +1,28 @@
 package authorizenet
 
 import (
-	"fmt"
-	"time"
-
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
-
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 )
 
-// GetName returns payment method name
+// GetInternalName returns the name of the payment method
+func (it DirectPostMethod) GetInternalName() string {
+	return ConstPaymentNameDPM
+}
+
+// GetName returns the user customized name of the payment method
 func (it *DirectPostMethod) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMTitle))
 }
@@ -27,6 +30,11 @@ func (it *DirectPostMethod) GetName() string {
 // GetCode returns payment method code
 func (it *DirectPostMethod) GetCode() string {
 	return ConstPaymentCodeDPM
+}
+
+// IsTokenable returns possibility to save token for this payment method
+func (it *DirectPostMethod) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
 }
 
 // GetType returns type of payment method
@@ -61,7 +69,7 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	//---------------------------
 	formValues := map[string]string{
 		"x_relay_response": utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMCheckout)),
-		"x_relay_url":      utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "authorizenet/relay",
+		"x_relay_url":      app.GetFoundationURL("") + "authorizenet/relay",
 
 		"x_test_request": utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMTest)),
 

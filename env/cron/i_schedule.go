@@ -144,3 +144,14 @@ func (it *DefaultCronSchedule) GetInfo() map[string]interface{} {
 		"params": it.Params,
 		"active": it.active}
 }
+
+// RunTask  - execute a task of schedule without changing of schedule
+// to execute with empty params you should use RunTask(make(map[string]interface{})
+// otherwise schedule params will be used
+func (it *DefaultCronSchedule) RunTask(params map[string]interface{}) error {
+	if params != nil {
+		return it.task(params)
+	}
+
+	return it.task(it.Params)
+}

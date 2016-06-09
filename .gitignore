@@ -8,11 +8,13 @@
 _obj
 _test
 tags
+.tags
 .idea
 tmp
 release
 var
 .vagrant
+.vscode
 kg-media
 
 # Architecture specific extensions/prefixes

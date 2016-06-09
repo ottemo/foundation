@@ -246,7 +246,7 @@ func UpdateShippingAndPaymentMethods(currentCheckout checkout.InterfaceCheckout)
 		}
 	}
 	if !found {
-		errors.New("Shipping method 'flat rate' not registered")
+		_ = errors.New("Shipping method 'flat rate' not registered")
 	}
 
 	// setting payment method
@@ -259,7 +259,7 @@ func UpdateShippingAndPaymentMethods(currentCheckout checkout.InterfaceCheckout)
 		}
 	}
 	if !found {
-		errors.New("Payment method 'check money order' not registered")
+		_ = errors.New("Payment method 'check money order' not registered")
 	}
 	return nil
 }

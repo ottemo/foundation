@@ -2,32 +2,22 @@ package cart
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/cart"
 )
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("cart", api.ConstRESTOperationGet, APICartInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item", api.ConstRESTOperationCreate, APICartItemAdd)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.ConstRESTOperationUpdate, APICartItemUpdate)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.ConstRESTOperationDelete, APICartItemDelete)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cart", APICartInfo)
+	service.POST("cart/item", APICartItemAdd)
+	service.PUT("cart/item/:itemIdx/:qty", APICartItemUpdate)
+	service.DELETE("cart/item/:itemIdx", APICartItemDelete)
 
 	return nil
 }
@@ -49,6 +39,11 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	if currentCart != nil {
 
+		mediaStorage, err := media.GetMediaStorage()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
 		cartItems := currentCart.GetItems()
 		for _, cartItem := range cartItems {
 
@@ -66,14 +61,16 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				productData := make(map[string]interface{})
 
-				mediaPath, _ := product.GetMediaPath("image")
-
 				productData["name"] = product.GetName()
 				productData["sku"] = product.GetSku()
-				productData["image"] = mediaPath + product.GetDefaultImage()
 				productData["price"] = product.GetPrice()
 				productData["weight"] = product.GetWeight()
 				productData["options"] = product.GetOptions()
+
+				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
+				if err != nil {
+					env.LogError(err)
+				}
 
 				item["product"] = productData
 			}

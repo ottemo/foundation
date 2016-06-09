@@ -61,13 +61,15 @@ type InterfaceCart interface {
 
 	Activate() error
 	Deactivate() error
-
 	IsActive() bool
 
 	GetLastUpdateTime() time.Time
 
 	SetCartInfo(infoAttribute string, infoValue interface{}) error
 	GetCartInfo() map[string]interface{}
+
+	SetCustomInfo(info map[string]interface{})
+	GetCustomInfo() map[string]interface{}
 
 	ValidateCart() error
 

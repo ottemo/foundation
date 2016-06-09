@@ -94,9 +94,17 @@ func setupConfig() error {
 			}
 
 			// taking rules as array
-			newRatesArray, err := utils.DecodeJSONToArray(newRatesValues)
-			if err != nil {
-				return nil, err
+			var newRatesArray []interface{}
+			switch value := newRatesValues.(type) {
+			case string:
+				newRatesArray, err = utils.DecodeJSONToArray(value)
+				if err != nil {
+					return nil, err
+				}
+			case []interface{}:
+				newRatesArray = value
+			default:
+				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
 			}
 
 			methods := make(map[string]map[string]interface{})
@@ -134,10 +142,9 @@ func setupConfig() error {
 				rate["code"] = rateCode
 				rates = append(rates, rate)
 			}
-
 			additionalRates = rates
 
-			return utils.EncodeToJSONString(rates), nil
+			return newRatesValues, nil
 		}
 
 		// grouping rules config setup
@@ -145,15 +152,18 @@ func setupConfig() error {
 		err = config.RegisterItem(env.StructConfigItem{
 			Path:    ConstConfigPathAdditionalRates,
 			Value:   `[]`,
-			Type:    env.ConstConfigTypeText,
+			Type:    env.ConstConfigTypeJSON,
 			Editor:  "multiline_text",
 			Options: "",
 			Label:   "Additional rates",
 			Description: `flat rate additional shipping rates, pattern:
-   [{"title": "State Shipping", "code": "State", "price": 4.99},
-   {"title": "Expedited Shipping", "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
-   {"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},    ... ]
-    make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
+[
+	{"title": "State Shipping",         "code": "State", "price": 4.99},
+	{"title": "Expedited Shipping",     "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
+	{"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},
+	...
+]
+make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
 			Image: "",
 		}, env.FuncConfigValueValidator(validateNewRates))
 

@@ -19,17 +19,10 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("paypal/success", api.ConstRESTOperationGet, APIReceipt)
-	if err != nil {
-		return err
-	}
-
-	err = api.GetRestService().RegisterAPI("paypal/cancel", api.ConstRESTOperationGet, APIDecline)
-	if err != nil {
-		return err
-	}
+	service.GET("paypal/success", APIReceipt)
+	service.GET("paypal/cancel", APIDecline)
 
 	return nil
 }
@@ -117,7 +110,7 @@ func CompleteTransaction(orderInstance order.InterfaceOrder, token string, payer
 func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 	requestData := context.GetRequestArguments()
 	if !utils.KeysInMapAndNotBlank(requestData, "token", "PayerID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "tocken or payerID are not set")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "token or payerID are not set")
 	}
 	sessionID := waitingTokens[requestData["token"]]
 
@@ -175,7 +168,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 	requestData := context.GetRequestArguments()
 	if !utils.KeysInMapAndNotBlank(requestData, "token", "PayerID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "tocken or payerID are not set")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "token or payerID are not set")
 	}
 	sessionID := waitingTokens[requestData["token"]]
 
@@ -199,14 +192,14 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	checkoutOrder := currentCheckout.GetOrder()
 
-	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+	checkoutOrder.SetStatus(order.ConstOrderStatusDeclined)
 
 	err = checkoutOrder.Save()
 	if err != nil {
 		return nil, err
 	}
 
-	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "CANCELED: "+
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "Declined: "+
 		"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 		"OrderID - "+checkoutOrder.GetID()+", "+
 		"TOKEN - : "+requestData["token"])

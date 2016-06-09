@@ -8,7 +8,12 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 )
 
-// GetName returns payment method name
+// GetInternalName returns the name of the payment method
+func (it ZeroAmountPayment) GetInternalName() string {
+	return ConstPaymentName
+}
+
+// GetName returns the user customized name of the payment method
 func (it *ZeroAmountPayment) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
 }
@@ -31,8 +36,16 @@ func (it *ZeroAmountPayment) IsAllowed(checkoutInstance checkout.InterfaceChecko
 	return true
 }
 
+// IsTokenable checks for method applicability
+func (it *ZeroAmountPayment) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+	return false
+}
+
 // Authorize makes payment method authorize operation
 func (it *ZeroAmountPayment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+	if orderInstance.GetGrandTotal() > 0 {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a1de8e4-94f8-4e8b-92fd-378b92d7d9fa", "Order amount above zero, please specify allowe payment method.")
+	}
 	return nil, nil
 }
 

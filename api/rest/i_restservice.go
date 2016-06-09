@@ -22,16 +22,22 @@ func (it *DefaultRestService) GetName() string {
 	return "httprouter"
 }
 
-// RegisterAPI is available for modules to call in order to provide their own REST API functionality
-func (it *DefaultRestService) RegisterAPI(resource string, operation string, handler api.FuncAPIHandler) error {
-
+// wrappedHandler Middleware around the handler you registered
+// 1. Debug timers
+// 1. Parses the request
+// 1. Sets the ApplicationContext
+// 1. Starts the Session
+// 1. Handles the Referrer cookie
+// 1. Calls handler on context
+// 1. Handle redirects and response encoding (json/xml)
+func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprouter.Handle {
 	// httprouter supposes other format of handler than we use, so we need wrapper
 	wrappedHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
 
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail")
+				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
 			}
 		}()
 
@@ -115,6 +121,8 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 		// request contains POST text
 		case strings.Contains(contentType, "text/plain"):
+			fallthrough
+		default:
 			var body []byte
 
 			body, err = ioutil.ReadAll(req.Body)
@@ -123,9 +131,6 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 			}
 
 			content = string(body)
-
-		default:
-			content = req.Body
 		}
 
 		// Handling request
@@ -150,7 +155,10 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 						if contentDisposition, present := fileInfo.Header["Content-Disposition"]; present && len(contentDisposition) > 0 {
 							if _, mediaParams, err := mime.ParseMediaType(contentDisposition[0]); err == nil {
 								if value, present := mediaParams["name"]; present {
-									mediaFileName = value
+									if len(reqArguments[value]) != 0 {
+										reqArguments[value] += ", "
+									}
+									reqArguments[value] += mediaFileName
 								}
 							}
 
@@ -170,22 +178,37 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 
 		if ConstUseDebugLog {
 			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+
+			env.LogEvent(env.LogFields{
+				"request_thread_id": debugRequestIdentifier,
+				"session_id":        currentSession.GetID(),
+
+				"uri":          req.RequestURI,
+				"verb":         req.Method,
+				"content":      content,
+				"agent":        req.UserAgent(),
+				"clientip":     req.RemoteAddr,
+				"httpversion":  req.Proto,
+				"host":         req.Host,
+				"content_type": contentType,
+			}, "request")
 		}
 
 		// event for request
 		eventData := map[string]interface{}{"session": currentSession, "context": applicationContext}
-		cookieReferrer, err := req.Cookie("X_Referrer")
-		if err != nil {
-			eventData["referrer"] = ""
-		} else {
-			eventData["referrer"] = cookieReferrer.Value
-		}
 		env.Event("api.request", eventData)
 
 		// API handler processing
 		result, err := handler(applicationContext)
 		if err != nil {
 			env.LogError(err)
+			env.LogEvent(env.LogFields{
+				"request_thread_id": debugRequestIdentifier,
+				"session_id":        currentSession.GetID(),
+
+				"uri":        req.RequestURI,
+				"error_dump": err,
+			}, "handler_error")
 		}
 
 		if err == nil {
@@ -237,47 +260,76 @@ func (it *DefaultRestService) RegisterAPI(resource string, operation string, han
 					}
 				}
 
-				result, _ = json.Marshal(map[string]interface{}{"result": result, "error": errorMsg, "redirect": redirectLocation})
+				response := map[string]interface{}{
+					"result":   result,
+					"error":    errorMsg,
+					"redirect": redirectLocation,
+				}
+
+				if ConstUseDebugLog {
+					responseTime := time.Now().Sub(startTime)
+					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+
+					logFields := env.LogFields{
+						"request_thread_id": debugRequestIdentifier,
+						"session_id":        currentSession.GetID(),
+						"uri":               req.RequestURI,
+						"resp_time":         responseTime,
+						"response":          response,
+					}
+					env.LogEvent(logFields, "response")
+				}
+
+				result, _ = json.Marshal(response)
 			}
 
 			// XML encode
-			if resp.Header().Get("Content-Type") == "text/xml" {
-				result, _ = xml.Marshal(result)
+			if resp.Header().Get("Content-Type") == "text/xml" && result != nil {
+				xmlResult, _ := xml.MarshalIndent(result, "", "    ")
+				result = []byte(xml.Header + string(xmlResult))
 			}
-		}
-
-		if ConstUseDebugLog {
-			responseTime := time.Now().Sub(startTime)
-			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
 		}
 
 		if value, ok := result.([]byte); ok {
 			resp.Write(value)
-		} else {
+		} else if result != nil {
 			resp.Write([]byte(fmt.Sprint(result)))
 		}
 	}
 
+	return wrappedHandler
+}
+
+// GET is a wrapper for the HTTP GET verb
+func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
-	// registration of handler within httprouter
-	//-------------------------------------------
-	switch operation {
-	case "GET":
-		it.Router.GET(path, wrappedHandler)
-	case "PUT":
-		it.Router.PUT(path, wrappedHandler)
-	case "POST":
-		it.Router.POST(path, wrappedHandler)
-	case "DELETE":
-		it.Router.DELETE(path, wrappedHandler)
-	default:
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58228dcc-f5e4-4aae-b6df-9dd55041a21e", "unsupported method '"+operation+"'")
-	}
+	it.Router.GET(path, it.wrappedHandler(handler))
 
-	key := path + " {" + operation + "}"
-	it.Handlers[key] = wrappedHandler
+	it.Handlers = append(it.Handlers, path+" {GET}")
+}
 
-	return nil
+// PUT is a wrapper for the HTTP PUT verb
+func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
+	path := "/" + resource
+	it.Router.PUT(path, it.wrappedHandler(handler))
+
+	it.Handlers = append(it.Handlers, path+" {PUT}")
+}
+
+// POST is a wrapper for the HTTP POST verb
+func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
+	path := "/" + resource
+	it.Router.POST(path, it.wrappedHandler(handler))
+
+	it.Handlers = append(it.Handlers, path+" {POST}")
+}
+
+// DELETE is a wrapper for the HTTP DELETE verb
+func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
+	path := "/" + resource
+	it.Router.DELETE(path, it.wrappedHandler(handler))
+
+	it.Handlers = append(it.Handlers, path+" {DELETE}")
 }
 
 // ServeHTTP is an entry point for HTTP request, it takes control before request handled
