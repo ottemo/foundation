@@ -1,39 +1,22 @@
 package composer
 
 import (
-	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
 	"strings"
+
+	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("composer/units/:names", api.ConstRESTOperationGet, composerUnits)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("composer", api.ConstRESTOperationGet, composerInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("composer/go-json", api.ConstRESTOperationGet, composerGoTypes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
+	service.GET("composer/units/:names", composerUnits)
+	service.GET("composer", composerInfo)
+	service.GET("composer/go-json", composerGoTypes)
 	// get type info {types: {}, units:{}, types_units_binding:{}}
-	err = api.GetRestService().RegisterAPI("composer/types/:names", api.ConstRESTOperationGet, composerTypes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	// add Check!!!!
+	service.GET("composer/types/:names", composerTypes)
 
 	return nil
 }
@@ -46,7 +29,7 @@ func composerTypes(context api.InterfaceApplicationContext) (interface{}, error)
 	bindingResult := make(map[string]interface{})
 
 	composer := GetComposer()
-	baseForAny := map[string]int{"string":1, "int":1, "float":1, "boolean":1}
+	baseForAny := map[string]int{"string": 1, "int": 1, "float": 1, "boolean": 1}
 	typeNames := strings.Split(context.GetRequestArgument("names"), ",")
 	listUnits := composer.ListUnits()
 
@@ -56,9 +39,9 @@ func composerTypes(context api.InterfaceApplicationContext) (interface{}, error)
 			keyInfo := make(map[string]interface{})
 			for _, item := range typeInfo.ListItems() {
 				keyInfo[item] = map[string]interface{}{
-					"label": 		typeInfo.GetLabel(item),
-					"description":  typeInfo.GetDescription(item),
-					"type":  		typeInfo.GetType(item),
+					"label":       typeInfo.GetLabel(item),
+					"description": typeInfo.GetDescription(item),
+					"type":        typeInfo.GetType(item),
 				}
 			}
 
@@ -74,7 +57,7 @@ func composerTypes(context api.InterfaceApplicationContext) (interface{}, error)
 
 				unitName := unitInfo.GetName()
 				// binding definition
-				binding = append(binding, unitName);
+				binding = append(binding, unitName)
 
 				if unitsResult[unitName] == nil {
 					keyInfo := make(map[string]interface{})
@@ -91,7 +74,7 @@ func composerTypes(context api.InterfaceApplicationContext) (interface{}, error)
 				}
 			}
 		}
-		bindingResult[typeName] = binding;
+		bindingResult[typeName] = binding
 	}
 
 	result["types"] = typesResult
