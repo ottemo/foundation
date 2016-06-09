@@ -10,7 +10,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -394,11 +395,11 @@ func setupConfig() error {
 		newEmail := utils.InterfaceToString(newValue)
 		if newEmail == "" {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "d5abe68b-5bde-4b14-a3a7-b89507c14597", "recipient e-mail can not be blank")
-			return "support+contactus@ottemo.io", err
+			return "support+contactus@ottemo.io", env.ErrorDispatch(err)
 		}
 		if !utils.ValidEmailAddress(newEmail) {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "720c5b82-4aa9-405b-b52d-b94d1f31e49d", "recipient e-mail is not in a valid format")
-			return "support+contactus@ottemo.io", err
+			return "support+contactus@ottemo.io", env.ErrorDispatch(err)
 
 		}
 

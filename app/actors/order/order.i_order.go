@@ -8,12 +8,13 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"strings"
+
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"strings"
 )
 
 // GetItems returns order items for current order
@@ -275,7 +276,6 @@ func (it *DefaultOrder) Proceed() error {
 	stockManager := product.GetRegisteredStock()
 	if stockManager != nil {
 		for _, orderItem := range it.GetItems() {
-			options := orderItem.GetOptions()
 
 			currProductOptions := make(map[string]interface{})
 			for optionName, optionValue := range options {

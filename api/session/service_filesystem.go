@@ -75,7 +75,7 @@ func startup() error {
 		if currentTime.Sub(fileInfo.ModTime()).Seconds() >= ConstSessionLifeTime {
 			err := os.Remove(ConstStorageFolder + fileInfo.Name())
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			continue
 		}
@@ -89,7 +89,8 @@ func shutdown() error {
 
 	filesystemService, ok := SessionService.(*FilesystemSessionService)
 	if !ok {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		return env.ErrorDispatch(err)
 	}
 
 	currentTime := time.Now()
@@ -104,7 +105,7 @@ func shutdown() error {
 
 			// flushing session
 			if err := filesystemService.FlushSession(sessionInstance.id); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			return false
 		})

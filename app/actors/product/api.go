@@ -703,7 +703,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		result = append(result, productInfo)

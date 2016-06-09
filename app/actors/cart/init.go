@@ -52,12 +52,12 @@ func setupEventListeners() error {
 
 						cartModel, err := cart.GetCartModelAndSetID(utils.InterfaceToString(cartID))
 						if err != nil {
-							env.LogError(err)
+							env.ErrorDispatch(err)
 						}
 
 						err = cartModel.Delete()
 						if err != nil {
-							env.LogError(err)
+							env.ErrorDispatch(err)
 						}
 					}
 				}
@@ -88,7 +88,7 @@ func cleanupGuestCarts() error {
 
 	records, err := cartCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 	for _, record := range records {
 		sessionID := utils.InterfaceToString(record["session_id"])
@@ -96,14 +96,14 @@ func cleanupGuestCarts() error {
 			cartID := utils.InterfaceToString(record["_id"])
 			err = cartCollection.DeleteByID(cartID)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			cartItemsCollection.ClearFilters()
 			cartItemsCollection.AddFilter("cart_id", "=", cartID)
 			_, err = cartItemsCollection.Delete()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	}

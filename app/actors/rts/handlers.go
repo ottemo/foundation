@@ -18,7 +18,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 	if _, present := eventData["context"]; present {
 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := api.GetContentValue(context, "referrer").(string)
+			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
 			if xReferrer == "" {
 				return true
 			}
@@ -41,7 +41,7 @@ func referrerHandler(event string, eventData map[string]interface{}) bool {
 			referrers[referrer]++
 
 			if err := saveNewReferrer(referrer); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 				err := SaveStatisticsData()
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 			}
 		}
@@ -101,7 +101,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
 					err := SaveStatisticsData()
 					if err != nil {
-						env.LogError(err)
+						env.ErrorDispatch(err)
 					}
 				}
 
@@ -117,7 +117,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
 				err := SaveStatisticsData()
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 			}
 		}
@@ -138,7 +138,7 @@ func visitCheckoutHandler(event string, eventData map[string]interface{}) bool {
 
 	err := SaveStatisticsData()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return true
@@ -156,7 +156,7 @@ func setPaymentHandler(event string, eventData map[string]interface{}) bool {
 
 	err := SaveStatisticsData()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return true
@@ -200,7 +200,7 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 			err := SaveStatisticsData()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	} else {
@@ -219,7 +219,7 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 			err := SaveStatisticsData()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	}
@@ -243,7 +243,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 
 		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			return true
 		}
 		currentDate := time.Now().Truncate(time.Hour).Add(time.Hour)
@@ -256,7 +256,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 			salesHistoryCollection.AddFilter("product_id", "=", productID)
 			dbSaleRow, err := salesHistoryCollection.Load()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return true
 			}
 
@@ -274,7 +274,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				salesHistoryRecord["count"] = newCount
 				_, err = salesHistoryCollection.Save(salesHistoryRecord)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					return true
 				}
 			}
@@ -294,7 +294,7 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 
 		if event == "api.rts.visit" {
 			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				referrer = api.GetContentValue(context, "referrer").(string)
+				referrer = utils.InterfaceToString(api.GetContentValue(context, "referrer"))
 			}
 		}
 

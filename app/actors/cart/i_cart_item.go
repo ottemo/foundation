@@ -143,7 +143,14 @@ func (it *DefaultCartItem) ValidateProduct() error {
 	allowOversell := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathOversell))
 	if !allowOversell && product.GetRegisteredStock() != nil {
 		if qty := cartProduct.GetQty(); qty < it.GetQty() {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b-6968-43b9-b9ad-42bc385105a6", "Item is out of stock")
+			var msg string
+			if qty == 0 {
+				msg = "No "
+			} else {
+				msg = "Only " + utils.InterfaceToString(qty) + " "
+			}
+			msg += cartProduct.GetName() + " are left in stock."
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3ce4e4b-6968-43b9-b9ad-42bc385105a6", msg)
 		}
 	}
 

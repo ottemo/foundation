@@ -107,13 +107,13 @@ func SendTask(params map[string]interface{}) error {
 			})
 
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			continue
 		}
 
 		err = app.SendMail(giftCardRecipientEmail, giftCardEmailSubject, giftCardEmail)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			continue
 		}
 
@@ -121,7 +121,7 @@ func SendTask(params map[string]interface{}) error {
 
 		_, err = giftCardCollection.Save(record)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 
