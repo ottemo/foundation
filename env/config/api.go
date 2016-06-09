@@ -14,44 +14,33 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("config/groups", restConfigGroups)
-	service.GET("config/item/:path", restConfigInfo)
-	service.GET("config/values", restConfigList)
-	service.GET("config/values/refresh", restConfigReload)
 	service.GET("config/value/:path", restConfigGet)
-	service.POST("config/value/:path", restConfigRegister)
-	service.PUT("config/value/:path", restConfigSet)
-	service.DELETE("config/value/:path", restConfigUnRegister)
+
+	// Admin Only
+	service.GET("config/item/:path", api.IsAdmin(restConfigInfo))
+	service.GET("config/values", api.IsAdmin(restConfigList))
+	service.GET("config/values/refresh", api.IsAdmin(restConfigReload))
+	service.POST("config/value/:path", api.IsAdmin(restConfigRegister))
+	service.PUT("config/value/:path", api.IsAdmin(restConfigSet))
+	service.DELETE("config/value/:path", api.IsAdmin(restConfigUnRegister))
 
 	return nil
 }
 
 // WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
 func restConfigGroups(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	config := env.GetConfig()
 	return config.GetGroupItems(), nil
 }
 
 // WEB REST API to get value information about config items with type [ConstConfigTypeGroup]
 func restConfigList(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	config := env.GetConfig()
 	return config.ListPathes(), nil
 }
 
 // WEB REST API to get value information about item(s) matching path
 func restConfigInfo(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	config := env.GetConfig()
 	return config.GetItemsInfo(context.GetRequestArgument("path")), nil
 }
@@ -101,11 +90,6 @@ func restConfigSet(context api.InterfaceApplicationContext) (interface{}, error)
 		}
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	err = config.SetValue(configPath, setValue)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -118,11 +102,6 @@ func restConfigSet(context api.InterfaceApplicationContext) (interface{}, error)
 func restConfigRegister(context api.InterfaceApplicationContext) (interface{}, error) {
 	inputData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -151,11 +130,6 @@ func restConfigRegister(context api.InterfaceApplicationContext) (interface{}, e
 // WEB REST API used to remove config item from system
 func restConfigUnRegister(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	config := env.GetConfig()
 
 	err := config.UnregisterItem(context.GetRequestArgument("path"))
@@ -168,11 +142,6 @@ func restConfigUnRegister(context api.InterfaceApplicationContext) (interface{},
 
 // WEB REST API used to re-load config from DB
 func restConfigReload(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	config := env.GetConfig()
 

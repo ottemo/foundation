@@ -11,7 +11,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1f7ecfb8-b5e3-4361-b066-42c088f6b350", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1f7ecfb8-b5e3-4361-b066-42c088f6b350", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	// Subscription config elements
@@ -101,7 +102,7 @@ func setupConfig() error {
 		Value: `Dear {{.Visitor.name}},
 Yours subscription can't be processed because of an insufficient funds error from your credit card
 provider, please create new subscription using valid credit card.`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Insufficient Funds Email: Body",
@@ -133,7 +134,7 @@ provider, please create new subscription using valid credit card.`,
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionCancelEmailTemplate,
 		Value:       "Your subscription has been canceled",
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Cancellation Email: Body",
@@ -148,7 +149,7 @@ provider, please create new subscription using valid credit card.`,
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        subscription.ConstConfigPathSubscriptionStockEmailTemplate,
 		Value:       "Subscription failure due to out of stock items.",
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Admin - Stock Warning Email: Body",

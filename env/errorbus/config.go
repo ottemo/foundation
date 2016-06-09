@@ -10,7 +10,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6dee39ac-c930-420e-b777-b95f6cab8981", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6dee39ac-c930-420e-b777-b95f6cab8981", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -32,7 +33,8 @@ func setupConfig() error {
 	hideLevelValidator := func(newValue interface{}) (interface{}, error) {
 		newLevel := utils.InterfaceToInt(newValue)
 		if newLevel > 10 || newLevel < 0 {
-			return hideLevel, errors.New("'Hide level' config value should be between 0 and 10")
+			err := errors.New("'Hide level' config value should be between 0 and 10")
+			return hideLevel, env.ErrorDispatch(err)
 		}
 		hideLevel = newLevel
 
@@ -58,7 +60,8 @@ func setupConfig() error {
 		if newMessage, ok := newValue.(string); ok {
 			hideMessage = newMessage
 		} else {
-			return hideMessage, errors.New("wrong type for 'Hide message' config value")
+			err := errors.New("wrong type for 'Hide message' config value")
+			return hideMessage, env.ErrorDispatch(err)
 		}
 		return hideMessage, nil
 	}

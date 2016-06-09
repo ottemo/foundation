@@ -15,19 +15,19 @@ func (it *DefaultStock) GetProductQty(productID string, options map[string]inter
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 
 	err = dbCollection.AddFilter("product_id", "=", productID)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 
 	dbRecords, err := dbCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return minQty
 	}
 
@@ -78,11 +78,11 @@ func (it *DefaultStock) RemoveProductQty(productID string, options map[string]in
 	// collecting record ids to remove
 	var stockIDsToRemove []string
 	for _, dbRecord := range dbRecords {
-		if recordOptions, present := dbRecord["options"]; !present {
+		if recordOptions, present := dbRecord["options"]; present {
 			recordOptions, ok := recordOptions.(map[string]interface{})
 
 			// skipping un-matching records
-			if !ok || !utils.MatchMapAValuesToMapB(recordOptions, options) {
+			if !ok || !utils.MatchMapAValuesToMapB(options, recordOptions) {
 				continue
 			}
 
@@ -218,12 +218,8 @@ func (it *DefaultStock) UpdateProductQty(productID string, options map[string]in
 		recordsProcessed++
 	}
 
-	// no records was - adding new
 	if recordsProcessed == 0 {
-		_, err := dbCollection.Save(map[string]interface{}{"product_id": productID, "options": options, "qty": deltaQty})
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "62214642-d384-4474-b45c-e5fe8424fc3a", "Was given a set of options that didn't match any stock options in the db"))
 	}
 
 	return nil

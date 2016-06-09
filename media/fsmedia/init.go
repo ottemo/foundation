@@ -36,7 +36,7 @@ func (it *FilesystemMediaStorage) setupCheckDone() {
 	if it.setupWaitCnt--; it.setupWaitCnt == 0 {
 		err := media.OnMediaStorageStart()
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 }

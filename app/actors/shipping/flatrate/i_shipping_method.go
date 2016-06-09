@@ -1,11 +1,12 @@
 package flatrate
 
 import (
-	"github.com/ottemo/foundation/app/models/checkout"
+	"strings"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // GetName returns name of shipping method
@@ -89,4 +90,28 @@ func rateIsAllowed(shippingRate map[string]interface{}, checkoutObject checkout.
 	}
 
 	return true
+}
+
+// GetAllRates returns an unfiltered list of all supported shipping rates using the Flat Rate method.
+func (it ShippingMethod) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+	for _, shippingRate := range additionalRates {
+		shippingRates := utils.InterfaceToMap(shippingRate)
+		rate := checkout.StructShippingRate{
+			Code:  utils.InterfaceToString(shippingRates["code"]),
+			Name:  utils.InterfaceToString(shippingRates["title"]),
+			Price: utils.InterfaceToFloat64(shippingRates["price"]),
+		}
+		result = append(result, rate)
+	}
+
+	defaultRate := checkout.StructShippingRate{
+		Code: "default",
+		Name: "Default",
+		// Name:  utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName)),
+		Price: utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathAmount)),
+	}
+
+	result = append(result, defaultRate)
+	return result
 }

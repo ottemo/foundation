@@ -21,7 +21,7 @@ func updateCartHandler(event string, eventData map[string]interface{}) bool {
 	}
 
 	if err := currentCart.Save(); err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return true
@@ -114,7 +114,7 @@ func applyGroupRule(currentCart cart.InterfaceCart, groupProductsArray []interfa
 
 			_, err := currentCart.AddItem(intoProductPID, intoProductQty*ruleMultiplier, intoProductOptions)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 	}

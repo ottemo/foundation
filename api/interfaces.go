@@ -84,4 +84,9 @@ type InterfaceApplicationContext interface {
 	SetResponseSetting(name string, value interface{}) error
 	GetResponseResult() interface{}
 	SetResponseResult(value interface{}) error
+
+	SetResponseStatus(code int)
+	SetResponseStatusBadRequest()
+	SetResponseStatusForbidden()
+	SetResponseStatusNotFound()
 }

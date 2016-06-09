@@ -31,21 +31,25 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/payment/authorizenet" // Authorize.Net payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/checkmo"      // "Check Money Order" payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/paypal"       // PayPal payment method
+	_ "github.com/ottemo/foundation/app/actors/payment/stripe"       // Stripe payment method
 
-	_ "github.com/ottemo/foundation/app/actors/shipping/fedex"    // FedEx shipping method
-	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate" // "Flat Rate" shipping method
-	_ "github.com/ottemo/foundation/app/actors/shipping/usps"     // USPS shipping method
+	_ "github.com/ottemo/foundation/app/actors/shipping/fedex"      // FedEx
+	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate"   // Flat Rate
+	_ "github.com/ottemo/foundation/app/actors/shipping/flatweight" // Flat Weight
+	_ "github.com/ottemo/foundation/app/actors/shipping/usps"       // USPS
 
 	_ "github.com/ottemo/foundation/app/actors/discount/coupon"   // Coupon based discounts
 	_ "github.com/ottemo/foundation/app/actors/discount/giftcard" // Gift Cards
 	_ "github.com/ottemo/foundation/app/actors/tax"               // Tax Rates
 
-	_ "github.com/ottemo/foundation/app/actors/rts" // Real Time Statistics service
-	_ "github.com/ottemo/foundation/app/actors/seo" // URL Rewrite support
+	_ "github.com/ottemo/foundation/app/actors/reporting" // Reporting
+	_ "github.com/ottemo/foundation/app/actors/rts"       // Real Time Statistics service
+	_ "github.com/ottemo/foundation/app/actors/seo"       // URL Rewrite support
 
-	_ "github.com/ottemo/foundation/app/actors/other/friendmail" // email friend extension
-	_ "github.com/ottemo/foundation/app/actors/other/grouping"   // products grouping extension
-	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"  // MailChimp integration
-	_ "github.com/ottemo/foundation/app/actors/other/quickbooks" // QuickBooks exporting extension
-	_ "github.com/ottemo/foundation/app/actors/other/trustpilot" // TrustPilot integration
+	_ "github.com/ottemo/foundation/app/actors/other/friendmail"  // email friend extension
+	_ "github.com/ottemo/foundation/app/actors/other/grouping"    // products grouping extension
+	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"   // MailChimp integration
+	_ "github.com/ottemo/foundation/app/actors/other/quickbooks"  // QuickBooks exporting extension
+	_ "github.com/ottemo/foundation/app/actors/other/shipstation" // Shipstation integration
+	_ "github.com/ottemo/foundation/app/actors/other/trustpilot"  // TrustPilot integration
 )

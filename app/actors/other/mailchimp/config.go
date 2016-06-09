@@ -8,7 +8,8 @@ func setupConfig() error {
 
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -78,7 +79,7 @@ func setupConfig() error {
 		<br />
 		The following email address could not be added to Mailchimp:
 		{{.email_address}}`,
-		Type:        env.ConstConfigTypeText,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
 		Label:       "Support Email Template",

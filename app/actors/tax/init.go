@@ -12,7 +12,7 @@ import (
 func init() {
 	instance := new(DefaultTax)
 
-	checkout.RegisterTax(instance)
+	checkout.RegisterPriceAdjustment(instance)
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)

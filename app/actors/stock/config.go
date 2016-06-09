@@ -33,7 +33,8 @@ func setupConfig() error {
 			}
 			return boolValue, nil
 		}
-		config.RegisterItem(env.StructConfigItem{
+
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -49,6 +50,9 @@ func setupConfig() error {
 		}
 
 		validateEnabled(env.ConfigGetValue(ConstConfigPathEnabled))
+	} else {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fdc4f498-3d03-48a9-b51b-46aeae42edd1", "Unable to obtain configuration for Stock")
+		return env.ErrorDispatch(err)
 	}
 
 	return nil

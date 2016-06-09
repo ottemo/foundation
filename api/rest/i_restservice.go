@@ -37,7 +37,8 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
+				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
+				env.ErrorDispatch(err)
 			}
 		}()
 
@@ -84,7 +85,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			json.Unmarshal(body, &newContent)
 
@@ -127,7 +128,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			content = string(body)
@@ -172,7 +173,8 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// starting session for request
 		currentSession, err := api.StartSession(applicationContext)
 		if err != nil {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
+			err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
+			env.ErrorDispatch(err)
 		}
 		applicationContext.Session = currentSession
 
@@ -201,7 +203,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// API handler processing
 		result, err := handler(applicationContext)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			env.LogEvent(env.LogFields{
 				"request_thread_id": debugRequestIdentifier,
 				"session_id":        currentSession.GetID(),
@@ -260,32 +262,39 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 					}
 				}
 
-				result, _ = json.Marshal(map[string]interface{}{"result": result, "error": errorMsg, "redirect": redirectLocation})
+				response := map[string]interface{}{
+					"result":   result,
+					"error":    errorMsg,
+					"redirect": redirectLocation,
+				}
+
+				if ConstUseDebugLog {
+					responseTime := time.Now().Sub(startTime)
+					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
+
+					logFields := env.LogFields{
+						"request_thread_id": debugRequestIdentifier,
+						"session_id":        currentSession.GetID(),
+						"uri":               req.RequestURI,
+						"resp_time":         responseTime,
+						"response":          response,
+					}
+					env.LogEvent(logFields, "response")
+				}
+
+				result, _ = json.Marshal(response)
 			}
 
 			// XML encode
-			if resp.Header().Get("Content-Type") == "text/xml" {
-				result, _ = xml.Marshal(result)
+			if resp.Header().Get("Content-Type") == "text/xml" && result != nil {
+				xmlResult, _ := xml.MarshalIndent(result, "", "    ")
+				result = []byte(xml.Header + string(xmlResult))
 			}
-		}
-
-		if ConstUseDebugLog {
-			responseTime := time.Now().Sub(startTime)
-			env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
-
-			env.LogEvent(env.LogFields{
-				"request_thread_id": debugRequestIdentifier,
-				"session_id":        currentSession.GetID(),
-
-				"uri":       req.RequestURI,
-				"resp_time": responseTime,
-				"response":  result,
-			}, "response")
 		}
 
 		if value, ok := result.([]byte); ok {
 			resp.Write(value)
-		} else {
+		} else if result != nil {
 			resp.Write([]byte(fmt.Sprint(result)))
 		}
 	}
@@ -293,6 +302,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 	return wrappedHandler
 }
 
+// GET is a wrapper for the HTTP GET verb
 func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.GET(path, it.wrappedHandler(handler))
@@ -300,6 +310,7 @@ func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {GET}")
 }
 
+// PUT is a wrapper for the HTTP PUT verb
 func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.PUT(path, it.wrappedHandler(handler))
@@ -307,6 +318,7 @@ func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
 	it.Handlers = append(it.Handlers, path+" {PUT}")
 }
 
+// POST is a wrapper for the HTTP POST verb
 func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.POST(path, it.wrappedHandler(handler))
@@ -314,6 +326,7 @@ func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) 
 	it.Handlers = append(it.Handlers, path+" {POST}")
 }
 
+// DELETE is a wrapper for the HTTP DELETE verb
 func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
 	path := "/" + resource
 	it.Router.DELETE(path, it.wrappedHandler(handler))
@@ -349,7 +362,10 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 // Run is the Ottemo REST server startup function, analogous to "ListenAndServe"
 func (it *DefaultRestService) Run() error {
 	fmt.Println("REST API Service [HTTPRouter] starting to listen on " + it.ListenOn)
-	env.LogError(http.ListenAndServe(it.ListenOn, it))
+	err := http.ListenAndServe(it.ListenOn, it)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	return nil
 }

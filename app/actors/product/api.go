@@ -19,29 +19,30 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	// Products
+	// Public
 	service.GET("products", APIListProducts)
 	service.GET("product/:productID", APIGetProduct)
 
-	service.POST("product", APICreateProduct)
-	service.PUT("product/:productID", APIUpdateProduct)
-	service.DELETE("product/:productID", APIDeleteProduct)
-
-	// Attributes
 	service.GET("products/attributes", APIListProductAttributes)
-	service.POST("products/attribute", APICreateProductAttribute)
-	service.PUT("products/attribute/:attribute", APIUpdateProductAttribute)
-	service.DELETE("products/attribute/:attribute", APIDeleteProductsAttribute)
 
-	// Media
-	service.POST("product/:productID/media/:mediaType/:mediaName", APIAddMediaForProduct)
-	service.DELETE("product/:productID/media/:mediaType/:mediaName", APIRemoveMediaForProduct)
 	service.GET("product/:productID/media/:mediaType/:mediaName", APIGetMedia) // @DEPRECATED
 	service.GET("product/:productID/media/:mediaType", APIListMedia)           // @DEPRECATED
 	service.GET("product/:productID/mediapath/:mediaType", APIGetMediaPath)    // @DEPRECATED
 
 	// Related
 	service.GET("product/:productID/related", APIListRelatedProducts)
+
+	// Admin Only
+	service.POST("product", api.IsAdmin(APICreateProduct))
+	service.PUT("product/:productID", api.IsAdmin(APIUpdateProduct))
+	service.DELETE("product/:productID", api.IsAdmin(APIDeleteProduct))
+
+	service.POST("products/attribute", api.IsAdmin(APICreateProductAttribute))
+	service.PUT("products/attribute/:attribute", api.IsAdmin(APIUpdateProductAttribute))
+	service.DELETE("products/attribute/:attribute", api.IsAdmin(APIDeleteProductsAttribute))
+
+	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
 
 	return nil
 }
@@ -72,11 +73,6 @@ func APIUpdateProductAttribute(context api.InterfaceApplicationContext) (interfa
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	productModel, err := product.GetProductModel()
@@ -144,11 +140,6 @@ func APICreateProductAttribute(context api.InterfaceApplicationContext) (interfa
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "93457847-8e4d-4536-8985-43f340a1abc4", "attribute label was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// make product attribute operation
 	//---------------------------------
 	productModel, err := product.GetProductModel()
@@ -213,11 +204,6 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// remove attribute actions
@@ -312,11 +298,6 @@ func APICreateProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2a0cf2b0-215e-4b53-bf55-98fbfe22cd27", "product name and/or sku were not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// create product operation
 	//-------------------------
 	productModel, err := product.GetProductModel()
@@ -350,11 +331,6 @@ func APIDeleteProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f35af170-8172-4ec0-b30d-ab883231d222", "product id was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// delete operation
 	//-----------------
 	productModel, err := product.GetProductModelAndSetID(productID)
@@ -385,11 +361,6 @@ func APIUpdateProduct(context api.InterfaceApplicationContext) (interface{}, err
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fffccbad-455a-4fff-81d4-8919ae3a5c35", "unexpected request content")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// update operations
@@ -498,11 +469,6 @@ func APIAddMediaForProduct(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23fb7617-f19a-4505-b706-10f7898fd980", "media name was not specified")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// income file processing
 	//-----------------------
 	files := context.GetRequestFiles()
@@ -558,11 +524,6 @@ func APIRemoveMediaForProduct(context api.InterfaceApplicationContext) (interfac
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// list media operation
@@ -736,7 +697,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		result = append(result, productInfo)

@@ -108,15 +108,15 @@ type InterfaceVisitorAddressCollection interface {
 // InterfaceVisitorCard represents interface to access business layer implementation of visitor card object
 type InterfaceVisitorCard interface {
 	GetVisitorID() string
-
-	GetHolderName() string
 	GetPaymentMethodCode() string
 
+	GetToken() string
+	GetCustomerID() string
+
+	GetHolderName() string
 	GetType() string
 	GetNumber() string
 	GetExpirationDate() string
-
-	GetToken() string
 
 	IsExpired() bool
 

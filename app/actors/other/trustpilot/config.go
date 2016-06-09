@@ -8,7 +8,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b2c1c442-36b9-4994-b5d1-7c948a7552bd", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b2c1c442-36b9-4994-b5d1-7c948a7552bd", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	// Trust pilot config elements
@@ -35,23 +36,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Trust Pilot",
-		Description: `Enabled Trust Pilot sent order data`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathTrustPilotTestMode,
-		Value:       false,
-		Type:        env.ConstConfigTypeBoolean,
-		Editor:      "boolean",
-		Options:     nil,
-		Label:       "Test mode",
-		Description: `Enabled Trust Pilot sent order data in test mode (add _test@ to email)`,
+		Label:       "Enable Service Emails",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -66,7 +52,7 @@ func setupConfig() error {
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "Business Unit ID",
-		Description: `Trustpilot Business Unit ID`,
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -80,13 +66,13 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     "",
-		Label:       "Trustpilot username",
-		Description: `Trustpilot b2b login email`,
+		Label:       "Username",
+		Description: "",
 		Image:       "",
 	}, nil)
 
 	if err != nil {
-		return env.ErrorDispatch(err)
+		return err
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
@@ -95,8 +81,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeSecret,
 		Editor:      "password",
 		Options:     "",
-		Label:       "Trustpilot password",
-		Description: `Trustpilot b2b login password`,
+		Label:       "Password",
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -111,7 +97,7 @@ func setupConfig() error {
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "API Key",
-		Description: `Trustpilot API Key`,
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -126,54 +112,7 @@ func setupConfig() error {
 		Editor:      "line_text",
 		Options:     "",
 		Label:       "API Secret",
-		Description: `Trustpilot API Secret`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathTrustPilotAccessTokenURL,
-		Value:       "https://api.trustpilot.com/v1/oauth/oauth-business-users-for-applications/accesstoken",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Access token URL",
-		Description: `Trustpilot URL for getting access token and appending it to product review request`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	//
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathTrustPilotServiceReviewURL,
-		Value:       "https://invitations-api.trustpilot.com/v1/private/business-units/{businessUnitId}/invitation-links",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Service review URL",
-		Description: `Trustpilot service review URL, {businessUnitId} - will be rewrited by "Business Unit ID" config value`,
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathTrustPilotProductReviewURL,
-		Value:       "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/invitation-links",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     "",
-		Label:       "Product review URL",
-		Description: `Trustpilot product review URL, {businessUnitId} - will be rewrited by "Business Unit ID" config value`,
+		Description: "",
 		Image:       "",
 	}, nil)
 
@@ -184,14 +123,29 @@ func setupConfig() error {
 	err = config.RegisterItem(env.StructConfigItem{
 		Path: ConstConfigPathTrustPilotEmailTemplate,
 		Value: `Dear {{.Visitor.name}},
-		please provide your feedback on recently purchase
-		<br />
-		{{.Visitor.link}}`,
-		Type:        env.ConstConfigTypeText,
+please provide your feedback on recently purchase
+<br />
+{{.Visitor.link}}`,
+		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "Trustpilot data send e-mail: ",
-		Description: "contents of email will be sent to cutomers two weeks after purchase",
+		Label:       "Service review e-mail template",
+		Description: "Contents of this email will be sent to customers two weeks after purchase",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathTrustPilotProductBrand,
+		Value:       "",
+		Type:        env.ConstConfigTypeText,
+		Editor:      "line_text",
+		Options:     "",
+		Label:       "Default Product Brand",
+		Description: "If the product has a brand attribute that will be used, otherwise the default value will be sent to TrustPilot",
 		Image:       "",
 	}, nil)
 
