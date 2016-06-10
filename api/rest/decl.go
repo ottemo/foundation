@@ -16,11 +16,10 @@ const (
 	ConstErrorModule = "api/rest"
 	ConstErrorLevel  = env.ConstErrorLevelService
 
-	ConstConfigPathAPI             = "api"
-	ConstConfigPathAPILog          = "api.log"
-	ConstConfigPathAPILogEnable    = "api.log.enable"
-	ConstConfigPathAPILogExclude   = "api.log.exclude"
-
+	ConstConfigPathAPI           = "api"
+	ConstConfigPathAPILog        = "api.log"
+	ConstConfigPathAPILogEnable  = "api.log.enable"
+	ConstConfigPathAPILogExclude = "api.log.exclude"
 )
 
 // DefaultRestService is a default implementer of InterfaceRestService

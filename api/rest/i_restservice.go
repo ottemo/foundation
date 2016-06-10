@@ -47,7 +47,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		var startTime time.Time
 		var debugRequestIdentifier string
 
-		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)){
+		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
 			startTime = time.Now()
 			debugRequestIdentifier = startTime.Format("20060102150405")
 		}
