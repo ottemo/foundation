@@ -53,7 +53,6 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
-	//------------------------
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		context.SetResponseStatusInternalServerError()

@@ -313,7 +313,7 @@ func EmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{
 		return "failure", env.ErrorDispatch(err)
 	}
 
-	return "success", nil
+	return "Email Sent", nil
 }
 
 // loadOrder will load the order from the database
