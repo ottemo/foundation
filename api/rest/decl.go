@@ -11,11 +11,16 @@ import (
 
 // Package global constants
 const (
-	ConstUseDebugLog     = true       // flag to use REST API logging
 	ConstDebugLogStorage = "rest.log" // log storage for debug log records
 
 	ConstErrorModule = "api/rest"
 	ConstErrorLevel  = env.ConstErrorLevelService
+
+	ConstConfigPathAPI             = "api"
+	ConstConfigPathAPILog          = "api.log"
+	ConstConfigPathAPILogEnable    = "api.log.enable"
+	ConstConfigPathAPILogExclude   = "api.log.exclude"
+
 )
 
 // DefaultRestService is a default implementer of InterfaceRestService

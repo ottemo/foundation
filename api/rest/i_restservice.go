@@ -15,6 +15,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // GetName returns implementation name of our REST API service
@@ -46,7 +47,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		var startTime time.Time
 		var debugRequestIdentifier string
 
-		if ConstUseDebugLog {
+		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)){
 			startTime = time.Now()
 			debugRequestIdentifier = startTime.Format("20060102150405")
 		}
@@ -178,22 +179,35 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		}
 		applicationContext.Session = currentSession
 
-		if ConstUseDebugLog {
-			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
+			allowLog := true
+			apiExcludedURIs := env.ConfigGetValue(ConstConfigPathAPILogExclude)
+			if apiExcludedURIs != nil {
+				excludedURIs := utils.InterfaceToArray(apiExcludedURIs)
+				needle := req.RequestURI + " {" + req.Method + "}"
+				for i := 0; i < len(excludedURIs); i++ {
+					if needle == excludedURIs[i] {
+						allowLog = false
+						break
+					}
+				}
+			}
+			if allowLog {
+				env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+				env.LogEvent(env.LogFields{
+					"request_thread_id": debugRequestIdentifier,
+					"session_id":        currentSession.GetID(),
 
-			env.LogEvent(env.LogFields{
-				"request_thread_id": debugRequestIdentifier,
-				"session_id":        currentSession.GetID(),
-
-				"uri":          req.RequestURI,
-				"verb":         req.Method,
-				"content":      content,
-				"agent":        req.UserAgent(),
-				"clientip":     req.RemoteAddr,
-				"httpversion":  req.Proto,
-				"host":         req.Host,
-				"content_type": contentType,
-			}, "request")
+					"uri":          req.RequestURI,
+					"verb":         req.Method,
+					"content":      content,
+					"agent":        req.UserAgent(),
+					"clientip":     req.RemoteAddr,
+					"httpversion":  req.Proto,
+					"host":         req.Host,
+					"content_type": contentType,
+				}, "request")
+			}
 		}
 
 		// event for request
@@ -268,7 +282,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 					"redirect": redirectLocation,
 				}
 
-				if ConstUseDebugLog {
+				if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
 					responseTime := time.Now().Sub(startTime)
 					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
 
