@@ -1,6 +1,7 @@
 package order
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/ottemo/foundation/api"
@@ -28,7 +29,8 @@ func setupAPI() error {
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/sendStatusEmail", api.IsAdmin(APISendStatusEmail))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(EmailShipStatus))
+	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(EmailOrderConfirmation))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitOrders)
@@ -40,11 +42,15 @@ func setupAPI() error {
 // APIListOrderAttributes returns a list of purchase order attributes
 func APIListOrderAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	orderModel, err := order.GetOrderModel()
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return orderModel.GetAttributesInfo(), nil
 }
 
@@ -52,9 +58,12 @@ func APIListOrderAttributes(context api.InterfaceApplicationContext) (interface{
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	// taking orders collection model
 	orderCollectionModel, err := order.GetOrderCollectionModel()
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -63,6 +72,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		responseWriter.WriteHeader(http.StatusOK)
 		return orderCollectionModel.GetDBCollection().Count()
 	}
 
@@ -72,6 +82,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 	// extra parameter handle
 	models.ApplyExtraAttributes(context, orderCollectionModel)
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return orderCollectionModel.List()
 }
 
@@ -79,15 +90,12 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 //   - order id should be specified in "orderID" argument
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// pull order id off context
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443-f974-4455-9be0-a8af13916554", "order id should be specified")
-	}
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
-	// load order
-	orderModel, err := order.LoadOrderByID(orderID)
+	// pull order id off context
+	orderModel, err := loadOrder(context)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -99,41 +107,48 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	result["items"] = orderModel.GetItems()
+	responseWriter.WriteHeader(http.StatusOK)
 	return result, nil
 }
 
-// APISendStatusEmail will send the visitor a shipping confirmation email
-func APISendStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
-	orderID := context.GetRequestArgument("orderID")
-	orderModel, err := order.LoadOrderByID(orderID)
+// EmailShipStatus will send the visitor a shipping confirmation email
+// - order id should be specified in "orderID" argument
+func EmailShipStatus(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
+	orderModel, err := loadOrder(context)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 	err = orderModel.SendShippingStatusUpdateEmail()
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return "sent", nil
+	responseWriter.WriteHeader(http.StatusOK)
+	return "Email Sent", nil
 }
 
 // APIUpdateOrder update existing purchase order
 //   - order id should be specified in "orderID" argument
 func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638-e9e6-428b-b70c-a418d7821e4b", "order id should be specified")
-	}
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
-	requestData, err := api.GetRequestContentAsMap(context)
+	orderModel, err := loadOrder(context)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
+
 	// operation
 	//----------
-	orderModel, err := order.LoadOrderByID(orderID)
+	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -141,9 +156,9 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 		orderModel.Set(attribute, value)
 	}
 
-	orderModel.SetID(orderID)
 	orderModel.Save()
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return orderModel.ToHashMap(), nil
 }
 
@@ -151,10 +166,13 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 //   - order id should be specified in "orderID" argument
 func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	// check request context
 	//---------------------
 	orderID := context.GetRequestArgument("orderID")
 	if orderID == "" {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
 	}
 
@@ -162,21 +180,25 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 	//----------
 	orderModel, err := order.GetOrderModelAndSetID(orderID)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	orderModel.Delete()
-
-	return "ok", nil
+	responseWriter.WriteHeader(http.StatusOK)
+	return "Order Deleted", nil
 }
 
 // APIGetVisitOrder returns current visitor order details for specified order
 //   - orderID should be specified in arguments
 func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
+	orderModel, err := loadOrder(context)
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc719b01-c1e4-4b69-9c89-5735f5c0d339", "Unable to retrieve an order associated with OrderID: "+context.GetRequestArgument("orderID")+".")
+		responseWriter.WriteHeader(http.StatusInternalServerError)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// allow anonymous visitors through if the session id matches
@@ -186,6 +208,7 @@ func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, err
 		if visitorID == "" {
 			return "No Visitor ID found, unable to process order request. Please log in first.", nil
 		} else if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
+			responseWriter.WriteHeader(http.StatusInternalServerError)
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
 		}
 	}
@@ -193,11 +216,15 @@ func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, err
 	result := orderModel.ToHashMap()
 	result["items"] = orderModel.GetItems()
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return result, nil
 }
 
 // APIGetVisitOrders returns list of orders related to current visitor
+//   - visitorID is required, visitor must be logged in
 func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
 	// list operation
 	//---------------
@@ -208,11 +235,13 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 
 	orderCollection, err := order.GetOrderCollectionModel()
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
 	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorID)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -231,29 +260,27 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 
 	result, err := orderCollection.List()
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return result, env.ErrorDispatch(err)
 }
 
-// APISendConfirmation will send out an order confirmation email to the visitor specficied in the orderID
-func APISendConfirmation(context api.InterfaceApplicationContext) (interface{}, error) {
+// EmailOrderConfirmation will send out an order confirmation email to the visitor specficied in the orderID
+//   - orderID must be passed as a request argument
+func EmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	var orderModel order.InterfaceOrder
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	var orderItems []map[string]interface{}
-	var err error
-	var email, emailAddress, timeZone, giftCardSku string
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	orderModel, err := loadOrder(context)
+	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if orderModel, err = loadOrder(context); err != nil {
-		return "failure", env.ErrorDispatch(err)
-	}
-
-	email = utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
-	timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-	giftCardSku = utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
+	email := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+	giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
 
 	// create visitor map
 	visitor := make(map[string]interface{})
@@ -313,33 +340,39 @@ func APISendConfirmation(context api.InterfaceApplicationContext) (interface{}, 
 		"Info":    customInfo,
 	})
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return "failure", env.ErrorDispatch(err)
 	}
 
-	emailAddress = utils.InterfaceToString(visitor["email"])
+	emailAddress := utils.InterfaceToString(visitor["email"])
 	err = app.SendMail(emailAddress, "Order confirmation", confirmationEmail)
 	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return "failure", env.ErrorDispatch(err)
 	}
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return "success", nil
 }
 
 // loadOrder will load the order from the database
 func loadOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
 
-	var orderID string
-	var orderModel order.InterfaceOrder
-	var err error
+	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
 	// load orderID
-	if orderID = context.GetRequestArgument("orderID"); orderID == "" {
+	orderID := context.GetRequestArgument("orderID")
+	if orderID == "" {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
 	}
 
-	if orderModel, err = order.LoadOrderByID(orderID); err != nil {
+	orderModel, err := order.LoadOrderByID(orderID)
+	if err != nil {
+		responseWriter.WriteHeader(http.StatusInternalServerError)
 		return nil, env.ErrorDispatch(err)
 	}
 
+	responseWriter.WriteHeader(http.StatusOK)
 	return orderModel, nil
 }
