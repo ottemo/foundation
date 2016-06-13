@@ -10,6 +10,7 @@ import (
 	"testing"
 )
 
+// TestStock validates product inventory model to works properly
 func TestStock(t *testing.T) {
 	err := tests.StartAppInTestingMode()
 	if err != nil {
@@ -36,13 +37,19 @@ func TestStock(t *testing.T) {
 		"price": 1,
 		"weight": 1,
 		"qty": 10,
+		"inventory": [
+			{"options": {"color": "black"}, "qty": 1 },
+			{"options": {"color": "blue"},  "qty": 5 },
+			{"options": {"size":  "s"},     "qty": 5 },
+			{"options": {"size":  "l"},     "qty": 1 }
+		],
 		"options": {
 			"color": {
 				"order": 1,
 				"required": true,
 				"options": {
-					"black": {"sku": "-black", "qty": 1},
-					"blue":  {"sku": "-blue",  "qty": 5},
+					"black": {"sku": "-black"},
+					"blue":  {"sku": "-blue"},
 					"green": {"sku": "-green", "price": "+1"}
 				}
 			},
@@ -50,8 +57,8 @@ func TestStock(t *testing.T) {
 				"order": 2,
 				"required": true,
 				"options": {
-					"s":  {"sku": "-s",  "price": 1.0, "qty": 5},
-					"l":  {"sku": "-l",  "price": 1.5, "qty": 1},
+					"s":  {"sku": "-s",  "price": 1.0 },
+					"l":  {"sku": "-l",  "price": 1.5 },
 					"xl": {"sku": "-xl", "price": 2.0 }
 				}
 			}
@@ -79,7 +86,7 @@ func TestStock(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// defer productModel.Delete()
+	defer productModel.Delete()
 
 	productID := productModel.GetID()
 
@@ -107,6 +114,7 @@ func TestStock(t *testing.T) {
 
 }
 
+// TestStock validates product inventory model calculations
 func TestDecrementingStock(t *testing.T) {
 	err := tests.StartAppInTestingMode()
 	if err != nil {
@@ -125,8 +133,8 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	productData, err := utils.DecodeJSONToStringKeyMap(`{
-		"sku": "test",
-		"name": "Test Product",
+		"sku": "test2",
+		"name": "Test Product 2",
 		"short_description": "something short",
 		"description": "something long",
 		"default_image": "",
@@ -184,83 +192,101 @@ func TestDecrementingStock(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// defer productModel.Delete()
+	defer productModel.Delete()
 
 	productID := productModel.GetID()
 	stock := product.GetRegisteredStock()
 
-	// define options
+	// test options
 	optionsWrapY := map[string]interface{}{"wrap": "Y"}
 	optionsSizeS := map[string]interface{}{"size": "S"}
 	optionsColorRedSizeS := map[string]interface{}{"color": "Red", "size": "S"}
 	optionsColorGreenSizeXL := map[string]interface{}{"color": "Green", "size": "XL"}
 
-	// set stock
+	// setting stock for test options
 	stock.SetProductQty(productID, optionsSizeS, 20)
 	stock.SetProductQty(productID, optionsColorRedSizeS, 5)
 	stock.SetProductQty(productID, optionsColorGreenSizeXL, 20)
 
-	// if options not managed by stock
-	// example: "wrap": "Y"
+	// Test Case 1
 	stock.UpdateProductQty(productID, map[string]interface{}{"wrap": "Y"}, -5)
-	// gets qty for specified options if it doesn't exist returns minimal from matched options
-	qtyWrapY := stock.GetProductQty(productID, optionsWrapY)
+
 	productTestModel, _ := product.LoadProductByID(productID)
-	if qty := productTestModel.GetQty(); qty == 95 && qtyWrapY == 95 {
-		fmt.Println("case 1 -5 \n\t baseQty: ", qty, "\n\t qty Wrap - Y: ", qtyWrapY)
-	} else {
-		t.Error("case 1 error")
+	qty := productTestModel.GetQty()
+	qtyWrapY := stock.GetProductQty(productID, optionsWrapY)
+	if qty != 95 || qtyWrapY != 95 {
+		msg := fmt.Sprintln("Test case 1 error")
+		msg += fmt.Sprintln("\t qty:", qty, "(95 expected)")
+		msg += fmt.Sprintln("\t qty(Wrap=Y):", qtyWrapY, "(95 expected)")
+
+		t.Error(msg)
 		return
 	}
 
-	// if one option managed by stock
-	// example: "size": "S"
+	// Test Case 2
 	stock.UpdateProductQty(productID, map[string]interface{}{"size": "S"}, -5)
-	qtySizeS := stock.GetProductQty(productID, optionsSizeS)
+
 	productTestModel, _ = product.LoadProductByID(productID)
-	if qty := productTestModel.GetQty(); qty == 90 && qtySizeS == 15 {
-		fmt.Println("\ncase 2 -5 \n\t baseQty: ", qty, "\n\t qty Size - S: ", qtySizeS)
-	} else {
-		t.Error("case 2 error")
+	qty = productTestModel.GetQty()
+	qtySizeS := stock.GetProductQty(productID, optionsSizeS)
+	if qty != 90 || qtySizeS != 15 {
+		msg := fmt.Sprintln("Test case 2 error")
+		msg += fmt.Sprintln("\t qty:", qty, "(90 expected)")
+		msg += fmt.Sprintln("\t qty(Size=S):", qtySizeS, "(15 expected)")
+
+		t.Error(msg)
 		return
 	}
 
-	// if multiple options managed by stock
-	// example: "color": "Red", "size": "S"}
+	// Test Case 3
 	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S"}, -1)
+
 	// TODO: check is it possible to add more than we have
+	productTestModel, _ = product.LoadProductByID(productID)
+	qty = productTestModel.GetQty()
 	qtySizeS = stock.GetProductQty(productID, optionsSizeS)
 	qtyColorRedSizeS := stock.GetProductQty(productID, optionsColorRedSizeS)
-	productTestModel, _ = product.LoadProductByID(productID)
-	if qty := productTestModel.GetQty(); qty == 89 && qtySizeS == 14 && qtyColorRedSizeS == 4 {
-		fmt.Println("\ncase 3 -1 \n\t baseQty: ", qty, "\n\t qty Size - S: ", qtySizeS, "\n\t qty Color - Red, Size - S: ", qtyColorRedSizeS)
-	} else {
-		t.Error("case 3 error")
+	if qty != 89 || qtySizeS != 14 || qtyColorRedSizeS != 4 {
+		msg := fmt.Sprintln("Test case 3 error")
+		msg += fmt.Sprintln("\t qty:", qty, "(89 expected)")
+		msg += fmt.Sprintln("\t qty(Size=S):", qtySizeS, "(14 expected)")
+		msg += fmt.Sprintln("\t qty(Color=Red, Size=S):", qtyColorRedSizeS, "(4 expected)")
+
+		t.Error(msg)
 		return
 	}
 
-	// example: "color": "Green", "size": "XL"
+	// Test Case 4
 	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Green", "size": "XL"}, -5)
-	qtyColorGreenSizeXL := stock.GetProductQty(productID, optionsColorGreenSizeXL)
+
 	productTestModel, _ = product.LoadProductByID(productID)
-	if qty := productTestModel.GetQty(); qty == 84 && qtyColorGreenSizeXL == 15 {
-		fmt.Println("\ncase 4 -5 \n\t baseQty: ", qty, "\n\t qty Color - Green, Size - XL: ", qtyColorGreenSizeXL)
-	} else {
-		t.Error("case 4 error")
+	qty = productTestModel.GetQty()
+	qtyColorGreenSizeXL := stock.GetProductQty(productID, optionsColorGreenSizeXL)
+	if qty != 84 || qtyColorGreenSizeXL != 15 {
+		msg := fmt.Sprintln("Test case 4 error")
+		msg += fmt.Sprintln("\t qty:", qty, "(84 expected)")
+		msg += fmt.Sprintln("\t qty(Color=Green, Size=XL):", qtyColorGreenSizeXL, "(15 expected)")
+
+		t.Error(msg)
 		return
 	}
 
-	// if exist multiple options managed by stock and one not managed by stock
-	// "color": "Red", "size": "S", "wrap": "Y"
+	// Test Case 5
 	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S", "wrap": "Y"}, -1)
+
+	productTestModel, _ = product.LoadProductByID(productID)
+	qty = productTestModel.GetQty()
 	qtyWrapY = stock.GetProductQty(productID, optionsWrapY)
 	qtySizeS = stock.GetProductQty(productID, optionsSizeS)
 	qtyColorRedSizeS = stock.GetProductQty(productID, optionsColorRedSizeS)
-	productTestModel, _ = product.LoadProductByID(productID)
-	if qty := productTestModel.GetQty(); qty == 83 && qtyWrapY == 83 && qtySizeS == 13 && qtyColorRedSizeS == 3 {
-		fmt.Println("\ncase 5 -1 \n\t baseQty: ", qty, "\n\t qty Wrap - Y: ", qtyWrapY, "\n\t qty Size - S: ", qtySizeS, "\n\t qty Color - Red, Size - S: ", qtyColorRedSizeS)
-	} else {
-		t.Error("case 5 error")
+	if qty != 83 && qtyWrapY != 83 && qtySizeS != 13 && qtyColorRedSizeS != 3 {
+		msg := fmt.Sprintln("Test case 5 error")
+		msg += fmt.Sprintln("\t qty=", qty, "(83 expected)")
+		msg += fmt.Sprintln("\t qty(Wrap: Y)=", qtyWrapY, "(83 expected)")
+		msg += fmt.Sprintln("\t qty(Size: S)=", qtySizeS, "(13 expected)")
+		msg += fmt.Sprintln("\t qty(Color: Red, Size: S)=", qtyColorRedSizeS, "(3 expected)")
+
+		t.Error(msg)
 		return
 	}
 
