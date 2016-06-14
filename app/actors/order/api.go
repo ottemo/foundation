@@ -28,8 +28,8 @@ func setupAPI() error {
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(EmailShipStatus))
-	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(EmailOrderConfirmation))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APIEmailShipStatus))
+	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APIEmailOrderConfirmation))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitOrders)
@@ -82,7 +82,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// pull order id off context
-	orderModel, err := loadOrder(context)
+	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -98,11 +98,11 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	return result, nil
 }
 
-// EmailShipStatus will send the visitor a shipping confirmation email
+// APIEmailShipStatus will send the visitor a shipping confirmation email
 // - order id should be specified in "orderID" argument
-func EmailShipStatus(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIEmailShipStatus(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := loadOrder(context)
+	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -119,7 +119,7 @@ func EmailShipStatus(context api.InterfaceApplicationContext) (interface{}, erro
 //   - order id should be specified in "orderID" argument
 func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := loadOrder(context)
+	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -166,7 +166,7 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 //   - orderID should be specified in arguments
 func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := loadOrder(context)
+	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -229,13 +229,13 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 	return result, env.ErrorDispatch(err)
 }
 
-// EmailOrderConfirmation will send out an order confirmation email to the visitor specficied in the orderID
+// APIEmailOrderConfirmation will send out an order confirmation email to the visitor specficied in the orderID
 //   - orderID must be passed as a request argument
-func EmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIEmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	var orderItems []map[string]interface{}
 
-	orderModel, err := loadOrder(context)
+	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -316,8 +316,8 @@ func EmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{
 	return "Email Sent", nil
 }
 
-// loadOrder will load the order from the database
-func loadOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
+// orderByID will load the order from the database using the orderID from the application context
+func orderByID(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
 
 	// load orderID
 	orderID := context.GetRequestArgument("orderID")
