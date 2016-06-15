@@ -10,7 +10,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6dee39ac-c930-420e-b777-b95f6cab8981", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6dee39ac-c930-420e-b777-b95f6cab8981", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -25,14 +26,15 @@ func setupConfig() error {
 	}, nil)
 
 	if err != nil {
-		env.ErrorDispatch(err)
+		return env.ErrorDispatch(err)
 	}
 
 	// Log level
 	logLevelValidator := func(newValue interface{}) (interface{}, error) {
 		newLevel := utils.InterfaceToInt(newValue)
 		if newLevel > 10 || newLevel < 0 {
-			return errorLogLevel, errors.New("'Log level' config value should be between 0 and 10")
+			err := errors.New("'Log level' config value should be between 0 and 10")
+			return errorLogLevel, env.ErrorDispatch(err)
 		}
 		errorLogLevel = newLevel
 

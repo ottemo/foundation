@@ -8,7 +8,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "972198e1-2a7a-4bd7-9da9-d4d1be525dba", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "972198e1-2a7a-4bd7-9da9-d4d1be525dba", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -40,7 +41,8 @@ func setupConfig() error {
 		Editor: "line_text",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cfc4cb85-b769-414c-90fb-9be3fbe7fe98", "can't be blank")
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cfc4cb85-b769-414c-90fb-9be3fbe7fe98", "can't be blank")
+			return nil, env.ErrorDispatch(err)
 		}
 		return value, nil
 	})

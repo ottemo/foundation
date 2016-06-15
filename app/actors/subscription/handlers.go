@@ -146,17 +146,17 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		if subscriptionPeriodValue, present := subscriptionItems[cartItem.GetIdx()]; present && subscriptionPeriodValue != 0 {
 
 			if err = subscriptionInstance.SetActionDate(subscriptionTime); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.SetPeriod(subscriptionPeriodValue); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.UpdateActionDate(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
@@ -183,7 +183,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			subscriptionInstance.SetID("")
 
 			if err = subscriptionInstance.Save(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 		}

@@ -7,7 +7,8 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fed0dee4-3409-4533-a445-998d2290569a", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fed0dee4-3409-4533-a445-998d2290569a", "can't obtain config");
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -29,7 +30,7 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathCartAbandonEmailTemplate,
 		Value:       "",
 		Type:        env.ConstConfigTypeHTML,

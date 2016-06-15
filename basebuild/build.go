@@ -33,9 +33,10 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/payment/paypal"       // PayPal payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/stripe"       // Stripe payment method
 
-	_ "github.com/ottemo/foundation/app/actors/shipping/fedex"    // FedEx shipping method
-	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate" // "Flat Rate" shipping method
-	_ "github.com/ottemo/foundation/app/actors/shipping/usps"     // USPS shipping method
+	_ "github.com/ottemo/foundation/app/actors/shipping/fedex"      // FedEx
+	_ "github.com/ottemo/foundation/app/actors/shipping/flatrate"   // Flat Rate
+	_ "github.com/ottemo/foundation/app/actors/shipping/flatweight" // Flat Weight
+	_ "github.com/ottemo/foundation/app/actors/shipping/usps"       // USPS
 
 	_ "github.com/ottemo/foundation/app/actors/discount/coupon"   // Coupon based discounts
 	_ "github.com/ottemo/foundation/app/actors/discount/giftcard" // Gift Cards

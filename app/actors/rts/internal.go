@@ -82,7 +82,7 @@ func GetDateFrom() (time.Time, error) {
 		salesHistoryCollection.SetLimit(0, 1)
 		dbRecord, err := salesHistoryCollection.Load()
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		if len(dbRecord) > 0 {
@@ -101,7 +101,7 @@ func GetDateFrom() (time.Time, error) {
 	dbOrderCollection.SetLimit(0, 1)
 	dbRecord, err := dbOrderCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	if len(dbRecord) > 0 {
