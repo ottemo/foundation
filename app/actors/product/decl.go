@@ -36,7 +36,10 @@ type DefaultProduct struct {
 
 	Weight float64
 
+	//Qty int
 	Qty int
+
+	Inventory []map[string]interface{}
 
 	Options map[string]interface{}
 
@@ -44,9 +47,6 @@ type DefaultProduct struct {
 
 	// appliedOptions tracks options were applied to current instance
 	appliedOptions map[string]interface{}
-
-	// updatedQty holds qty should be updated during save operation ("" item holds qty value)
-	updatedQty []map[string]interface{}
 
 	*attributes.CustomAttributes
 }
