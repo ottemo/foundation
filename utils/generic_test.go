@@ -1,6 +1,8 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMatchMapAValuesToMapB(t *testing.T) {
 
@@ -67,5 +69,82 @@ func TestMatchMapAValuesToMapB(t *testing.T) {
 	A = map[string]interface{}{"tags": []interface{}{"super"}}
 	if MatchMapAValuesToMapB(A, B) != false {
 		t.Error("case 10 fail")
+	}
+}
+
+func TestStrToSnakeCase(t *testing.T) {
+
+	str := "Product Size "
+	if StrToSnakeCase(str) != "product_size" {
+		t.Error("case 1 fail")
+	}
+
+	str = "ProductSize 1"
+	if StrToSnakeCase(str) != "product_size_1" {
+		t.Error("case 2 fail")
+	}
+
+	str = "-101"
+	if StrToSnakeCase(str) != "-101" {
+		t.Error("case 3 fail")
+	}
+
+	str = " - 101"
+	if StrToSnakeCase(str) != "-_101" {
+		t.Error("case 4 fail")
+	}
+
+	str = " - 101 Discount Amount"
+
+	if StrToSnakeCase(str) != "-_101_discount_amount" {
+		t.Error("case 5 fail")
+	}
+
+	str = "subtract - 101 from Discount Amount"
+	if StrToSnakeCase(str) != "subtract_-_101_from_discount_amount" {
+		t.Error("case 6 fail")
+	}
+
+	str = ";LARGE"
+	if StrToSnakeCase(str) != "large" {
+		t.Error("case 8 fail")
+	}
+
+	str = "XLarge"
+	if StrToSnakeCase(str) != "x_large" {
+		t.Error("case 9 fail")
+	}
+
+	str = "X-Large"
+	if StrToSnakeCase(str) != "x-large" {
+		t.Error("case 10 fail")
+	}
+
+	str = "$20 X-LARGE"
+	if StrToSnakeCase(str) != "$20_x-large" {
+		t.Error("case 11 fail")
+	}
+
+	str = "Size (*^*%^@XLARGE"
+	if StrToSnakeCase(str) != "size_xlarge" {
+		t.Error("case 12 fail")
+	}
+
+	str = "     Size: XLARGE + @'-3'Num of  *&*&&^^^^()(##A   ; "
+	if StrToSnakeCase(str) != "size_xlarge_-3_num_of_a" {
+		t.Error("case 13 fail")
+	}
+}
+
+func TestStrToCamelCase(t *testing.T) {
+
+	str := "product_size_xlarge"
+	if StrToCamelCase(str) != "productSizeXlarge" {
+		t.Error("case 1 fail")
+	}
+
+	str = "subtract_-_101_discount_amount"
+	if StrToCamelCase(str) != "subtract-101DiscountAmount" {
+		t.Error("case 2 fail")
 	}
 }
