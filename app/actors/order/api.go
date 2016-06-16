@@ -231,69 +231,27 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 //   - orderID must be passed as a request argument
 func APIEmailOrderConfirmation(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	var orderItems []map[string]interface{}
+	// load the email template
+	email := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
 
+	// load the order
 	orderModel, err := orderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	email := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-	giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
-
-	// create visitor map
+	// set visitor
 	visitor := make(map[string]interface{})
 	visitor["first_name"] = orderModel.Get("customer_name")
 	visitor["email"] = orderModel.Get("customer_email")
 
-	// create order map
-	order := orderModel.ToHashMap()
+	order := hydrateOrder(orderModel)
 
-	// load order items
-	for _, item := range orderModel.GetItems() {
-		options := make(map[string]interface{})
-
-		for optionName, optionKeys := range item.GetOptions() {
-			optionMap := utils.InterfaceToMap(optionKeys)
-			options[optionName] = optionMap["value"]
-
-			// Giftcard's delivery date
-			if strings.Contains(item.GetSku(), giftCardSku) {
-				if utils.IsAmongStr(optionName, "Date", "Delivery Date", "send_date", "Send Date", "date") {
-					// Localize and format the date
-					giftcardDeliveryDate, _ := utils.MakeTZTime(utils.InterfaceToTime(optionMap["value"]), timeZone)
-					if !utils.IsZeroTime(giftcardDeliveryDate) {
-						//TODO: Should be "Monday Jan 2 15:04 (MST)" but we have a bug
-						options[optionName] = giftcardDeliveryDate.Format("Monday Jan 2 15:04")
-					}
-				}
-			}
-		}
-
-		orderItems = append(orderItems, map[string]interface{}{
-			"name":    item.GetName(),
-			"options": options,
-			"sku":     item.GetSku(),
-			"qty":     item.GetQty(),
-			"price":   item.GetPrice()})
-	}
-
-	// convert date of order creation to store time zone
-	if date, present := order["created_at"]; present {
-		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
-		if !utils.IsZeroTime(convertedDate) {
-			order["created_at"] = convertedDate
-		}
-	}
-
-	order["items"] = orderItems
-	order["payment_method_title"] = orderModel.GetPaymentMethod()
-	order["shipping_method_title"] = orderModel.GetShippingMethod()
-
+	// set store url
 	customInfo := make(map[string]interface{})
 	customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
 
+	// build the email
 	confirmationEmail, err := utils.TextTemplate(email, map[string]interface{}{
 		"Order":   order,
 		"Visitor": visitor,
@@ -304,6 +262,7 @@ func APIEmailOrderConfirmation(context api.InterfaceApplicationContext) (interfa
 		return "failure", env.ErrorDispatch(err)
 	}
 
+	// send the email
 	emailAddress := utils.InterfaceToString(visitor["email"])
 	err = app.SendMail(emailAddress, "Order confirmation", confirmationEmail)
 	if err != nil {
@@ -331,4 +290,71 @@ func orderByID(context api.InterfaceApplicationContext) (order.InterfaceOrder, e
 	}
 
 	return orderModel, nil
+}
+
+func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
+
+	var orderItems []map[string]interface{}
+
+	order := orderModel.ToHashMap()
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
+	giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
+
+	// convert date of order creation to store time zone
+	if date, present := order["created_at"]; present {
+		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
+		if !utils.IsZeroTime(convertedDate) {
+			order["created_at"] = convertedDate
+		}
+	}
+
+	// load items into the order
+	for _, item := range orderModel.GetItems() {
+		options := make(map[string]interface{})
+
+		for optionName, optionKeys := range item.GetOptions() {
+			optionMap := utils.InterfaceToMap(optionKeys)
+
+			if strings.Contains(item.GetSku(), giftCardSku) {
+
+				// if we have a giftcard date, localize the date
+				options[optionName] = ifGiftcardSetLocalDate(item.GetSku(), timeZone, optionMap)
+			} else {
+
+				// if not a date, just set the option value
+				options[optionName] = optionMap["value"]
+			}
+		}
+
+		orderItems = append(orderItems, map[string]interface{}{
+			"name":    item.GetName(),
+			"options": options,
+			"sku":     item.GetSku(),
+			"qty":     item.GetQty(),
+			"price":   item.GetPrice()})
+	}
+
+	order["items"] = orderItems
+	order["payment_method_title"] = orderModel.GetPaymentMethod()
+	order["shipping_method_title"] = orderModel.GetShippingMethod()
+
+	return order
+}
+
+func ifGiftcardSetLocalDate(optionName, timeZone string, optionMap map[string]interface{}) string {
+
+	// make sure we are looking for a date
+	if utils.IsAmongStr(optionName, "Date", "Delivery Date", "send_date", "Send Date", "date") {
+
+		// localize the date
+		giftcardDeliveryDate, _ := utils.MakeTZTime(utils.InterfaceToTime(optionMap["value"]), timeZone)
+
+		// format the date if not zero
+		if !utils.IsZeroTime(giftcardDeliveryDate) {
+			// TODO: Should be "Monday Jan 2 15:04 (MST)" but we have a bug
+			return giftcardDeliveryDate.Format("Monday Jan 2 15:04")
+		}
+	}
+
+	return utils.InterfaceToString(optionMap["value"])
 }
