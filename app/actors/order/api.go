@@ -80,7 +80,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// pull order id off context
-	orderModel, err := orderByID(context)
+	orderModel, err := getOrderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -100,7 +100,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 // - order id should be specified in "orderID" argument
 func APIEmailShipStatus(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := orderByID(context)
+	orderModel, err := getOrderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -117,7 +117,7 @@ func APIEmailShipStatus(context api.InterfaceApplicationContext) (interface{}, e
 //   - order id should be specified in "orderID" argument
 func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := orderByID(context)
+	orderModel, err := getOrderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -164,7 +164,7 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 //   - orderID should be specified in arguments
 func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := orderByID(context)
+	orderModel, err := getOrderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -235,7 +235,7 @@ func APIEmailOrderConfirmation(context api.InterfaceApplicationContext) (interfa
 	email := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
 
 	// load the order
-	orderModel, err := orderByID(context)
+	orderModel, err := getOrderByID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -273,8 +273,8 @@ func APIEmailOrderConfirmation(context api.InterfaceApplicationContext) (interfa
 	return "Email Sent", nil
 }
 
-// orderByID will load the order from the database using the orderID from the application context
-func orderByID(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
+// getOrderByID will load the order from the database using the orderID from the application context
+func getOrderByID(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
 
 	// load orderID
 	orderID := context.GetRequestArgument("orderID")
