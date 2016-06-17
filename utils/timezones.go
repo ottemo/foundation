@@ -307,6 +307,8 @@ func MakeUTCOffsetTime(inTime time.Time, timeZone string) (time.Time, time.Durat
 // MakeTZTime returns given time in specified timezone (current time.Locale() ignores)
 // and offset from GMT in duration format
 func MakeTZTime(inTime time.Time, timeZone string) (time.Time, time.Duration) {
+	// TODO: move to using time.LoadLocation() instead of tz to support
+	//     areas using Daylight Savings Time : https://www.pivotaltracker.com/story/show/108345622
 	zoneName, zoneOffset := ParseTimeZone(timeZone)
 
 	if timeZoneOffset, present := TimeZones[zoneName]; present {

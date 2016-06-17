@@ -89,4 +89,5 @@ type InterfaceApplicationContext interface {
 	SetResponseStatusBadRequest()
 	SetResponseStatusForbidden()
 	SetResponseStatusNotFound()
+	SetResponseStatusInternalServerError()
 }

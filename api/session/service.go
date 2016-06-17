@@ -306,7 +306,7 @@ func (it *DefaultSessionService) Close(sessionID string) error {
 		if _, err := os.Stat(filename); err == nil {
 			err := os.Remove(filename)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 		}
 
@@ -364,7 +364,7 @@ func (it *DefaultSessionService) GC() error {
 			if secondsAfterLastUpdate > ConstSessionUpdateTime {
 				err := it.storage.FlushSession(sessionInstance.id)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 			}
 			return false
@@ -378,7 +378,7 @@ func (it *DefaultSessionService) IsEmpty(sessionID string) bool {
 
 	_, err := it.Get(sessionID, false)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	if sessionInstance := it.syncGet(sessionID); sessionInstance != nil {

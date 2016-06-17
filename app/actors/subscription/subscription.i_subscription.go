@@ -118,13 +118,13 @@ func (it *DefaultSubscription) GetShippingAddress() visitor.InterfaceVisitorAddr
 
 	shippingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = shippingAddress.FromHashMap(it.ShippingAddress)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -150,13 +150,13 @@ func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddre
 
 	billingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = billingAddress.FromHashMap(it.BillingAddress)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -179,7 +179,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -189,7 +189,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	err = visitorCardModel.FromHashMap(it.PaymentInstrument)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return visitorCardModel
 	}
 

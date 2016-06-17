@@ -343,7 +343,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage, defaultImage)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 		result = append(result, productInfo)
 	}

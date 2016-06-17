@@ -23,7 +23,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathEnabled,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -38,7 +38,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathUser,
 			Value:       nil,
 			Type:        env.ConstConfigTypeText,
@@ -53,7 +53,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathOriginZip,
 			Value:       nil,
 			Type:        env.ConstConfigTypeText,
@@ -68,7 +68,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathContainer,
 			Value:       "VARIABLE",
 			Type:        env.ConstConfigTypeVarchar,
@@ -83,7 +83,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathSize,
 			Value:       "REGULAR",
 			Type:        env.ConstConfigTypeVarchar,
@@ -98,7 +98,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDefaultDimensions,
 			Value:       "1.0 x 1.0 x 1.0 x 1.0",
 			Type:        env.ConstConfigTypeVarchar,
@@ -113,7 +113,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDefaultWeight,
 			Value:       0.1,
 			Type:        env.ConstConfigTypeDecimal,
@@ -128,7 +128,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathAllowedMethods,
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,
@@ -143,7 +143,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDebugLog,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -157,6 +157,9 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+	} else {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "91775c4b-521a-49f3-90bf-c377f266b62e", "Unable to obtain configuration for USPS")
+		return env.ErrorDispatch(err)
 	}
 
 	return nil

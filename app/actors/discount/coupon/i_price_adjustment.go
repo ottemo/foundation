@@ -22,7 +22,9 @@ func (it *Coupon) GetCode() string {
 
 // GetPriority returns the code of the current coupon implementation
 func (it *Coupon) GetPriority() []float64 {
-	return []float64{utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))}
+	baseCouponPriority := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))
+	cartCalculationPriority := baseCouponPriority + 0.01
+	return []float64{baseCouponPriority, cartCalculationPriority}
 }
 
 // Calculate calculates and returns a set of coupons applied to the provided checkout
@@ -53,6 +55,8 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 			}
 
 			applicableProductDiscounts := make(map[string][]discount)
+			applicableCartDiscounts := make([]discount, 0)
+
 			// collect products to one map, that holds productID: qty and used to get apply qty
 			productsInCart := make(map[string]int)
 
@@ -83,6 +87,7 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 			}
 
 			couponPriorityValue := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathDiscountApplyPriority))
+			productCouponsCalculation := couponPriorityValue == currentPriority
 
 			// accumulation of coupon discounts for cart to result and for products to applicableProductDiscounts
 			for appliedCodesIdx, discountCode := range redeemedCodes {
@@ -119,19 +124,36 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 					Qty:      utils.InterfaceToInt(discountCoupon["usage_qty"]),
 				}
 
-				// case it's a cart discount we just add them to result with calculating amount based on current totals
+				// if we in product coupons calculation then skip cart coupons
 				if strings.Contains(discountTarget, checkout.ConstDiscountObjectCart) || discountTarget == "" {
-					couponPriorityValue += float64(0.000001)
+					if !productCouponsCalculation {
+						applicableCartDiscounts = append(applicableCartDiscounts, applicableDiscount)
+					}
 
-					// build price adjustment for cart coupon discount,
-					// one for percent and one for dollar amount value of coupon
-					// TODO: this part should be moved in calculate phase to priority 2.2
+					continue
+				}
+
+				// collect only discounts for productIDs that are in cart
+				for _, productID := range utils.InterfaceToStringArray(discountTarget) {
+					if discounts, present := applicableProductDiscounts[productID]; present {
+						applicableProductDiscounts[productID] = append(discounts, applicableDiscount)
+					}
+				}
+			}
+
+			// handle cart coupon discounts to find one that is biggest and append it to result
+			// as price adjustments in % and in $ amount
+			if !productCouponsCalculation {
+				currentCartAmount := checkoutInstance.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal)
+				if len(applicableCartDiscounts) > 0 && currentCartAmount > 0 {
+					applicableDiscount, _ := findBiggestDiscount(applicableCartDiscounts, currentCartAmount)
+
 					currentPriceAdjustment := checkout.StructPriceAdjustment{
 						Code:      applicableDiscount.Code,
 						Name:      applicableDiscount.Name,
 						Amount:    applicableDiscount.Percents * -1,
 						IsPercent: true,
-						Priority:  couponPriorityValue + float64(0.001),
+						Priority:  currentPriority,
 						Labels:    []string{checkout.ConstLabelDiscount},
 						PerItem:   nil,
 					}
@@ -149,16 +171,9 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 
 						result = append(result, currentPriceAdjustment)
 					}
-
-					continue
 				}
 
-				// collect only discounts for productIDs that are in cart
-				for _, productID := range utils.InterfaceToStringArray(discountTarget) {
-					if discounts, present := applicableProductDiscounts[productID]; present {
-						applicableProductDiscounts[productID] = append(discounts, applicableDiscount)
-					}
-				}
+				return result
 			}
 
 			// hold price adjustment for every coupon code ( to make total details with right description)
@@ -180,29 +195,8 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 							break
 						}
 
-						var biggestAppliedDiscount discount
-						var biggestAppliedDiscountIndex int
-
 						// looking for biggest applicable discount for current item
-						for index, productDiscount := range productDiscounts {
-							if (productDiscount.Qty) > 0 {
-								productDiscountableAmount := productDiscount.Amount + productPrice*productDiscount.Percents/100
-
-								// if we have discount that is bigger then a price we will apply it
-								if productDiscountableAmount > productPrice {
-									biggestAppliedDiscount = productDiscount
-									biggestAppliedDiscount.Total = productPrice
-									biggestAppliedDiscountIndex = index
-									break
-								}
-
-								if biggestAppliedDiscount.Total < productDiscountableAmount {
-									biggestAppliedDiscount = productDiscount
-									biggestAppliedDiscount.Total = productDiscountableAmount
-									biggestAppliedDiscountIndex = index
-								}
-							}
-						}
+						biggestAppliedDiscount, biggestAppliedDiscountIndex := findBiggestDiscount(productDiscounts, productPrice)
 
 						// update used discount and change qty of chosen discount to number of usage
 						discountUsed := productDiscounts[biggestAppliedDiscountIndex].Qty
@@ -212,8 +206,6 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 						i += discountUsed - 1
 
 						productDiscounts[biggestAppliedDiscountIndex].Qty -= discountUsed
-
-						biggestAppliedDiscount.Qty = discountUsed
 
 						// remove fully used discount from discounts list
 						var newProductDiscounts []discount
@@ -226,20 +218,20 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 
 						// making from discount price adjustment
 						// calculating amount that will be discounted from item
-						amount := float64(biggestAppliedDiscount.Qty) * biggestAppliedDiscount.Total * -1
+						amount := float64(discountUsed) * biggestAppliedDiscount.Total * -1
 
 						// add this amount to already existing PA (with the same coupon code) or creating new
 						if priceAdjustment, present := priceAdjustments[biggestAppliedDiscount.Code]; present {
 							priceAdjustment.PerItem[index] = utils.RoundPrice(priceAdjustment.PerItem[index] + amount)
 							priceAdjustments[biggestAppliedDiscount.Code] = priceAdjustment
 						} else {
-							couponPriorityValue += float64(0.000001)
+							currentPriority += float64(0.000001)
 							priceAdjustments[biggestAppliedDiscount.Code] = checkout.StructPriceAdjustment{
 								Code:      biggestAppliedDiscount.Code,
 								Name:      biggestAppliedDiscount.Name,
 								Amount:    0,
 								IsPercent: false,
-								Priority:  couponPriorityValue,
+								Priority:  currentPriority,
 								Labels:    []string{checkout.ConstLabelDiscount},
 								PerItem: map[string]float64{
 									index: amount,
@@ -258,6 +250,36 @@ func (it *Coupon) Calculate(checkoutInstance checkout.InterfaceCheckout, current
 	}
 
 	return result
+}
+
+//finds biggest discount amount if applied more than one coupon
+func findBiggestDiscount(discounts []discount, total float64) (discount, int) {
+
+	var biggestAppliedDiscount discount
+	var biggestAppliedDiscountIndex int
+
+	// looking for biggest applicable discount for current item
+	for index, discount := range discounts {
+		if (discount.Qty) > 0 {
+			productDiscountableAmount := discount.Amount + total*discount.Percents/100
+
+			// if we have discount that is bigger then a price we will apply it
+			if productDiscountableAmount > total {
+				biggestAppliedDiscount = discount
+				biggestAppliedDiscount.Total = total
+				biggestAppliedDiscountIndex = index
+				break
+			}
+
+			if biggestAppliedDiscount.Total < productDiscountableAmount {
+				biggestAppliedDiscount = discount
+				biggestAppliedDiscount.Total = productDiscountableAmount
+				biggestAppliedDiscountIndex = index
+			}
+		}
+	}
+
+	return biggestAppliedDiscount, biggestAppliedDiscountIndex
 }
 
 // check coupon limitation parameters for correspondence to current checkout values

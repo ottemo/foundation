@@ -659,7 +659,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		if err != nil {
 			// in  this case raw cc will be set to checkout info and used by payment method
 			currentCheckout.SetInfo("cc", specifiedCreditCard)
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		} else {
 			currentCheckout.SetInfo("cc", creditCard)
 		}

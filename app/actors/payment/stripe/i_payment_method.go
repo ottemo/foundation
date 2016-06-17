@@ -1,8 +1,6 @@
 package stripe
 
 import (
-	"strings"
-
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	stripe "github.com/stripe/stripe-go"
@@ -223,32 +221,6 @@ func getCardParams(ccInfo map[string]interface{}, stripeCID string) (*stripe.Car
 	}
 
 	return cp, nil
-}
-
-// getStripeCustomerToken We attach customer tokens to card tokens in the visitor_token table
-// - the customer token is sensitive data because you can make a charge with it alone
-// - if you are going to make a charge against a card that is attached to a customer though,
-//   you must attach the customer id
-func getStripeCustomerToken(vid string) string {
-	const customerTokenPrefix = "cus"
-
-	if vid == "" {
-		env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "2ecfa3ec-7cfc-4783-9060-8467ca63beae", "empty vid passed to look up customer token"))
-		return ""
-	}
-
-	tokens := visitor.LoadVisitorCardByVID(vid)
-	// env.LogEvent(env.LogFields{"token_list": tokens, "vid": vid}, "get customer token")
-	for _, t := range tokens {
-		ts := utils.InterfaceToString(t.Extra["customer_id"])
-
-		// Double check that this field is filled out
-		if strings.HasPrefix(ts, customerTokenPrefix) {
-			return ts
-		}
-	}
-
-	return ""
 }
 
 // Capture is the payment method used to capture authorized funds.  **This method is for future use**

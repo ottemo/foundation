@@ -15,6 +15,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // GetName returns implementation name of our REST API service
@@ -37,7 +38,8 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// catching API handler fails
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
-				env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
+				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
+				env.ErrorDispatch(err)
 			}
 		}()
 
@@ -45,7 +47,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		var startTime time.Time
 		var debugRequestIdentifier string
 
-		if ConstUseDebugLog {
+		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
 			startTime = time.Now()
 			debugRequestIdentifier = startTime.Format("20060102150405")
 		}
@@ -84,7 +86,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			json.Unmarshal(body, &newContent)
 
@@ -127,7 +129,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			content = string(body)
@@ -172,26 +174,40 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// starting session for request
 		currentSession, err := api.StartSession(applicationContext)
 		if err != nil {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
+			err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
+			env.ErrorDispatch(err)
 		}
 		applicationContext.Session = currentSession
 
-		if ConstUseDebugLog {
-			env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
+			allowLog := true
+			apiExcludedURIs := env.ConfigGetValue(ConstConfigPathAPILogExclude)
+			if apiExcludedURIs != nil {
+				excludedURIs := utils.InterfaceToArray(apiExcludedURIs)
+				needle := req.RequestURI + " {" + req.Method + "}"
+				for i := 0; i < len(excludedURIs); i++ {
+					if needle == excludedURIs[i] {
+						allowLog = false
+						break
+					}
+				}
+			}
+			if allowLog {
+				env.Log(ConstDebugLogStorage, "REQUEST_"+debugRequestIdentifier, fmt.Sprintf("%s [%s]\n%#v\n", req.RequestURI, currentSession.GetID(), content))
+				env.LogEvent(env.LogFields{
+					"request_thread_id": debugRequestIdentifier,
+					"session_id":        currentSession.GetID(),
 
-			env.LogEvent(env.LogFields{
-				"request_thread_id": debugRequestIdentifier,
-				"session_id":        currentSession.GetID(),
-
-				"uri":          req.RequestURI,
-				"verb":         req.Method,
-				"content":      content,
-				"agent":        req.UserAgent(),
-				"clientip":     req.RemoteAddr,
-				"httpversion":  req.Proto,
-				"host":         req.Host,
-				"content_type": contentType,
-			}, "request")
+					"uri":          req.RequestURI,
+					"verb":         req.Method,
+					"content":      content,
+					"agent":        req.UserAgent(),
+					"clientip":     req.RemoteAddr,
+					"httpversion":  req.Proto,
+					"host":         req.Host,
+					"content_type": contentType,
+				}, "request")
+			}
 		}
 
 		// event for request
@@ -201,7 +217,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		// API handler processing
 		result, err := handler(applicationContext)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			env.LogEvent(env.LogFields{
 				"request_thread_id": debugRequestIdentifier,
 				"session_id":        currentSession.GetID(),
@@ -266,7 +282,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 					"redirect": redirectLocation,
 				}
 
-				if ConstUseDebugLog {
+				if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
 					responseTime := time.Now().Sub(startTime)
 					env.Log(ConstDebugLogStorage, "RESPONSE_"+debugRequestIdentifier, fmt.Sprintf("%s (%dns)\n%s\n", req.RequestURI, responseTime, result))
 
@@ -360,7 +376,10 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 // Run is the Ottemo REST server startup function, analogous to "ListenAndServe"
 func (it *DefaultRestService) Run() error {
 	fmt.Println("REST API Service [HTTPRouter] starting to listen on " + it.ListenOn)
-	env.LogError(http.ListenAndServe(it.ListenOn, it))
+	err := http.ListenAndServe(it.ListenOn, it)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	return nil
 }
