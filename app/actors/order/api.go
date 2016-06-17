@@ -26,7 +26,7 @@ func setupAPI() error {
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APIEmailShipStatus))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
 	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
 
 	// Public
@@ -96,9 +96,9 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	return result, nil
 }
 
-// APIEmailShipStatus will send the visitor a shipping confirmation email
+// APISendShipStatusEmail will send the visitor a shipping confirmation email
 // - order id should be specified in "orderID" argument
-func APIEmailShipStatus(context api.InterfaceApplicationContext) (interface{}, error) {
+func APISendShipStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	orderModel, err := getOrder(context)
 	if err != nil {
