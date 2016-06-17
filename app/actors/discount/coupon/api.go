@@ -2,7 +2,6 @@ package coupon
 
 import (
 	"encoding/csv"
-	"net/http"
 	"strings"
 	"time"
 
@@ -36,18 +35,15 @@ func setupAPI() error {
 // List returns a list registered coupons and is an protected resource that requires authentication to access.
 func List(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	records, err := collection.Load()
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return records, env.ErrorDispatch(err)
+	return records, nil
 }
 
 // Create will generate a new coupon code when supplied the following required keys,
@@ -57,9 +53,9 @@ func List(context api.InterfaceApplicationContext) (interface{}, error) {
 func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
-	//------------------------
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -96,12 +92,14 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection.AddFilter("code", "=", valueCode)
 	recordsNumber, err := collection.Count()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	if recordsNumber > 0 {
@@ -132,6 +130,7 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	newID, err := collection.Save(newRecord)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -147,12 +146,10 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 	var couponCode string
 	var present bool
 
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
 	// check request context
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -160,7 +157,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 	if _, present = postValues["code"]; present {
 		couponCode = utils.InterfaceToString(postValues["code"])
 	} else {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "085b8e25-7939-4b94-93f1-1007ada357d4", "Required key 'code' cannot have a blank value.")
 	}
 
@@ -171,25 +168,25 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check if coupon has already been applied
 	if utils.IsInArray(couponCode, currentRedemptions) {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29c4c963-0940-4780-8ad2-9ed5ca7c97ff", "Coupon code, "+couponCode+" has already been applied in this cart.")
 	}
 
 	// load coupon for specified code
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	err = collection.AddFilter("code", "=", couponCode)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	records, err := collection.Load()
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -212,7 +209,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 				discountCoupon["times"] = applyTimes - 1
 				_, err := collection.Save(discountCoupon)
 				if err != nil {
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					context.SetResponseStatusInternalServerError()
 					return nil, env.ErrorDispatch(err)
 				}
 			}
@@ -222,21 +219,23 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 			currentSession.Set(ConstSessionKeyCurrentRedemptions, currentRedemptions)
 
 		} else {
-			responseWriter.WriteHeader(http.StatusBadRequest)
+			context.SetResponseStatusBadRequest()
 			if !validStart {
+				context.SetResponseStatusBadRequest()
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an start time outside valid time constraints.")
 			} else if !validEnd {
+				context.SetResponseStatusInternalServerError()
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an end time outside valid time constraints.")
 			}
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
 		}
 	} else {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2934505-06e9-4250-bb98-c22e4918799e", "Coupon code, "+strings.ToUpper(couponCode)+", is not a valid coupon code.")
 	}
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return "ok", nil
+	return "Coupon Applied", nil
 }
 
 // Revert will remove the coupon code and its value from the current checkout
@@ -245,7 +244,6 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	couponCode := context.GetRequestArgument("code")
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
 	currentRedemptions := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyCurrentRedemptions))
 	if !utils.IsInArray(couponCode, currentRedemptions) {
@@ -264,17 +262,17 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 		// times used increase
 		collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 		if err != nil {
-			responseWriter.WriteHeader(http.StatusInternalServerError)
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		err = collection.AddFilter("code", "=", couponCode)
 		if err != nil {
-			responseWriter.WriteHeader(http.StatusInternalServerError)
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		records, err := collection.Load()
 		if err != nil {
-			responseWriter.WriteHeader(http.StatusInternalServerError)
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		if len(records) > 0 {
@@ -284,21 +282,19 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				_, err := collection.Save(records[0])
 				if err != nil {
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					context.SetResponseStatusInternalServerError()
 					return nil, env.ErrorDispatch(err)
 				}
 			}
 		}
 	}
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return "ok", nil
+	return "Revert Successful", nil
 }
 
 // DownloadCSV returns a csv file with the current coupons and their configuration
 //   * returns a csv file
 func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
 
 	// preparing csv writer
 	csvWriter := csv.NewWriter(context.GetResponseWriter())
@@ -312,7 +308,7 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 	// loading records from DB and writing them in csv format
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -334,17 +330,16 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 		return true
 	})
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return nil, nil
+	return "Download Complete", nil
 }
 
 // UploadCSV will overwrite and replace the current coupon configuration with the uploaded CSV
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	csvFile := context.GetRequestFile("file")
 	if csvFile == nil {
-		responseWriter.WriteHeader(http.StatusBadRequest)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "A file name must be specified.")
 	}
 
@@ -353,7 +348,7 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	collection.Delete()
@@ -388,52 +383,46 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return "ok", nil
+	return "Upload Complete", nil
 }
 
 // GetByID returns a coupon with the specified ID
 // * coupon id should be specified in the "id" argument
 func GetByID(context api.InterfaceApplicationContext) (interface{}, error) {
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	id := context.GetRequestArgument("id")
 	records, err := collection.LoadByID(id)
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return records, env.ErrorDispatch(err)
+	return records, nil
 }
 
 // UpdateByID updates existing coupon specified in the request argument
 //   * coupon id should be specified in "couponID" argument
 func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
-
 	// check request context
-	//---------------------
-
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	couponID := context.GetRequestArgument("id")
 	record, err := collection.LoadByID(couponID)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -444,11 +433,11 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 		collection.AddFilter("code", "=", codeValue)
 		recordsNumber, err := collection.Count()
 		if err != nil {
-			responseWriter.WriteHeader(http.StatusInternalServerError)
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		if recordsNumber > 0 {
-			responseWriter.WriteHeader(http.StatusBadRequest)
+			context.SetResponseStatusBadRequest()
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e49e5e01-4f6f-4ff0-bd28-dfb616308aa7", "A Discount with the provided code: '"+codeValue+"', already exists.")
 		}
 
@@ -456,7 +445,6 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	// updating other attributes
-	//--------------------------
 	attributes := []string{"amount", "percent", "times", "limits"}
 	for _, attribute := range attributes {
 		if value, present := postValues[attribute]; present {
@@ -481,33 +469,30 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	// saving updates
-	//---------------
 	_, err = collection.Save(record)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	responseWriter.WriteHeader(http.StatusOK)
 	return record, nil
 }
 
 // DeleteByID deletes specified SEO item
 //   * discount id should be specified in the "couponID" argument
 func DeleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
-	responseWriter, _ := context.GetResponseWriter().(http.ResponseWriter)
+
 	collection, err := db.GetCollection(ConstCollectionNameCouponDiscounts)
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	err = collection.DeleteByID(context.GetRequestArgument("id"))
 	if err != nil {
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	responseWriter.WriteHeader(http.StatusOK)
-	return "ok", nil
+	return "Delete Successful", nil
 }

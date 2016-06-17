@@ -31,11 +31,12 @@ func setupAPI() error {
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/sendStatusEmail", api.IsAdmin(APISendStatusEmail))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
+	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
 
 	// Public
-	service.GET("visit/orders", APIGetVisitOrders)
-	service.GET("visit/order/:orderID", APIGetVisitOrder)
+	service.GET("visit/orders", APIGetVisitorOrders)
+	service.GET("visit/order/:orderID", APIGetVisitorOrder)
 
 	return nil
 }
@@ -58,6 +59,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 	// taking orders collection model
 	orderCollectionModel, err := order.GetOrderCollectionModel()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -82,14 +84,8 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 //   - order id should be specified in "orderID" argument
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "723ef443-f974-4455-9be0-a8af13916554", "order id should be specified")
-	}
-
-	orderModel, err := order.LoadOrderByID(orderID)
+	// pull order id off context
+	orderModel, err := getOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -105,40 +101,36 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 	return result, nil
 }
 
-func APISendStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
-	orderID := context.GetRequestArgument("orderID")
-	orderModel, err := order.LoadOrderByID(orderID)
+// APISendShipStatusEmail will send the visitor a shipping confirmation email
+// - order id should be specified in "orderID" argument
+func APISendShipStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	orderModel, err := getOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 	err = orderModel.SendShippingStatusUpdateEmail()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return "sent", nil
+	return "Shipping status email sent", nil
 }
 
 // APIUpdateOrder update existing purchase order
 //   - order id should be specified in "orderID" argument
 func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20a08638-e9e6-428b-b70c-a418d7821e4b", "order id should be specified")
-	}
-
-	requestData, err := api.GetRequestContentAsMap(context)
+	orderModel, err := getOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// operation
-	//----------
-	orderModel, err := order.LoadOrderByID(orderID)
+	// update the order data from request
+	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -146,7 +138,6 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 		orderModel.Set(attribute, value)
 	}
 
-	orderModel.SetID(orderID)
 	orderModel.Save()
 
 	return orderModel.ToHashMap(), nil
@@ -157,31 +148,29 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
-	//---------------------
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "order id should be specified")
-	}
-
-	// operation
-	//----------
-	orderModel, err := order.GetOrderModelAndSetID(orderID)
+	orderID, err := getOrderID(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	orderModel.Delete()
+	// grab order ID off request
+	orderModel, err := order.GetOrderModelAndSetID(orderID)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
 
-	return "ok", nil
+	orderModel.Delete()
+	return "Order deleted: " + orderID, nil
 }
 
-// APIGetOrder returns current visitor order details for specified order
+// APIGetVisitorOrder returns current visitor order details for specified order
 //   - orderID should be specified in arguments
-func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIGetVisitorOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
+	orderModel, err := getOrder(context)
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc719b01-c1e4-4b69-9c89-5735f5c0d339", "Unable to retrieve an order associated with OrderID: "+context.GetRequestArgument("orderID")+".")
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// allow anonymous visitors through if the session id matches
@@ -191,6 +180,7 @@ func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, err
 		if visitorID == "" {
 			return "No Visitor ID found, unable to process order request. Please log in first.", nil
 		} else if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
+			context.SetResponseStatusBadRequest()
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
 		}
 	}
@@ -201,11 +191,11 @@ func APIGetVisitOrder(context api.InterfaceApplicationContext) (interface{}, err
 	return result, nil
 }
 
-// APIGetOrders returns list of orders related to current visitor
-func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, error) {
+// APIGetVisitorOrders returns list of orders related to current visitor
+//   - visitorID is required, visitor must be logged in
+func APIGetVisitorOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// list operation
-	//---------------
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
 		return "No Visitor ID found, unable to process request.  Please log in first.", nil
@@ -213,11 +203,13 @@ func APIGetVisitOrders(context api.InterfaceApplicationContext) (interface{}, er
 
 	orderCollection, err := order.GetOrderCollectionModel()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorID)
 	if err != nil {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
