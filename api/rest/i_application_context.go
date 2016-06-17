@@ -114,17 +114,30 @@ func (it *DefaultRestApplicationContext) SetResponseSetting(name string, value i
 	return nil
 }
 
+// SetResponseStatus will set an HTTP response code
+//    - code is an integer correlating to HTTP response codes
 func (it *DefaultRestApplicationContext) SetResponseStatus(code int) {
 	it.ResponseWriter.WriteHeader(code)
 }
+
+// SetResponseStatusBadRequest will set the ResponseWriter to StatusBadRequest (400)
 func (it *DefaultRestApplicationContext) SetResponseStatusBadRequest() {
 	it.SetResponseStatus(http.StatusBadRequest)
 }
+
+// SetResponseStatusForbidden will set the ResponseWriter to StatusForbidden (403)
 func (it *DefaultRestApplicationContext) SetResponseStatusForbidden() {
 	it.SetResponseStatus(http.StatusForbidden)
 }
+
+// SetResponseStatusNotFound will set the ResponseWriter to StatusNotFound (404)
 func (it *DefaultRestApplicationContext) SetResponseStatusNotFound() {
 	it.SetResponseStatus(http.StatusNotFound)
+}
+
+// SetResponseStatusInternalServerError will set the ResponseWriter to StatusInternalServerError (500)
+func (it *DefaultRestApplicationContext) SetResponseStatusInternalServerError() {
+	it.SetResponseStatus(http.StatusInternalServerError)
 }
 
 // GetResponseResult returns result going to be written to response writer
