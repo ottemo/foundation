@@ -321,9 +321,10 @@ func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
 	for _, item := range orderModel.GetItems() {
 		options := make(map[string]interface{})
 
-		for optionName, optionKeys := range item.GetOptions() {
+		for _, optionKeys := range item.GetOptions() {
 			optionMap := utils.InterfaceToMap(optionKeys)
-
+			optionName := utils.InterfaceToString(optionMap["label"])
+			optionValue := utils.InterfaceToMap(utils.InterfaceToMap(optionMap["options"])[utils.InterfaceToString(optionMap["value"])])["label"]
 			if strings.Contains(item.GetSku(), giftCardSku) {
 
 				// if we have a giftcard date, localize the date
@@ -331,7 +332,7 @@ func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
 			} else {
 
 				// if not a date, just set the option value
-				options[optionName] = optionMap["value"]
+				options[optionName] = optionValue
 			}
 		}
 
