@@ -40,8 +40,8 @@ const (
 
 var (
 	optionValues = map[string]int{
-		"Every 5 days": 5, "Every 30 days": 30, "Every 60 days": 60, "Every 90 days": 90, "Every 120 days": 120,
+		"every_5_days": 5, "every_30_days": 30, "every_60_days": 60, "every_90_days": 90, "every_120_days": 120,
 		"": 0, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1,
-		"Just Once": 0, "30 days": 30, "60 days": 60, "90 days": 90, "120 days": 120,
+		"just_once": 0, "30_days": 30, "60_days": 60, "90_days": 90, "120_days": 120,
 	}
 )
