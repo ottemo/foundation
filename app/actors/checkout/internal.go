@@ -59,7 +59,9 @@ func (it *DefaultCheckout) SendOrderConfirmationMail() error {
 
 			for optionName, optionKeys := range item.GetOptions() {
 				optionMap := utils.InterfaceToMap(optionKeys)
-				options[optionName] = optionMap["value"]
+				optionLabel := utils.InterfaceToString(optionMap["label"])
+				optionValue := utils.InterfaceToMap(utils.InterfaceToMap(optionMap["options"])[utils.InterfaceToString(optionMap["value"])])["label"]
+				options[optionLabel] = optionValue
 
 				// Giftcard's delivery date
 				if strings.Contains(item.GetSku(), giftCardSku) {
