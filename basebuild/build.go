@@ -49,7 +49,6 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/other/friendmail"  // email friend extension
 	_ "github.com/ottemo/foundation/app/actors/other/grouping"    // products grouping extension
 	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"   // MailChimp integration
-	_ "github.com/ottemo/foundation/app/actors/other/quickbooks"  // QuickBooks exporting extension
 	_ "github.com/ottemo/foundation/app/actors/other/shipstation" // Shipstation integration
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot"  // TrustPilot integration
 )
