@@ -523,5 +523,5 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 	csvWriter.Flush()
 
-	return "CSV created successfully", nil
+	return "", nil
 }
