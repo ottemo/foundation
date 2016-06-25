@@ -26,7 +26,7 @@ func setupAPI() error {
 	// Admin
 	service.GET("orders/attributes", api.IsAdmin(APIListOrderAttributes))
 	service.GET("orders", api.IsAdmin(APIListOrders))
-	service.POST("orders/exportCSV", api.IsAdmin(APIExportOrders))
+	service.POST("orders/exportToCSV", api.IsAdmin(APIExportOrders))
 
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
