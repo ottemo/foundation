@@ -1,16 +1,20 @@
 package app
 
 import (
+	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/rest"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"sort"
 )
 
 // setupConfig setups package configuration values for a system
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -394,11 +398,11 @@ func setupConfig() error {
 		newEmail := utils.InterfaceToString(newValue)
 		if newEmail == "" {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "d5abe68b-5bde-4b14-a3a7-b89507c14597", "recipient e-mail can not be blank")
-			return "support+contactus@ottemo.io", err
+			return "support+contactus@ottemo.io", env.ErrorDispatch(err)
 		}
 		if !utils.ValidEmailAddress(newEmail) {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "720c5b82-4aa9-405b-b52d-b94d1f31e49d", "recipient e-mail is not in a valid format")
-			return "support+contactus@ottemo.io", err
+			return "support+contactus@ottemo.io", env.ErrorDispatch(err)
 
 		}
 
@@ -417,6 +421,81 @@ func setupConfig() error {
 
 	if err != nil {
 		return env.ErrorDispatch(err)
+	}
+
+	// API settings
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        rest.ConstConfigPathAPI,
+		Value:       nil,
+		Type:        env.ConstConfigTypeGroup,
+		Editor:      "",
+		Options:     nil,
+		Label:       "API",
+		Description: "API relarted options",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        rest.ConstConfigPathAPILog,
+		Value:       nil,
+		Type:        env.ConstConfigTypeGroup,
+		Editor:      "",
+		Options:     nil,
+		Label:       "Log",
+		Description: "API logger relarted options",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        rest.ConstConfigPathAPILogEnable,
+		Value:       false,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
+		Options:     nil,
+		Label:       "Enable API Logger",
+		Description: "enable/disable api logger",
+		Image:       "",
+	}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	APIURIs := map[string]string{}
+
+	// sorting handlers before output
+	apiRestService := api.GetRestService()
+	if restService, ok := apiRestService.(*rest.DefaultRestService); ok {
+		sort.Strings(restService.Handlers)
+		for _, handlerPath := range restService.Handlers {
+			path := string(handlerPath)
+			APIURIs[path] = path
+		}
+
+		config.RegisterItem(env.StructConfigItem{
+			Path:        rest.ConstConfigPathAPILogExclude,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "multi_select",
+			Options:     APIURIs,
+			Label:       "Exclude the following URI from being logged",
+			Description: "exclude selected URI from being logged",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	} else {
+		return env.ErrorDispatch(env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "890ae42a-b890-4481-81ba-5165a78acd11", "can't read config of Excluded URIs"))
 	}
 
 	return nil

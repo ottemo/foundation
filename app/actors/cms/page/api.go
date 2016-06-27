@@ -10,33 +10,15 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
+	service.GET("cms/pages", APIListCMSPages)
+	service.GET("cms/pages/attributes", APIListCMSPageAttributes)
+	service.GET("cms/page/:pageID", APIGetCMSPage)
 
-	err = api.GetRestService().RegisterAPI("cms/pages", api.ConstRESTOperationGet, APIListCMSPages)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/pages/attributes", api.ConstRESTOperationGet, APIListCMSPageAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationGet, APIGetCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page", api.ConstRESTOperationCreate, APICreateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationUpdate, APIUpdateCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/page/:pageID", api.ConstRESTOperationDelete, APIDeleteCMSPage)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Admin Only
+	service.POST("cms/page", api.IsAdmin(APICreateCMSPage))
+	service.PUT("cms/page/:pageID", api.IsAdmin(APIUpdateCMSPage))
+	service.DELETE("cms/page/:pageID", api.IsAdmin(APIDeleteCMSPage))
 
 	return nil
 }
@@ -124,11 +106,6 @@ func APICreateCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsPageModel, err := cms.GetCMSPageModel()
@@ -162,11 +139,6 @@ func APIUpdateCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsPageModel, err := cms.LoadCMSPageByID(pageID)
@@ -193,11 +165,6 @@ func APIDeleteCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 	pageID := context.GetRequestArgument("pageID")
 	if pageID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "20545153-b171-4638-b47e-15317e85262c", "cms page id should be specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation

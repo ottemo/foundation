@@ -28,6 +28,7 @@ const (
 	ConstDataTypeFloat    = "float"
 	ConstDataTypeDatetime = "datetime"
 	ConstDataTypeJSON     = "json"
+	ConstDataTypeHTML     = "html"
 )
 
 // DataType represents data type details
@@ -75,7 +76,7 @@ func DataTypeIsFloat(dataType string) bool {
 // DataTypeIsString returns true if dataType representation for GO language is string type
 func DataTypeIsString(dataType string) bool {
 	parsedType := DataTypeParse(dataType)
-	if IsAmongStr(parsedType.Name, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeJSON) {
+	if IsAmongStr(parsedType.Name, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeJSON, ConstDataTypeHTML) {
 		return true
 	}
 
@@ -91,7 +92,7 @@ func DataTypeIsArray(dataType string) bool {
 // DataTypeArrayOf adds array modifier to given dataType, returns "" for unknown types
 func DataTypeArrayOf(dataType string) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -107,7 +108,7 @@ func DataTypeArrayBaseType(dataType string) string {
 // DataTypeWPrecision adds precision modifier to given dataType, returns "" for unknown types
 func DataTypeWPrecision(dataType string, precision int) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -118,7 +119,7 @@ func DataTypeWPrecision(dataType string, precision int) string {
 // DataTypeWPrecisionAndScale adds precision and scale modifier to given dataType, returns "" for unknown types
 func DataTypeWPrecisionAndScale(dataType string, precision int, scale int) string {
 	if !IsAmongStr(dataType, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON, ConstDataTypeHTML) {
 
 		return ""
 	}
@@ -143,34 +144,34 @@ func DataTypeParse(typeName string) DataType {
 		result.Scale, _ = StringToInteger(regexpGroups[4])
 	}
 
-	if !IsAmongStr(result.Name, ConstDataTypeID, ConstDataTypeBoolean, ConstDataTypeVarchar, ConstDataTypeText, ConstDataTypeInteger,
-		ConstDataTypeDecimal, ConstDataTypeMoney, ConstDataTypeFloat, ConstDataTypeDatetime, ConstDataTypeJSON) {
+	switch {
+	case IsAmongStr(result.Name, "b", "bool", "boolean"):
+		result.Name = ConstDataTypeBoolean
+		result.IsKnown = true
 
-		switch {
-		case IsAmongStr(result.Name, "b", "boolean"):
-			result.Name = ConstDataTypeBoolean
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "i", "int", "integer", "single"):
+		result.Name = ConstDataTypeInteger
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "i", "integer", "single"):
-			result.Name = ConstDataTypeInteger
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double", "decimal", "money"):
+		result.Name = ConstDataTypeFloat
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "f", "d", "flt", "dbl", "float", "double"):
-			result.Name = ConstDataTypeFloat
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "str", "string", "text"):
+		result.Name = ConstDataTypeText
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "str", "string"):
-			result.Name = ConstDataTypeText
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "time", "date", "calendar", "datetime"):
+		result.Name = ConstDataTypeDatetime
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "time", "date", "calendar"):
-			result.Name = ConstDataTypeDatetime
-			result.IsKnown = true
+	case IsAmongStr(result.Name, "struct", "json"):
+		result.Name = ConstDataTypeJSON
+		result.IsKnown = true
 
-		case IsAmongStr(result.Name, "struct"):
-			result.Name = ConstDataTypeJSON
-			result.IsKnown = true
-		}
+	case IsAmongStr(result.Name, "html"):
+		result.Name = ConstDataTypeHTML
+		result.IsKnown = true
 	}
 
 	return result

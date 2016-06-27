@@ -58,6 +58,9 @@ func (it *DefaultCategory) Get(attribute string) interface{} {
 	case "description":
 		return it.GetDescription()
 
+	case "product_ids":
+		return it.GetProductIds()
+
 	case "products":
 		var result []map[string]interface{}
 
@@ -166,6 +169,7 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84284b03-0a29-4036-aa2d-b35768884b63", "unsupported 'products' value")
 		}
 	}
+
 	return nil
 }
 
@@ -174,7 +178,7 @@ func (it *DefaultCategory) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 
@@ -195,7 +199,7 @@ func (it *DefaultCategory) ToHashMap() map[string]interface{} {
 
 	result["parent_id"] = it.Get("parent_id")
 	result["name"] = it.Get("name")
-	result["products"] = it.Get("products")
+	result["product_ids"] = it.Get("product_ids")
 	result["path"] = it.Get("path")
 
 	return result
@@ -286,7 +290,7 @@ func (it *DefaultCategory) GetAttributesInfo() []models.StructAttributeInfo {
 		models.StructAttributeInfo{
 			Model:      category.ConstModelNameCategory,
 			Collection: ConstCollectionNameCategory,
-			Attribute:  "products",
+			Attribute:  "product_ids",
 			Type:       db.TypeArrayOf(db.ConstTypeID),
 			IsRequired: false,
 			IsStatic:   true,

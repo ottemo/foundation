@@ -42,9 +42,9 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 	case "google_id":
 		return it.GoogleID
 	case "is_admin":
-		return it.Admin
+		return it.IsAdmin()
 	case "created_at":
-		return it.IsAdmin
+		return it.CreatedAt
 	}
 
 	return it.CustomAttributes.Get(attribute)
@@ -153,7 +153,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 

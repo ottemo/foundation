@@ -28,7 +28,7 @@ func (it *DefaultProduct) Load(loadID string) error {
 
 	dbRecord, err := collection.LoadByID(loadID)
 	if err != nil {
-		return env.ErrorDispatch(err)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a671dee4-b95b-11e5-a86b-28cfe917b6c7", "Unable to find product by id; "+loadID)
 	}
 
 	err = it.FromHashMap(dbRecord)
@@ -74,6 +74,7 @@ func (it *DefaultProduct) Save() error {
 	if _, present := valuesToStore["qty"]; present {
 		delete(valuesToStore, "qty")
 	}
+
 	newID, err := collection.Save(valuesToStore)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -84,21 +85,28 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	// stock management stuff
+	// stock managementInventory stuff
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		for _, qtyOptions := range it.updatedQty {
-			if qtyOptions == nil {
-				continue
-			}
 
-			if qtyValue, present := qtyOptions[""]; present {
-				qty := utils.InterfaceToInt(qtyValue)
-				delete(qtyOptions, "")
+		// remove current stock
+		err = stockManager.RemoveProductQty(it.id, make(map[string]interface{}))
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
 
-				err := stockManager.SetProductQty(it.GetID(), qtyOptions, qty)
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
+		// set new stock
+		err = stockManager.SetProductQty(it.id, make(map[string]interface{}), it.Qty)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		for _, productOptions := range it.Inventory {
+			options := utils.InterfaceToMap(productOptions["options"])
+			qty := utils.InterfaceToInt(productOptions["qty"])
+
+			err = stockManager.SetProductQty(it.id, options, qty)
+			if err != nil {
+				return env.ErrorDispatch(err)
 			}
 		}
 	}

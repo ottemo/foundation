@@ -11,33 +11,16 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("cms/blocks", api.ConstRESTOperationGet, APIListCMSBlocks)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/blocks/attributes", api.ConstRESTOperationGet, APIListCMSBlockAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cms/blocks", APIListCMSBlocks)
+	service.GET("cms/blocks/attributes", APIListCMSBlockAttributes)
+	service.GET("cms/block/:blockID", APIGetCMSBlock)
 
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationGet, APIGetCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block", api.ConstRESTOperationCreate, APICreateCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationUpdate, APIUpdateCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cms/block/:blockID", api.ConstRESTOperationDelete, APIDeleteCMSBlock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Admin Only
+	service.POST("cms/block", api.IsAdmin(APICreateCMSBlock))
+	service.PUT("cms/block/:blockID", api.IsAdmin(APIUpdateCMSBlock))
+	service.DELETE("cms/block/:blockID", api.IsAdmin(APIDeleteCMSBlock))
 
 	return nil
 }
@@ -117,11 +100,6 @@ func APICreateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsBlockModel, err := cms.GetCMSBlockModel()
@@ -155,11 +133,6 @@ func APIUpdateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	// operation
 	//----------
 	cmsBlockModel, err := cms.LoadCMSBlockByID(blockID)
@@ -186,11 +159,6 @@ func APIDeleteCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 	blockID := context.GetRequestArgument("blockID")
 	if blockID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8dd275d4-efaf-4e67-b24d-67b28acd74e5", "cms block id should be specified")
-	}
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation

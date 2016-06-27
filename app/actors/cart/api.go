@@ -2,33 +2,22 @@ package cart
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/cart"
 )
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("cart", api.ConstRESTOperationGet, APICartInfo)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item", api.ConstRESTOperationCreate, APICartItemAdd)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx/:qty", api.ConstRESTOperationUpdate, APICartItemUpdate)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("cart/item/:itemIdx", api.ConstRESTOperationDelete, APICartItemDelete)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("cart", APICartInfo)
+	service.POST("cart/item", APICartItemAdd)
+	service.PUT("cart/item/:itemIdx/:qty", APICartItemUpdate)
+	service.DELETE("cart/item/:itemIdx", APICartItemDelete)
 
 	return nil
 }
@@ -80,7 +69,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 
 				item["product"] = productData

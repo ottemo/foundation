@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestMixedTree(t *testing.T) {
+func TestStackContextMixedTree(t *testing.T) {
 	var A, B, C, D func(testValue interface{})
 
 	const testKey = "test"

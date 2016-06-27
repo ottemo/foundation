@@ -11,11 +11,15 @@ import (
 
 // Package global constants
 const (
-	ConstUseDebugLog     = true       // flag to use REST API logging
 	ConstDebugLogStorage = "rest.log" // log storage for debug log records
 
 	ConstErrorModule = "api/rest"
 	ConstErrorLevel  = env.ConstErrorLevelService
+
+	ConstConfigPathAPI           = "api"
+	ConstConfigPathAPILog        = "api.log"
+	ConstConfigPathAPILogEnable  = "api.log.enable"
+	ConstConfigPathAPILogExclude = "api.log.exclude"
 )
 
 // DefaultRestService is a default implementer of InterfaceRestService
@@ -23,7 +27,7 @@ const (
 type DefaultRestService struct {
 	ListenOn string
 	Router   *httprouter.Router
-	Handlers map[string]httprouter.Handle
+	Handlers []string
 }
 
 // DefaultRestApplicationContext is a structure to hold API request related information

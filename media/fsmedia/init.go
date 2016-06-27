@@ -36,7 +36,7 @@ func (it *FilesystemMediaStorage) setupCheckDone() {
 	if it.setupWaitCnt--; it.setupWaitCnt == 0 {
 		err := media.OnMediaStorageStart()
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 }
@@ -92,7 +92,7 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 	dbCollection.AddColumn("object", db.ConstTypeVarchar, true)
 	dbCollection.AddColumn("type", db.ConstTypeVarchar, true)
 	dbCollection.AddColumn("media", db.ConstTypeVarchar, false)
-
+	dbCollection.AddColumn("created_at", db.ConstTypeDatetime, false)
 	it.setupCheckDone()
 
 	return nil

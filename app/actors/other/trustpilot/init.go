@@ -86,13 +86,13 @@ func schedulerFunc(params map[string]interface{}) error {
 					"Site":    siteMap})
 
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			err = app.SendMail(visitorEmail, ConstEmailSubject, emailToVisitor)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 			customInfo[ConstOrderCustomInfoSentKey] = true
@@ -100,7 +100,7 @@ func schedulerFunc(params map[string]interface{}) error {
 			currentOrder["custom_info"] = customInfo
 			_, err = dbOrderCollection.Save(currentOrder)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 		}

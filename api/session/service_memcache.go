@@ -28,7 +28,7 @@ func init() {
 
 	memcacheService := new(MemcacheSessionService)
 	memcacheService.DefaultSessionService = InitDefaultSessionService()
-	memcacheService.DefaultSessionService.Storage = memcacheService
+	memcacheService.DefaultSessionService.storage = memcacheService
 
 	SessionService = memcacheService
 
@@ -76,6 +76,9 @@ func shutdown() error {
 	return nil
 }
 
+// InterfaceServiceStorage implementation
+// --------------------------------------
+
 // GetStorageName returns storage implementation name for a session service
 func (it *MemcacheSessionService) GetStorageName() string {
 	return "MemcacheSessionService"
@@ -85,8 +88,7 @@ func (it *MemcacheSessionService) GetStorageName() string {
 func (it *MemcacheSessionService) LoadSession(sessionID string) (*DefaultSessionContainer, error) {
 
 	// making new session holder instance
-	sessionInstance := new(DefaultSessionContainer)
-	sessionInstance.id = DefaultSession(sessionID)
+	sessionInstance := &DefaultSessionContainer{id: sessionID}
 
 	// checking existence
 	item, err := it.memcacheClient.Get(sessionID)
@@ -124,8 +126,8 @@ func (it *MemcacheSessionService) LoadSession(sessionID string) (*DefaultSession
 // FlushSession stores serialized session on memcache server
 func (it *MemcacheSessionService) FlushSession(sessionID string) error {
 	// checking session existence
-	sessionInstance, present := it.Sessions[sessionID]
-	if !present {
+	sessionInstance := it.syncGet(sessionID)
+	if sessionInstance == nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
 	}
 
@@ -146,20 +148,21 @@ func (it *MemcacheSessionService) FlushSession(sessionID string) error {
 		}
 	}
 
+	sessionInstance.mutex.Lock()
 	jsonEncoder := json.NewEncoder(writer)
 	err = jsonEncoder.Encode(sessionInstance)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+	value := buffer.Bytes()
+	sessionInstance.mutex.Unlock()
 
 	// storing session item
-	item := &memcache.Item{Key: sessionID, Value: buffer.Bytes(), Expiration: ConstSessionLifeTime}
+	item := &memcache.Item{Key: sessionID, Value: value, Expiration: ConstSessionLifeTime}
 	it.memcacheClient.Set(item)
 
 	// releasing application memory
-	it.sessionsMutex.Lock()
-	delete(it.Sessions, sessionID)
-	it.sessionsMutex.Unlock()
+	it.syncDel(sessionID)
 
 	return nil
 }

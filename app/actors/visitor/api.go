@@ -15,115 +15,42 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	// Dashboard API
-	err := api.GetRestService().RegisterAPI("visitor", api.ConstRESTOperationCreate, APICreateVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationUpdate, APIUpdateVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationDelete, APIDeleteVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitor/:visitorID", api.ConstRESTOperationGet, APIGetVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("visitors", api.ConstRESTOperationGet, APIListVisitors)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/attributes", api.ConstRESTOperationGet, APIListVisitorAttributes)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.ConstRESTOperationDelete, APIDeleteVisitorAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute/:attribute", api.ConstRESTOperationUpdate, APIUpdateVisitorAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/attribute", api.ConstRESTOperationCreate, APICreateVisitorAttribute)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	// Dashboard API
+	service.POST("visitor", api.IsAdmin(APICreateVisitor))
+	service.PUT("visitor/:visitorID", APIUpdateVisitor)
+	service.DELETE("visitor/:visitorID", api.IsAdmin(APIDeleteVisitor))
+	service.GET("visitor/:visitorID", api.IsAdmin(APIGetVisitor))
+
+	service.GET("visitors", api.IsAdmin(APIListVisitors))
+	service.GET("visitors/attributes", APIListVisitorAttributes)
+	service.DELETE("visitors/attribute/:attribute", api.IsAdmin(APIDeleteVisitorAttribute))
+	service.PUT("visitors/attribute/:attribute", api.IsAdmin(APIUpdateVisitorAttribute))
+	service.POST("visitors/attribute", api.IsAdmin(APICreateVisitorAttribute))
 
 	// Storefront API
-	err = api.GetRestService().RegisterAPI("visitors/register", api.ConstRESTOperationCreate, APIRegisterVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/available", api.ConstRESTOperationCreate, APIVisitorEmailAvailable)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/validate/:key", api.ConstRESTOperationGet, APIValidateVisitors)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/invalidate/:email", api.ConstRESTOperationGet, APIInvalidateVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/forgot-password/:email", api.ConstRESTOperationGet, APIForgotPassword)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visitors/mail", api.ConstRESTOperationCreate, APIMailToVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("visitors/register", APIRegisterVisitor)
+	service.POST("visitors/available", APIVisitorEmailAvailable)
+	service.GET("visitors/validate/:key", APIValidateVisitors)
+	service.GET("visitors/invalidate/:email", APIInvalidateVisitor)
+	service.GET("visitors/forgot-password/:email", APIForgotPassword)
+	service.POST("visitors/mail", APIMailToVisitor)
 
-	err = api.GetRestService().RegisterAPI("visitors/reset-password", api.ConstRESTOperationCreate, APIResetPassword)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("visitors/reset-password", APIResetPassword)
 
-	err = api.GetRestService().RegisterAPI("visit", api.ConstRESTOperationGet, APIGetVisit)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit", api.ConstRESTOperationUpdate, APIUpdateVisitor)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/logout", api.ConstRESTOperationGet, APILogout)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/login", api.ConstRESTOperationCreate, APILogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/login-facebook", api.ConstRESTOperationCreate, APIFacebookLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/login-google", api.ConstRESTOperationCreate, APIGoogleLogin)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/orders", api.ConstRESTOperationGet, APIGetOrders)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("visit/order/:orderID", api.ConstRESTOperationGet, APIGetOrder)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("visit", APIGetVisit)
+	service.PUT("visit", APIUpdateVisitor)
+	service.GET("visit/logout", APILogout)
+	service.POST("visit/login", APILogin)
+	service.POST("visit/login-facebook", APIFacebookLogin)
+	service.POST("visit/login-google", APIGoogleLogin)
 
 	return nil
 }
@@ -132,12 +59,6 @@ func setupAPI() error {
 //   - visitor attributes should be specified in content
 //   - "email" attribute required
 func APICreateVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -248,12 +169,6 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 //   - visitor id should be specified in "visitorID" argument
 func APIDeleteVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorID := context.GetRequestArgument("visitorID")
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "No Visitor ID found, please specify a Visitor ID.")
@@ -278,12 +193,6 @@ func APIDeleteVisitor(context api.InterfaceApplicationContext) (interface{}, err
 //   - visitor id should be specified in "visitorID" argument
 func APIGetVisitor(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorID := context.GetRequestArgument("visitorID")
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "58630919-23f5-4406-8676-a7d1a629b35f", "No Visitor ID found, please specify a Visitor ID.")
@@ -302,11 +211,6 @@ func APIGetVisitor(context api.InterfaceApplicationContext) (interface{}, error)
 // APIListVisitors returns a list of existing visitors
 //   - if "action" parameter is set to "count" result value will be just a number of list items
 func APIListVisitors(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	visitorCollectionModel, err := visitor.GetVisitorCollectionModel()
 	if err != nil {
@@ -344,12 +248,6 @@ func APIListVisitorAttributes(context api.InterfaceApplicationContext) (interfac
 // APICreateVisitorAttribute creates a new custom attribute for a visitor model
 //   - attribute parameters "Attribute" and "Label" are required
 func APICreateVisitorAttribute(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -434,11 +332,6 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "Attribute Name was not specified, this is a required field.")
 	}
 
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	visitorModel, err := visitor.GetVisitorModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -486,12 +379,6 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 // APIDeleteVisitorAttribute removes existing custom attribute of a visitor model
 //   - attribute name/code should be provided in "attribute" argument
 func APIDeleteVisitorAttribute(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//--------------------
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
@@ -695,7 +582,7 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 		if strings.Contains(err.Error(), "Unable to find") {
 			return "ok", nil
 		}
-		
+
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -873,8 +760,9 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 	// facebook login operation
 	//-------------------------
 
-	// using access token to get user information
-	url := "https://graph.facebook.com/" + utils.InterfaceToString(requestData["user_id"]) + "?access_token=" + utils.InterfaceToString(requestData["access_token"])
+	// using access token to get user information,
+	// NOTE: API Version supported at least until April 2018
+	url := "https://graph.facebook.com/v2.5/" + utils.InterfaceToString(requestData["user_id"]) + "?access_token=" + utils.InterfaceToString(requestData["access_token"]) + "&fields=id,email,first_name,last_name"
 	facebookResponse, err := http.Get(url)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -896,8 +784,16 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name", "verified") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name and verfied.")
+	if !utils.StrKeysInMap(jsonMap, "id", "email", "first_name", "last_name") {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6258ffff-8336-49ef-9aaf-dd15f578a16f", "The following fields are all required: id, email, first_name, last_name.")
+	}
+
+	if responseError, present := jsonMap["error"]; present && responseError != nil {
+		errorMap := utils.InterfaceToMap(responseError)
+		if errorMessage, present := errorMap["message"]; present {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9f003c22-65e2-4c17-abb7-cd2a74b7eb44", utils.InterfaceToString(errorMessage))
+		}
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "df03de97-e779-4779-b6c9-e8d331bf590d", "Unexpected error during retrieving information from facebook service")
 	}
 
 	visitorFacebookAccount := map[string]string{
@@ -919,9 +815,9 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 
 		// there is no such facebook_id in DB, trying to find by e-mail
 		err = visitorModel.LoadByEmail(visitorFacebookAccount["email"])
-		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
-			// visitor not exists in out DB - reating new one
+		// visitor not exists in out DB - creating new one
+		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 			visitorModel.Set("email", visitorFacebookAccount["email"])
 			visitorModel.Set("first_name", visitorFacebookAccount["first_name"])
 			visitorModel.Set("last_name", visitorFacebookAccount["last_name"])
@@ -1035,63 +931,6 @@ func APIGoogleLogin(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	return "ok", nil
-}
-
-// APIGetOrder returns current visitor order details for specified order
-//   - orderID should be specified in arguments
-func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	orderModel, err := order.LoadOrderByID(context.GetRequestArgument("orderID"))
-	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc719b01-c1e4-4b69-9c89-5735f5c0d339", "Unable to retrieve an order associated with OrderID: "+context.GetRequestArgument("orderID")+".")
-	}
-
-	// allow anonymous visitors through if the session id matches
-	if utils.InterfaceToString(orderModel.Get("session_id")) != context.GetSession().GetID() {
-		// force anonymous visitors to log in if their session id does not match the one on the order
-		visitorID := visitor.GetCurrentVisitorID(context)
-		if visitorID == "" {
-			return "No Visitor ID found, unable to process order request. Please log in first.", nil
-		} else if utils.InterfaceToString(orderModel.Get("visitor_id")) != visitorID {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c5ca1fdb-7008-4a1c-a168-9df544df9825", "There is a mis-match between the current Visitor ID and the Visitor ID on the order.")
-		}
-	}
-
-	result := orderModel.ToHashMap()
-	result["items"] = orderModel.GetItems()
-
-	return result, nil
-}
-
-// APIGetOrders returns list of orders related to current visitor
-func APIGetOrders(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// list operation
-	//---------------
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		return "No Visitor ID found, unable to process request.  Please log in first.", nil
-	}
-
-	orderCollection, err := order.GetOrderCollectionModel()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	err = orderCollection.ListFilterAdd("visitor_id", "=", visitorID)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// filters handle
-	models.ApplyFilters(context, orderCollection.GetDBCollection())
-
-	// extra parameter handle
-	models.ApplyExtraAttributes(context, orderCollection)
-
-	result, err := orderCollection.List()
-
-	return result, env.ErrorDispatch(err)
 }
 
 // APIMailToVisitor sends email to specified visitors

@@ -74,9 +74,12 @@ func (it *DefaultCMSBlock) Save() error {
 	currentTime := time.Now()
 
 	if it.CreatedAt.IsZero() {
-		storingValues["created_at"] = currentTime
+		it.CreatedAt = currentTime
 	}
-	storingValues["updated_at"] = currentTime
+	storingValues["created_at"] = it.CreatedAt
+
+	it.UpdatedAt = currentTime
+	storingValues["updated_at"] = it.UpdatedAt
 
 	newID, err := collection.Save(storingValues)
 	if err != nil {

@@ -15,37 +15,16 @@ import (
 // setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("impex/models", api.ConstRESTOperationGet, restImpexListModels)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("impex/import/status", api.ConstRESTOperationGet, restImpexImportStatus)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("impex/export/:model", api.ConstRESTOperationGet, restImpexExportModel)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("impex/import/:model", api.ConstRESTOperationCreate, restImpexImportModel)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("impex/import", api.ConstRESTOperationCreate, restImpexImport)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("impex/models", restImpexListModels)
+	service.GET("impex/import/status", restImpexImportStatus)
+	service.GET("impex/export/:model", restImpexExportModel)
+	service.POST("impex/import/:model", restImpexImportModel)
+	service.POST("impex/import", restImpexImport)
 
-	err = api.GetRestService().RegisterAPI("impex/test/import", api.ConstRESTOperationCreate, restImpexTestImport)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("impex/test/mapping", api.ConstRESTOperationCreate, restImpexTestCsvToMap)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("impex/test/import", restImpexTestImport)
+	service.POST("impex/test/mapping", restImpexTestCsvToMap)
 
 	return nil
 }
@@ -135,7 +114,7 @@ func restImpexExportModel(context api.InterfaceApplicationContext) (interface{},
 
 	err := MapToCSV(records, csvWriter)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return nil, nil
@@ -200,7 +179,7 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 
 		err := ImportCSVData(commandLine, exchangeDict, csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 
@@ -235,7 +214,7 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 
 		err := ImportCSVScript(csvReader, context.GetResponseWriter(), true)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 		filesProcessed++
@@ -271,7 +250,7 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 
 		err := ImportCSVScript(csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 

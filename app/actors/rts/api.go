@@ -2,7 +2,6 @@ package rts
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -13,95 +12,53 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-// setupAPI setups package related API endpoint routines
+// setupAPI configures package related API endpoint routines
 func setupAPI() error {
-	var err error
 
-	err = api.GetRestService().RegisterAPI("rts/visit", api.ConstRESTOperationCreate, APIRegisterVisit)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("rts/referrers", api.ConstRESTOperationGet, APIGetReferrers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("rts/visit", APIRegisterVisit)
 
-	err = api.GetRestService().RegisterAPI("rts/visits", api.ConstRESTOperationGet, APIGetVisits)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/visits", APIGetVisits)
+	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
+	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
 
-	err = api.GetRestService().RegisterAPI("rts/visits/detail/:from/:to", api.ConstRESTOperationGet, APIGetVisitsDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/sales", APIGetSales)
+	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
 
-	err = api.GetRestService().RegisterAPI("rts/conversion", api.ConstRESTOperationGet, APIGetConversion)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales", api.ConstRESTOperationGet, APIGetSales)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/sales/detail/:from/:to", api.ConstRESTOperationGet, APIGetSalesDetails)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/bestsellers", api.ConstRESTOperationGet, APIGetBestsellers)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = api.GetRestService().RegisterAPI("rts/visits/realtime", api.ConstRESTOperationGet, APIGetVisitsRealtime)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("rts/conversion", APIGetConversion)
+	service.GET("rts/bestsellers", APIGetBestsellers)
+	service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
 }
 
 // APIRegisterVisit registers request for a statistics
 func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, error) {
-	if httpRequest, ok := context.GetRequest().(*http.Request); ok && httpRequest != nil {
-		if httpResponseWriter, ok := context.GetResponseWriter().(http.ResponseWriter); ok && httpResponseWriter != nil {
-			xReferrer := utils.InterfaceToString(httpRequest.Header.Get("X-Referer"))
+	// Variables in post; path=/shop/cleaning-products, referrer=http://google.com
+	// In headers; Referrer=http://karigran.com/shop/cleaning-products
+	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
+	env.Event("api.rts.visit", eventData)
 
-			http.SetCookie(httpResponseWriter, &http.Cookie{Name: "X_Referrer", Value: xReferrer, Path: "/"})
-
-			eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
-			env.Event("api.rts.visit", eventData)
-
-			return nil, nil
-		}
-	}
 	return nil, nil
 }
 
 // APIGetReferrers returns list of unique referrers were registered
 func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
 	var result []map[string]interface{}
-	var resultArray []map[string]interface{}
 
 	for url, count := range referrers {
-		resultArray = append(resultArray, map[string]interface{}{
+		result = append(result, map[string]interface{}{
 			"url":   url,
 			"count": count,
 		})
-	}
 
-	resultArray = sortArrayOfMapByKey(resultArray, "count")
-
-	for _, value := range resultArray {
-		result = append(result, value)
 		if len(result) >= 20 {
 			break
 		}
 	}
+
+	result = utils.SortMapByKeys(result, true, "count", "url")
 
 	return result, nil
 }
@@ -154,16 +111,16 @@ func APIGetVisits(context api.InterfaceApplicationContext) (interface{}, error) 
 	weekTotalVisits := yesterdayVisits + todayVisits + weekStats.TotalVisits
 
 	result["total"] = map[string]int{
-		"today":         todayTotalVisits,
-		"yesterday":     yesterdayTotalVisits,
-		"week":          weekTotalVisits,
-		"month to date": monthStatistic.TotalVisits,
+		"today":       todayTotalVisits,
+		"yesterday":   yesterdayTotalVisits,
+		"week":        weekTotalVisits,
+		"monthToDate": monthStatistic.TotalVisits,
 	}
 	result["unique"] = map[string]int{
-		"today":         todayVisits,
-		"yesterday":     yesterdayVisits,
-		"week":          weekVisits,
-		"month to date": monthStatistic.Visit,
+		"today":       todayVisits,
+		"yesterday":   yesterdayVisits,
+		"week":        weekVisits,
+		"monthToDate": monthStatistic.Visit,
 	}
 
 	return result, nil
@@ -351,17 +308,17 @@ func APIGetSales(context api.InterfaceApplicationContext) (interface{}, error) {
 	weekSalesAmount := todaySalesAmount + yesterdaySalesAmount + weekStats.SalesAmount
 
 	result["sales"] = map[string]float64{
-		"today":         todaySalesAmount,
-		"yesterday":     yesterdaySalesAmount,
-		"week":          weekSalesAmount,
-		"month to date": monthStatistic.SalesAmount,
+		"today":       todaySalesAmount,
+		"yesterday":   yesterdaySalesAmount,
+		"week":        weekSalesAmount,
+		"monthToDate": monthStatistic.SalesAmount,
 	}
 
 	result["orders"] = map[string]int{
-		"today":         todaySales,
-		"yesterday":     yesterdaySales,
-		"week":          weekSales,
-		"month to date": monthStatistic.Sales,
+		"today":       todaySales,
+		"yesterday":   yesterdaySales,
+		"week":        weekSales,
+		"monthToDate": monthStatistic.Sales,
 	}
 
 	return result, nil
@@ -455,9 +412,8 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 }
 
 // APIGetBestsellers returns information about bestsellers for some period
-// 	possible periods: "today", "yesterday", "week", "month"
+//     possible periods: "today", "yesterday", "week", "month"
 func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, error) {
-	var result []map[string]interface{}
 
 	bestsellersRange := utils.InterfaceToString(context.GetRequestArgument("period"))
 
@@ -466,7 +422,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	}
 
-	// get a hours pasted for local day and base from it
+	// get a hours passed for local day and base from it
 	todayTo := time.Now().Truncate(time.Hour).Add(time.Hour) // last hour of current day
 	todayFrom, _ := utils.MakeUTCOffsetTime(todayTo, timeZone)
 	if utils.IsZeroTime(todayFrom) {
@@ -497,7 +453,7 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	salesHistoryCollection.AddFilter("count", ">", 0)
@@ -506,19 +462,24 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 	collectionRecords, err := salesHistoryCollection.Load()
 	if err != nil {
-		return result, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
-	productsSold := make(map[string]int)
+	// map  and arrays to hold sales data
+	productSales := make(map[string]int)
+	var productsToSort, bestSellers []map[string]interface{}
 
+	// count the products sales by product id
 	for _, item := range collectionRecords {
-		productsSold[utils.InterfaceToString(item["product_id"])] = utils.InterfaceToInt(item["count"]) + productsSold[utils.InterfaceToString(item["product_id"])]
+		pid := utils.InterfaceToString(item["product_id"])
+		count := utils.InterfaceToInt(item["count"])
+		productSales[pid] = count + productSales[pid]
 	}
 
-	for productID, count := range productsSold {
-		productID := utils.InterfaceToString(productID)
+	// populate the bestseller data
+	for id, count := range productSales {
 
-		productInstance, err := product.LoadProductByID(productID)
+		productInstance, err := product.LoadProductByID(id)
 		if err != nil {
 			continue
 		}
@@ -529,25 +490,30 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		}
 
 		bestsellerItem := make(map[string]interface{})
+		bestsellerItem["pid"] = id
+		bestsellerItem["name"] = productInstance.GetName()
+		bestsellerItem["count"] = count
 
-		bestsellerItem["pid"] = productID
 		if productInstance.GetDefaultImage() != "" {
 			bestsellerItem["image"] = mediaPath + productInstance.GetDefaultImage()
 		}
 
-		bestsellerItem["name"] = productInstance.GetName()
-		bestsellerItem["count"] = count
-
-		result = append(result, bestsellerItem)
-
-		if len(result) >= 10 {
-			break
-		}
+		productsToSort = append(productsToSort, bestsellerItem)
 	}
 
-	result = sortArrayOfMapByKey(result, "count")
+	// sort list of products by sales
+	descending := true    // sort in descending order
+	bestsellerLimit := 12 // limit on returned bestsellers
+	productsSorted := utils.SortMapByKeys(productsToSort, descending, "count", "name")
 
-	return result, nil
+	// pass back only bestsellerLimit or less
+	if len(productsSorted) <= bestsellerLimit {
+		bestSellers = productsSorted
+	} else {
+		bestSellers = productsSorted[:bestsellerLimit]
+	}
+
+	return bestSellers, nil
 }
 
 // APIGetVisitsRealtime returns real-time information on current visits

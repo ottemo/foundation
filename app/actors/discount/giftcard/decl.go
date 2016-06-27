@@ -30,3 +30,6 @@ const (
 
 // DefaultGiftcard is a default implementer of InterfaceDiscount
 type DefaultGiftcard struct{}
+
+// Shipping is a default free shipping rate for Gift Cards
+type Shipping struct{}

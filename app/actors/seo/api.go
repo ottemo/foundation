@@ -6,56 +6,34 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/cms"
-	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/category"
+	"github.com/ottemo/foundation/app/models/cms"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("seo/items", api.ConstRESTOperationGet, APIListSEOItems)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item", api.ConstRESTOperationCreate, APICreateSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationUpdate, APIUpdateSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/item/:itemID", api.ConstRESTOperationDelete, APIDeleteSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/url", api.ConstRESTOperationGet, APIGetSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/url/:url", api.ConstRESTOperationGet, APIGetSEOItem)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/canonical/:id", api.ConstRESTOperationGet, APIGetSEOItemByID)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("seo/items", APIListSEOItems)
 
-	err = api.GetRestService().RegisterAPI("seo/sitemap", api.ConstRESTOperationGet, APIGenerateSitemap)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("seo/sitemap/sitemap.xml", api.ConstRESTOperationGet, APIGetSitemap)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("seo/url", APIGetSEOItem)
+	service.GET("seo/url/:url", APIGetSEOItem)
+	service.GET("seo/canonical/:id", APIGetSEOItemByID)
+
+	service.GET("seo/sitemap", APIGenerateSitemap)
+	service.GET("seo/sitemap/sitemap.xml", APIGetSitemap)
+
+	// Admin Only
+	service.POST("seo/item", api.IsAdmin(APICreateSEOItem))
+	service.PUT("seo/item/:itemID", api.IsAdmin(APIUpdateSEOItem))
+	service.DELETE("seo/item/:itemID", api.IsAdmin(APIDeleteSEOItem))
 
 	return nil
 }
@@ -136,13 +114,6 @@ func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, er
 //   - SEO item id should be specified in "itemID" argument
 func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// check request context
-	//---------------------
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -198,14 +169,6 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 // APICreateSEOItem creates a new SEO item
 //   - "url" and "rewrite" attributes are required
 func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// checking request context
-	//------------------------
-
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
@@ -266,10 +229,6 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 // APIDeleteSEOItem deletes specified SEO item
 //   - SEO item id should be specified in "itemID" argument
 func APIDeleteSEOItem(context api.InterfaceApplicationContext) (interface{}, error) {
-	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
@@ -352,16 +311,16 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	writeLine([]byte("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"))
 	writeLine([]byte("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"))
 
-	baseURL := "http://dev.ottemo.io:8080/"
-	pageType := ""
+	baseURL := app.GetStorefrontURL("")
+	rewriteType := ""
 
 	// per database record iterator
 	iteratorFunc := func(record map[string]interface{}) bool {
 		pageURL := ""
-		if pageType == "" {
+		if rewriteType == "" {
 			pageURL = baseURL + utils.InterfaceToString(record["url"])
 		} else {
-			pageURL = baseURL + pageType + "/" + utils.InterfaceToString(record["_id"])
+			pageURL = baseURL + rewriteType + "/" + utils.InterfaceToString(record["_id"])
 		}
 
 		writeLine([]byte("  <url><loc>" + pageURL + "</loc></url>"))
@@ -377,8 +336,8 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	rewritesCollection.SetResultColumns("rewrite")
 
 	// Product pages
-	pageType = "product"
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewriteType = "product"
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	productCollectionModel, _ := product.GetProductCollectionModel()
 	dbProductCollection := productCollectionModel.GetDBCollection()
@@ -387,9 +346,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbProductCollection.Iterate(iteratorFunc)
 
 	// Category pages
-	pageType = "category"
+	rewriteType = "category"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	categoryCollectionModel, _ := category.GetCategoryCollectionModel()
 	dbCategoryCollection := categoryCollectionModel.GetDBCollection()
@@ -398,9 +357,9 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	dbCategoryCollection.Iterate(iteratorFunc)
 
 	// Cms pages
-	pageType = "cms"
+	rewriteType = "page"
 	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", pageType)
+	rewritesCollection.AddFilter("type", "=", rewriteType)
 
 	cmsPageCollectionModel, _ := cms.GetCMSPageCollectionModel()
 	dbCMSPageCollection := cmsPageCollectionModel.GetDBCollection()

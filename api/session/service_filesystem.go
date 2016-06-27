@@ -27,7 +27,7 @@ func init() {
 
 	filesystemService := new(FilesystemSessionService)
 	filesystemService.DefaultSessionService = InitDefaultSessionService()
-	filesystemService.DefaultSessionService.Storage = filesystemService
+	filesystemService.DefaultSessionService.storage = filesystemService
 
 	SessionService = filesystemService
 
@@ -75,7 +75,7 @@ func startup() error {
 		if currentTime.Sub(fileInfo.ModTime()).Seconds() >= ConstSessionLifeTime {
 			err := os.Remove(ConstStorageFolder + fileInfo.Name())
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			continue
 		}
@@ -89,27 +89,32 @@ func shutdown() error {
 
 	filesystemService, ok := SessionService.(*FilesystemSessionService)
 	if !ok {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		return env.ErrorDispatch(err)
 	}
 
 	currentTime := time.Now()
 
 	// saving all session to storage
-	for sessionID, sessionInstance := range filesystemService.Sessions {
+	filesystemService.syncLoop(
+		func(sessionInstance *DefaultSessionContainer) bool {
+			// session expiration check
+			if currentTime.Sub(sessionInstance.UpdatedAt).Seconds() >= ConstSessionLifeTime {
+				return false
+			}
 
-		// session expiration check
-		if currentTime.Sub(sessionInstance.UpdatedAt).Seconds() >= ConstSessionLifeTime {
-			continue
-		}
-
-		// flushing session
-		if err := filesystemService.FlushSession(sessionID); err != nil {
-			env.LogError(err)
-		}
-	}
+			// flushing session
+			if err := filesystemService.FlushSession(sessionInstance.id); err != nil {
+				env.ErrorDispatch(err)
+			}
+			return false
+		})
 
 	return nil
 }
+
+// InterfaceServiceStorage implementation
+// --------------------------------------
 
 // GetStorageName returns storage implementation name for a session service
 func (it *FilesystemSessionService) GetStorageName() string {
@@ -120,8 +125,7 @@ func (it *FilesystemSessionService) GetStorageName() string {
 func (it *FilesystemSessionService) LoadSession(sessionID string) (*DefaultSessionContainer, error) {
 
 	// making new session holder instance
-	sessionInstance := new(DefaultSessionContainer)
-	sessionInstance.id = DefaultSession(sessionID)
+	sessionInstance := &DefaultSessionContainer{id: sessionID}
 
 	// checking file exists in file system
 	filename := ConstStorageFolder + sessionID
@@ -175,8 +179,8 @@ func (it *FilesystemSessionService) LoadSession(sessionID string) (*DefaultSessi
 // FlushSession serializes session into filesystem storage
 //   - routine not checks session expiration or modification time - it just flushes data to storage
 func (it *FilesystemSessionService) FlushSession(sessionID string) error {
-	sessionInstance, present := it.Sessions[sessionID]
-	if !present {
+	sessionInstance := it.syncGet(sessionID)
+	if sessionInstance == nil {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
 	}
 
@@ -193,7 +197,8 @@ func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 
 	defer func() {
 		sessionFile.Close()
-		os.Chtimes(sessionFile.Name(), sessionInstance.UpdatedAt, sessionInstance.UpdatedAt)
+		updatedAt := sessionInstance.GetUpdatedAt()
+		os.Chtimes(sessionFile.Name(), updatedAt, updatedAt)
 	}()
 
 	var writer io.Writer = sessionFile
@@ -204,16 +209,16 @@ func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 		}
 	}
 
+	sessionInstance.mutex.Lock()
 	jsonEncoder := json.NewEncoder(writer)
 	err = jsonEncoder.Encode(sessionInstance)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+	sessionInstance.mutex.Unlock()
 
 	// releasing application memory
-	it.sessionsMutex.Lock()
-	delete(it.Sessions, sessionID)
-	it.sessionsMutex.Unlock()
+	it.syncDel(sessionID)
 
 	return nil
 }

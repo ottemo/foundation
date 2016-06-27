@@ -23,7 +23,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMEnabled,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -38,7 +38,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMTitle,
 			Value:       "Authorize.Net (Direct Post)",
 			Type:        env.ConstConfigTypeVarchar,
@@ -49,7 +49,8 @@ func setupConfig() error {
 			Image:       "",
 		}, func(value interface{}) (interface{}, error) {
 			if utils.CheckIsBlank(value) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e3e1002e-02da-45dd-876a-2ffd1d7790d2", "can't be blank")
+				err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e3e1002e-02da-45dd-876a-2ffd1d7790d2", "can't be blank")
+				return nil, env.ErrorDispatch(err)
 			}
 			return value, nil
 		})
@@ -58,7 +59,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMAction,
 			Value:       ConstDPMActionAuthorizeOnly,
 			Type:        env.ConstConfigTypeVarchar,
@@ -70,7 +71,8 @@ func setupConfig() error {
 		}, func(value interface{}) (interface{}, error) {
 			stringValue := utils.InterfaceToString(value)
 			if !utils.IsAmongStr(stringValue, ConstDPMActionAuthorizeOnly, ConstDPMActionAuthorizeAndCapture) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "91645509-37f3-4add-b692-2dafac332bd1", "should be "+ConstDPMActionAuthorizeOnly+" or "+ConstDPMActionAuthorizeAndCapture)
+				err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "91645509-37f3-4add-b692-2dafac332bd1", "should be "+ConstDPMActionAuthorizeOnly+" or "+ConstDPMActionAuthorizeAndCapture)
+				return nil, env.ErrorDispatch(err)
 			}
 			return value, nil
 		})
@@ -79,7 +81,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMLogin,
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,
@@ -94,11 +96,11 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMKey,
 			Value:       "",
-			Type:        env.ConstConfigTypeSecret,
-			Editor:      "password",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
 			Options:     nil,
 			Label:       "Transaction Key",
 			Description: "account transaction key",
@@ -109,7 +111,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMGateway,
 			Value:       "https://test.authorize.net/gateway/transact.dll",
 			Type:        env.ConstConfigTypeVarchar,
@@ -124,7 +126,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMTest,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -139,7 +141,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMDebug,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -154,7 +156,7 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMCheckout,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
@@ -166,10 +168,10 @@ func setupConfig() error {
 		}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
 
 		if err != nil {
-			return err
+			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMReceiptURL,
 			Value:       "",
 			Type:        env.ConstConfigTypeText,
@@ -181,10 +183,10 @@ func setupConfig() error {
 		}, nil)
 
 		if err != nil {
-			return err
+			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMDeclineURL,
 			Value:       "",
 			Type:        env.ConstConfigTypeText,
@@ -196,10 +198,10 @@ func setupConfig() error {
 		}, nil)
 
 		if err != nil {
-			return err
+			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMReceiptHTML,
 			Value:       ConstDefaultReceiptTemplate,
 			Type:        env.ConstConfigTypeText,
@@ -211,10 +213,10 @@ func setupConfig() error {
 		}, nil)
 
 		if err != nil {
-			return err
+			return env.ErrorDispatch(err)
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err = config.RegisterItem(env.StructConfigItem{
 			Path:        ConstConfigPathDPMDeclineHTML,
 			Value:       ConstDefaultDeclineTemplate,
 			Type:        env.ConstConfigTypeText,
@@ -226,8 +228,11 @@ func setupConfig() error {
 		}, nil)
 
 		if err != nil {
-			return err
+			return env.ErrorDispatch(err)
 		}
+	} else {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "25367d9b-18e6-4304-99c7-4df2eae5521c", "Unable to obtain configuration for AuthorizeNet")
+		return env.ErrorDispatch(err)
 	}
 
 	return nil

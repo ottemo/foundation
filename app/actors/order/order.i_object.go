@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -169,37 +170,89 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 		it.GrandTotal = utils.InterfaceToFloat64(value)
 
 	case "taxes":
-		arrayValue := utils.InterfaceToArray(value)
 		it.Taxes = make([]order.StructTaxRate, 0)
+
+		arrayValue := utils.InterfaceToArray(value)
 		for _, arrayItem := range arrayValue {
-			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
 				taxRate := order.StructTaxRate{
+					Name:   priceAdjustment.Name,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Taxes = append(it.Taxes, taxRate)
+				continue
+			}
+
+			mapValue := utils.InterfaceToMap(arrayItem)
+			taxRate := order.StructTaxRate{}
+
+			// Coming from the db
+			if utils.StrKeysInMap(mapValue, "name", "code", "amount") {
+				taxRate = order.StructTaxRate{
+					Name:   utils.InterfaceToString(mapValue["name"]),
+					Code:   utils.InterfaceToString(mapValue["code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["amount"]),
+				}
+			}
+
+			// Coming from a struct
+			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+				taxRate = order.StructTaxRate{
 					Name:   utils.InterfaceToString(mapValue["Name"]),
 					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
-
-				if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
-					it.Taxes = append(it.Taxes, taxRate)
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"]),
 				}
+			}
+
+			// if we have data then append
+			if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
+				it.Taxes = append(it.Taxes, taxRate)
 			}
 		}
 
 	case "discounts":
-		arrayValue := utils.InterfaceToArray(value)
 		it.Discounts = make([]order.StructDiscount, 0)
-		for _, arrayItem := range arrayValue {
-			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
-				discount := order.StructDiscount{
-					Name:   utils.InterfaceToString(mapValue["Name"]),
-					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
 
-				if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
-					it.Discounts = append(it.Discounts, discount)
+		arrayValue := utils.InterfaceToArray(value)
+		for _, arrayItem := range arrayValue {
+
+			if priceAdjustment, ok := arrayItem.(checkout.StructPriceAdjustment); ok {
+				discount := order.StructDiscount{
+					Name:   priceAdjustment.Name,
+					Code:   priceAdjustment.Code,
+					Amount: priceAdjustment.Amount}
+
+				it.Discounts = append(it.Discounts, discount)
+				continue
+			}
+
+			mapValue := utils.InterfaceToMap(arrayItem)
+			discount := order.StructDiscount{}
+
+			// Coming from the db
+			if utils.StrKeysInMap(mapValue, "name", "code", "amount") {
+				discount = order.StructDiscount{
+					Name:   utils.InterfaceToString(mapValue["name"]),
+					Code:   utils.InterfaceToString(mapValue["code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["amount"]),
 				}
 			}
+
+			// Coming from a struct
+			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
+				discount = order.StructDiscount{
+					Name:   utils.InterfaceToString(mapValue["Name"]),
+					Code:   utils.InterfaceToString(mapValue["Code"]),
+					Amount: utils.InterfaceToFloat64(mapValue["Amount"]),
+				}
+			}
+
+			// If we have any data then append
+			if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
+				it.Discounts = append(it.Discounts, discount)
+			}
+
 		}
 
 	case "created_at":
@@ -247,7 +300,7 @@ func (it *DefaultOrder) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 
@@ -339,8 +392,15 @@ func (it *DefaultOrder) GetAttributesInfo() []models.StructAttributeInfo {
 			Label:      "Status",
 			Group:      "General",
 			Editors:    "selector",
-			Options:    "new,pending,processed,declined,complete,cancelled",
-			Default:    "new",
+			Options: strings.Join([]string{
+				order.ConstOrderStatusNew,
+				order.ConstOrderStatusPending,
+				order.ConstOrderStatusProcessed,
+				order.ConstOrderStatusDeclined,
+				order.ConstOrderStatusCompleted,
+				order.ConstOrderStatusCancelled,
+			}, ","),
+			Default: order.ConstOrderStatusNew,
 		},
 		models.StructAttributeInfo{
 			Model:      order.ConstModelNameOrder,

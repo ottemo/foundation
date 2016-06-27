@@ -82,7 +82,7 @@ func GetDateFrom() (time.Time, error) {
 		salesHistoryCollection.SetLimit(0, 1)
 		dbRecord, err := salesHistoryCollection.Load()
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		if len(dbRecord) > 0 {
@@ -101,7 +101,7 @@ func GetDateFrom() (time.Time, error) {
 	dbOrderCollection.SetLimit(0, 1)
 	dbRecord, err := dbOrderCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	if len(dbRecord) > 0 {
@@ -462,25 +462,4 @@ func initReferrals() error {
 	updateSync.Unlock()
 
 	return nil
-}
-
-// sortArrayOfMapByKey sort array from biggest to lowest value of map[key] element
-func sortArrayOfMapByKey(data []map[string]interface{}, key string) []map[string]interface{} {
-
-	var result []map[string]interface{}
-	var indexOfMaxValueItem int
-	var maxValue float64
-
-	for len(data) > 0 {
-		for index, item := range data {
-			if utils.InterfaceToFloat64(item[key]) > maxValue {
-				maxValue = utils.InterfaceToFloat64(item[key])
-				indexOfMaxValueItem = index
-			}
-		}
-		result = append(result, data[indexOfMaxValueItem])
-		data = append(data[:indexOfMaxValueItem], data[indexOfMaxValueItem+1:]...)
-		maxValue = 0
-	}
-	return result
 }

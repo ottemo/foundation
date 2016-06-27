@@ -23,7 +23,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -33,7 +33,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderGiftCardApplying, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -46,15 +46,15 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		for _, orderAppliedDiscount := range orderAppliedDiscounts {
 
 			if err := giftCardCollection.ClearFilters(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			if err := giftCardCollection.AddFilter("code", "=", orderAppliedDiscount.Code); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			records, err := giftCardCollection.Load()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 
@@ -63,7 +63,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 				giftCard := records[0]
 
 				// calculate the amount that will be on cart after apply and add order used record with orderID and amount
-				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) - orderAppliedDiscount.Amount
+				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) + orderAppliedDiscount.Amount
 
 				ordersGiftCardUsedMap := utils.InterfaceToMap(giftCard["orders_used"])
 				ordersGiftCardUsedMap[orderID] = orderAppliedDiscount.Amount
@@ -85,7 +85,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 				_, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					continue
 				}
 			}
@@ -107,7 +107,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -115,12 +115,12 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 	orderID := rollbackOrder.GetID()
 
 	if err := giftCardCollection.AddFilter("orders_used", "LIKE", orderID); err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	records, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -131,7 +131,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 		if refillAmount, present := ordersUsage[orderID]; present {
 
-			newAmount := utils.InterfaceToFloat64(refillAmount) + utils.InterfaceToFloat64(record["amount"])
+			newAmount := utils.InterfaceToFloat64(record["amount"]) - utils.InterfaceToFloat64(refillAmount)
 
 			// refill gift card amount, change status and orders_used information
 			delete(ordersUsage, orderID)
@@ -142,7 +142,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 			_, err := giftCardCollection.Save(record)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 		}
@@ -162,7 +162,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -174,7 +174,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	cartProducts := orderProceed.GetItems()
 	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
 
-	giftCardsToSendImmediately := make([]string, 0)
+	var giftCardsToSendImmediately []string
 
 	// check cart for gift card's and save in table if they present
 	for _, cartItem := range cartProducts {
@@ -264,8 +264,8 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				giftCard["delivery_date"] = deliveryDate
 
 				giftCardID, err := giftCardCollection.Save(giftCard)
-				if  err != nil {
-					env.LogError(err)
+				if err != nil {
+					env.ErrorDispatch(err)
 					return false
 				}
 				if deliveryDate.Truncate(time.Hour).Before(currentTime) {
@@ -277,9 +277,9 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// run SendTask task to send immediately if delivery_date is today's date
 	if len(giftCardsToSendImmediately) > 0 {
-		params := map[string]interface {} {
-			"giftCards" : giftCardsToSendImmediately,
-			"ignoreDeliveryDate" : true,
+		params := map[string]interface{}{
+			"giftCards":          giftCardsToSendImmediately,
+			"ignoreDeliveryDate": true,
 		}
 
 		go SendTask(params)

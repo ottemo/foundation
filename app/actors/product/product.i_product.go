@@ -52,7 +52,10 @@ func (it *DefaultProduct) GetWeight() float64 {
 
 // GetOptions returns current products possible options as a map[string]interface{}
 func (it *DefaultProduct) GetOptions() map[string]interface{} {
-	return it.Options
+	options := it.Options
+	eventData := map[string]interface{}{"id": it.GetID(), "product": it, "options": options}
+	env.Event("product.getOptions", eventData)
+	return options
 }
 
 // GetRelatedProductIds returns the related product id list
@@ -84,6 +87,7 @@ func (it *DefaultProduct) GetQty() int {
 	if stockManager := product.GetRegisteredStock(); it.Qty == 0 && stockManager != nil {
 		it.Qty = stockManager.GetProductQty(it.GetID(), it.GetAppliedOptions())
 	}
+
 	return it.Qty
 }
 
@@ -92,7 +96,17 @@ func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 	if it.appliedOptions != nil {
 		return it.appliedOptions
 	}
+
 	return make(map[string]interface{})
+}
+
+// GetInventory returns product inventory for current instance by id
+func (it *DefaultProduct) GetInventory() []map[string]interface{} {
+	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+		it.Inventory = stockManager.GetProductOptions(it.GetID())
+	}
+
+	return it.Inventory
 }
 
 // ApplyOptions updates current product attributes according to given product options,

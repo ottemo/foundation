@@ -11,29 +11,14 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
-	var err error
+	service := api.GetRestService()
 
-	err = api.GetRestService().RegisterAPI("stock/:productID", api.ConstRESTOperationGet, APIGetProductStock)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("stock/:productID/:qty", api.ConstRESTOperationCreate, APISetStockQty)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("stock/:productID/:qty", api.ConstRESTOperationUpdate, APIUpdateStockQty)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	err = api.GetRestService().RegisterAPI("stock/:productID", api.ConstRESTOperationDelete, APIDeleteStockQty)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.GET("stock/:productID", APIGetProductStock)
+	service.POST("stock/:productID/:qty", APISetStockQty)
+	service.PUT("stock/:productID/:qty", APIUpdateStockQty)
+	service.DELETE("stock/:productID", APIDeleteStockQty)
 
-	err = api.GetRestService().RegisterAPI("product/:productID/stock", api.ConstRESTOperationCreate, APIGetProductQty)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
+	service.POST("product/:productID/stock", APIGetProductQty)
 
 	return nil
 }
