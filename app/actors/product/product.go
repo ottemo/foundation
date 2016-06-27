@@ -326,7 +326,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 // Get returns an object attribute value or nil
 func (it *DefaultProduct) Get(attribute string) interface{} {
 
-	if utils.IsInListStr(attribute, it.externalAttributes.ListExternalAttributes()) {
+	if utils.StrKeysInMap(it.externalAttributes.ListExternalAttributes(), attribute) {
 		return it.externalAttributes.Get(attribute)
 	}
 
@@ -364,7 +364,7 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 	lowerCaseAttribute := strings.ToLower(attribute)
 
-	if utils.IsInListStr(attribute, it.externalAttributes.ListExternalAttributes()) {
+	if utils.StrKeysInMap(it.externalAttributes.ListExternalAttributes(), attribute) {
 		err := it.externalAttributes.Set(attribute, value)
 		if err != nil {
 			return env.ErrorDispatch(err)
@@ -808,7 +808,7 @@ func (it *DefaultProduct) Save() error {
 		delete(valuesToStore, "qty")
 	}
 
-	for _, x := range it.externalAttributes.ListExternalAttributes() {
+	for x := range it.externalAttributes.ListExternalAttributes() {
 		delete(valuesToStore, x)
 	}
 
@@ -977,18 +977,19 @@ func (it *DefaultProduct) GetCustomAttributeCollectionName() string {
 // InterfaceExternalAttributes implementation (package "github.com/ottemo/foundation/app/models")
 // ----------------------------------------------------------------------------------------------
 
-// AddExternalAttribute registers new delegate for a given attribute
-func (it *DefaultProduct) AddExternalAttribute(newAttribute models.StructAttributeInfo, delegate interface{}) error {
+// GetInstance() method was implemented before for InterfaceCustomAttributes
 
-	return it.externalAttributes.AddExternalAttribute(newAttribute, delegate)
+// AddExternalAttribute registers new delegate for a given attribute
+func (it *DefaultProduct) AddExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
+	return it.externalAttributes.AddExternalAttributes(delegate)
 }
 
 // RemoveExternalAttribute registers new delegate for a given attribute
-func (it *DefaultProduct) RemoveExternalAttribute(attributeName string) error {
-	return it.externalAttributes.RemoveExternalAttribute(attributeName)
+func (it *DefaultProduct) RemoveExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
+	return it.externalAttributes.RemoveExternalAttributes(delegate)
 }
 
 // ListExternalAttributes registers new delegate for a given attribute
-func (it *DefaultProduct) ListExternalAttributes() []string {
+func (it *DefaultProduct) ListExternalAttributes() map[string]models.InterfaceAttributesDelegate {
 	return it.externalAttributes.ListExternalAttributes()
 }
