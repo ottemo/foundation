@@ -272,7 +272,8 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 	return "Order confirmation email sent", nil
 }
 
-// getOrder will load the order from the database using the orderID from the application context
+// getOrder will load the order from the database using the orderID on the application context
+//    - order id should specified on the context
 func getOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
 
 	orderID, err := getOrderID(context)
@@ -289,6 +290,8 @@ func getOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, er
 	return orderModel, nil
 }
 
+// getOrderID will will return the order id as a string
+//    - orderID should be supplied as a request argument
 func getOrderID(context api.InterfaceApplicationContext) (string, error) {
 
 	// load orderID
@@ -301,6 +304,8 @@ func getOrderID(context api.InterfaceApplicationContext) (string, error) {
 	return orderID, nil
 }
 
+// hydrateOrder will populate an order model with the order items
+//    - takes an order.InterfaceOrder
 func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
 
 	var orderItems []map[string]interface{}
@@ -351,6 +356,11 @@ func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
 	return order
 }
 
+// ifGiftcardSetLocalDate will check every option and if a gifcard is found, it will convert the server time to local
+// time for a gift card
+//    - optionName is checked for date field
+//    - timeZone equal to the store timezone
+//    - optionMap it's time value updated to the new local timezone
 func ifGiftcardSetLocalDate(optionName, timeZone string, optionMap map[string]interface{}) string {
 
 	// make sure we are looking for a date
