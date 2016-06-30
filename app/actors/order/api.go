@@ -1,11 +1,8 @@
 package order
 
 import (
-	"strings"
-
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
-	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
@@ -13,6 +10,10 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
+
+// ------------------
+// Internal functions
+// ------------------
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
@@ -35,6 +36,36 @@ func setupAPI() error {
 
 	return nil
 }
+
+// apiFindSpecifiedOrder tries for find specified order ID among request argumants
+func apiFindSpecifiedOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
+
+	// looking for specified order ID
+	orderID := ""
+	for _, key := range []string{"orderID", "order", "order_id"} {
+		if value := context.GetRequestArgument(key); value != "" {
+			orderID = value
+		}
+	}
+
+	// returning error if order ID was not specified
+	if orderID == "" {
+		context.SetResponseStatusBadRequest()
+		return orderID, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "No order id found on request, orderID should be specified")
+	}
+
+	orderModel, err := order.LoadOrderByID(orderID)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return orderModel, nil
+}
+
+// -------------
+// API functions
+// -------------
 
 // APIListOrderAttributes returns a list of purchase order attributes
 func APIListOrderAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -80,7 +111,7 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// pull order id off context
-	orderModel, err := getOrder(context)
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -100,7 +131,7 @@ func APIGetOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 // - order id should be specified in "orderID" argument
 func APISendShipStatusEmail(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := getOrder(context)
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -117,7 +148,7 @@ func APISendShipStatusEmail(context api.InterfaceApplicationContext) (interface{
 //   - order id should be specified in "orderID" argument
 func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := getOrder(context)
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -143,27 +174,20 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
-	orderID, err := getOrderID(context)
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// grab order ID off request
-	orderModel, err := order.GetOrderModelAndSetID(orderID)
-	if err != nil {
-		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	orderModel.Delete()
-	return "Order deleted: " + orderID, nil
+	return "Order deleted: " + orderModel.GetID(), nil
 }
 
 // APIGetVisitorOrder returns current visitor order details for specified order
 //   - orderID should be specified in arguments
 func APIGetVisitorOrder(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	orderModel, err := getOrder(context)
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -230,28 +254,57 @@ func APIGetVisitorOrders(context api.InterfaceApplicationContext) (interface{}, 
 //   - orderID must be passed as a request argument
 func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// load the email template
-	email := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
-
-	// load the order
-	orderModel, err := getOrder(context)
+	// loading the order model
+	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// set visitor
+	// preparing template object "Info"
+	customInfo := make(map[string]interface{})
+	customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
+
+	// preparing template object "Visitor"
 	visitor := make(map[string]interface{})
 	visitor["first_name"] = orderModel.Get("customer_name")
 	visitor["email"] = orderModel.Get("customer_email")
 
-	order := hydrateOrder(orderModel)
+	// preparing template object "Order"
+	order := orderModel.ToHashMap()
+	order["payment_method_title"] = orderModel.GetPaymentMethod()
+	order["shipping_method_title"] = orderModel.GetShippingMethod()
 
-	// set store url
-	customInfo := make(map[string]interface{})
-	customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
+	// the dates in order should be converted to clients locale
+	// TODO: the dates to locale conversion should not happens there - it should be either part of order helper or utilities routine over resulting map
+	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 
-	// build the email
-	confirmationEmail, err := utils.TextTemplate(email, map[string]interface{}{
+	// "created_at" date conversion
+	if date, present := order["created_at"]; present {
+		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
+		if !utils.IsZeroTime(convertedDate) {
+			order["created_at"] = convertedDate
+		}
+	}
+
+	// order items extraction
+	var items []map[string]interface{}
+	for _, item := range orderModel.GetItems() {
+		// the item options could also contain the date, which should be converted
+		for key, value := range item.GetOptions() {
+			if utils.IsAmongStr(key, "Date", "Delivery Date", "send_date", "Send Date", "date") {
+				localizedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
+				if !utils.IsZeroTime(localizedDate) {
+					value[key] = localizedDate
+				}
+			}
+		}
+		items = append(items, item.ToHashMap())
+	}
+	order["items"] = items
+
+	// processing email template
+	template := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
+	confirmationEmail, err := utils.TextTemplate(template, map[string]interface{}{
 		"Order":   order,
 		"Visitor": visitor,
 		"Info":    customInfo,
@@ -261,7 +314,7 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 		return "failure", env.ErrorDispatch(err)
 	}
 
-	// send the email
+	// sending the email notification
 	emailAddress := utils.InterfaceToString(visitor["email"])
 	err = app.SendMail(emailAddress, "Order confirmation", confirmationEmail)
 	if err != nil {
@@ -270,111 +323,4 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 	}
 
 	return "Order confirmation email sent", nil
-}
-
-// getOrder will load the order from the database using the orderID on the application context
-//    - order id should specified on the context
-func getOrder(context api.InterfaceApplicationContext) (order.InterfaceOrder, error) {
-
-	orderID, err := getOrderID(context)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	orderModel, err := order.LoadOrderByID(orderID)
-	if err != nil {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorDispatch(err)
-	}
-
-	return orderModel, nil
-}
-
-// getOrderID will will return the order id as a string
-//    - orderID should be supplied as a request argument
-func getOrderID(context api.InterfaceApplicationContext) (string, error) {
-
-	// load orderID
-	orderID := context.GetRequestArgument("orderID")
-	if orderID == "" {
-		context.SetResponseStatusBadRequest()
-		return orderID, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fc3011c7-e58c-4433-b9b0-881a7ba005cf", "No order id found on request, orderID should be specified")
-	}
-
-	return orderID, nil
-}
-
-// hydrateOrder will populate an order model with the order items
-//    - takes an order.InterfaceOrder
-func hydrateOrder(orderModel order.InterfaceOrder) map[string]interface{} {
-
-	var orderItems []map[string]interface{}
-
-	order := orderModel.ToHashMap()
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-	giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
-
-	// convert date of order creation to store time zone
-	if date, present := order["created_at"]; present {
-		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
-		if !utils.IsZeroTime(convertedDate) {
-			order["created_at"] = convertedDate
-		}
-	}
-
-	// load items into the order
-	for _, item := range orderModel.GetItems() {
-		options := make(map[string]interface{})
-
-		for _, optionKeys := range item.GetOptions() {
-			optionMap := utils.InterfaceToMap(optionKeys)
-			optionName := utils.InterfaceToString(optionMap["label"])
-			optionValue := utils.InterfaceToMap(utils.InterfaceToMap(optionMap["options"])[utils.InterfaceToString(optionMap["value"])])["label"]
-			if strings.Contains(item.GetSku(), giftCardSku) {
-
-				// if we have a giftcard date, localize the date
-				options[optionName] = ifGiftcardSetLocalDate(item.GetSku(), timeZone, optionMap)
-			} else {
-
-				// if not a date, just set the option value
-				options[optionName] = optionValue
-			}
-		}
-
-		orderItems = append(orderItems, map[string]interface{}{
-			"name":    item.GetName(),
-			"options": options,
-			"sku":     item.GetSku(),
-			"qty":     item.GetQty(),
-			"price":   item.GetPrice()})
-	}
-
-	order["items"] = orderItems
-	order["payment_method_title"] = orderModel.GetPaymentMethod()
-	order["shipping_method_title"] = orderModel.GetShippingMethod()
-
-	return order
-}
-
-// ifGiftcardSetLocalDate will check every option and if a gifcard is found, it will convert the server time to local
-// time for a gift card
-//    - optionName is checked for date field
-//    - timeZone equal to the store timezone
-//    - optionMap it's time value updated to the new local timezone
-func ifGiftcardSetLocalDate(optionName, timeZone string, optionMap map[string]interface{}) string {
-
-	// make sure we are looking for a date
-	if utils.IsAmongStr(optionName, "Date", "Delivery Date", "send_date", "Send Date", "date") {
-
-		// localize the date
-		giftcardDeliveryDate, _ := utils.MakeTZTime(utils.InterfaceToTime(optionMap["value"]), timeZone)
-
-		// format the date if not zero
-		if !utils.IsZeroTime(giftcardDeliveryDate) {
-			// TODO: Should be "Monday Jan 2 15:04 (MST)" but we have a bug
-			return giftcardDeliveryDate.Format("Monday Jan 2 15:04")
-		}
-	}
-
-	return utils.InterfaceToString(optionMap["value"])
 }
