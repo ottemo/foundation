@@ -8,6 +8,7 @@ import (
 	_ "github.com/ottemo/foundation/env/ini"      // INI Configuration service
 	_ "github.com/ottemo/foundation/env/logger"   // File-based Logging service
 
+	_ "github.com/ottemo/foundation/api/context"   // Context runtime transfer service
 	_ "github.com/ottemo/foundation/api/rest"      // RESTful API service
 	_ "github.com/ottemo/foundation/api/session"   // Session Management service
 	_ "github.com/ottemo/foundation/impex"         // Import/Export service
@@ -49,7 +50,6 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/other/friendmail"  // email friend extension
 	_ "github.com/ottemo/foundation/app/actors/other/grouping"    // products grouping extension
 	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"   // MailChimp integration
-	_ "github.com/ottemo/foundation/app/actors/other/quickbooks"  // QuickBooks exporting extension
 	_ "github.com/ottemo/foundation/app/actors/other/shipstation" // Shipstation integration
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot"  // TrustPilot integration
 )
