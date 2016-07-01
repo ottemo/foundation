@@ -115,7 +115,7 @@ func RegisterScheduler(scheduler InterfaceScheduler) error {
 	return nil
 }
 
-// GetConfig returns currently used config service implementation or nil
+// GetConfig returns currently the used configuration service implementation or nil
 func GetConfig() InterfaceConfig {
 	return registeredConfig
 }

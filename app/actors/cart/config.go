@@ -7,7 +7,7 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fed0dee4-3409-4533-a445-998d2290569a", "can't obtain config");
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fed0dee4-3409-4533-a445-998d2290569a", "Cart module is unable to obtain configuration settings, using nil instead")
 		return env.ErrorDispatch(err)
 	}
 
@@ -21,7 +21,7 @@ func setupConfig() error {
 			"-6":  "After 6 hours",
 			"-24": "After 24 hours",
 		},
-		Label:       "Cart Abandon Email - Send Time",
+		Label:       "Abandoned Cart Email - Send Time",
 		Description: "If the customer abandons checkout, send them an email to complete their order.",
 		Image:       "",
 	}, nil)
@@ -36,7 +36,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeHTML,
 		Editor:      "multiline_text",
 		Options:     "",
-		Label:       "Cart Abandon Email - Template",
+		Label:       "Abandoned Cart Email - Template",
 		Description: "",
 		Image:       "",
 	}, nil)
