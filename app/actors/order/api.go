@@ -301,7 +301,7 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 			if utils.IsAmongStr(key, "Date", "Delivery Date", "send_date", "Send Date", "date") {
 				localizedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
 				if !utils.IsZeroTime(localizedDate) {
-					value[key] = localizedDate
+					item.Set(key, localizedDate)
 				}
 			}
 		}
