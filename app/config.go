@@ -1,19 +1,20 @@
 package app
 
 import (
+	"sort"
+
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/api/rest"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"sort"
 )
 
 // setupConfig setups package configuration values for a system
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f635e96c-3cd7-4ae2-a507-4349021e9f13", "The app module is unable to obtain configuration information, using nil instead.")
 		return env.ErrorDispatch(err)
 	}
 
