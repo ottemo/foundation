@@ -296,7 +296,7 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 	// order items extraction
 	var items []map[string]interface{}
 	for _, item := range orderModel.GetItems() {
-		// the item options could also contain the date, which should be converted to local time
+		// the item options could also contain the date, which should be converted
 		for key, value := range item.GetOptions() {
 			if utils.IsAmongStr(key, "Date", "Delivery Date", "send_date", "Send Date", "date") {
 				localizedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)

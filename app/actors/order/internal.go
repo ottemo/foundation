@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
+// SendShippingStatusUpdateEmail will send an email to alert customers their order has been packed and shipped
 func (it DefaultOrder) SendShippingStatusUpdateEmail() error {
 	subject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShippingEmailSubject))
 	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShippingEmailTemplate))
