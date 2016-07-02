@@ -84,6 +84,7 @@ type InterfaceOrder interface {
 
 	DuplicateOrder(params map[string]interface{}) (interface{}, error)
 	SendShippingStatusUpdateEmail() error
+	SendOrderConfirmationEmail() error
 
 	models.InterfaceModel
 	models.InterfaceObject

@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
@@ -267,68 +265,10 @@ func APISendOrderConfirmationEmail(context api.InterfaceApplicationContext) (int
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// preparing template object "Info"
-	customInfo := make(map[string]interface{})
-	customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
-
-	// preparing template object "Visitor"
-	visitor := make(map[string]interface{})
-	visitor["first_name"] = orderModel.Get("customer_name")
-	visitor["email"] = orderModel.Get("customer_email")
-
-	// preparing template object "Order"
-	order := orderModel.ToHashMap()
-	order["payment_method_title"] = orderModel.GetPaymentMethod()
-	order["shipping_method_title"] = orderModel.GetShippingMethod()
-
-	// the dates in order should be converted to clients locale
-	// TODO: the dates to locale conversion should not happens there - it should be either part of order helper or utilities routine over resulting map
-	timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-
-	// "created_at" date conversion
-	if date, present := order["created_at"]; present {
-		convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
-		if !utils.IsZeroTime(convertedDate) {
-			order["created_at"] = convertedDate
-		}
-	}
-
-	// order items extraction
-	var items []map[string]interface{}
-	for _, item := range orderModel.GetItems() {
-
-		// the item options could also contain the date, which should be converted to local time
-		itemOptions := item.GetOptions()
-		for key, value := range itemOptions {
-			if utils.IsAmongStr(key, "Date", "Delivery Date", "send_date", "Send Date", "date") {
-				localizedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
-				if !utils.IsZeroTime(localizedDate) {
-					itemOptions[key] = localizedDate
-				}
-			}
-		}
-		items = append(items, item.ToHashMap())
-	}
-	order["items"] = items
-
-	// processing email template
-	template := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
-	confirmationEmail, err := utils.TextTemplate(template, map[string]interface{}{
-		"Order":   order,
-		"Visitor": visitor,
-		"Info":    customInfo,
-	})
+	err = orderModel.SendOrderConfirmationEmail()
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
-		return "failure", env.ErrorDispatch(err)
-	}
-
-	// sending the email notification
-	emailAddress := utils.InterfaceToString(visitor["email"])
-	err = app.SendMail(emailAddress, "Order confirmation", confirmationEmail)
-	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return "failure", env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return "Order confirmation email sent", nil
