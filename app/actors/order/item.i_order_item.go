@@ -1,5 +1,7 @@
 package order
 
+import "github.com/ottemo/foundation/utils"
+
 // GetID returns order item unique id, or blank string
 func (it *DefaultOrderItem) GetID() string {
 	return it.id
@@ -44,4 +46,36 @@ func (it *DefaultOrderItem) GetWeight() float64 {
 // GetOptions returns order item product options
 func (it *DefaultOrderItem) GetOptions() map[string]interface{} {
 	return it.Options
+}
+
+// GetSelectedOptions returns order item options as a simple map
+// optionId: optionValue or optionLabel: optionValueLabel
+func (it *DefaultOrderItem) GetSelectedOptions(asLabels bool) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	// order items extraction
+	if asLabels {
+		for _, value := range it.GetOptions() {
+			option := utils.InterfaceToMap(value)
+			optionValue := option["value"]
+			optionLabel := utils.InterfaceToString(option["label"])
+			result[optionLabel] = optionValue
+
+			if options, present := option["options"]; present {
+				optionsMap := utils.InterfaceToMap(options)
+				if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+					optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+					result[optionLabel] = optionValueParametersMap["label"]
+				}
+			}
+		}
+		return result
+	}
+
+	for key, value := range it.GetOptions() {
+		option := utils.InterfaceToMap(value)
+		result[key] = option["value"]
+	}
+
+	return result
 }

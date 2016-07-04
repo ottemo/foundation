@@ -43,6 +43,8 @@ type InterfaceOrderItem interface {
 
 	GetOptions() map[string]interface{}
 
+	GetSelectedOptions(asLabels bool) map[string]interface{}
+
 	models.InterfaceObject
 }
 

@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"strings"
 )
 
 // SendShippingStatusUpdateEmail will send an email to alert customers their order has been packed and shipped
@@ -78,19 +79,20 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 
 	// order items extraction
 	var items []map[string]interface{}
-	for _, item := range it.GetItems() {
 
+	for _, item := range it.GetItems() {
 		// the item options could also contain the date, which should be converted to local time
-		itemOptions := item.GetOptions()
-		for key, value := range itemOptions {
-			if utils.IsAmongStr(key, "Date", "Delivery Date", "send_date", "Send Date", "date") {
-				localizedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
-				if !utils.IsZeroTime(localizedDate) {
-					itemOptions[key] = localizedDate
-				}
+		itemMap := item.ToHashMap()
+		options := item.GetSelectedOptions(true) // return "Size": "Small", "Color": "Blue"
+		// TODO: this convertation should depend on 'type' of option ('date') or we can add additional method to time object that will return converted value (?)
+		for option, value := range options {
+			if strings.Index(strings.ToLower(option), "date") > 0 {
+				options[option], _ = utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
 			}
 		}
-		items = append(items, item.ToHashMap())
+		// this will override default options
+		itemMap["options"] = options
+		items = append(items, itemMap)
 	}
 	order["items"] = items
 
