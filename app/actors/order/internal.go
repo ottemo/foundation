@@ -83,11 +83,16 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 	for _, item := range it.GetItems() {
 		// the item options could also contain the date, which should be converted to local time
 		itemMap := item.ToHashMap()
-		options := item.GetSelectedOptions(true) // return "Size": "Small", "Color": "Blue"
+		options := item.GetOptionValues(true) // return "Size": "Small", "Color": "Blue"
 		// TODO: this convertation should depend on 'type' of option ('date') or we can add additional method to time object that will return converted value (?)
 		for option, value := range options {
-			if strings.Index(strings.ToLower(option), "date") > 0 {
-				options[option], _ = utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
+			if strings.Index(strings.ToLower(option), "date") >= 0 {
+				tempDate, _ := utils.MakeTZTime(utils.InterfaceToTime(value), timeZone)
+				options[option] = tempDate
+				// format the date if not zero
+				if !utils.IsZeroTime(tempDate) {
+					options[option] = tempDate.Format("Monday Jan 2 15:04")
+				}
 			}
 		}
 		// this will override default options

@@ -48,18 +48,28 @@ func (it *DefaultOrderItem) GetOptions() map[string]interface{} {
 	return it.Options
 }
 
-// GetSelectedOptions returns order item options as a simple map
+// GetSelectedOptions returns order item options values
 // optionId: optionValue or optionLabel: optionValueLabel
-func (it *DefaultOrderItem) GetSelectedOptions(asLabels bool) map[string]interface{} {
+func (it *DefaultOrderItem) GetOptionValues(labels bool) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	// order items extraction
-	if asLabels {
-		for _, value := range it.GetOptions() {
+	if labels {
+		// this part is hard version of moving through key's of option just to get one value
+		for key, value := range it.GetOptions() {
 			option := utils.InterfaceToMap(value)
-			optionValue := option["value"]
-			optionLabel := utils.InterfaceToString(option["label"])
+			optionLabel := key
+			if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+				optionLabel = utils.InterfaceToString(labelValue)
+			}
+
+			optionValue, optionValuePresent := option["value"]
 			result[optionLabel] = optionValue
+			// in this case looks like structure of options was changed or it's not a map
+			if !optionValuePresent {
+				result[optionLabel] = value
+				continue
+			}
 
 			if options, present := option["options"]; present {
 				optionsMap := utils.InterfaceToMap(options)
@@ -74,7 +84,11 @@ func (it *DefaultOrderItem) GetSelectedOptions(asLabels bool) map[string]interfa
 
 	for key, value := range it.GetOptions() {
 		option := utils.InterfaceToMap(value)
-		result[key] = option["value"]
+		if optionValue, present := option["value"]; present {
+			result[key] = optionValue
+		} else {
+			result[key] = value
+		}
 	}
 
 	return result
