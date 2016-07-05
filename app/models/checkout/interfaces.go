@@ -65,7 +65,7 @@ type InterfaceCheckout interface {
 	GetOrder() order.InterfaceOrder
 
 	CheckoutSuccess(checkoutOrder order.InterfaceOrder, session api.InterfaceSession) error
-	SendOrderConfirmationMail() error
+	SendOrderConfirmationEmail() error
 
 	IsSubscription() bool
 

@@ -1,5 +1,7 @@
 package order
 
+import "github.com/ottemo/foundation/utils"
+
 // GetID returns order item unique id, or blank string
 func (it *DefaultOrderItem) GetID() string {
 	return it.id
@@ -44,4 +46,50 @@ func (it *DefaultOrderItem) GetWeight() float64 {
 // GetOptions returns order item product options
 func (it *DefaultOrderItem) GetOptions() map[string]interface{} {
 	return it.Options
+}
+
+// GetSelectedOptions returns order item options values
+// optionId: optionValue or optionLabel: optionValueLabel
+func (it *DefaultOrderItem) GetOptionValues(labels bool) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	// order items extraction
+	if labels {
+		// this part is hard version of moving through key's of option just to get one value
+		for key, value := range it.GetOptions() {
+			option := utils.InterfaceToMap(value)
+			optionLabel := key
+			if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+				optionLabel = utils.InterfaceToString(labelValue)
+			}
+
+			optionValue, optionValuePresent := option["value"]
+			result[optionLabel] = optionValue
+			// in this case looks like structure of options was changed or it's not a map
+			if !optionValuePresent {
+				result[optionLabel] = value
+				continue
+			}
+
+			if options, present := option["options"]; present {
+				optionsMap := utils.InterfaceToMap(options)
+				if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+					optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+					result[optionLabel] = optionValueParametersMap["label"]
+				}
+			}
+		}
+		return result
+	}
+
+	for key, value := range it.GetOptions() {
+		option := utils.InterfaceToMap(value)
+		if optionValue, present := option["value"]; present {
+			result[key] = optionValue
+		} else {
+			result[key] = value
+		}
+	}
+
+	return result
 }
