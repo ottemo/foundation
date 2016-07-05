@@ -17,5 +17,5 @@ func (it *DefaultSubscription) GetImplementationName() string {
 
 // New returns new instance of model implementation object for the Subscription
 func (it *DefaultSubscription) New() (models.InterfaceModel, error) {
-	return &DefaultSubscription{}, nil
+	return &DefaultSubscription{Info: make(map[string]interface{})}, nil
 }

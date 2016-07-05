@@ -175,6 +175,40 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
+
+				productOptions := make(map[string]interface{})
+				// add options to subscription info as description that used to show on FED
+				fullOptions := product.GetOptions()
+				subscriptionInstance.SetInfo("detail_options", fullOptions)
+
+				for key, value := range product.GetOptions() {
+					option := utils.InterfaceToMap(value)
+					optionLabel := key
+					if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+						optionLabel = utils.InterfaceToString(labelValue)
+					}
+
+					optionValue, optionValuePresent := option["value"]
+					productOptions[optionLabel] = optionValue
+					// in this case looks like structure of options was changed or it's not a map
+					if !optionValuePresent {
+						productOptions[optionLabel] = value
+						continue
+					}
+
+					if options, present := option["options"]; present {
+						optionsMap := utils.InterfaceToMap(options)
+						if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+							optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+							if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+								productOptions[optionLabel] = labelValue
+							}
+
+						}
+					}
+				}
+
+				subscriptionInstance.SetInfo("options", productOptions)
 			}
 
 			items = append(items, subscriptionItem)

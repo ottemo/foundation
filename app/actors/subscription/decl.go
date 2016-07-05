@@ -56,6 +56,8 @@ type DefaultSubscription struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+
+	Info map[string]interface{}
 }
 
 // DefaultSubscriptionCollection is a default implementer of InterfaceSubscriptionCollection

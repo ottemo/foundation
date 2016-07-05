@@ -45,6 +45,9 @@ type InterfaceSubscription interface {
 	GetPeriod() int
 	SetPeriod(days int) error
 
+	SetInfo(key string, value interface{})
+	GetInfo(key string) interface{}
+
 	UpdateActionDate() error
 
 	Validate() error
