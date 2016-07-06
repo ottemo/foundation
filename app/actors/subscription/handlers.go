@@ -181,7 +181,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 				fullOptions := product.GetOptions()
 				subscriptionInstance.SetInfo("detail_options", fullOptions)
 
-				for key, value := range product.GetOptions() {
+				for key, value := range fullOptions {
 					option := utils.InterfaceToMap(value)
 					optionLabel := key
 					if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
@@ -190,15 +190,37 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 					optionValue, optionValuePresent := option["value"]
 					productOptions[optionLabel] = optionValue
+
 					// in this case looks like structure of options was changed or it's not a map
 					if !optionValuePresent {
 						productOptions[optionLabel] = value
 						continue
 					}
 
+					optionType := ""
+					if val, present := option["type"]; present {
+						optionType = utils.InterfaceToString(val)
+					}
 					if options, present := option["options"]; present {
 						optionsMap := utils.InterfaceToMap(options)
-						if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+
+						if optionType == "multi_select" {
+							selectedOptions := ""
+							for i, optionValue := range utils.InterfaceToArray(optionValue) {
+								if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+									optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+									if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+										productOptions[optionLabel] = labelValue
+										if i > 0 {
+											selectedOptions = selectedOptions + ", "
+										}
+										selectedOptions = selectedOptions + utils.InterfaceToString(labelValue)
+									}
+								}
+							}
+							productOptions[optionLabel] = selectedOptions
+
+						} else if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
 							optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
 							if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
 								productOptions[optionLabel] = labelValue
