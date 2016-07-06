@@ -65,7 +65,7 @@ func processOrder(order order.InterfaceOrder) error {
 
 		// split Order.CustomerName into sub-parts
 		customerName := utils.InterfaceToString(order.Get("customer_name"))
-		firstName, lastName := splitName(customerName)
+		firstName, lastName := utils.SplitFullName(customerName)
 		registration.MergeFields = map[string]string{
 			"FNAME": firstName,
 			"LNAME": lastName,
@@ -78,27 +78,6 @@ func processOrder(order order.InterfaceOrder) error {
 	}
 
 	return nil
-}
-
-// splitName will take a fullname as a string and split it into first name and last names
-func splitName(name string) (string, string) {
-
-	var firstName, lastName string
-
-	fullName := strings.SplitN(name, " ", 2)
-
-	if len(fullName) == 2 {
-		firstName = fullName[0]
-		lastName = fullName[1]
-	} else if len(fullName) == 1 {
-		firstName = fullName[0]
-		lastName = ""
-	} else {
-		firstName = ""
-		lastName = ""
-	}
-
-	return firstName, lastName
 }
 
 //Subscribe a user to a MailChimp list when passed:

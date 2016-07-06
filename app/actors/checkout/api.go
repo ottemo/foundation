@@ -1,6 +1,7 @@
 package checkout
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -460,6 +461,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
+	fmt.Printf("About to call Authorize with %v\n\n\n", paymentInfo)
 	paymentResult, err := paymentMethod.Authorize(nil, paymentInfo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)

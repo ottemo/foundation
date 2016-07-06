@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -29,13 +30,20 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		return "you are not logined in", nil
+		return "You are not logged in. Please log in.", nil
+	}
+
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("Context contains: %v\n\n\n", requestData)
 
 	paymentMethodCode := utils.InterfaceToString(utils.GetFirstMapValue(requestData, "payment", "payment_method"))
 	if paymentMethodCode == "" {
@@ -64,9 +72,16 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c80c4106-1208-4d0b-8577-0889f608869b", "such payment method not existing")
 	}
 
+	// add email, first and lastname to paymentInfo map
+	email := currentCheckout.GetVisitor().GetEmail()
+	billingFirstName := currentCheckout.GetBillingAddress().GetFirstName()
+	billingLastName := currentCheckout.GetBillingAddress().GetLastName()
+
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
-		"cc": creditCardInfo,
+		"cc":           creditCardInfo,
+		"email":        email,
+		"billing_name": billingFirstName + " " + billingLastName,
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp

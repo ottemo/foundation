@@ -49,6 +49,8 @@ func (it *PayFlowAPI) IsAllowed(checkoutInstance checkout.InterfaceCheckout) boo
 // Authorize makes payment method authorize operation (currently it's a Authorize zero amount + Sale operations)
 func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
+	fmt.Printf("Order contains: %v\n", orderInstance)
+	fmt.Printf("Payment Info contains: %v\n\n", paymentInfo)
 	// authorize the card & create a token with a zero dollar amount first time through
 	if value, present := paymentInfo[checkout.ConstPaymentActionTypeKey]; present && utils.InterfaceToString(value) == checkout.ConstPaymentActionTypeCreateToken {
 		return it.AuthorizeZeroAmount(orderInstance, paymentInfo)
@@ -273,6 +275,14 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	if len(utils.InterfaceToString(ccInfo["expire_month"])) == 1 {
 		ccExpirationDate = "0" + ccExpirationDate
 	}
+	// populate visitor order data
+	if extraInfo, present := paymentInfo["extra"]; !present || !utils.StrKeysInMap(utils.InterfaceToMap(extraInfo), "email", "billing_name") {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "39a27c94-7d39-453d-b464-fd24f7beebcc", "Email or Billing Name not specified")
+	}
+
+	extraInfo := utils.InterfaceToMap(paymentInfo["extra"])
+	email := utils.InterfaceToString(extraInfo["email"])
+	billingFirstName, billingLastName := utils.SplitFullName(utils.InterfaceToString(extraInfo["billing_name"]))
 
 	// getting order information
 	//--------------------------
@@ -282,15 +292,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowPass))
 	vendor := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowVendor))
 
-	// populate visitor order data
-	email := ""
-	billingLastName := ""
-	billingFirstName := ""
-	if orderInstance != nil {
-		email = utils.InterfaceToString(orderInstance.Get("customer_email"))
-		billingLastName = orderInstance.GetBillingAddress().GetLastName()
-		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
-	}
+	fmt.Printf("Inside AuthorizeZeroAmount: %v, %v, %v\n", email, billingFirstName, billingLastName)
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
@@ -383,7 +385,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 
 		// On review of by Fraud Service -- possible to continue
 		if responseResult == "126" {
-			env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "ZERO AMOUNT ATHORIZE TRANSACTION WITH COMMENT: "+
+			env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "ZERO AMOUNT AUTHORIZE TRANSACTION WITH COMMENT: "+
 				"MESSAGE - "+responseMessage+
 				"TRANSACTIONID - "+transactionID)
 
@@ -415,6 +417,8 @@ func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.Inter
 		billingLastName = orderInstance.GetBillingAddress().GetLastName()
 		billingFirstName = orderInstance.GetBillingAddress().GetFirstName()
 	}
+
+	fmt.Printf("Inside CreateAuthorizeZeroAmountRequest: %v, %v, %v\n", email, billingFirstName, billingLastName)
 
 	// PayFlow Request Fields
 	requestParams := "USER=" + user +
