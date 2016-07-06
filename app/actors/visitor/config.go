@@ -4,12 +4,6 @@ import (
 	"github.com/ottemo/foundation/env"
 )
 
-// configuration constants
-const (
-	ConstConfigPathLostPasswordEmailSubject  = "general.mail.lost_password_email_subject"
-	ConstConfigPathLostPasswordEmailTemplate = "general.mail.lost_password_email_template"
-)
-
 // setupConfig setups package configuration values for a system
 func setupConfig() error {
 	config := env.GetConfig()
