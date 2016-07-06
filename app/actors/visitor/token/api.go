@@ -30,7 +30,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		return "You are not logged in. Please log in.", nil
+		return "You are not logged in, please log in.", nil
 	}
 
 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)

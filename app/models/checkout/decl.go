@@ -40,8 +40,8 @@ const (
 	ConstPaymentTypePost       = "post"
 	ConstPaymentTypePostCC     = "post_cc"
 
-	ConstPaymentErrorDeclined  = "Payment declined."
-	ConstPaymentErrorTechnical = "Technical error."
+	ConstPaymentErrorDeclined  = "Payment declined"
+	ConstPaymentErrorTechnical = "Technical error"
 
 	ConstCalculateTargetSubtotal   = 1.0
 	ConstCalculateTargetShipping   = 2.0
