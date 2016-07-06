@@ -253,14 +253,13 @@ func APIUpdateSubscriptionsInfo(context api.InterfaceApplicationContext) (interf
 					optionLabel = utils.InterfaceToString(labelValue)
 				}
 
+				productOptions[optionLabel] = value
 				optionValue, optionValuePresent := option["value"]
-				productOptions[optionLabel] = optionValue
-
 				// in this case looks like structure of options was changed or it's not a map
 				if !optionValuePresent {
-					productOptions[optionLabel] = value
 					continue
 				}
+				productOptions[optionLabel] = optionValue
 
 				optionType := ""
 				if val, present := option["type"]; present {
