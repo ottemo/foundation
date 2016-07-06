@@ -440,7 +440,7 @@ func (it *PayFlowAPI) CreateAuthorizeZeroAmountRequest(orderInstance order.Inter
 
 	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowURL))
 
-	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "NEW  obtain token transaction request created")
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "NEW obtain token transaction request created")
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "Params: "+requestParams)
 
 	return api.StructRestRedirect{Result: requestParams, Location: nvpGateway}, nil
