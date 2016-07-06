@@ -263,7 +263,14 @@ func (it *DefaultVisitor) ResetPassword() error {
 		"name": utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName)),
 	}
 
-	resetTemplateEmail := `<p>You have requested to have your password reset for your account at {{.shop.name}}</p>
+	subject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathLostPasswordEmailSubject))
+	if subject == "" {
+		subject = "Password Recovery"
+	}
+
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathLostPasswordEmailTemplate))
+	if emailTemplate == "" {
+		emailTemplate := `<p>You have requested to have your password reset for your account at {{.shop.name}}</p>
 		<p></p>
 		<p>Please visit this url within the next {{.customer.reset_time_length}} minutes to reset your password. </p>
 		<p></p>
@@ -271,12 +278,13 @@ func (it *DefaultVisitor) ResetPassword() error {
 		<p></p>
 		<p>If you received this email in error, you may safely ignore this request.</p>`
 
-	if it.GetFullName() != "" {
-		resetTemplateEmail = `<p>Dear {{.customer.name}},</p>
-			<p></p>` + resetTemplateEmail
+		if it.GetFullName() != "" {
+			emailTemplate = `<p>Dear {{.customer.name}},</p>
+			<p></p>` + emailTemplate
+		}
 	}
 
-	passwordRecoveryEmail, err := utils.TextTemplate(resetTemplateEmail,
+	passwordRecoveryEmail, err := utils.TextTemplate(emailTemplate,
 		map[string]interface{}{
 			"customer": customerInfo,
 			"shop":     shopInfo,
