@@ -21,7 +21,7 @@ func setupAPI() error {
 	service.GET("subscriptions", api.IsAdmin(APIListSubscriptions))
 	service.GET("subscriptions/:id", api.IsAdmin(APIGetSubscription))
 	service.PUT("subscriptions/:id", APIUpdateSubscription)
-	service.PUT("update/subscriptions/:id", api.IsAdmin(APIUpdateSubscriptionInfo))
+	service.GET("update/subscriptions", api.IsAdmin(APIUpdateSubscriptionInfo))
 
 	// Public
 	service.GET("visit/subscriptions", APIListVisitorSubscriptions)
