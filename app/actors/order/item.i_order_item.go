@@ -63,19 +63,44 @@ func (it *DefaultOrderItem) GetOptionValues(labels bool) map[string]interface{} 
 				optionLabel = utils.InterfaceToString(labelValue)
 			}
 
+			result[optionLabel] = value
 			optionValue, optionValuePresent := option["value"]
-			result[optionLabel] = optionValue
 			// in this case looks like structure of options was changed or it's not a map
 			if !optionValuePresent {
-				result[optionLabel] = value
 				continue
 			}
+			result[optionLabel] = optionValue
 
+			optionType := ""
+
+			if val, present := option["type"]; present {
+				optionType = utils.InterfaceToString(val)
+			}
 			if options, present := option["options"]; present {
 				optionsMap := utils.InterfaceToMap(options)
-				if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+
+				if optionType == "multi_select" {
+					selectedOptions := ""
+					for i, optionValue := range utils.InterfaceToArray(optionValue) {
+						if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+							optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+							if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+								result[optionLabel] = labelValue
+								if i > 0 {
+									selectedOptions = selectedOptions + ", "
+								}
+								selectedOptions = selectedOptions + utils.InterfaceToString(labelValue)
+							}
+						}
+					}
+					result[optionLabel] = selectedOptions
+
+				} else if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
 					optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
-					result[optionLabel] = optionValueParametersMap["label"]
+					if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+						result[optionLabel] = labelValue
+					}
+
 				}
 			}
 		}

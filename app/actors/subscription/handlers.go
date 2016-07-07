@@ -175,6 +175,62 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
+
+				productOptions := make(map[string]interface{})
+				// add options to subscription info as description that used to show on FED
+				fullOptions := product.GetOptions()
+				subscriptionInstance.SetInfo("detail_options", fullOptions)
+
+				for key, value := range fullOptions {
+					option := utils.InterfaceToMap(value)
+					optionLabel := key
+					if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+						optionLabel = utils.InterfaceToString(labelValue)
+					}
+
+					optionValue, optionValuePresent := option["value"]
+					productOptions[optionLabel] = optionValue
+
+					// in this case looks like structure of options was changed or it's not a map
+					if !optionValuePresent {
+						productOptions[optionLabel] = value
+						continue
+					}
+
+					optionType := ""
+					if val, present := option["type"]; present {
+						optionType = utils.InterfaceToString(val)
+					}
+					if options, present := option["options"]; present {
+						optionsMap := utils.InterfaceToMap(options)
+
+						if optionType == "multi_select" {
+							selectedOptions := ""
+							for i, optionValue := range utils.InterfaceToArray(optionValue) {
+								if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+									optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+									if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+										productOptions[optionLabel] = labelValue
+										if i > 0 {
+											selectedOptions = selectedOptions + ", "
+										}
+										selectedOptions = selectedOptions + utils.InterfaceToString(labelValue)
+									}
+								}
+							}
+							productOptions[optionLabel] = selectedOptions
+
+						} else if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+							optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+							if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+								productOptions[optionLabel] = labelValue
+							}
+
+						}
+					}
+				}
+
+				subscriptionInstance.SetInfo("options", productOptions)
 			}
 
 			items = append(items, subscriptionItem)
