@@ -21,8 +21,7 @@ func setupAPI() error {
 	service.GET("subscriptions", api.IsAdmin(APIListSubscriptions))
 	service.GET("subscriptions/:id", api.IsAdmin(APIGetSubscription))
 	service.PUT("subscriptions/:id", APIUpdateSubscription)
-
-	service.GET("subscriptionsupdate/info/:id", api.IsAdmin(APIUpdateSubscriptionsInfo))
+	service.PUT("update/subscriptions/:id", api.IsAdmin(APIUpdateSubscriptionInfo))
 
 	// Public
 	service.GET("visit/subscriptions", APIListVisitorSubscriptions)
@@ -215,9 +214,9 @@ func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, 
 	return subject, body
 }
 
-// APIUpdateSubscriptionsInfo allows run and update info of all existing subscriptions
-// if id provided in request it would be used to filter category
-func APIUpdateSubscriptionsInfo(context api.InterfaceApplicationContext) (interface{}, error) {
+// APIUpdateSubscriptionInfo allows run and update info of all existing subscriptions
+//  - if id is provided in request it is used to filter category
+func APIUpdateSubscriptionInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	subscriptionID := context.GetRequestArgument("id")
