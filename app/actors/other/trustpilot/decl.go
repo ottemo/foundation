@@ -3,7 +3,6 @@ package trustpilot
 
 // Package global constants
 const (
-	ConstProductBrand = "Kari Gran"
 	ConstEmailSubject = "Purchase feedback"
 
 	ConstErrorModule = "trustpilot"
@@ -12,15 +11,13 @@ const (
 	ConstOrderCustomInfoLinkKey = "trustpilot_link"
 	ConstOrderCustomInfoSentKey = "trustpilot_sent"
 
-	ConstConfigPathTrustPilot                 = "general.trustpilot"
-	ConstConfigPathTrustPilotEnabled          = "general.trustpilot.enabled"
-	ConstConfigPathTrustPilotAPIKey           = "general.trustpilot.apiKey"
-	ConstConfigPathTrustPilotAPISecret        = "general.trustpilot.apiSecret"
-	ConstConfigPathTrustPilotBusinessUnitID   = "general.trustpilot.businessUnitID"
-	ConstConfigPathTrustPilotUsername         = "general.trustpilot.username"
-	ConstConfigPathTrustPilotPassword         = "general.trustpilot.password"
-	ConstConfigPathTrustPilotAccessTokenURL   = "general.trustpilot.accessTokenURL"
-	ConstConfigPathTrustPilotProductReviewURL = "general.trustpilot.productReviewURL"
-	ConstConfigPathTrustPilotServiceReviewURL = "general.trustpilot.serviceReviewURL"
-	ConstConfigPathTrustPilotEmailTemplate    = "general.trustpilot.emailTemplate"
+	ConstConfigPathTrustPilot               = "general.trustpilot"
+	ConstConfigPathTrustPilotEnabled        = "general.trustpilot.enabled"
+	ConstConfigPathTrustPilotAPIKey         = "general.trustpilot.apiKey"
+	ConstConfigPathTrustPilotAPISecret      = "general.trustpilot.apiSecret"
+	ConstConfigPathTrustPilotBusinessUnitID = "general.trustpilot.businessUnitID"
+	ConstConfigPathTrustPilotUsername       = "general.trustpilot.username"
+	ConstConfigPathTrustPilotPassword       = "general.trustpilot.password"
+	ConstConfigPathTrustPilotEmailTemplate  = "general.trustpilot.emailTemplate"
+	ConstConfigPathTrustPilotProductBrand   = "general.trustpilot.productBrand"
 )

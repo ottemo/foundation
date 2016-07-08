@@ -146,17 +146,17 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		if subscriptionPeriodValue, present := subscriptionItems[cartItem.GetIdx()]; present && subscriptionPeriodValue != 0 {
 
 			if err = subscriptionInstance.SetActionDate(subscriptionTime); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.SetPeriod(subscriptionPeriodValue); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.UpdateActionDate(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
@@ -175,6 +175,62 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
+
+				productOptions := make(map[string]interface{})
+				// add options to subscription info as description that used to show on FED
+				fullOptions := product.GetOptions()
+				subscriptionInstance.SetInfo("detail_options", fullOptions)
+
+				for key, value := range fullOptions {
+					option := utils.InterfaceToMap(value)
+					optionLabel := key
+					if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+						optionLabel = utils.InterfaceToString(labelValue)
+					}
+
+					optionValue, optionValuePresent := option["value"]
+					productOptions[optionLabel] = optionValue
+
+					// in this case looks like structure of options was changed or it's not a map
+					if !optionValuePresent {
+						productOptions[optionLabel] = value
+						continue
+					}
+
+					optionType := ""
+					if val, present := option["type"]; present {
+						optionType = utils.InterfaceToString(val)
+					}
+					if options, present := option["options"]; present {
+						optionsMap := utils.InterfaceToMap(options)
+
+						if optionType == "multi_select" {
+							selectedOptions := ""
+							for i, optionValue := range utils.InterfaceToArray(optionValue) {
+								if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+									optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+									if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+										productOptions[optionLabel] = labelValue
+										if i > 0 {
+											selectedOptions = selectedOptions + ", "
+										}
+										selectedOptions = selectedOptions + utils.InterfaceToString(labelValue)
+									}
+								}
+							}
+							productOptions[optionLabel] = selectedOptions
+
+						} else if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+							optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+							if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+								productOptions[optionLabel] = labelValue
+							}
+
+						}
+					}
+				}
+
+				subscriptionInstance.SetInfo("options", productOptions)
 			}
 
 			items = append(items, subscriptionItem)
@@ -183,7 +239,7 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			subscriptionInstance.SetID("")
 
 			if err = subscriptionInstance.Save(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 		}
@@ -217,11 +273,11 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 			"order":    1,
 			"label":    "Subscription",
 			"options": map[string]interface{}{
-				"Just Once": map[string]interface{}{"order": 1, "label": "Just Once"},
-				"30 days":   map[string]interface{}{"order": 2, "label": "30 days"},
-				"60 days":   map[string]interface{}{"order": 3, "label": "60 days"},
-				"90 days":   map[string]interface{}{"order": 4, "label": "90 days"},
-				"120 days":  map[string]interface{}{"order": 5, "label": "120 days"},
+				"just_once": map[string]interface{}{"order": 1, "label": "Just Once"},
+				"30_days":   map[string]interface{}{"order": 2, "label": "30 days"},
+				"60_days":   map[string]interface{}{"order": 3, "label": "60 days"},
+				"90_days":   map[string]interface{}{"order": 4, "label": "90 days"},
+				"120_days":  map[string]interface{}{"order": 5, "label": "120 days"},
 			},
 		}
 

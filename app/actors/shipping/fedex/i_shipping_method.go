@@ -156,7 +156,7 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	url := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGateway)) + "/rate"
 	request, err := http.NewRequest("POST", url, &body)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return result
 	}
 
@@ -167,13 +167,13 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	//--------------------------------------
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return result
 	}
 
 	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return result
 	}
 
@@ -185,7 +185,7 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	//------------------------------
 	xmlRoot, err := xmlpath.Parse(bytes.NewReader(responseData))
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return result
 	}
 
@@ -227,6 +227,22 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 				})
 		}
 
+	}
+
+	return result
+}
+
+// GetAllRates will return all the rates for the FedEx shipping method.
+func (it FedEx) GetAllRates() []checkout.StructShippingRate {
+	result := []checkout.StructShippingRate{}
+
+	for code, name := range ConstShippingMethods {
+		resultItem := checkout.StructShippingRate{
+			Code: code,
+			Name: name,
+		}
+
+		result = append(result, resultItem)
 	}
 
 	return result

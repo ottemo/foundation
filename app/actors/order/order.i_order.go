@@ -3,6 +3,7 @@ package order
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -13,7 +14,6 @@ import (
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"strings"
 )
 
 // GetItems returns order items for current order
@@ -154,19 +154,20 @@ func (it *DefaultOrder) SetIncrementID(incrementID string) error {
 // CalculateTotals recalculates order Subtotal and GrandTotal
 func (it *DefaultOrder) CalculateTotals() error {
 
-	var subtotal float64
-	for _, orderItem := range it.Items {
-		subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
-	}
-	it.Subtotal = utils.RoundPrice(subtotal)
-
-	it.GrandTotal = utils.RoundPrice(it.Subtotal + it.ShippingAmount + it.TaxAmount - it.Discount)
+	it.GrandTotal = utils.RoundPrice(it.GetSubtotal() + it.GetShippingAmount() + it.GetTaxAmount() + it.GetDiscountAmount())
 
 	return nil
 }
 
 // GetSubtotal returns subtotal of order
 func (it *DefaultOrder) GetSubtotal() float64 {
+	if it.Subtotal == 0 {
+		var subtotal float64
+		for _, orderItem := range it.Items {
+			subtotal += utils.RoundPrice(orderItem.GetPrice() * float64(orderItem.GetQty()))
+		}
+		it.Subtotal = utils.RoundPrice(subtotal)
+	}
 	return it.Subtotal
 }
 
@@ -276,18 +277,18 @@ func (it *DefaultOrder) Proceed() error {
 		for _, orderItem := range it.GetItems() {
 			options := orderItem.GetOptions()
 
+			currProductOptions := make(map[string]interface{})
 			for optionName, optionValue := range options {
 				if optionValue, ok := optionValue.(map[string]interface{}); ok {
 					if value, present := optionValue["value"]; present {
-						options := map[string]interface{}{optionName: value}
-
-						err := stockManager.UpdateProductQty(orderItem.GetProductID(), options, -1*orderItem.GetQty())
-						if err != nil {
-							return env.ErrorDispatch(err)
-						}
-
+						currProductOptions[optionName] = value
 					}
 				}
+			}
+
+			err := stockManager.UpdateProductQty(orderItem.GetProductID(), currProductOptions, -1*orderItem.GetQty())
+			if err != nil {
+				return env.ErrorDispatch(err)
 			}
 
 		}

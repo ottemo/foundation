@@ -20,6 +20,9 @@ const (
 
 	ConstErrorModule = "visitor"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstConfigPathLostPasswordEmailSubject  = "general.mail.lost_password_email_subject"
+	ConstConfigPathLostPasswordEmailTemplate = "general.mail.lost_password_email_template"
 )
 
 // DefaultVisitor is a default implementer of InterfaceVisitor

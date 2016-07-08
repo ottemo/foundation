@@ -139,6 +139,15 @@ func (it *DefaultProduct) GetQty() int {
 	return it.Qty
 }
 
+// GetInventory returns product inventory for current instance by id
+func (it *DefaultProduct) GetInventory() []map[string]interface{} {
+	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+		it.Inventory = stockManager.GetProductOptions(it.GetID())
+	}
+
+	return it.Inventory
+}
+
 // GetAppliedOptions returns applied options for current product instance
 func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 	if it.appliedOptions != nil {
@@ -353,6 +362,8 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 		return it.GetQty()
 	case "options":
 		return it.GetOptions()
+	case "inventory":
+		return it.GetInventory()
 	case "related_pids":
 		return it.GetRelatedProductIds()
 	}
@@ -395,7 +406,11 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.updatedQty = append(it.updatedQty, map[string]interface{}{"": it.Qty})
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
-		it.checkOptionsForQty()
+	case "inventory":
+		inventory := utils.InterfaceToArray(value)
+		for _, options := range inventory {
+			it.Inventory = append(it.Inventory, utils.InterfaceToMap(options))
+		}
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
 
@@ -683,46 +698,6 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 	}
 
 	return result
-}
-
-// checkOptionsForQty looking for specified qty attribute for options, removes it and passes for stock management
-func (it *DefaultProduct) checkOptionsForQty() {
-
-	for productOptionName, productOption := range it.GetOptions() {
-		if productOption, ok := productOption.(map[string]interface{}); ok {
-
-			// checking options for specified qty
-			if qtyValue, present := productOption["qty"]; present {
-				qty := utils.InterfaceToInt(qtyValue)
-				options := map[string]interface{}{productOptionName: nil, "": qty}
-				it.updatedQty = append(it.updatedQty, options)
-
-				// qty should not be stored with options
-				delete(productOption, "qty")
-			}
-
-			// checking option values for specified qty
-			if productOptionValues, present := productOption["options"]; present {
-				if productOptionValues, ok := productOptionValues.(map[string]interface{}); ok {
-
-					for productOptionValueName, productOptionValue := range productOptionValues {
-						if productOptionValue, ok := productOptionValue.(map[string]interface{}); ok {
-							if qtyValue, present := productOptionValue["qty"]; present {
-								qty := utils.InterfaceToInt(qtyValue)
-								options := map[string]interface{}{productOptionName: productOptionValueName, "": qty}
-								it.updatedQty = append(it.updatedQty, options)
-
-								// qty should not be stored with options values
-								delete(productOptionValue, "qty")
-							}
-						}
-					}
-
-				}
-			}
-
-		}
-	}
 }
 
 // ------------------------------------------------------------------------------------

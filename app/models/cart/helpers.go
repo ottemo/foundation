@@ -93,12 +93,12 @@ func GetCurrentCart(context api.InterfaceApplicationContext, createNew bool) (In
 
 					err = visitorCart.Save()
 					if err != nil {
-						env.LogError(err)
+						env.ErrorDispatch(err)
 					}
 
 					err = sessionCart.Delete()
 					if err != nil {
-						env.LogError(err)
+						env.ErrorDispatch(err)
 					}
 
 					context.GetSession().Set(ConstSessionKeyCurrentCart, visitorCart.GetID())

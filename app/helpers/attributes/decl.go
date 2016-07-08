@@ -51,7 +51,7 @@ type ModelCustomAttributes struct {
 //                    helper makes proxy for Object/Storable interface methods:
 //                                 Get(), Set(), ListAttributes(),
 //           +---------------+       FromHashMap(), ToHashMap(),       +------------------+
-//           | Model Package |    GetId(), Load(), Sate(), Delete()    | External package |
+//           | Model Package |    GetId(), Load(), Save(), Delete()    | External package |
 //           |               |                                         |                  |
 //           |   +-------+   |                                         |   +----------+   |
 //     +---------> Model <---------------------+ +-------------------------> Delegate |   |

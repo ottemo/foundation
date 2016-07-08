@@ -50,7 +50,7 @@ func (it *DefaultVisitorCardCollection) List() ([]models.StructListItem, error) 
 // ListAddExtraAttribute allows to obtain additional attributes from  List() function
 func (it *DefaultVisitorCardCollection) ListAddExtraAttribute(attribute string) error {
 
-	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "visitorID", "name", "holder", "number", "type", "payment", "expiration", "expiration_date", "created_at", "token_updated") {
+	if utils.IsAmongStr(attribute, "_id", "id", "visitor_id", "visitorID", "name", "holder", "number", "type", "payment", "expiration", "expiration_date", "created_at", "token_updated", "customer_id") {
 
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)

@@ -11,9 +11,9 @@ import (
 // init makes package self-initialization routine
 func init() {
 	instance := new(DefaultGiftcard)
-	var _ checkout.InterfaceDiscount = instance
+	var _ checkout.InterfacePriceAdjustment = instance
 
-	checkout.RegisterDiscount(instance)
+	checkout.RegisterPriceAdjustment(instance)
 
 	freeShipping := new(Shipping)
 	var _ checkout.InterfaceShippingMethod = freeShipping
@@ -59,7 +59,6 @@ func onAppStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 	env.EventRegisterListener("order.proceed", orderProceedHandler)
 	env.EventRegisterListener("order.rollback", orderRollbackHandler)
-	env.EventRegisterListener("tax.amount", taxableAmountHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
 		scheduler.RegisterTask("sendGiftCards", SendTask)

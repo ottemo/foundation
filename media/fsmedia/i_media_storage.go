@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // GetName returns the media storage name
@@ -321,7 +322,7 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 		if mediaName, ok := record["media"].(string); ok {
 			mediaSet, err := it.GetSizes(model, objID, mediaType, mediaName)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			result = append(result, mediaSet)
@@ -403,7 +404,7 @@ func (it *FilesystemMediaStorage) ResizeAllMediaImages() error {
 			}
 			imagesResized++
 		} else {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 	}
 

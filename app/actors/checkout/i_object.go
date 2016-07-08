@@ -30,10 +30,6 @@ func (it *DefaultCheckout) Get(attribute string) interface{} {
 		return it.ShippingMethodCode
 	case "ShippingRate":
 		return it.ShippingRate
-	case "Taxes":
-		return it.Taxes
-	case "Discounts":
-		return it.Discounts
 	case "Info":
 		return it.Info
 	}
@@ -93,37 +89,10 @@ func (it *DefaultCheckout) Set(attribute string, value interface{}) error {
 			it.ShippingRate.Price = utils.InterfaceToFloat64(mapValue["Price"])
 		}
 
+		// leave this on it's one place to prevent some checkout from drop
 	case "Taxes":
-		arrayValue := utils.InterfaceToArray(value)
-		for _, arrayItem := range arrayValue {
-			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
-				taxRate := checkout.StructTaxRate{
-					Name:   utils.InterfaceToString(mapValue["Name"]),
-					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
-
-				if taxRate.Name != "" || taxRate.Code != "" || taxRate.Amount != 0 {
-					it.Taxes = append(it.Taxes, taxRate)
-				}
-			}
-		}
 
 	case "Discounts":
-		arrayValue := utils.InterfaceToArray(value)
-		for _, arrayItem := range arrayValue {
-			mapValue := utils.InterfaceToMap(arrayItem)
-			if utils.StrKeysInMap(mapValue, "Name", "Code", "Amount") {
-				discount := checkout.StructDiscount{
-					Name:   utils.InterfaceToString(mapValue["Name"]),
-					Code:   utils.InterfaceToString(mapValue["Code"]),
-					Amount: utils.InterfaceToFloat64(mapValue["Amount"])}
-
-				if discount.Name != "" || discount.Code != "" || discount.Amount != 0 {
-					it.Discounts = append(it.Discounts, discount)
-				}
-			}
-		}
 
 	case "Info":
 		info := utils.InterfaceToMap(value)
@@ -163,8 +132,6 @@ func (it *DefaultCheckout) ToHashMap() map[string]interface{} {
 	result["PaymentMethodCode"] = it.PaymentMethodCode
 	result["ShippingMethodCode"] = it.ShippingMethodCode
 	result["ShippingRate"] = it.ShippingRate
-	result["Taxes"] = it.Taxes
-	result["Discounts"] = it.Discounts
 	result["Info"] = it.Info
 
 	return result

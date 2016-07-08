@@ -43,6 +43,7 @@ func (it *DefaultCart) Load(ID string) error {
 		it.SessionID = utils.InterfaceToString(values["session_id"])
 		it.UpdatedAt = utils.InterfaceToTime(values["updated_at"])
 		it.Info, _ = utils.DecodeJSONToStringKeyMap(values["info"])
+		it.CustomInfo = utils.InterfaceToMap(values["custom_info"])
 		it.Items = make(map[int]cart.InterfaceCartItem)
 		it.maxIdx = 0
 
@@ -152,6 +153,7 @@ func (it *DefaultCart) Save() error {
 	cartStoringValues["session_id"] = it.SessionID
 	cartStoringValues["active"] = it.Active
 	cartStoringValues["info"] = utils.EncodeToJSONString(it.Info)
+	cartStoringValues["custom_info"] = it.CustomInfo
 	cartStoringValues["updated_at"] = time.Now()
 
 	newID, err := cartCollection.Save(cartStoringValues)

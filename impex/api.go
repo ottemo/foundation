@@ -114,7 +114,7 @@ func restImpexExportModel(context api.InterfaceApplicationContext) (interface{},
 
 	err := MapToCSV(records, csvWriter)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return nil, nil
@@ -179,7 +179,7 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 
 		err := ImportCSVData(commandLine, exchangeDict, csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 
@@ -214,7 +214,7 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 
 		err := ImportCSVScript(csvReader, context.GetResponseWriter(), true)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 		filesProcessed++
@@ -250,7 +250,7 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 
 		err := ImportCSVScript(csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 

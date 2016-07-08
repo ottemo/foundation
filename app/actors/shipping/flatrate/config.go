@@ -99,12 +99,13 @@ func setupConfig() error {
 			case string:
 				newRatesArray, err = utils.DecodeJSONToArray(value)
 				if err != nil {
-					return nil, err
+					return nil, env.ErrorDispatch(err)
 				}
 			case []interface{}:
 				newRatesArray = value
 			default:
-				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
+				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
+				return nil, env.ErrorDispatch(err)
 			}
 
 			methods := make(map[string]map[string]interface{})
@@ -114,7 +115,8 @@ func setupConfig() error {
 				shippingRate := utils.InterfaceToMap(rate)
 
 				if !utils.KeysInMapAndNotBlank(shippingRate, "title", "code", "price") {
-					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9593d30e-0df3-4571-8bb1-2e29656b9fe2", "keys 'title', 'code' and 'price' should be not null")
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9593d30e-0df3-4571-8bb1-2e29656b9fe2", "keys 'title', 'code' and 'price' should be not null")
+					return nil, env.ErrorDispatch(err)
 				}
 
 				shippingRateCode := strings.Replace(strings.ToLower(utils.InterfaceToString(shippingRate["code"])), " ", "_", -1)
@@ -122,15 +124,18 @@ func setupConfig() error {
 
 				matched, err := regexp.MatchString("^[a-z0-9_]+$", shippingRateCode)
 				if !matched || err != nil {
-					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea826349-4823-45fe-93c0-46c529f6bcac", "code must be only alphanumeric")
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea826349-4823-45fe-93c0-46c529f6bcac", "code must be only alphanumeric")
+					return nil, env.ErrorDispatch(err)
 				}
 
 				if shippingRatePrice < 0 {
-					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0db031e3-6961-4d90-99e9-736e156acbed", "price can't have negative value")
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0db031e3-6961-4d90-99e9-736e156acbed", "price can't have negative value")
+					return nil, env.ErrorDispatch(err)
 				}
 
 				if _, present := methods[shippingRateCode]; present {
-					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "beeccbfb-68b4-4379-8d9a-78a834c5911c", "duplicate code - "+shippingRateCode)
+					err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "beeccbfb-68b4-4379-8d9a-78a834c5911c", "duplicate code - "+shippingRateCode)
+					return nil, env.ErrorDispatch(err)
 				}
 
 				methods[shippingRateCode] = shippingRate
@@ -142,10 +147,9 @@ func setupConfig() error {
 				rate["code"] = rateCode
 				rates = append(rates, rate)
 			}
-
 			additionalRates = rates
 
-			return rates, nil
+			return newRatesValues, nil
 		}
 
 		// grouping rules config setup
@@ -158,16 +162,22 @@ func setupConfig() error {
 			Options: "",
 			Label:   "Additional rates",
 			Description: `flat rate additional shipping rates, pattern:
-   [{"title": "State Shipping", "code": "State", "price": 4.99},
-   {"title": "Expedited Shipping", "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
-   {"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},    ... ]
-    make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
+[
+	{"title": "State Shipping",         "code": "State", "price": 4.99},
+	{"title": "Expedited Shipping",     "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
+	{"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},
+	...
+]
+make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,
 			Image: "",
 		}, env.FuncConfigValueValidator(validateNewRates))
 
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+	} else {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "b05c2437-d93f-4b03-8811-2eea9f1c65ef", "Unable to obtain configuration for Flat Rate")
+		return env.ErrorDispatch(err)
 	}
 
 	return nil

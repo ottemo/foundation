@@ -29,10 +29,11 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("visitor_id", db.ConstTypeID, true)
+	collection.AddColumn("visitor_id", db.ConstTypeID, true) // ottemo vid
 	collection.AddColumn("token_id", db.ConstTypeVarchar, true)
 	collection.AddColumn("payment", db.TypeWPrecision(db.ConstTypeVarchar, 150), true)
 
+	collection.AddColumn("customer_id", db.ConstTypeVarchar, false) // 3rd party vid
 	collection.AddColumn("type", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)
 	collection.AddColumn("number", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)
 

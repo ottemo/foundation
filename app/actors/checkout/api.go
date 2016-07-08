@@ -1,14 +1,15 @@
 package checkout
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/payment/zeropay"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"time"
+	"github.com/ottemo/foundation/app/actors/payment/zeropay"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -34,7 +35,6 @@ func setupAPI() error {
 	service.PUT("checkout", APISetCheckoutInfo)
 	service.POST("checkout/submit", APISubmitCheckout)
 
-	// service.PUT("checkout/paymentdetails", APISetPaymentDetails)
 	return nil
 }
 
@@ -100,28 +100,26 @@ func APIGetCheckout(context api.InterfaceApplicationContext) (interface{}, error
 
 	if shippingRate := currentCheckout.GetShippingRate(); shippingRate != nil {
 		result["shipping_rate"] = shippingRate
-		result["shipping_amount"] = shippingRate.Price
 	}
 
+	result["grandtotal"] = currentCheckout.GetGrandTotal()
 	result["subtotal"] = currentCheckout.GetSubtotal()
 
-	result["grandtotal"] = currentCheckout.GetGrandTotal()
+	result["shipping_amount"] = currentCheckout.GetShippingAmount()
 
 	result["tax_amount"] = currentCheckout.GetTaxAmount()
 	result["taxes"] = currentCheckout.GetTaxes()
 
 	result["discount_amount"] = currentCheckout.GetDiscountAmount()
-	result["discounts"] = currentCheckout.GetAggregatedDiscounts()
+	result["discounts"] = currentCheckout.GetDiscounts()
 
 	// The info map is only returned for logged out users
 	infoMap := make(map[string]interface{})
 
-	if currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID)); currentVisitorID == "" {
-		for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
-			// prevent from showing cc values in info
-			if key != "cc" {
-				infoMap[key] = value
-			}
+	for key, value := range utils.InterfaceToMap(currentCheckout.GetInfo("*")) {
+		// prevent from showing cc values in info
+		if key != "cc" {
+			infoMap[key] = value
 		}
 	}
 
@@ -411,14 +409,19 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 // checkoutObtainToken is an internal usage function used to create or load credit card for visitor
 func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardInfo map[string]interface{}) (visitor.InterfaceVisitorCard, error) {
 
+	// make sure we have a visitor
 	currentVisitor := currentCheckout.GetVisitor()
 	currentVisitorID := ""
 	if currentVisitor != nil {
-		currentVisitorID = currentCheckout.GetVisitor().GetID()
+		currentVisitorID = currentVisitor.GetID()
+	}
+	if currentVisitorID == "" {
+		err := env.ErrorNew(ConstErrorModule, 10, "c9e46525-77f6-4add-b286-efeb8a63f4d1", "user not logged in, don't attempt to save a token")
+		return nil, err
 	}
 
-	// checking for address id was specified, if it was - making sure it correct
-	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); currentVisitorID != "" && creditCardID != nil {
+	// if we were passed a token rowID, make sure it belongs to the user
+	if creditCardID := utils.GetFirstMapValue(creditCardInfo, "id", "_id"); creditCardID != nil {
 
 		// loading specified credit card by id
 		visitorCard, err := visitor.LoadVisitorCardByID(utils.InterfaceToString(creditCardID))
@@ -434,15 +437,26 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return visitorCard, nil
 	}
 
+	// we weren't passed a token, start generating one
 	paymentMethod := currentCheckout.GetPaymentMethod()
 	if !paymentMethod.IsTokenable(currentCheckout) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5b05cc24-2184-47cc-b2dc-77cb41035698", "for selected payment method credit card can't be saved")
+	}
+
+	billingName := ""
+	if add := currentCheckout.GetBillingAddress(); add != nil {
+		billingName = add.GetFirstName() + " " + add.GetLastName()
 	}
 
 	// put required key to create token from payment method using only zero amount authorize
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
+		"extra": map[string]interface{}{
+			"email":        currentVisitor.GetEmail(),
+			"visitor_id":   currentVisitorID,
+			"billing_name": billingName,
+		},
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
@@ -456,7 +470,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "transaction can't be obtained")
 	}
 
-	// create visitor address operation
+	// create visitor card and fill required fields
 	//---------------------------------
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
@@ -467,16 +481,14 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	// TODO: payment should have interface method that return predefined struct for 0 authorize
 	creditCardInfo["token_id"] = authorizeCardResult["transactionID"]
 	creditCardInfo["payment"] = paymentMethod.GetCode()
+	creditCardInfo["customer_id"] = authorizeCardResult["customerID"]
 	creditCardInfo["type"] = authorizeCardResult["creditCardType"]
 	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
-	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"]
+	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"] // mmyy
 	creditCardInfo["token_updated"] = time.Now()
 	creditCardInfo["created_at"] = time.Now()
 
 	// filling new instance with request provided data
-	// TODO: check other places with such code:
-	// it's possible to put here id's or visitorID's in different way as they used in Set method
-	// and override value that should be
 	for attribute, value := range creditCardInfo {
 		err := visitorCardModel.Set(attribute, value)
 		if err != nil {
@@ -485,54 +497,14 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	}
 
 	// setting credit card owner to current visitor (for sure)
-	if currentVisitorID != "" {
-		visitorCardModel.Set("visitor_id", currentVisitorID)
-	}
+	visitorCardModel.Set("visitor_id", currentVisitorID)
 
-	// new cc are saved only if checked as save and for registered visitors
-	if (visitorCardModel.GetID() != "" || currentVisitorID != "") && utils.InterfaceToBool(creditCardInfo["save"]) {
-
-		err = visitorCardModel.Save()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	err = visitorCardModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return visitorCardModel, nil
-}
-
-// APISetPaymentDetails specifies payment details for a current checkout
-func APISetPaymentDetails(context api.InterfaceApplicationContext) (interface{}, error) {
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	requestContents, err := api.GetRequestContentAsMap(context)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	creditCard, err := checkoutObtainToken(currentCheckout, requestContents)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	currentCheckout.SetInfo("cc", creditCard)
-
-	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
-
-	var result map[string]interface{}
-
-	// hide token ID
-	for key, value := range creditCard.ToHashMap() {
-		if key != "token" {
-			result[key] = value
-		}
-	}
-
-	return result, nil
 }
 
 // APISubmitCheckout submits current checkout and creates a new order base on it
@@ -640,12 +612,12 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		var methodFound, rateFound bool
 
 		for _, shippingMethod := range checkout.GetRegisteredShippingMethods() {
-			if shippingMethod.GetCode() == context.GetRequestArgument("method") {
+			if shippingMethod.GetCode() == specifiedShippingMethod {
 				if shippingMethod.IsAllowed(currentCheckout) {
 					methodFound = true
 
 					for _, shippingRate := range shippingMethod.GetRates(currentCheckout) {
-						if shippingRate.Code == context.GetRequestArgument("rate") {
+						if shippingRate.Code == specifiedShippingMethodRate {
 							err = currentCheckout.SetShippingMethod(shippingMethod)
 							if err != nil {
 								return nil, env.ErrorDispatch(err)
@@ -670,11 +642,27 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// Now that checkout is about to submit we want to see if we can turn our cc info into a token
-	// if this errors out, it just means that the criteria wasn't met to create a token. Which is ok
-	specifiedCreditCard := currentCheckout.GetInfo("cc")
-	creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
-	if err == nil {
-		currentCheckout.SetInfo("cc", creditCard)
+	// cc info can be used directly from post body
+	specifiedCreditCard := utils.GetFirstMapValue(requestData, "cc", "ccInfo", "creditCardInfo")
+	if specifiedCreditCard == nil {
+		specifiedCreditCard = currentCheckout.GetInfo("cc")
+		// if credit card was already handled and saved to cc info, we will pass this handling
+		if creditCard, ok := specifiedCreditCard.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
+			specifiedCreditCard = nil
+		}
+	}
+
+	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
+	if specifiedCreditCard != nil {
+		// credit card wouldn't be saved to checkout if it's not response to current visitor/payment
+		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
+		if err != nil {
+			// in  this case raw cc will be set to checkout info and used by payment method
+			currentCheckout.SetInfo("cc", specifiedCreditCard)
+			env.ErrorDispatch(err)
+		} else {
+			currentCheckout.SetInfo("cc", creditCard)
+		}
 	}
 
 	return currentCheckout.Submit()

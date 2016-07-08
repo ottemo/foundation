@@ -2,10 +2,11 @@ package cart
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/cart"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -68,7 +69,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 
 				item["product"] = productData

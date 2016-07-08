@@ -35,6 +35,8 @@ type InterfaceProduct interface {
 	GetAppliedOptions() map[string]interface{}
 	GetOptions() map[string]interface{}
 
+	GetInventory() []map[string]interface{}
+
 	ApplyOptions(map[string]interface{}) error
 
 	models.InterfaceModel
@@ -56,6 +58,7 @@ type InterfaceProductCollection interface {
 type InterfaceStock interface {
 	SetProductQty(productID string, options map[string]interface{}, qty int) error
 	GetProductQty(productID string, options map[string]interface{}) int
+	GetProductOptions(productID string) []map[string]interface{}
 
 	RemoveProductQty(productID string, options map[string]interface{}) error
 	UpdateProductQty(productID string, options map[string]interface{}, deltaQty int) error

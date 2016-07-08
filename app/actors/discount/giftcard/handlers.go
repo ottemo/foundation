@@ -6,7 +6,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
-	"github.com/ottemo/foundation/app/models/checkout"
 	"strings"
 	"time"
 )
@@ -24,7 +23,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -34,7 +33,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderGiftCardApplying, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -47,15 +46,15 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		for _, orderAppliedDiscount := range orderAppliedDiscounts {
 
 			if err := giftCardCollection.ClearFilters(); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 			if err := giftCardCollection.AddFilter("code", "=", orderAppliedDiscount.Code); err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 			}
 
 			records, err := giftCardCollection.Load()
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 
@@ -64,7 +63,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 				giftCard := records[0]
 
 				// calculate the amount that will be on cart after apply and add order used record with orderID and amount
-				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) - orderAppliedDiscount.Amount
+				giftCardAmountAfterApply := utils.InterfaceToFloat64(giftCard["amount"]) + orderAppliedDiscount.Amount
 
 				ordersGiftCardUsedMap := utils.InterfaceToMap(giftCard["orders_used"])
 				ordersGiftCardUsedMap[orderID] = orderAppliedDiscount.Amount
@@ -86,7 +85,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 				_, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					continue
 				}
 			}
@@ -108,7 +107,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -116,12 +115,12 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 	orderID := rollbackOrder.GetID()
 
 	if err := giftCardCollection.AddFilter("orders_used", "LIKE", orderID); err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	records, err := giftCardCollection.Load()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -132,7 +131,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 		if refillAmount, present := ordersUsage[orderID]; present {
 
-			newAmount := utils.InterfaceToFloat64(refillAmount) + utils.InterfaceToFloat64(record["amount"])
+			newAmount := utils.InterfaceToFloat64(record["amount"]) - utils.InterfaceToFloat64(refillAmount)
 
 			// refill gift card amount, change status and orders_used information
 			delete(ordersUsage, orderID)
@@ -143,7 +142,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 			_, err := giftCardCollection.Save(record)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				return false
 			}
 		}
@@ -163,7 +162,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return false
 	}
 
@@ -266,7 +265,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 				giftCardID, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 					return false
 				}
 				if deliveryDate.Truncate(time.Hour).Before(currentTime) {
@@ -286,41 +285,5 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 		go SendTask(params)
 	}
 
-	return true
-}
-
-// taxableAmountHandler reduces taxable amount on selected gift cards total price
-func taxableAmountHandler(event string, eventData map[string]interface{}) bool {
-
-	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
-
-	var taxableAmount float64
-	if value, present := eventData["amount"]; present {
-		taxableAmount = utils.InterfaceToFloat64(value)
-	}
-
-	if currentCheckout, ok := utils.GetFirstMapValue(eventData, "checkout").(checkout.InterfaceCheckout); ok && currentCheckout != nil {
-		if cart := currentCheckout.GetCart(); cart != nil {
-			for _, cartItem := range cart.GetItems() {
-
-				if taxableAmount <= 0 {
-					taxableAmount = 0
-					break
-				}
-
-				cartProduct := cartItem.GetProduct()
-				if cartProduct == nil {
-					continue
-				}
-
-				cartProduct.ApplyOptions(cartItem.GetOptions())
-				if strings.Contains(cartProduct.GetSku(), giftCardSkuElement) {
-					taxableAmount -= cartProduct.GetPrice() * utils.InterfaceToFloat64(cartItem.GetQty())
-				}
-			}
-		}
-	}
-
-	eventData["amount"] = taxableAmount
 	return true
 }
