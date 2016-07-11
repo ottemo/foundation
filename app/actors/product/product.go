@@ -130,24 +130,6 @@ func (it *DefaultProduct) GetRelatedProducts() []product.InterfaceProduct {
 	return result
 }
 
-// GetQty updates and returns the product qty if stock manager is available and Qty was not set to instance
-// otherwise returns qty was set
-func (it *DefaultProduct) GetQty() int {
-	if stockManager := product.GetRegisteredStock(); it.Qty == 0 && stockManager != nil {
-		it.Qty = stockManager.GetProductQty(it.GetID(), it.GetAppliedOptions())
-	}
-	return it.Qty
-}
-
-// GetInventory returns product inventory for current instance by id
-func (it *DefaultProduct) GetInventory() []map[string]interface{} {
-	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		it.Inventory = stockManager.GetProductOptions(it.GetID())
-	}
-
-	return it.Inventory
-}
-
 // GetAppliedOptions returns applied options for current product instance
 func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 	if it.appliedOptions != nil {
@@ -320,11 +302,6 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 
 	it.appliedOptions = options
 
-	// stock management stuff
-	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		it.Qty = stockManager.GetProductQty(it.GetID(), it.GetAppliedOptions())
-	}
-
 	return nil
 }
 
@@ -335,7 +312,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 // Get returns an object attribute value or nil
 func (it *DefaultProduct) Get(attribute string) interface{} {
 
-	if utils.StrKeysInMap(it.externalAttributes.ListExternalAttributes(), attribute) {
+	if _, present := it.externalAttributes.ListExternalAttributes()[attribute]; present {
 		return it.externalAttributes.Get(attribute)
 	}
 
@@ -358,12 +335,8 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 		return it.Price
 	case "weight":
 		return it.Weight
-	case "qty":
-		return it.GetQty()
 	case "options":
 		return it.GetOptions()
-	case "inventory":
-		return it.GetInventory()
 	case "related_pids":
 		return it.GetRelatedProductIds()
 	}
@@ -375,11 +348,11 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 	lowerCaseAttribute := strings.ToLower(attribute)
 
-	if utils.StrKeysInMap(it.externalAttributes.ListExternalAttributes(), attribute) {
-		err := it.externalAttributes.Set(attribute, value)
-		if err != nil {
+	if _, present := it.externalAttributes.ListExternalAttributes()[lowerCaseAttribute]; present {
+		if err := it.externalAttributes.Set(lowerCaseAttribute, value); err != nil {
 			return env.ErrorDispatch(err)
 		}
+		return nil
 	}
 
 	switch lowerCaseAttribute {
@@ -401,16 +374,8 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.Price = utils.InterfaceToFloat64(value)
 	case "weight":
 		it.Weight = utils.InterfaceToFloat64(value)
-	case "qty":
-		it.Qty = utils.InterfaceToInt(value)
-		it.updatedQty = append(it.updatedQty, map[string]interface{}{"": it.Qty})
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
-	case "inventory":
-		inventory := utils.InterfaceToArray(value)
-		for _, options := range inventory {
-			it.Inventory = append(it.Inventory, utils.InterfaceToMap(options))
-		}
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
 
@@ -506,10 +471,6 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	result["options"] = it.GetOptions()
 
 	result["related_pids"] = it.Get("related_pids")
-
-	if product.GetRegisteredStock() != nil {
-		result["qty"] = it.Get("qty")
-	}
 
 	for key, value := range it.externalAttributes.ToHashMap() {
 		result[key] = value
@@ -669,24 +630,6 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 	}
 
-	if product.GetRegisteredStock() != nil {
-		result = append(result,
-			models.StructAttributeInfo{
-				Model:      product.ConstModelNameProduct,
-				Collection: ConstCollectionNameProduct,
-				Attribute:  "qty",
-				Type:       db.ConstTypeInteger,
-				IsRequired: true,
-				IsStatic:   true,
-				Label:      "Qty",
-				Group:      "General",
-				Editors:    "numeric",
-				Options:    "",
-				Default:    "0",
-				Validators: "numeric positive",
-			})
-	}
-
 	customAttributesInfo := it.customAttributes.GetAttributesInfo()
 	for _, customAttribute := range customAttributesInfo {
 		result = append(result, customAttribute)
@@ -759,11 +702,6 @@ func (it *DefaultProduct) Delete() error {
 		return env.ErrorDispatch(err)
 	}
 
-	// stock management stuff
-	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		stockManager.RemoveProductQty(it.GetID(), make(map[string]interface{}))
-	}
-
 	return nil
 }
 
@@ -779,9 +717,6 @@ func (it *DefaultProduct) Save() error {
 	}
 
 	valuesToStore := it.ToHashMap()
-	if _, present := valuesToStore["qty"]; present {
-		delete(valuesToStore, "qty")
-	}
 
 	for x := range it.externalAttributes.ListExternalAttributes() {
 		delete(valuesToStore, x)
@@ -800,25 +735,6 @@ func (it *DefaultProduct) Save() error {
 	err = it.SetID(newID)
 	if err != nil {
 		return env.ErrorDispatch(err)
-	}
-
-	// stock management stuff
-	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		for _, qtyOptions := range it.updatedQty {
-			if qtyOptions == nil {
-				continue
-			}
-
-			if qtyValue, present := qtyOptions[""]; present {
-				qty := utils.InterfaceToInt(qtyValue)
-				delete(qtyOptions, "")
-
-				err := stockManager.SetProductQty(it.GetID(), qtyOptions, qty)
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
-			}
-		}
 	}
 
 	return nil
@@ -954,12 +870,17 @@ func (it *DefaultProduct) GetCustomAttributeCollectionName() string {
 
 // GetInstance() method was implemented before for InterfaceCustomAttributes
 
-// AddExternalAttribute registers new delegate for a given attribute
+// GetExtendedInstance returns current instance delegate attached to
+func (it *DefaultProduct) GetExtendedInstance() interface{} {
+	return it
+}
+
+// AddExternalAttributes registers new delegate for a given attribute
 func (it *DefaultProduct) AddExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
 	return it.externalAttributes.AddExternalAttributes(delegate)
 }
 
-// RemoveExternalAttribute registers new delegate for a given attribute
+// RemoveExternalAttributes registers new delegate for a given attribute
 func (it *DefaultProduct) RemoveExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
 	return it.externalAttributes.RemoveExternalAttributes(delegate)
 }

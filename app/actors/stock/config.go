@@ -28,8 +28,27 @@ func setupConfig() error {
 			boolValue := utils.InterfaceToBool(value)
 			if boolValue {
 				product.RegisterStock(new(DefaultStock))
+
+				productModel, err := product.GetProductModel()
+				if err != nil {
+					env.LogError(err)
+				}
+
+				if err = productModel.AddExternalAttributes(stockDelegate); err != nil {
+					env.LogError(err)
+				}
+
 			} else {
 				product.UnRegisterStock()
+
+				productModel, err := product.GetProductModel()
+				if err != nil {
+					env.LogError(err)
+				}
+
+				if err = productModel.RemoveExternalAttributes(stockDelegate); err != nil {
+					env.LogError(err)
+				}
 			}
 			return boolValue, nil
 		}

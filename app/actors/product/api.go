@@ -279,8 +279,6 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	result["images"] = itemImages
-	// get inventory/stock
-	result["inventory"] = productModel.GetInventory()
 
 	return result, nil
 }
@@ -386,7 +384,6 @@ func APIUpdateProduct(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	result := productModel.ToHashMap()
-	result["inventory"] = productModel.GetInventory()
 
 	return result, nil
 }

@@ -3,6 +3,8 @@
 package stock
 
 import (
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -49,3 +51,15 @@ const (
 //	When the product going to be deleted, it removes all the records.
 
 type DefaultStock struct{}
+
+// StockDelegate type implements InterfaceAttributesDelegate and have handles
+// on InterfaceStorable methods which should have call-back on model method call
+// in order to test it we are pushing the callback status to model instance
+type StockDelegate struct {
+	instance  product.InterfaceProduct
+	Inventory []map[string]interface{}
+	Qty       int
+}
+
+// stockDelegate variable that is currently used as a stock delegate to extend product attributes
+var stockDelegate models.InterfaceAttributesDelegate
