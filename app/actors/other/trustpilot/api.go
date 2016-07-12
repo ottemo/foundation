@@ -14,7 +14,7 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 	service := api.GetRestService()
-	service.GET("trustpilot/summaries", APIGetTrustpilotSummaries)
+	service.GET("trustpilot/product/summaries", APIGetTrustpilotSummaries)
 	return nil
 }
 
