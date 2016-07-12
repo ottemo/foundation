@@ -59,6 +59,8 @@ func setupDB() error {
 	collection.AddColumn("created_at", db.ConstTypeDatetime, true)
 	collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
 
+	collection.AddColumn("info", db.ConstTypeJSON, false)
+
 	return nil
 }
 

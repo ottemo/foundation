@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
@@ -20,6 +21,7 @@ func setupAPI() error {
 	service.GET("subscriptions", api.IsAdmin(APIListSubscriptions))
 	service.GET("subscriptions/:id", api.IsAdmin(APIGetSubscription))
 	service.PUT("subscriptions/:id", APIUpdateSubscription)
+	service.GET("update/subscriptions", api.IsAdmin(APIUpdateSubscriptionInfo))
 
 	// Public
 	service.GET("visit/subscriptions", APIListVisitorSubscriptions)
@@ -210,4 +212,95 @@ func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, 
 	}
 
 	return subject, body
+}
+
+// APIUpdateSubscriptionInfo allows run and update info of all existing subscriptions
+//  - if id is provided in request it is used to filter category
+func APIUpdateSubscriptionInfo(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check request context
+	subscriptionID := context.GetRequestArgument("id")
+
+	subscriptionCollection, err := subscription.GetSubscriptionCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if subscriptionID != "" {
+		subscriptionCollection.ListFilterAdd("_id", "=", subscriptionID)
+	}
+
+	for _, currentSubscription := range subscriptionCollection.ListSubscriptions() {
+
+		for _, subscriptionItem := range currentSubscription.GetItems() {
+			productModel, err := product.LoadProductByID(subscriptionItem.ProductID)
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+			if err = productModel.ApplyOptions(subscriptionItem.Options); err != nil {
+				// no need to return here as it's possible that some options was already changed
+				env.ErrorDispatch(err)
+				continue
+			}
+			productOptions := make(map[string]interface{})
+
+			// add options to subscription info as description that used to show on FED
+			for key, value := range productModel.GetOptions() {
+				option := utils.InterfaceToMap(value)
+				optionLabel := key
+				if labelValue, optionLabelPresent := option["label"]; optionLabelPresent {
+					optionLabel = utils.InterfaceToString(labelValue)
+				}
+
+				productOptions[optionLabel] = value
+				optionValue, optionValuePresent := option["value"]
+				// in this case looks like structure of options was changed or it's not a map
+				if !optionValuePresent {
+					continue
+				}
+				productOptions[optionLabel] = optionValue
+
+				optionType := ""
+				if val, present := option["type"]; present {
+					optionType = utils.InterfaceToString(val)
+				}
+				if options, present := option["options"]; present {
+					optionsMap := utils.InterfaceToMap(options)
+
+					if optionType == "multi_select" {
+						selectedOptions := ""
+						for i, optionValue := range utils.InterfaceToArray(optionValue) {
+							if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+								optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+								if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+									productOptions[optionLabel] = labelValue
+									if i > 0 {
+										selectedOptions = selectedOptions + ", "
+									}
+									selectedOptions = selectedOptions + utils.InterfaceToString(labelValue)
+								}
+							}
+						}
+						productOptions[optionLabel] = selectedOptions
+
+					} else if optionValueParameters, ok := optionsMap[utils.InterfaceToString(optionValue)]; ok {
+						optionValueParametersMap := utils.InterfaceToMap(optionValueParameters)
+						if labelValue, labelValuePresent := optionValueParametersMap["label"]; labelValuePresent {
+							productOptions[optionLabel] = labelValue
+						}
+
+					}
+				}
+			}
+
+			currentSubscription.SetInfo("options", productOptions)
+		}
+
+		err = currentSubscription.Save()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	return "ok", nil
 }

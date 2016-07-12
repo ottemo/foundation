@@ -338,3 +338,30 @@ func (it *DefaultSubscription) Validate() error {
 
 	return nil
 }
+
+// SetInfo sets additional info for subscription
+func (it *DefaultSubscription) SetInfo(key string, value interface{}) {
+	if value == nil {
+		if _, present := it.Info[key]; present {
+			delete(it.Info, key)
+		}
+	} else {
+		it.Info[key] = value
+	}
+
+	return
+}
+
+// GetInfo returns additional subscription info value or nil,
+//   - use "*" as a key to get all keys and values currently set
+func (it *DefaultSubscription) GetInfo(key string) interface{} {
+	if key == "*" {
+		return it.Info
+	}
+
+	if value, present := it.Info[key]; present {
+		return value
+	}
+
+	return nil
+}
