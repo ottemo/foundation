@@ -25,10 +25,10 @@ const (
 	ConstConfigPathTrustPilotEmailTemplate  = "general.trustpilot.emailTemplate"
 	ConstConfigPathTrustPilotProductBrand   = "general.trustpilot.productBrand"
 
-	ConstRatingSummaryUrl = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/summaries"
+	ConstRatingSummaryURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/summaries"
 )
 
 var (
 	lastTimeSummariesUpdate time.Time
-	summariesCache 	interface{}
+	summariesCache          interface{}
 )

@@ -1,10 +1,10 @@
 package trustpilot
 
 import (
-	"time"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
@@ -18,10 +18,9 @@ func setupAPI() error {
 	return nil
 }
 
-// APIGetTrustpilotSummaries
-// Sends a request to obtain review summaries from the Trustpilot
+// APIGetTrustpilotSummaries sends a request to obtain review summaries from the Trustpilot
 // Caches the response for 1 hour
-func APIGetTrustpilotSummaries (context api.InterfaceApplicationContext) (interface{}, error) {
+func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interface{}, error) {
 	isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotEnabled))
 	if !isEnabled {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d535ccc0-68ec-4249-8ec5-e6962d965ffc", "Trustpilot integration is disabled")
@@ -56,14 +55,14 @@ func APIGetTrustpilotSummaries (context api.InterfaceApplicationContext) (interf
 		}
 
 		// Send the request to obtain review summaries
-		ratingUrl := strings.Replace(ConstRatingSummaryUrl, "{businessUnitId}", businessID, 1)
-		request, err := http.NewRequest("GET", ratingUrl, nil)
+		ratingURL := strings.Replace(ConstRatingSummaryURL, "{businessUnitId}", businessID, 1)
+		request, err := http.NewRequest("GET", ratingURL, nil)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 
 		request.Header.Set("Content-Type", "application/json")
-		request.Header.Set("Authorization", "Bearer " + accessToken)
+		request.Header.Set("Authorization", "Bearer "+accessToken)
 
 		client := &http.Client{}
 		response, err := client.Do(request)
@@ -81,9 +80,9 @@ func APIGetTrustpilotSummaries (context api.InterfaceApplicationContext) (interf
 			errMsg := "Non 200 response while trying to get trustpilot reviews summaries: StatusCode:" + response.Status
 			err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "198fd7b0-917a-4bdc-add8-2402876281ae", errMsg)
 			fields := env.LogFields{
-				"accessToken":        accessToken,
-				"businessID":         businessID,
-				"responseBody":       responseBody,
+				"accessToken":  accessToken,
+				"businessID":   businessID,
+				"responseBody": responseBody,
 			}
 			env.LogEvent(fields, "trustpilot-reviews-summary-error")
 			return nil, env.ErrorDispatch(err)
@@ -101,11 +100,9 @@ func APIGetTrustpilotSummaries (context api.InterfaceApplicationContext) (interf
 			return nil, env.ErrorNew(ConstErrorModule, 1, "7329b79e-cf91-4663-a1cd-2776d56c648b", errorMessage)
 		}
 
-		return summaries, nil
-
 		// Put the summaries in the cache and remember the request time
 		summariesCache = summaries
-		lastTimeSummariesUpdate = time.Now();
+		lastTimeSummariesUpdate = time.Now()
 	}
 
 	return summariesCache, nil
