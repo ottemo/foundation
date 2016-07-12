@@ -28,6 +28,8 @@ const (
 	ConstRatingSummaryURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/summaries"
 )
 
+// TODO: we should use some caching module instead of just global variables
+// Package global variables
 var (
 	lastTimeSummariesUpdate time.Time
 	summariesCache          interface{}

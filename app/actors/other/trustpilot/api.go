@@ -14,19 +14,22 @@ import (
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 	service := api.GetRestService()
-	service.GET("trustpilot/product/summaries", APIGetTrustpilotSummaries)
+	service.GET("trustpilot/products/summaries", APIGetTrustpilotProductsSummaries)
 	return nil
 }
 
-// APIGetTrustpilotSummaries sends a request to obtain review summaries from the Trustpilot
-// Caches the response for 1 hour
-func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interface{}, error) {
+// APIGetTrustpilotProductsSummaries Makes a request to Trustpilot api to obtain a list of reviews summaries for every product,
+// caches the response
+// https://developers.trustpilot.com/product-reviews-api#Get product reviews summaries list
+func APIGetTrustpilotProductsSummaries(context api.InterfaceApplicationContext) (interface{}, error) {
 	isEnabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathTrustPilotEnabled))
 	if !isEnabled {
+		context.SetResponseStatusForbidden()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d535ccc0-68ec-4249-8ec5-e6962d965ffc", "Trustpilot integration is disabled")
 	}
 
-	if summariesCache == nil || time.Since(lastTimeSummariesUpdate).Hours() > 1 {
+	// TODO: we should use some caching module instead of just global variables
+	if summariesCache == nil || time.Since(lastTimeSummariesUpdate).Hours() >= 24 {
 		// Get configuration values
 		apiKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPIKey))
 		apiSecret := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathTrustPilotAPISecret))
@@ -37,6 +40,7 @@ func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interfa
 		// Verify the configuration values
 		configs := []string{apiKey, apiSecret, apiUsername, apiPassword, businessID}
 		if hasEmpty(configs) {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "92485c24-66d4-4276-8978-88dabf2a47ac", "Some trustpilot settings are not configured"))
 		}
 
@@ -51,6 +55,7 @@ func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interfa
 		// Get the access token
 		accessToken, err := getAccessToken(credentials)
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 
@@ -58,6 +63,7 @@ func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interfa
 		ratingURL := strings.Replace(ConstRatingSummaryURL, "{businessUnitId}", businessID, 1)
 		request, err := http.NewRequest("GET", ratingURL, nil)
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 
@@ -67,12 +73,14 @@ func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interfa
 		client := &http.Client{}
 		response, err := client.Do(request)
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		defer response.Body.Close()
 
 		responseBody, err := ioutil.ReadAll(response.Body)
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 
@@ -85,18 +93,21 @@ func APIGetTrustpilotSummaries(context api.InterfaceApplicationContext) (interfa
 				"responseBody": responseBody,
 			}
 			env.LogEvent(fields, "trustpilot-reviews-summary-error")
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 
 		// Retrieve the review summaries from the response
 		jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 
 		summaries, ok := jsonResponse["summaries"]
 		if !ok {
 			errorMessage := "Reviews summaries are empty"
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorNew(ConstErrorModule, 1, "7329b79e-cf91-4663-a1cd-2776d56c648b", errorMessage)
 		}
 
