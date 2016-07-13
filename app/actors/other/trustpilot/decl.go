@@ -1,6 +1,10 @@
 // Package trustpilot implements trust pilot functions
 package trustpilot
 
+import (
+	"time"
+)
+
 // Package global constants
 const (
 	ConstEmailSubject = "Purchase feedback"
@@ -20,4 +24,13 @@ const (
 	ConstConfigPathTrustPilotPassword       = "general.trustpilot.password"
 	ConstConfigPathTrustPilotEmailTemplate  = "general.trustpilot.emailTemplate"
 	ConstConfigPathTrustPilotProductBrand   = "general.trustpilot.productBrand"
+
+	ConstRatingSummaryURL = "https://api.trustpilot.com/v1/private/product-reviews/business-units/{businessUnitId}/summaries"
+)
+
+// TODO: we should use some caching module instead of just global variables
+// Package global variables
+var (
+	lastTimeSummariesUpdate time.Time
+	summariesCache          interface{}
 )
