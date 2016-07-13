@@ -1,8 +1,6 @@
 package checkout
 
-import (
-	"github.com/ottemo/foundation/env"
-)
+import "github.com/ottemo/foundation/env"
 
 // Package global constants
 const (
@@ -63,4 +61,5 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelModel
 )
 
+// GiftCardSkuElement is a constant to provide a key to identify gift cards
 var GiftCardSkuElement = "gift-card"

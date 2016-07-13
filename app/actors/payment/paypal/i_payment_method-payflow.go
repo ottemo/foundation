@@ -283,7 +283,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	// pull email, first and last name off paymentInfo
 	extraInfo := utils.InterfaceToMap(paymentInfo["extra"])
 	email := utils.InterfaceToString(extraInfo["email"])
-	billingFirstName, billingLastName := utils.SplitFullName(utils.InterfaceToString(extraInfo["billing_name"]))
+	billingFirstName, billingLastName := order.SplitFullName(utils.InterfaceToString(extraInfo["billing_name"]))
 
 	// getting order information
 	//--------------------------
@@ -391,8 +391,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 			return result, nil
 		}
 	}
-
-	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "ZERO AMOUNT ATHORIZE FAIL: "+
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "ZERO AMOUNT AUTHORIZE FAIL: "+
 		"MESSAGE - "+responseMessage+" "+
 		"RESULT - "+responseResult)
 
