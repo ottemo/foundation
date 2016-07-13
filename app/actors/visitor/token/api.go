@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -29,7 +30,12 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		return "you are not logined in", nil
+		return "You are not logged in, please log in.", nil
+	}
+
+	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -37,14 +43,16 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, err
 	}
 
+	fmt.Printf("Context contains: %v\n\n\n", requestData)
+
 	paymentMethodCode := utils.InterfaceToString(utils.GetFirstMapValue(requestData, "payment", "payment_method"))
 	if paymentMethodCode == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6d1691c8-2d26-44be-b90d-24d920e26301", "payment method not selected")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6d1691c8-2d26-44be-b90d-24d920e26301", "Please select a payment method.")
 	}
 
 	value, present := requestData["cc"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2e9f1bfc-ec9f-4017-83c6-4d04b95b9c08", "payment info not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2e9f1bfc-ec9f-4017-83c6-4d04b95b9c08", "Missing field in credit card data.")
 	}
 
 	creditCardInfo := utils.InterfaceToMap(value)
@@ -54,19 +62,26 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 	for _, payment := range checkout.GetRegisteredPaymentMethods() {
 		if payment.GetCode() == paymentMethodCode {
 			if !payment.IsTokenable(nil) {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "519ef43c-4d07-4b64-90f7-7fdc3657940a", "for selected payment method credit card can't be saved")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "519ef43c-4d07-4b64-90f7-7fdc3657940a", "Cannot save selected Credit Card.")
 			}
 			paymentMethod = payment
 		}
 	}
 
 	if paymentMethod == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c80c4106-1208-4d0b-8577-0889f608869b", "such payment method not existing")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c80c4106-1208-4d0b-8577-0889f608869b", "Provided payment method does not exist.")
 	}
+
+	// add email, first and lastname to paymentInfo map
+	email := currentCheckout.GetVisitor().GetEmail()
+	billingFirstName := currentCheckout.GetBillingAddress().GetFirstName()
+	billingLastName := currentCheckout.GetBillingAddress().GetLastName()
 
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
-		"cc": creditCardInfo,
+		"cc":           creditCardInfo,
+		"email":        email,
+		"billing_name": billingFirstName + " " + billingLastName,
 	}
 
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
@@ -77,7 +92,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	cardInfoMap := utils.InterfaceToMap(paymentResult)
 	if !utils.KeysInMapAndNotBlank(cardInfoMap, "transactionID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "transaction can't be obtained")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "A transaction ID was not provided.")
 	}
 
 	// create visitor address operation
@@ -121,7 +136,7 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 
 		sessionVisitorID := visitor.GetCurrentVisitorID(context)
 		if sessionVisitorID == "" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "you are not logined in")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "Please log in.")
 		}
 		visitorID = sessionVisitorID
 	}
