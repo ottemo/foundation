@@ -8,7 +8,8 @@ func setupConfig() error {
 
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
+		return env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{

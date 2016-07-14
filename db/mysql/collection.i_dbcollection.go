@@ -400,7 +400,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 	for ok := rows.Next(); ok == true; ok = rows.Next() {
 		row, err := getRowAsStringMap(rows)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		key := row["column"].(string)

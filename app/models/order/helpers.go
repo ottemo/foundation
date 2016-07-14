@@ -1,9 +1,11 @@
 package order
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
-	"time"
 )
 
 // GetOrderCollectionModel retrieves current InterfaceOrderCollection model implementation
@@ -112,4 +114,25 @@ func GetItemsForOrders(orderIds []string) []map[string]interface{} {
 	oiResults, _ := oiDB.Load()
 
 	return oiResults
+}
+
+// SplitFullName will take a fullname as a string and split it into first name and last names
+func SplitFullName(name string) (string, string) {
+
+	var firstName, lastName string
+
+	fullName := strings.SplitN(name, " ", 2)
+
+	if len(fullName) == 2 {
+		firstName = fullName[0]
+		lastName = fullName[1]
+	} else if len(fullName) == 1 {
+		firstName = fullName[0]
+		lastName = ""
+	} else {
+		firstName = ""
+		lastName = ""
+	}
+
+	return firstName, lastName
 }

@@ -1,0 +1,4 @@
+media.fsmedia.folder=/Users/james/code/demo-media
+mongodb.db=demo-1
+mongodb.uri=mongodb://localhost:27017/demo-1
+secure_cookie=false

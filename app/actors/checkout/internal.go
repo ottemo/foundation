@@ -2,9 +2,7 @@ package checkout
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/actors/discount/coupon"
 	"github.com/ottemo/foundation/app/actors/discount/giftcard"
@@ -12,105 +10,19 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
-
-	"strings"
 )
 
-// SendOrderConfirmationMail sends an order confirmation email
-func (it *DefaultCheckout) SendOrderConfirmationMail() error {
+// SendOrderConfirmationEmail sends an order confirmation email
+func (it *DefaultCheckout) SendOrderConfirmationEmail() error {
 
 	checkoutOrder := it.GetOrder()
 	if checkoutOrder == nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e7c69056-cc28-4632-9524-50d71b909d83", "given checkout order does not exists")
 	}
 
-	confirmationEmail := utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathConfirmationEmail))
-	if confirmationEmail != "" {
-		timeZone := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
-		giftCardSku := utils.InterfaceToString(env.ConfigGetValue(giftcard.ConstConfigPathGiftCardSKU))
-
-		email := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
-		if email == "" {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1202fcfb-da3f-4a0f-9a2e-92f288fd3881", "customer email for order is not set")
-		}
-
-		orderID := checkoutOrder.GetID()
-
-		storeName := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName))
-		if storeName == "" {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "00e37332-19e6-493e-9eec-bec3be124f43", "store name is set in config")
-		}
-
-		subject := "Your " + storeName + " Order, #" + orderID
-
-		visitorMap := make(map[string]interface{})
-		if visitorModel := it.GetVisitor(); visitorModel != nil {
-			visitorMap = visitorModel.ToHashMap()
-		} else {
-			visitorMap["first_name"] = checkoutOrder.Get("customer_name")
-			visitorMap["email"] = email
-		}
-
-		orderMap := checkoutOrder.ToHashMap()
-		var orderItems []map[string]interface{}
-
-		for _, item := range checkoutOrder.GetItems() {
-			options := make(map[string]interface{})
-
-			for optionName, optionKeys := range item.GetOptions() {
-				optionMap := utils.InterfaceToMap(optionKeys)
-				options[optionName] = optionMap["value"]
-
-				// Giftcard's delivery date
-				if strings.Contains(item.GetSku(), giftCardSku) {
-					if utils.IsAmongStr(optionName, "Date", "Delivery Date", "send_date", "Send Date", "date") {
-						// Localize and format the date
-						giftcardDeliveryDate, _ := utils.MakeTZTime(utils.InterfaceToTime(optionMap["value"]), timeZone)
-						if !utils.IsZeroTime(giftcardDeliveryDate) {
-							//TODO: Should be "Monday Jan 2 15:04 (MST)" but we have a bug
-							options[optionName] = giftcardDeliveryDate.Format("Monday Jan 2 15:04")
-						}
-					}
-				}
-			}
-
-			orderItems = append(orderItems, map[string]interface{}{
-				"name":    item.GetName(),
-				"options": options,
-				"sku":     item.GetSku(),
-				"qty":     item.GetQty(),
-				"price":   item.GetPrice()})
-		}
-
-		// convert date of order creation to store time zone
-		if date, present := orderMap["created_at"]; present {
-			convertedDate, _ := utils.MakeTZTime(utils.InterfaceToTime(date), timeZone)
-			if !utils.IsZeroTime(convertedDate) {
-				orderMap["created_at"] = convertedDate
-			}
-		}
-
-		orderMap["items"] = orderItems
-		orderMap["payment_method_title"] = it.GetPaymentMethod().GetName()
-		orderMap["shipping_method_title"] = it.GetShippingMethod().GetName()
-
-		customInfo := make(map[string]interface{})
-		customInfo["base_storefront_url"] = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStorefrontURL))
-
-		confirmationEmail, err := utils.TextTemplate(confirmationEmail,
-			map[string]interface{}{
-				"Order":   orderMap,
-				"Visitor": visitorMap,
-				"Info":    customInfo,
-			})
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		err = app.SendMail(email, subject, confirmationEmail)
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
+	err := checkoutOrder.SendOrderConfirmationEmail()
+	if err != nil {
+		return env.ErrorDispatch(err)
 	}
 
 	return nil
@@ -158,9 +70,9 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 	eventData := map[string]interface{}{"checkout": it, "order": checkoutOrder, "session": session, "cart": currentCart}
 	env.Event("checkout.success", eventData)
 
-	err = it.SendOrderConfirmationMail()
+	err = it.SendOrderConfirmationEmail()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 	}
 
 	return nil

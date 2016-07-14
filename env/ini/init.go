@@ -80,7 +80,7 @@ func (it *DefaultIniConfig) appEndEvent() error {
 				if value, present := sectionValues[key]; present {
 					_, err := iniFile.WriteString(key + "=" + value + "\n")
 					if err != nil {
-						env.LogError(err)
+						env.ErrorDispatch(err)
 					}
 				}
 			}

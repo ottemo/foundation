@@ -8,10 +8,11 @@ import (
 func (it *FilesystemMediaStorage) setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(ConstErrorModule,
+		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
 			"7c6d9092-9a17-4d96-a796-fd0f7b64c00a",
 			"Unable to find configuration media configuration variable, please specify one.")
+		return env.ErrorDispatch(err)
 	}
 
 	imageSizesValidator := func(newValue interface{}) (interface{}, error) {
@@ -26,16 +27,17 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			if !resizeImagesOnFly && it.setupWaitCnt == 0 {
 				err = it.ResizeAllMediaImages()
 				if err != nil {
-					env.LogError(err)
+					env.ErrorDispatch(err)
 				}
 			}
 
 			return newValue, nil
 		}
-		return ConstDefaultImageSizes, env.ErrorNew(ConstErrorModule,
+		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
 			"165834bd-d8ca-4b1d-8cfa-b8a153288913",
 			"Unexpected value for image size found.")
+		return ConstDefaultImageSizes, env.ErrorDispatch(err)
 	}
 
 	err := config.RegisterItem(env.StructConfigItem{
@@ -63,10 +65,11 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			}
 			return newValue, nil
 		}
-		return ConstDefaultImageSize, env.ErrorNew(ConstErrorModule,
+		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
 			"165834bd-d8ca-4b1d-8cfa-b8a153288913",
 			"Unexpected value for image size found.")
+		return ConstDefaultImageSize, env.ErrorDispatch(err)
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
@@ -96,10 +99,11 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			return mediaBasePath, nil
 		}
 
-		return mediaBasePath, env.ErrorNew(ConstErrorModule,
+		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
 			"eb97378b-a940-45b4-a653-3bdb47fe6b16",
 			"Unexpected value found for the image base url.")
+		return mediaBasePath, env.ErrorDispatch(err)
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{

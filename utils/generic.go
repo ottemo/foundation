@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var (
+	regexpAnyToSnakeCase   = regexp.MustCompile("[!@#%^':;&|\\[\\]*=+><()\\s]+|([^\\s_$-])([A-Z][a-z])")
+	regexpSnakeToCamelCase = regexp.MustCompile("_[a-z-\\d]")
+)
+
 // KeysInMapAndNotBlank checks presence of non blank values for keys in map
 //   - first arg must be map
 //   - fallowing arguments are map keys you want to check
@@ -310,4 +315,25 @@ func Clone(subject interface{}) interface{} {
 	}
 
 	return result
+}
+
+// Convert string to snake_case format
+func StrToSnakeCase(str string) string {
+	str = regexpAnyToSnakeCase.ReplaceAllString(str, "${1}_${2}")
+	str = strings.Trim(str, "_")
+
+	return strings.ToLower(str)
+}
+
+// Convert string from snake_case to camelCase format
+func StrToCamelCase(str string) string {
+	operator := func(matchedStr string) string {
+		matchedStr = strings.Trim(matchedStr, "_")
+
+		return strings.ToUpper(matchedStr)
+	}
+
+	str = regexpSnakeToCamelCase.ReplaceAllStringFunc(str, operator)
+
+	return str
 }

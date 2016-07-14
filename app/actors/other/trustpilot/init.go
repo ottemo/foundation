@@ -1,17 +1,20 @@
 package trustpilot
 
 import (
+	"time"
+
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // init makes package self-initialization routine before app start
 func init() {
 	app.OnAppStart(onAppStart)
 	env.RegisterOnConfigStart(setupConfig)
+	api.RegisterOnRestServiceStart(setupAPI)
 }
 
 // Function for every day checking for email sent to customers who order is already two week
@@ -86,13 +89,13 @@ func schedulerFunc(params map[string]interface{}) error {
 					"Site":    siteMap})
 
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 
 			err = app.SendMail(visitorEmail, ConstEmailSubject, emailToVisitor)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 			customInfo[ConstOrderCustomInfoSentKey] = true
@@ -100,7 +103,7 @@ func schedulerFunc(params map[string]interface{}) error {
 			currentOrder["custom_info"] = customInfo
 			_, err = dbOrderCollection.Save(currentOrder)
 			if err != nil {
-				env.LogError(err)
+				env.ErrorDispatch(err)
 				continue
 			}
 		}

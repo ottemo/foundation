@@ -7,17 +7,25 @@ import (
 
 func setupConfig() error {
 	config := env.GetConfig()
+	if config == nil {
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "8a54aa93-8f6a-4e92-8398-d6e6d05ee2af", "can't obtain config")
+		return env.ErrorDispatch(err)
+	}
 
 	// Group Title
-	config.RegisterItem(env.StructConfigItem{
+	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGroup,
 		Type:        env.ConstConfigTypeGroup,
 		Label:       "Flat Weight",
 		Description: "static amount stipping method",
 	}, nil)
 
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	// Enabled
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:   ConstConfigPathEnabled,
 		Value:  false,
 		Type:   env.ConstConfigTypeBoolean,
@@ -25,9 +33,13 @@ func setupConfig() error {
 		Label:  "Enabled",
 	}, nil)
 
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	// Rates
 	// demo json [{"title": "Standard Shipping","code": "std_1","price": 1.99,"weight_from": 0.0,"weight_to": 5.0}]
-	config.RegisterItem(env.StructConfigItem{
+	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathRates,
 		Value:       `[]`,
 		Type:        env.ConstConfigTypeText,
@@ -35,6 +47,10 @@ func setupConfig() error {
 		Label:       "Rates",
 		Description: `Configuration format: [{"title": "Standard Shipping",  "code": "std_1", "price": 1.99,  "weight_from": 0.0, "weight_to": 5.0}]`,
 	}, validateAndApplyRates)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	return nil
 }
@@ -56,7 +72,7 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 
 	parsedRates, err := utils.DecodeJSONToArray(rawRates)
 	if err != nil {
-		return nil, err
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// Validate each new rate
@@ -66,7 +82,8 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 
 		// Make sure we have our keys
 		if !utils.KeysInMapAndNotBlank(parsedRate, "title", "code", "price", "weight_from", "weight_to") {
-			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "todo", "Missing keys in config object; title, code, price, weight_from, weight_to")
+			err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "todo", "Missing keys in config object; title, code, price, weight_from, weight_to")
+			return nil, env.ErrorDispatch(err)
 		}
 
 		// Assemble new rate

@@ -249,6 +249,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// get product
 	result := productModel.ToHashMap()
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
@@ -278,6 +279,8 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	result["images"] = itemImages
+	// get inventory/stock
+	result["inventory"] = productModel.GetInventory()
 
 	return result, nil
 }
@@ -382,7 +385,10 @@ func APIUpdateProduct(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return productModel.ToHashMap(), nil
+	result := productModel.ToHashMap()
+	result["inventory"] = productModel.GetInventory()
+
+	return result, nil
 }
 
 // APIGetMediaPath returns relative path to product media files within media library
@@ -697,7 +703,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
 		if err != nil {
-			env.LogError(err)
+			env.ErrorDispatch(err)
 		}
 
 		result = append(result, productInfo)

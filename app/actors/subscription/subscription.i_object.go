@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -47,6 +48,8 @@ func (it *DefaultSubscription) Get(attribute string) interface{} {
 		return it.CreatedAt
 	case "updated_at":
 		return it.UpdatedAt
+	case "info":
+		return it.Info
 	}
 
 	return nil
@@ -185,6 +188,8 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 
 	case "updated_at":
 		it.UpdatedAt = utils.InterfaceToTime(value)
+	case "info":
+		it.Info = utils.InterfaceToMap(value)
 	}
 
 	return nil
@@ -232,10 +237,177 @@ func (it *DefaultSubscription) ToHashMap() map[string]interface{} {
 	result["updated_at"] = it.UpdatedAt
 	result["created_at"] = it.CreatedAt
 
+	result["info"] = it.Info
+
 	return result
 }
 
 // GetAttributesInfo returns the Subscription attributes information in an array
+// TODO: finish list of attributes
 func (it *DefaultSubscription) GetAttributesInfo() []models.StructAttributeInfo {
-	return make([]models.StructAttributeInfo, 0)
+	info := []models.StructAttributeInfo{
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "ID",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "status",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Status",
+			Group:      "General",
+			Editors:    "selector",
+			Options: strings.Join([]string{
+				subscription.ConstSubscriptionStatusSuspended,
+				subscription.ConstSubscriptionStatusConfirmed,
+				subscription.ConstSubscriptionStatusCanceled,
+			}, ","),
+			Default: subscription.ConstSubscriptionStatusConfirmed,
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "visitor_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Visitor",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model: visitor",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "order_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Order",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model: order",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "customer_email",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Customer Email",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
+			Validators: "email",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "customer_name",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Customer Name",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "shipping_address",
+			Type:       db.ConstTypeJSON,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Shipping Address",
+			Group:      "General",
+			Editors:    "visitor_address",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "billing_address",
+			Type:       db.ConstTypeJSON,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Customer Name",
+			Group:      "General",
+			Editors:    "visitor_address",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "payment_method",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Payment Method",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model: payments",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "shipping_method",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Shipping Method",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model: shipping",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "created_at",
+			Type:       db.ConstTypeDatetime,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Created At",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      subscription.ConstModelNameSubscription,
+			Collection: ConstCollectionNameSubscription,
+			Attribute:  "updated_at",
+			Type:       db.ConstTypeDatetime,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Updated At",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+	}
+
+	return info
 }

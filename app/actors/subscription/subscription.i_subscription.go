@@ -118,13 +118,13 @@ func (it *DefaultSubscription) GetShippingAddress() visitor.InterfaceVisitorAddr
 
 	shippingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = shippingAddress.FromHashMap(it.ShippingAddress)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -150,13 +150,13 @@ func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddre
 
 	billingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = billingAddress.FromHashMap(it.BillingAddress)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -179,7 +179,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -189,7 +189,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	err = visitorCardModel.FromHashMap(it.PaymentInstrument)
 	if err != nil {
-		env.LogError(err)
+		env.ErrorDispatch(err)
 		return visitorCardModel
 	}
 
@@ -334,6 +334,33 @@ func (it *DefaultSubscription) Validate() error {
 
 	if len(it.items) == 0 {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "no items in subscription")
+	}
+
+	return nil
+}
+
+// SetInfo sets additional info for subscription
+func (it *DefaultSubscription) SetInfo(key string, value interface{}) {
+	if value == nil {
+		if _, present := it.Info[key]; present {
+			delete(it.Info, key)
+		}
+	} else {
+		it.Info[key] = value
+	}
+
+	return
+}
+
+// GetInfo returns additional subscription info value or nil,
+//   - use "*" as a key to get all keys and values currently set
+func (it *DefaultSubscription) GetInfo(key string) interface{} {
+	if key == "*" {
+		return it.Info
+	}
+
+	if value, present := it.Info[key]; present {
+		return value
 	}
 
 	return nil
