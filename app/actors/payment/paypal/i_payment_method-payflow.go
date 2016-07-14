@@ -277,9 +277,9 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 	//------------------------------------------------
 
 	// check if first and last name are present
-	if extraInfo, present := paymentInfo["extra"]; !present || !utils.StrKeysInMap(utils.InterfaceToMap(extraInfo), "email", "billing_name") {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d7044f0-e86d-4dba-9d4b-f511fd149c5c", "Email or Billing Name not specified")
-	}
+	//if extraInfo, present := paymentInfo["extra"]; !present || !utils.StrKeysInMap(utils.InterfaceToMap(extraInfo), "email", "billing_name") {
+	//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d7044f0-e86d-4dba-9d4b-f511fd149c5c", "Email or Billing Name not specified")
+	//}
 	// pull email, first and last name off paymentInfo
 	extraInfo := utils.InterfaceToMap(paymentInfo["extra"])
 	email := utils.InterfaceToString(extraInfo["email"])
