@@ -760,6 +760,10 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		paymentDetails["sessionID"] = currentSession.GetID()
 	}
 	paymentDetails["cc"] = it.GetInfo("cc")
+	paymentDetails["extra"] = map[string]interface{}{
+		"email":        checkoutOrder.Get("customer_email"),
+		"billing_name": checkoutOrder.GetBillingAddress().GetFirstName() + " " + checkoutOrder.GetBillingAddress().GetLastName(),
+	}
 
 	result, err := paymentMethod.Authorize(checkoutOrder, paymentDetails)
 	if err != nil {
