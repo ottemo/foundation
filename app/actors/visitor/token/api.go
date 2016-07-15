@@ -79,11 +79,12 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
-		"cc":           creditCardInfo,
-		"email":        email,
-		"billing_name": billingFirstName + " " + billingLastName,
+		"cc": creditCardInfo,
+		"extra": map[string]interface{}{
+			"email":        email,
+			"billing_name": billingFirstName + " " + billingLastName,
+		},
 	}
-
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
 	paymentResult, err := paymentMethod.Authorize(nil, paymentInfo)
 	if err != nil {
