@@ -12,7 +12,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
-	"fmt"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/subscription"
 )
@@ -53,40 +52,40 @@ func setupAPI() error {
 }
 
 func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, error) {
-	fmt.Println("starting application " + time.Now().String())
+	errors := make(map[string]string)
 
 	// get product collection
 	productCollection, err := product.GetProductCollectionModel()
 	if err != nil {
-		fmt.Println(env.ErrorDispatch(err))
+		return nil, env.ErrorDispatch(err)
 	}
 
-	fmt.Println("update products options" + time.Now().String())
 	// update products option
 	for _, currentProduct := range productCollection.ListProducts() {
 		newOptions := ConvertProductOptionsToSnakeCase(currentProduct)
 		err = currentProduct.Set("options", newOptions)
 		if err != nil {
-			fmt.Println(env.ErrorDispatch(err))
+			errors["product ID: " + currentProduct.GetID()] = utils.InterfaceToString(err);
 		}
 
 		err := currentProduct.Save()
 		if err != nil {
-			fmt.Println(env.ErrorDispatch(err))
+			return nil, env.ErrorDispatch(err)
 		}
 	}
 
-	// get product collection
+	// get subsciptions collection
 	subscriptionCollection, err := subscription.GetSubscriptionCollectionModel()
 	if err != nil {
-		fmt.Println(env.ErrorDispatch(err))
+		return nil, env.ErrorDispatch(err)
 	}
 	currentCart, err := cart.GetCartModel()
 	if err != nil {
-		fmt.Println(env.ErrorDispatch(err))
+		return nil, env.ErrorDispatch(err)
 	}
 
 	for _, currentSubscription := range subscriptionCollection.ListSubscriptions() {
+		var updatedItems []subscription.StructSubscriptionItem
 		for _, subscriptionItem := range currentSubscription.GetItems() {
 			updatedOptions := make(map[string]interface{})
 			// Labels where used as a key for options key: value, so we will convert both of them
@@ -95,18 +94,21 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 			}
 			subscriptionItem.Options = updatedOptions
 			if _, err = currentCart.AddItem(subscriptionItem.ProductID, subscriptionItem.Qty, subscriptionItem.Options); err != nil {
-				fmt.Println(env.ErrorDispatch(err))
-				fmt.Println(subscriptionItem.Options)
+				errors["subscription ID: " + currentSubscription.GetID()] = utils.InterfaceToString(err);
 			}
+
+			updatedItems = append(updatedItems, subscriptionItem)
 		}
+
+		currentSubscription.Set("items", updatedItems)
 
 		err = currentSubscription.Save()
 		if err != nil {
-			fmt.Println(env.ErrorDispatch(err))
+			return nil, env.ErrorDispatch(err)
 		}
 	}
 
-	return "ok", nil
+	return errors, nil
 }
 
 // ConvertProductOptionsToSnakeCase updates option keys for product to case_snake
