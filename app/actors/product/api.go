@@ -46,12 +46,14 @@ func setupAPI() error {
 	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
 	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
 
+	// TODO: remove after patching
 	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
 
 	return nil
 }
 
 // APIPatchOptions converts product options to snake case in products and subscriptions
+// TODO: remove after patching
 func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, error) {
 	warnings := make(map[string]string)
 
@@ -113,6 +115,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 }
 
 // ConvertProductOptionsToSnakeCase updates option keys for product to case_snake
+// TODO: remove after patching
 func ConvertProductOptionsToSnakeCase(product product.InterfaceProduct) map[string]interface{} {
 
 	newOptions := make(map[string]interface{})
