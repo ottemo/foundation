@@ -8,12 +8,12 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/app/models/cart"
-	"github.com/ottemo/foundation/app/models/subscription"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -46,13 +46,14 @@ func setupAPI() error {
 	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
 	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
 
-	service.GET("patch/options", APIPatchOptions)
+	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
 
 	return nil
 }
 
+// APIPatchOptions converts product options to snake case in products and subscriptions
 func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, error) {
-	errors := make(map[string]string)
+	warnings := make(map[string]string)
 
 	// get product collection
 	productCollection, err := product.GetProductCollectionModel()
@@ -65,7 +66,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 		newOptions := ConvertProductOptionsToSnakeCase(currentProduct)
 		err = currentProduct.Set("options", newOptions)
 		if err != nil {
-			errors["product ID: " + currentProduct.GetID()] = utils.InterfaceToString(err);
+			warnings["product ID: "+currentProduct.GetID()] = utils.InterfaceToString(err)
 		}
 
 		err := currentProduct.Save()
@@ -74,7 +75,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 		}
 	}
 
-	// get subsciptions collection
+	// get subscriptions collection
 	subscriptionCollection, err := subscription.GetSubscriptionCollectionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -94,7 +95,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 			}
 			subscriptionItem.Options = updatedOptions
 			if _, err = currentCart.AddItem(subscriptionItem.ProductID, subscriptionItem.Qty, subscriptionItem.Options); err != nil {
-				errors["subscription ID: " + currentSubscription.GetID()] = utils.InterfaceToString(err);
+				warnings["subscription ID: "+currentSubscription.GetID()] = utils.InterfaceToString(err)
 			}
 
 			updatedItems = append(updatedItems, subscriptionItem)
@@ -108,7 +109,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 		}
 	}
 
-	return errors, nil
+	return warnings, nil
 }
 
 // ConvertProductOptionsToSnakeCase updates option keys for product to case_snake
