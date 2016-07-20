@@ -60,7 +60,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 	// get product collection
 	productCollection, err := product.GetProductCollectionModel()
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return warnings, env.ErrorDispatch(err)
 	}
 
 	// update products option
@@ -73,7 +73,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 
 		err := currentProduct.Save()
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return warnings, env.ErrorDispatch(err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 	currentCart, err := cart.GetCartModel()
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return warnings, env.ErrorDispatch(err)
 	}
 
 	for _, currentSubscription := range subscriptionCollection.ListSubscriptions() {
@@ -107,7 +107,7 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 
 		err = currentSubscription.Save()
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return warnings, env.ErrorDispatch(err)
 		}
 	}
 
