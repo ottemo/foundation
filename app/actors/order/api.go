@@ -181,6 +181,7 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 	// check request context
 	orderModel, err := apiFindSpecifiedOrder(context)
 	if err != nil {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
