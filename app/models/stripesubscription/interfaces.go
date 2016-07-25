@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ConstModelNameStripeSubscription = "StripeSubscription"
+	ConstModelNameStripeSubscription           = "StripeSubscription"
 	ConstModelNameStripeSubscriptionCollection = "StripeSubscriptionCollection"
 )
 

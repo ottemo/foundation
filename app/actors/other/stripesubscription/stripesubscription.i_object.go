@@ -50,7 +50,7 @@ func (it *DefaultStripeSubscription) Get(attribute string) interface{} {
 	return nil
 }
 
-// Set will set attribute value of the Subscription to object or return an error
+// Set will set attribute value of the Stripe Subscription to object or return an error
 func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) error {
 	switch strings.ToLower(attribute) {
 	case "_id", "id":
@@ -90,7 +90,7 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 	return nil
 }
 
-// FromHashMap fills Subscription object attributes from a map[string]interface{}
+// FromHashMap fills Stripe Subscription object attributes from a map[string]interface{}
 func (it *DefaultStripeSubscription) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
@@ -102,7 +102,7 @@ func (it *DefaultStripeSubscription) FromHashMap(input map[string]interface{}) e
 	return nil
 }
 
-// ToHashMap represents Subscription object as map[string]interface{}
+// ToHashMap represents Stripe Subscription object as map[string]interface{}
 func (it *DefaultStripeSubscription) ToHashMap() map[string]interface{} {
 
 	result := make(map[string]interface{})
@@ -194,7 +194,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeJSON,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Billing Address",
 			Group:      "General",
 			Editors:    "visitor_address",
 			Options:    "",
@@ -207,7 +207,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeJSON,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Shipping Address",
 			Group:      "General",
 			Editors:    "visitor_address",
 			Options:    "",
@@ -220,7 +220,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeVarchar,
 			IsRequired: true,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Stripe Subscription ID",
 			Group:      "General",
 			Editors:    "line_text",
 			Options:    "",
@@ -231,9 +231,9 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Collection: ConstCollectionNameStripeSubscription,
 			Attribute:  "stripe_customer_id",
 			Type:       db.ConstTypeVarchar,
-			IsRequired: false,
+			IsRequired: true,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Stripe Customer ID",
 			Group:      "General",
 			Editors:    "line_text",
 			Options:    "",
@@ -246,7 +246,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Stripe Coupon",
 			Group:      "General",
 			Editors:    "line_text",
 			Options:    "",
@@ -312,19 +312,6 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Description",
-			Group:      "General",
-			Editors:    "not_editable",
-			Options:    "",
-			Default:    "",
-		},
-		models.StructAttributeInfo{
-			Model:      stripesubscription.ConstModelNameStripeSubscription,
-			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "info",
-			Type:       db.ConstTypeJSON,
-			IsRequired: false,
-			IsStatic:   true,
-			Label:      "ID",
 			Group:      "General",
 			Editors:    "not_editable",
 			Options:    "",

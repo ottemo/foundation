@@ -7,8 +7,8 @@ import (
 
 // Package global constants
 const (
-	ConstConfigPathPlans = "payment.stripe.plans"
-	ConstErrorModule     = "stripesubscription"
+	ConstConfigPathPlans                  = "payment.stripe.plans"
+	ConstErrorModule                      = "stripesubscription"
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
 )
 
@@ -25,8 +25,8 @@ type DefaultStripeSubscription struct {
 
 	StripeSubscriptionID string
 	StripeCustomerID     string
-	StripeCoupon string
-	StripeEvents map[string]interface{}
+	StripeCoupon         string
+	StripeEvents         map[string]interface{}
 
 	Price float64
 
