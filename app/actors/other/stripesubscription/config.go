@@ -15,18 +15,18 @@ func setupConfig() error {
 	// Subscription plans config
 	//----------------------------
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathPlans,
-		Value:       nil,
-		Type:        env.ConstConfigTypeJSON,
-		Editor:      "multiline_text",
-		Options:     nil,
-		Label:       "Subscription plans",
+		Path:    ConstConfigPathPlans,
+		Value:   nil,
+		Type:    env.ConstConfigTypeJSON,
+		Editor:  "multiline_text",
+		Options: nil,
+		Label:   "Subscription plans",
 		Description: `Subscription plans settings, pattern:
 [
 	{"id": "monthPlanStripeId", "name": "Month to Month", "price": 36, "deliveryCount": 1, "info": "Charged every month", "img": "/images/subscribe/1month.png"},
 	...
 ]`,
-		Image:       "",
+		Image: "",
 	}, nil)
 
 	if err != nil {
