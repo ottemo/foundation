@@ -2,6 +2,7 @@ package stripesubscription
 
 import (
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 	"time"
 )
 
@@ -9,6 +10,7 @@ import (
 const (
 	ConstConfigPathPlans                  = "payment.stripe.plans"
 	ConstErrorModule                      = "stripesubscription"
+	ConstErrorLevel                       = env.ConstErrorLevelActor
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
 )
 
