@@ -24,6 +24,9 @@ build:
         - REMOTE_HOST=sb.staging.ottemo.io bash bin/deploy.sh
         - REMOTE_HOST=scs.staging.ottemo.io bash bin/deploy.sh
         - REMOTE_HOST=gk.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=sg.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=dl.staging.ottemo.io bash bin/deploy.sh
+        - REMOTE_HOST=kkr.staging.ottemo.io bash bin/deploy.sh
         - python bin/slack_notifier.py --org $SLACK_ORG --project $PROJECT --token $SLACK_TOKEN -s
 
 
