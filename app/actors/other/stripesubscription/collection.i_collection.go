@@ -29,7 +29,7 @@ func (it *DefaultStripeSubscriptionCollection) List() ([]models.StructListItem, 
 		resultItem := new(models.StructListItem)
 
 		resultItem.ID = stripeSubscriptionModel.GetID()
-		resultItem.Name = stripeSubscriptionModel.Get("customer_email")
+		resultItem.Name = utils.InterfaceToString(stripeSubscriptionModel.Get("customer_email"))
 		resultItem.Image = ""
 		resultItem.Desc = utils.InterfaceToString(stripeSubscriptionModel.Get("description"))
 

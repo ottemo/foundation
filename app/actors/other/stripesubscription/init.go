@@ -1,6 +1,7 @@
 package stripesubscription
 
 import (
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/stripesubscription"
 	"github.com/ottemo/foundation/db"
@@ -18,6 +19,7 @@ func init() {
 	models.RegisterModel(stripesubscription.ConstModelNameStripeSubscriptionCollection, stripeSubscriptionCollectionInstance)
 
 	db.RegisterOnDatabaseStart(setupDB)
+	api.RegisterOnRestServiceStart(setupAPI)
 	env.RegisterOnConfigStart(setupConfig)
 }
 
