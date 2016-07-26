@@ -5,13 +5,8 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/app/models/stripesubscription"
 )
-
-// GetDBCollection returns database collection for the Stripe Subscription
-func (it *DefaultStripeSubscriptionCollection) GetDBCollection() db.InterfaceDBCollection {
-	return it.listCollection
-}
 
 // List enumerates items of Stripe Subscription model type in a Stripe Subscription collection
 func (it *DefaultStripeSubscriptionCollection) List() ([]models.StructListItem, error) {
@@ -24,11 +19,12 @@ func (it *DefaultStripeSubscriptionCollection) List() ([]models.StructListItem, 
 
 	for _, dbRecordData := range dbRecords {
 
-		stripeSubscriptionModel := new(DefaultStripeSubscription)
-		err = stripeSubscriptionModel.FromHashMap(dbRecordData)
+		stripeSubscriptionModel, err := stripesubscription.GetStripeSubscriptionModel()
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
+		stripeSubscriptionModel.FromHashMap(dbRecordData)
+
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
 

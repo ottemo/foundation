@@ -4,12 +4,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 )
 
-const (
-	ConstModelNameStripeSubscription           = "StripeSubscription"
-	ConstModelNameStripeSubscriptionCollection = "StripeSubscriptionCollection"
-)
-
-// InterfaceStripeSubscription represents interface to access business layer implementation of purchase subscription object
+//InterfaceStripeSubscription represents interface to access business layer implementation of purchase subscription object
 type InterfaceStripeSubscription interface {
 	models.InterfaceModel
 	models.InterfaceObject
@@ -17,7 +12,7 @@ type InterfaceStripeSubscription interface {
 	models.InterfaceListable
 }
 
-// InterfaceSubscriptionCollection represents interface to access business layer implementation of purchase subscription collection
+//InterfaceStripeSubscriptionCollection represents interface to access business layer implementation of purchase subscription collection
 type InterfaceStripeSubscriptionCollection interface {
 	ListSubscriptions() []InterfaceStripeSubscription
 

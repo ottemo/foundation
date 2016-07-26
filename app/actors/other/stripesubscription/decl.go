@@ -28,7 +28,8 @@ type DefaultStripeSubscription struct {
 	StripeSubscriptionID string
 	StripeCustomerID     string
 	StripeCoupon         string
-	StripeEvents         map[string]interface{}
+	LastPaymentInfo      map[string]interface{}
+	NextPaymentAt        time.Time
 
 	Price float64
 

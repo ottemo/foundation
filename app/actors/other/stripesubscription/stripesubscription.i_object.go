@@ -31,8 +31,10 @@ func (it *DefaultStripeSubscription) Get(attribute string) interface{} {
 		return it.StripeCustomerID
 	case "stripe_coupon":
 		return it.StripeCoupon
-	case "stripe_events":
-		return it.StripeEvents
+	case "last_payment_info":
+		return it.LastPaymentInfo
+	case "next_payment_at":
+		return it.NextPaymentAt
 	case "price":
 		return it.Price
 	case "created_at":
@@ -57,7 +59,7 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 		it.id = utils.InterfaceToString(value)
 	case "visitor_id":
 		it.VisitorID = utils.InterfaceToString(value)
-	case "customer_name", "full_name":
+	case "customer_name":
 		it.CustomerName = utils.InterfaceToString(value)
 	case "customer_email":
 		it.CustomerEmail = utils.InterfaceToString(value)
@@ -71,8 +73,10 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 		it.StripeCustomerID = utils.InterfaceToString(value)
 	case "stripe_coupon":
 		it.StripeCoupon = utils.InterfaceToString(value)
-	case "stripe_events":
-		it.StripeEvents = utils.InterfaceToMap(value)
+	case "last_payment_info":
+		it.LastPaymentInfo = utils.InterfaceToMap(value)
+	case "next_payment_at":
+		it.NextPaymentAt = utils.InterfaceToTime(value)
 	case "price":
 		it.Price = utils.InterfaceToFloat64(value)
 	case "created_at":
@@ -118,7 +122,8 @@ func (it *DefaultStripeSubscription) ToHashMap() map[string]interface{} {
 	result["stripe_subscription_id"] = it.StripeSubscriptionID
 	result["stripe_customer_id"] = it.StripeCustomerID
 	result["stripe_coupon"] = it.StripeCoupon
-	result["stripe_events"] = it.StripeEvents
+	result["last_payment_info"] = it.LastPaymentInfo
+	result["next_payment_at"] = it.NextPaymentAt
 
 	result["price"] = it.Price
 
@@ -181,7 +186,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeVarchar,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Customer Email",
 			Group:      "General",
 			Editors:    "line_text",
 			Options:    "",
@@ -255,12 +260,25 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 		models.StructAttributeInfo{
 			Model:      stripesubscription.ConstModelNameStripeSubscription,
 			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "stripe_events",
+			Attribute:  "last_payment_info",
 			Type:       db.ConstTypeJSON,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
-			Group:      "Stripe Events",
+			Label:      "Last Payment Information",
+			Group:      "General",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      stripesubscription.ConstModelNameStripeSubscription,
+			Collection: ConstCollectionNameStripeSubscription,
+			Attribute:  "next_payment_at",
+			Type:       db.ConstTypeDatetime,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Next Payment At",
+			Group:      "General",
 			Editors:    "not_editable",
 			Options:    "",
 			Default:    "",
@@ -272,7 +290,7 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Type:       db.ConstTypeDecimal,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "ID",
+			Label:      "Price",
 			Group:      "General",
 			Editors:    "not_editable",
 			Options:    "",
