@@ -112,9 +112,18 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 		return env.ErrorDispatch(err)
 	}
 
+	orderID := checkoutOrder.GetID()
+
+	storeName := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName))
+	if storeName == "" {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "81e24346-786e-4528-a3d6-85fc514917cc", "store name is not set in config")
+	}
+
+	subject := "Your " + storeName + " Order, #" + orderID
+
 	// sending the email notification
 	emailAddress := utils.InterfaceToString(visitor["email"])
-	err = app.SendMail(emailAddress, "Order confirmation", confirmationEmail)
+	err = app.SendMail(emailAddress, subject, confirmationEmail)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
