@@ -284,69 +284,6 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 	return true
 }
 
-func registerVisitorAsOnlineHandler(event string, eventData map[string]interface{}) bool {
-
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
-
-		referrerType := ConstReferrerTypeDirect
-		referrer := ""
-
-		if event == "api.rts.visit" {
-			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				referrer = utils.InterfaceToString(api.GetContentValue(context, "referrer"))
-			}
-		}
-
-		if referrer != "" {
-			referrer, err := GetReferrer(referrer)
-			if err != nil {
-				return true
-			}
-
-			isSearchEngine := false
-			for index := 0; index < len(knownSearchEngines); index++ {
-				if strings.Contains(referrer, knownSearchEngines[index]) {
-					isSearchEngine = true
-				}
-			}
-
-			if isSearchEngine {
-				referrerType = ConstReferrerTypeSearch
-			} else {
-				referrerType = ConstReferrerTypeSite
-			}
-		}
-
-		if _, present := OnlineSessions[sessionID]; !present || OnlineSessions[sessionID] == nil {
-			updateSync.Lock()
-			OnlineSessions[sessionID] = &OnlineReferrer{}
-			updateSync.Unlock()
-
-			IncreaseOnline(referrerType)
-			if OnlineSessionsCount := len(OnlineSessions); OnlineSessionsCount > OnlineSessionsMax {
-				OnlineSessionsMax = OnlineSessionsCount
-			}
-		} else {
-			updateSync.RLock()
-			if OnlineSessions[sessionID].referrerType != referrerType {
-				DecreaseOnline(OnlineSessions[sessionID].referrerType)
-				IncreaseOnline(referrerType)
-			}
-			updateSync.RUnlock()
-		}
-
-		defer updateSync.Unlock()
-		updateSync.Lock()
-		if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] == nil {
-			OnlineSessions[sessionID].time = time.Now()
-			OnlineSessions[sessionID].referrerType = referrerType
-		}
-	}
-
-	return true
-}
-
 func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
 
 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {

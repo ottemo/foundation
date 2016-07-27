@@ -46,8 +46,6 @@ func initListners() error {
 	env.EventRegisterListener("api.checkout.setPayment", setPaymentHandler)
 	env.EventRegisterListener("checkout.success", purchasedHandler)
 	env.EventRegisterListener("checkout.success", salesHandler)
-	env.EventRegisterListener("api.rts.visit", registerVisitorAsOnlineHandler)
-	env.EventRegisterListener("api.request", registerVisitorAsOnlineHandler)
 	env.EventRegisterListener("api.request", visitorOnlineActionHandler)
 
 	return nil
