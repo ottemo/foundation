@@ -64,7 +64,6 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 	order := it.ToHashMap()
 	order["payment_method_title"] = it.GetPaymentMethod()
 	order["shipping_method_title"] = it.GetShippingMethod()
-	order["order_id"] := it.Get("_id")
 
 	// the dates in order should be converted to clients locale
 	// TODO: the dates to locale conversion should not happens there - it should be either part of order helper or utilities routine over resulting map
@@ -113,12 +112,14 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 		return env.ErrorDispatch(err)
 	}
 
+	orderID := utils.InterfaceToString(it.Get("_id"))
+
 	storeName := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName))
 	if storeName == "" {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "81e24346-786e-4528-a3d6-85fc514917cc", "store name is not set in config")
 	}
 
-	subject := "Your " + storeName + " Order, #" + order["order_id"]
+	subject := "Your " + storeName + " Order, #" + orderID
 
 	// sending the email notification
 	emailAddress := utils.InterfaceToString(visitor["email"])
