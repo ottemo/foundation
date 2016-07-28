@@ -1,11 +1,9 @@
 package rts
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
@@ -13,41 +11,41 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-func referrerHandler(event string, eventData map[string]interface{}) bool {
+// func referrerHandler(event string, eventData map[string]interface{}) bool {
 
-	if _, present := eventData["context"]; present {
-		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
+// 	if _, present := eventData["context"]; present {
+// 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
 
-			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
-			if xReferrer == "" {
-				return true
-			}
+// 			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
+// 			if xReferrer == "" {
+// 				return true
+// 			}
 
-			referrer, err := GetReferrer(xReferrer)
-			if err != nil {
-				return true
-			}
+// 			referrer, err := GetReferrer(xReferrer)
+// 			if err != nil {
+// 				return true
+// 			}
 
-			// excluding itself (i.e. "storefront" requests)
-			if strings.Contains(app.GetStorefrontURL(""), referrer) {
-				return true
-			}
+// 			// excluding itself (i.e. "storefront" requests)
+// 			if strings.Contains(app.GetStorefrontURL(""), referrer) {
+// 				return true
+// 			}
 
-			if _, present := referrers[referrer]; !present {
-				updateSync.Lock()
-				referrers[referrer] = 0
-				updateSync.Unlock()
-			}
-			referrers[referrer]++
+// 			if _, present := referrers[referrer]; !present {
+// 				updateSync.Lock()
+// 				referrers[referrer] = 0
+// 				updateSync.Unlock()
+// 			}
+// 			referrers[referrer]++
 
-			if err := saveNewReferrer(referrer); err != nil {
-				env.ErrorDispatch(err)
-			}
-		}
-	}
+// 			if err := saveNewReferrer(referrer); err != nil {
+// 				env.ErrorDispatch(err)
+// 			}
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }
 
 func visitsHandler(event string, eventData map[string]interface{}) bool {
 
@@ -284,17 +282,17 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 	return true
 }
 
-func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
+// func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
 
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
-		if sessionID := sessionInstance.GetID(); sessionID != "" {
-			defer updateSync.Unlock()
-			updateSync.Lock()
-			if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] != nil {
-				OnlineSessions[sessionID].time = time.Now()
-			}
-		}
-	}
+// 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
+// 		if sessionID := sessionInstance.GetID(); sessionID != "" {
+// 			defer updateSync.Unlock()
+// 			updateSync.Lock()
+// 			if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] != nil {
+// 				OnlineSessions[sessionID].time = time.Now()
+// 			}
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }

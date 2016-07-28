@@ -21,14 +21,14 @@ func setupAPI() error {
 
 	service.GET("rts/visits", APIGetVisits)
 	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
-	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
+	// service.GET("rts/visits/realtime", APIGetVisitsRealtime)
 
 	service.GET("rts/sales", APIGetSales)
 	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
 
 	service.GET("rts/conversion", APIGetConversion)
 	service.GET("rts/bestsellers", APIGetBestsellers)
-	service.GET("rts/referrers", APIGetReferrers)
+	// service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
 }
@@ -44,24 +44,24 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 }
 
 // APIGetReferrers returns list of unique referrers were registered
-func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
-	var result []map[string]interface{}
+// func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
+// 	var result []map[string]interface{}
 
-	for url, count := range referrers {
-		result = append(result, map[string]interface{}{
-			"url":   url,
-			"count": count,
-		})
+// 	for url, count := range referrers {
+// 		result = append(result, map[string]interface{}{
+// 			"url":   url,
+// 			"count": count,
+// 		})
 
-		if len(result) >= 20 {
-			break
-		}
-	}
+// 		if len(result) >= 20 {
+// 			break
+// 		}
+// 	}
 
-	result = utils.SortMapByKeys(result, true, "count", "url")
+// 	result = utils.SortMapByKeys(result, true, "count", "url")
 
-	return result, nil
-}
+// 	return result, nil
+// }
 
 // APIGetVisits returns site visit information for a specified local day
 func APIGetVisits(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -517,44 +517,44 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	return bestSellers, nil
 }
 
-// APIGetVisitsRealtime returns real-time information on current visits
-func APIGetVisitsRealtime(context api.InterfaceApplicationContext) (interface{}, error) {
-	result := make(map[string]interface{})
-	ratio := float64(0)
+// // APIGetVisitsRealtime returns real-time information on current visits
+// func APIGetVisitsRealtime(context api.InterfaceApplicationContext) (interface{}, error) {
+// 	result := make(map[string]interface{})
+// 	ratio := float64(0)
 
-	onlineSessionCount := len(OnlineSessions)
+// 	onlineSessionCount := len(OnlineSessions)
 
-	result["Online"] = onlineSessionCount
-	if OnlineSessionsMax == 0 || onlineSessionCount == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(onlineSessionCount) / float64(OnlineSessionsMax)
-	}
-	result["OnlineRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Online"] = onlineSessionCount
+// 	if OnlineSessionsMax == 0 || onlineSessionCount == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(onlineSessionCount) / float64(OnlineSessionsMax)
+// 	}
+// 	result["OnlineRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Direct"] = OnlineDirect
-	if OnlineDirectMax == 0 || OnlineDirect == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineDirect) / float64(OnlineDirectMax)
-	}
-	result["DirectRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Direct"] = OnlineDirect
+// 	if OnlineDirectMax == 0 || OnlineDirect == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineDirect) / float64(OnlineDirectMax)
+// 	}
+// 	result["DirectRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Search"] = OnlineSearch
-	if OnlineSearchMax == 0 || OnlineSearch == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineSearch) / float64(OnlineSearchMax)
-	}
-	result["SearchRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Search"] = OnlineSearch
+// 	if OnlineSearchMax == 0 || OnlineSearch == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineSearch) / float64(OnlineSearchMax)
+// 	}
+// 	result["SearchRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Site"] = OnlineSite
-	if OnlineSiteMax == 0 || OnlineSite == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineSite) / float64(OnlineSiteMax)
-	}
-	result["SiteRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Site"] = OnlineSite
+// 	if OnlineSiteMax == 0 || OnlineSite == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineSite) / float64(OnlineSiteMax)
+// 	}
+// 	result["SiteRatio"] = utils.Round(ratio, 0.5, 2)
 
-	return result, nil
-}
+// 	return result, nil
+// }

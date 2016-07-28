@@ -14,7 +14,7 @@ import (
 const (
 	ConstCollectionNameRTSSalesHistory = "rts_sales_history"
 	ConstCollectionNameRTSVisitors     = "rts_visitors"
-	ConstCollectionNameRTSReferrals    = "rts_referrals"
+	// ConstCollectionNameRTSReferrals    = "rts_referrals"
 
 	ConstReferrerTypeDirect = 0
 	ConstReferrerTypeSite   = 1
@@ -32,7 +32,7 @@ const (
 var (
 	updateSync sync.RWMutex
 
-	referrers      = make(map[string]int)         // collects and counts refers from external sites
+	// referrers      = make(map[string]int)         // collects and counts refers from external sites
 	statistic      = make(map[int64]*ActionsMade) // information about per hour site activity
 	monthStatistic = new(ActionsMade)             // information total month activity
 
@@ -45,24 +45,24 @@ var (
 	visitState = make(map[string]bool)
 
 	// OnlineSessions holds session based information about referrer type on first visit
-	OnlineSessions = make(map[string]*OnlineReferrer)
+	// OnlineSessions = make(map[string]*OnlineReferrer)
 
-	OnlineDirect      = 0
-	OnlineSite        = 0
-	OnlineSearch      = 0
-	OnlineSessionsMax = 0
-	OnlineDirectMax   = 0
-	OnlineSiteMax     = 0
-	OnlineSearchMax   = 0
+	// OnlineDirect      = 0
+	// OnlineSite        = 0
+	// OnlineSearch      = 0
+	// OnlineSessionsMax = 0
+	// OnlineDirectMax   = 0
+	// OnlineSiteMax     = 0
+	// OnlineSearchMax   = 0
 
-	// knownSearchEngines is a list of search engines used to determinate referer type
-	knownSearchEngines = []string{"www.daum.net", "www.google.com", "www.eniro.se", "www.naver.com", "www.yahoo.com",
-		"www.msn.com", "www.bing.com", "www.aol.com", "www.aol.com", "www.lycos.com", "www.ask.com", "www.altavista.com",
-		"search.netscape.com", "www.cnn.com", "www.about.com", "www.mamma.com", "www.alltheweb.com", "www.voila.fr",
-		"search.virgilio.it", "www.bing.com", "www.baidu.com", "www.alice.com", "www.yandex.com", "www.najdi.org.mk",
-		"www.aol.com", "www.mamma.com", "www.seznam.cz", "www.search.com", "www.wp.pl", "online.onetcenter.org",
-		"www.szukacz.pl", "www.yam.com", "www.pchome.com", "www.kvasir.no", "sesam.no", "www.ozu.es", "www.terra.com",
-		"www.mynet.com", "www.ekolay.net", "www.rambler.ru"}
+	// // knownSearchEngines is a list of search engines used to determinate referer type
+	// knownSearchEngines = []string{"www.daum.net", "www.google.com", "www.eniro.se", "www.naver.com", "www.yahoo.com",
+	// 	"www.msn.com", "www.bing.com", "www.aol.com", "www.aol.com", "www.lycos.com", "www.ask.com", "www.altavista.com",
+	// 	"search.netscape.com", "www.cnn.com", "www.about.com", "www.mamma.com", "www.alltheweb.com", "www.voila.fr",
+	// 	"search.virgilio.it", "www.bing.com", "www.baidu.com", "www.alice.com", "www.yandex.com", "www.najdi.org.mk",
+	// 	"www.aol.com", "www.mamma.com", "www.seznam.cz", "www.search.com", "www.wp.pl", "online.onetcenter.org",
+	// 	"www.szukacz.pl", "www.yam.com", "www.pchome.com", "www.kvasir.no", "sesam.no", "www.ozu.es", "www.terra.com",
+	// 	"www.mynet.com", "www.ekolay.net", "www.rambler.ru"}
 )
 
 // ActionsMade contains info of visits, cart create and sales made for a hour
@@ -84,7 +84,7 @@ type SellerInfo struct {
 }
 
 // OnlineReferrer holds information about visit referer type and visit time
-type OnlineReferrer struct {
-	referrerType int
-	time         time.Time
-}
+// type OnlineReferrer struct {
+// 	referrerType int
+// 	time         time.Time
+// }
