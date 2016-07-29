@@ -8,7 +8,9 @@ import (
 
 // Package global constants
 const (
-	ConstConfigPathPlans                  = "payment.stripe.plans"
+	ConstConfigPathGroup   = "general.stripesubscription"
+	ConstConfigPathAPIKey  = "general.stripesubscription.apiKey"
+	ConstConfigPathPlans                  = "general.stripesubscription.plans"
 	ConstErrorModule                      = "stripesubscription"
 	ConstErrorLevel                       = env.ConstErrorLevelActor
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
