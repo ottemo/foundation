@@ -52,7 +52,7 @@ func setupDB() error {
 
 	collection.AddColumn("description", db.TypeWPrecision(db.ConstTypeVarchar, 200), false)
 	collection.AddColumn("info", db.ConstTypeJSON, false)
-	collection.AddColumn("status", db.ConstTypeJSON, false)
+	collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
 
 	return nil
 }

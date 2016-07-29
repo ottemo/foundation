@@ -2,14 +2,15 @@ package stripesubscription
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/stripesubscription"
+	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
 	"github.com/stripe/stripe-go/sub"
-	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -36,54 +37,42 @@ func setupAPI() error {
 	return nil
 }
 
-// APISubscribe creates stripe subscription
+// APISubscription creates stripe subscription
 func APISubscription(context api.InterfaceApplicationContext) (interface{}, error) {
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "287e280f-3567-4935-9cbf-0f2f1afd149e", "You should log in to subscribe")
-	}
-	visitorModel, err := visitor.LoadVisitorByID(visitorID)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	stripeSubscriptionModel, err := stripesubscription.GetStripeSubscriptionModel()
+	// Check visitor
+	//----------------------------
+	visitorID := visitor.GetCurrentVisitorID(context)
+	if visitorID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "287e280f-3567-4935-9cbf-0f2f1afd149e", "You should log in to subscribe")
+	}
+	visitorInstance, err := visitor.LoadVisitorByID(visitorID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Set shipping address
+	// Check shipping address
 	//----------------------------
-	shippingAddress := requestData["shipping_address"]
-	if shippingAddress == nil {
+	reqShippingAddress := requestData["shipping_address"]
+	if reqShippingAddress == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c91225f6-6752-4608-90a6-4119d008a25b", "Shipping address should be specified")
 	}
-	shippingAddressModel, err := checkout.ValidateAddress(shippingAddress)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Set("shipping_address", shippingAddressModel.ToHashMap())
+	shippingAddress, err := checkout.ValidateAddress(reqShippingAddress)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-
-	// Set billing address
+	// Check billing address
 	//----------------------------
-	billingAddress := requestData["billing_address"]
-	if billingAddress == nil {
+	reqBillingAddress := requestData["billing_address"]
+	if reqBillingAddress == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "838ecfa5-3e58-45ef-b52d-061abeeeedc8", "Billing address should be specified")
 	}
-	billingAddressModel, err := checkout.ValidateAddress(billingAddress)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Set("billing_address", billingAddressModel.ToHashMap())
+	billingAddress, err := checkout.ValidateAddress(reqBillingAddress)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -102,55 +91,61 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card token should be specified")
 	}
 
-	stripe.Key = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
-
-	// Create customer on Stripe
+	// Check stripe api key
 	//----------------------------
+	stripeKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
+	if stripeKey == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "057379c6-0664-465e-881f-082b6bafab48", "Stripe API key is empty")
+	}
+
+	// Process subscription
+	//----------------------------
+	stripeSubscriptionInstance, err := stripesubscription.GetStripeSubscriptionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	stripe.Key = stripeKey
+
+	// Create new customer for Stripe
 	customerParams := &stripe.CustomerParams{
-		Email: visitorModel.GetEmail(),
+		Email: visitorInstance.GetEmail(),
 	}
 	customerParams.SetSource(ccToken)
-	customerForStripe, err := customer.New(customerParams)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Set("stripe_customer_id", customerForStripe.ID)
+	respStripeCustomer, err := customer.New(customerParams)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Create subscription on Stripe
-	//----------------------------
-	subscriptionForStripe, err := sub.New(&stripe.SubParams{
-		Customer: customerForStripe.ID,
-		Plan: planID,
+	// Create new subscription for Stripe
+	respStripeSubscription, err := sub.New(&stripe.SubParams{
+		Customer: respStripeCustomer.ID,
+		Plan:     planID,
 	})
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	err = stripeSubscriptionModel.Set("stripe_subscription_id", subscriptionForStripe.ID)
+
+	// Save subscription
+	//----------------------------
+	stripeSubscriptionInstance.Set("visitor_id", visitorInstance.GetID())
+	stripeSubscriptionInstance.Set("customer_name", visitorInstance.GetFullName())
+	stripeSubscriptionInstance.Set("customer_email", visitorInstance.GetEmail())
+	stripeSubscriptionInstance.Set("billing_address", billingAddress.ToHashMap())
+	stripeSubscriptionInstance.Set("shipping_address", shippingAddress.ToHashMap())
+	stripeSubscriptionInstance.Set("stripe_subscription_id", respStripeSubscription.ID)
+	stripeSubscriptionInstance.Set("stripe_customer_id", respStripeCustomer.ID)
+	stripeSubscriptionInstance.Set("next_payment_at", respStripeSubscription.PeriodEnd)
+	stripeSubscriptionInstance.Set("price", respStripeSubscription.Plan.Amount)
+	stripeSubscriptionInstance.Set("description", respStripeSubscription.Plan.Name)
+	stripeSubscriptionInstance.Set("status", "confirmed")
+
+	err = stripeSubscriptionInstance.Save()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = stripeSubscriptionModel.Set("visitor_id", visitorModel.GetID())
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Set("customer_name", visitorModel.GetFullName())
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Set("customer_email", visitorModel.GetEmail())
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	err = stripeSubscriptionModel.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	return stripeSubscriptionModel.ToHashMap(), nil
+	return stripeSubscriptionInstance.ToHashMap(), nil
 }
 
 // APIGetCoupon returns stripe coupon
@@ -160,7 +155,26 @@ func APIGetCoupon(context api.InterfaceApplicationContext) (interface{}, error) 
 
 // APIListSubscriptions returns a list of stripe subscriptions
 func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
-	return nil, nil
+	// List operation
+	stripeSubscriptionCollectionModel, err := stripesubscription.GetStripeSubscriptionCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	models.ApplyFilters(context, stripeSubscriptionCollectionModel.GetDBCollection())
+
+	// Check for a "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return stripeSubscriptionCollectionModel.GetDBCollection().Count()
+	}
+
+	// Limit parameter handle
+	stripeSubscriptionCollectionModel.ListLimit(models.GetListLimit(context))
+
+	// Extra parameter handle
+	models.ApplyExtraAttributes(context, stripeSubscriptionCollectionModel)
+
+	return stripeSubscriptionCollectionModel.List()
 }
 
 // APIGetSubscription returns specified stripe subscription information

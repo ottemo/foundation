@@ -8,12 +8,17 @@ import (
 
 // Package global constants
 const (
-	ConstConfigPathGroup   = "general.stripesubscription"
-	ConstConfigPathAPIKey  = "general.stripesubscription.apiKey"
+	ConstConfigPathGroup                  = "general.stripesubscription"
+	ConstConfigPathAPIKey                 = "general.stripesubscription.apiKey"
+	ConstConfigPathEnabled                = "general.stripesubscription.enabled"
 	ConstConfigPathPlans                  = "general.stripesubscription.plans"
 	ConstErrorModule                      = "stripesubscription"
 	ConstErrorLevel                       = env.ConstErrorLevelActor
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
+
+	ConstSubscriptionStatusSuspended = "suspended"
+	ConstSubscriptionStatusConfirmed = "confirmed"
+	ConstSubscriptionStatusCanceled  = "canceled"
 )
 
 // DefaultStripeSubscription struct to hold subscription information and represent

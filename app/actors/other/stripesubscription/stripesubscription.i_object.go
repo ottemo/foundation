@@ -340,13 +340,17 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Collection: ConstCollectionNameStripeSubscription,
 			Attribute:  "status",
 			Type:       db.ConstTypeVarchar,
-			IsRequired: true,
+			IsRequired: false,
 			IsStatic:   true,
 			Label:      "Status",
 			Group:      "General",
 			Editors:    "selector",
-			Options:    "",
-			Default:    "",
+			Options: strings.Join([]string{
+				ConstSubscriptionStatusSuspended,
+				ConstSubscriptionStatusConfirmed,
+				ConstSubscriptionStatusCanceled,
+			}, ","),
+			Default: "",
 		},
 	}
 

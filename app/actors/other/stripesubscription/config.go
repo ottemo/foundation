@@ -2,6 +2,7 @@ package stripesubscription
 
 import (
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupConfig setups package configuration values for a system
@@ -18,6 +19,33 @@ func setupConfig() error {
 		Path:  ConstConfigPathGroup,
 		Label: "Stripe Subscription",
 		Type:  env.ConstConfigTypeGroup,
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Enabled
+	//----------------------------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathEnabled,
+		Value:       false,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
+		Options:     nil,
+		Label:       "Enable",
+		Description: "Enables/disables subscritions through Stripe",
+		Image:       "",
+	}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+	// Stripe API key
+	//----------------------------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathAPIKey,
+		Label:       "API Key",
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Description: "Your API Key will be located in your Stripe Dashboard.",
 	}, nil)
 	if err != nil {
 		return env.ErrorDispatch(err)
