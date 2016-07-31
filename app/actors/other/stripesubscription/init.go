@@ -42,6 +42,7 @@ func setupDB() error {
 	collection.AddColumn("last_payment_info", db.ConstTypeJSON, false)
 
 	collection.AddColumn("stripe_customer_id", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
+	collection.AddColumn("stripe_subscription_id", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
 	collection.AddColumn("stripe_coupon", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 	collection.AddColumn("price", db.ConstTypeMoney, false)
 

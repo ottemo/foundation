@@ -11,6 +11,7 @@ import (
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
 	"github.com/stripe/stripe-go/event"
+	"github.com/stripe/stripe-go/sub"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -25,11 +26,11 @@ func setupAPI() error {
 	// Administrative
 	service.GET("stripe/subscriptions", api.IsAdmin(APIListSubscriptions))
 	service.GET("stripe/subscription/:id", api.IsAdmin(APIGetSubscription))
-	service.PUT("stripe/subscription/:id", api.IsAdmin(APIUpdateSubscription))
+	service.PUT("stripe/subscription/:id/cancel", APICancelSubscription)
 
 	// Visitor Account
 	service.GET("visit/stripe/subscriptions", APIListVisitorSubscriptions)
-	service.PUT("visit/stripe/subscription/:id", APIUpdateVisitorSubscription)
+	service.PUT("visit/stripe/subscription/:id/cancel", APICancelSubscription)
 
 	// Stripe events
 	service.POST("stripe/event", APIProcessStripeEvent)
@@ -44,7 +45,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Check visitor
+	// Validate visitor
 	//----------------------------
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
@@ -55,7 +56,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Check shipping address
+	// Validate shipping address
 	//----------------------------
 	reqShippingAddress := requestData["shipping_address"]
 	if reqShippingAddress == nil {
@@ -66,7 +67,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Check billing address
+	// Validate billing address
 	//----------------------------
 	reqBillingAddress := requestData["billing_address"]
 	if reqBillingAddress == nil {
@@ -77,21 +78,21 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// Check subscription plan ID
+	// Validate subscription plan ID
 	//----------------------------
 	planID := utils.InterfaceToString(requestData["plan_id"])
 	if planID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b153941b-27d3-4653-bc9f-61683b6047a9", "Subscription plan ID should be specified")
 	}
 
-	// Check credit card token
+	// Validate credit card token
 	//----------------------------
 	ccToken := utils.InterfaceToString(requestData["cc_token"])
 	if ccToken == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card token should be specified")
 	}
 
-	// Check stripe api key
+	// Validate stripe api key
 	//----------------------------
 	stripeKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
 	if stripeKey == "" {
@@ -134,19 +135,23 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	stripeSubscriptionInstance.Set("customer_email", visitorInstance.GetEmail())
 	stripeSubscriptionInstance.Set("billing_address", billingAddress.ToHashMap())
 	stripeSubscriptionInstance.Set("shipping_address", shippingAddress.ToHashMap())
-	stripeSubscriptionInstance.Set("stripe_customer_id", stripeCustomer.ID)
-	stripeSubscriptionInstance.Set("next_payment_at", stripeCustomer.Subs.Values[0].PeriodEnd)
-	stripeSubscriptionInstance.Set("price", stripeCustomer.Subs.Values[0].Plan.Amount)
 	stripeSubscriptionInstance.Set("description", stripeCustomer.Subs.Values[0].Plan.Name)
-	stripeSubscriptionInstance.Set("status", "confirmed")
+	stripeSubscriptionInstance.Set("status", stripeCustomer.Subs.Values[0].Status)
+	stripeSubscriptionInstance.Set("stripe_customer_id", stripeCustomer.ID)
+	stripeSubscriptionInstance.Set("price", stripeCustomer.Subs.Values[0].Plan.Amount)
+	stripeSubscriptionInstance.Set("period_end", stripeCustomer.Subs.Values[0].PeriodEnd)
+	stripeSubscriptionInstance.Set("notify_renew", requestData["notify_on_renew"])
+	stripeSubscriptionInstance.Set("renew_notified", false)
+	if utils.InterfaceToBool(requestData["is_gift"]) == true {
+		stripeSubscriptionInstance.Set("info", map[string]interface{}{"Gift": true})
+	}
 
 	err = stripeSubscriptionInstance.Save()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return stripeCustomer, nil
-	//return stripeSubscriptionInstance.ToHashMap(), nil
+	return stripeSubscriptionInstance.ToHashMap(), nil
 }
 
 // APIGetCoupon returns stripe coupon
@@ -183,18 +188,49 @@ func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, e
 	return nil, nil
 }
 
-// APIUpdateSubscription allows to update subscription status
-func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
-	return nil, nil
+// APICancelSubscription cancels subscription
+func APICancelSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
+	// Validate params
+	id := context.GetRequestArgument("id")
+	if id == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9147deb7-66ee-4608-82ad-620190193edf", "Subscription id should be specified")
+	}
+
+	stripeSubscriptionInstance, err := stripesubscription.LoadStripeSubscriptionByID(id)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// Validate ownership
+	isAdmin := api.ValidateAdminRights(context) == nil
+	isOwner := utils.InterfaceToString(stripeSubscriptionInstance.Get("visitor_id")) == visitor.GetCurrentVisitorID(context)
+
+	if !isAdmin && !isOwner {
+		context.SetResponseStatusForbidden()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ed71c6e1-744b-41e9-9b4b-95a4e6c1b75b", "Subscription ownership could not be verified")
+	}
+
+	// Set stripe api key
+	stripeKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
+	if stripeKey == "" {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7be27002-9d50-44a5-9b8b-11d22d757f11", "Stripe API key is empty")
+	}
+	stripe.Key = stripeKey
+
+	stripeSub, err := sub.Cancel(stripeSubscriptionInstance.GetStripeSubscriptionID(), nil)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a1f8f680-1c9d-4f96-bfdd-95aedd9ca4b0", err.Error())
+	}
+
+	return stripeSub, nil
 }
 
 // APIListVisitorSubscriptions returns a list of visitor's stripe subscriptions
 func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (interface{}, error) {
-	return nil, nil
-}
-
-// APIUpdateVisitorSubscription allows visitor to cancel subscription
-func APIUpdateVisitorSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
 	return nil, nil
 }
 

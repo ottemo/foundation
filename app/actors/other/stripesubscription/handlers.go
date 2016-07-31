@@ -22,7 +22,7 @@ func eventCancelHandler(evt *stripe.Event) error {
 			currentSubscription.Set("status", evt.Data.Obj["status"])
 			currentSubscription.Save()
 
-			email := utils.InterfaceToString(currentSubscription.Get("customer_email"))
+			email := currentSubscription.GetCustomerEmail()
 			emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelTemplate))
 			emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelSubject))
 
@@ -62,7 +62,7 @@ func eventUpdateHandler(evt *stripe.Event) error {
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
 		// If subscription current period has been changed
 		// we want to send a renewing notify email to a customer
-		currPeriodEnd := utils.InterfaceToTime(currentSubscription.Get("period_end"))
+		currPeriodEnd := currentSubscription.GetPeriodEnd()
 		newPeriodEnd := utils.InterfaceToTime(evt.Data.Obj["current_period_end"])
 		if newPeriodEnd.After(currPeriodEnd) {
 			currentSubscription.Set("renew_notified", false)

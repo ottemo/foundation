@@ -34,3 +34,19 @@ func GetStripeSubscriptionModel() (InterfaceStripeSubscription, error) {
 
 	return stripeSubscriptionModel, nil
 }
+
+// LoadStripeSubscriptionByID loads subscription data into current InterfaceStripeSubscription model implementation
+func LoadStripeSubscriptionByID(id string) (InterfaceStripeSubscription, error) {
+
+	stripeSubscriptionModel, err := GetStripeSubscriptionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = stripeSubscriptionModel.Load(id)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return stripeSubscriptionModel, nil
+}

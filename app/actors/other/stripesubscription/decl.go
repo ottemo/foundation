@@ -42,9 +42,10 @@ type DefaultStripeSubscription struct {
 	Status          string
 	LastPaymentInfo map[string]interface{}
 
-	StripeCustomerID string
-	StripeCoupon     string
-	Price            float64
+	StripeCustomerID     string
+	StripeSubscriptionID string
+	StripeCoupon         string
+	Price                float64
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

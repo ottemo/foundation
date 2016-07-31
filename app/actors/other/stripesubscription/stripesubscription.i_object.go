@@ -33,6 +33,8 @@ func (it *DefaultStripeSubscription) Get(attribute string) interface{} {
 		return it.LastPaymentInfo
 	case "stripe_customer_id":
 		return it.StripeCustomerID
+	case "stripe_subscription_id":
+		return it.StripeCustomerID
 	case "stripe_coupon":
 		return it.StripeCoupon
 	case "price":
@@ -76,6 +78,8 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 	case "last_payment_info":
 		it.LastPaymentInfo = utils.InterfaceToMap(value)
 	case "stripe_customer_id":
+		it.StripeCustomerID = utils.InterfaceToString(value)
+	case "stripe_subscription_id":
 		it.StripeCustomerID = utils.InterfaceToString(value)
 	case "stripe_coupon":
 		it.StripeCoupon = utils.InterfaceToString(value)
@@ -128,6 +132,7 @@ func (it *DefaultStripeSubscription) ToHashMap() map[string]interface{} {
 	result["last_payment_info"] = it.LastPaymentInfo
 
 	result["stripe_customer_id"] = it.StripeCustomerID
+	result["stripe_subscription_id"] = it.StripeCustomerID
 	result["stripe_coupon"] = it.StripeCoupon
 	result["price"] = it.Price
 
@@ -275,6 +280,19 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			IsRequired: true,
 			IsStatic:   true,
 			Label:      "Stripe Customer ID",
+			Group:      "General",
+			Editors:    "line_text",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      stripesubscription.ConstModelNameStripeSubscription,
+			Collection: ConstCollectionNameStripeSubscription,
+			Attribute:  "stripe_subscription_id",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: true,
+			IsStatic:   true,
+			Label:      "Stripe Subscription ID",
 			Group:      "General",
 			Editors:    "line_text",
 			Options:    "",
