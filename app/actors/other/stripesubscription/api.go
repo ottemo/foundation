@@ -10,7 +10,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/customer"
-	"github.com/stripe/stripe-go/sub"
+	"github.com/stripe/stripe-go/event"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -32,7 +32,7 @@ func setupAPI() error {
 	service.PUT("visit/stripe/subscription/:id", APIUpdateVisitorSubscription)
 
 	// Stripe events
-	service.POST("stripe/subscriptions", APIProcessStripeEvent)
+	service.POST("stripe/event", APIProcessStripeEvent)
 
 	return nil
 }
@@ -97,33 +97,34 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	if stripeKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "057379c6-0664-465e-881f-082b6bafab48", "Stripe API key is empty")
 	}
+	stripe.Key = stripeKey
 
-	// Process subscription
-	//----------------------------
 	stripeSubscriptionInstance, err := stripesubscription.GetStripeSubscriptionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	stripe.Key = stripeKey
-
-	// Create new customer for Stripe
+	// Create new customer and subscription on Stripe
 	customerParams := &stripe.CustomerParams{
 		Email: visitorInstance.GetEmail(),
+		Plan:  planID,
+		Shipping: &stripe.CustomerShippingDetails{
+			Name:  shippingAddress.GetFirstName() + " " + shippingAddress.GetLastName(),
+			Phone: shippingAddress.GetPhone(),
+			Address: stripe.Address{
+				Line1:   shippingAddress.GetAddressLine1(),
+				Line2:   shippingAddress.GetAddressLine2(),
+				City:    shippingAddress.GetCity(),
+				State:   shippingAddress.GetState(),
+				Zip:     shippingAddress.GetZipCode(),
+				Country: shippingAddress.GetCountry(),
+			},
+		},
 	}
 	customerParams.SetSource(ccToken)
-	respStripeCustomer, err := customer.New(customerParams)
+	stripeCustomer, err := customer.New(customerParams)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	// Create new subscription for Stripe
-	respStripeSubscription, err := sub.New(&stripe.SubParams{
-		Customer: respStripeCustomer.ID,
-		Plan:     planID,
-	})
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f3825627-1dd1-475f-a6f7-d3acaebe590e", err.Error())
 	}
 
 	// Save subscription
@@ -133,11 +134,10 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	stripeSubscriptionInstance.Set("customer_email", visitorInstance.GetEmail())
 	stripeSubscriptionInstance.Set("billing_address", billingAddress.ToHashMap())
 	stripeSubscriptionInstance.Set("shipping_address", shippingAddress.ToHashMap())
-	stripeSubscriptionInstance.Set("stripe_subscription_id", respStripeSubscription.ID)
-	stripeSubscriptionInstance.Set("stripe_customer_id", respStripeCustomer.ID)
-	stripeSubscriptionInstance.Set("next_payment_at", respStripeSubscription.PeriodEnd)
-	stripeSubscriptionInstance.Set("price", respStripeSubscription.Plan.Amount)
-	stripeSubscriptionInstance.Set("description", respStripeSubscription.Plan.Name)
+	stripeSubscriptionInstance.Set("stripe_customer_id", stripeCustomer.ID)
+	stripeSubscriptionInstance.Set("next_payment_at", stripeCustomer.Subs.Values[0].PeriodEnd)
+	stripeSubscriptionInstance.Set("price", stripeCustomer.Subs.Values[0].Plan.Amount)
+	stripeSubscriptionInstance.Set("description", stripeCustomer.Subs.Values[0].Plan.Name)
 	stripeSubscriptionInstance.Set("status", "confirmed")
 
 	err = stripeSubscriptionInstance.Save()
@@ -145,7 +145,8 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return stripeSubscriptionInstance.ToHashMap(), nil
+	return stripeCustomer, nil
+	//return stripeSubscriptionInstance.ToHashMap(), nil
 }
 
 // APIGetCoupon returns stripe coupon
@@ -199,5 +200,48 @@ func APIUpdateVisitorSubscription(context api.InterfaceApplicationContext) (inte
 
 // APIProcessStripeEvent listens to Stripe events and makes appropriate updates to subscriptions
 func APIProcessStripeEvent(context api.InterfaceApplicationContext) (interface{}, error) {
-	return nil, nil
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// Set stripe api key
+	stripeKey := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
+	if stripeKey == "" {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "66b29232-5f49-4c2f-baa6-4db95b931bbf", "Stripe API key is empty")
+	}
+	stripe.Key = stripeKey
+
+	// Get stripe event
+	eventID := utils.InterfaceToString(requestData["id"])
+	if eventID == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c4a15c78-6c95-400c-b516-67d65679ccb1", "Event ID should be scpecified")
+	}
+	evt, err := event.Get(eventID, nil)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2630a2ef-536f-4fff-a9e1-e6c678e05a9a", err.Error())
+	}
+
+	// Handle event
+	switch evt.Type {
+	case "customer.subscription.deleted":
+		err = eventCancelHandler(evt)
+	case "customer.subscription.updated":
+		err = eventUpdateHandler(evt)
+	case "invoice.payment_failed", "invoice.payment_succeeded":
+		err = eventPaymentHandler(evt)
+	default:
+		err = nil
+	}
+
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return "ok", nil
 }

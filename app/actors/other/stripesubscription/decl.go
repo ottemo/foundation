@@ -8,10 +8,16 @@ import (
 
 // Package global constants
 const (
-	ConstConfigPathGroup                  = "general.stripesubscription"
-	ConstConfigPathAPIKey                 = "general.stripesubscription.apiKey"
-	ConstConfigPathEnabled                = "general.stripesubscription.enabled"
-	ConstConfigPathPlans                  = "general.stripesubscription.plans"
+	ConstConfigPathGroup   = "general.stripesubscription"
+	ConstConfigPathAPIKey  = "general.stripesubscription.apiKey"
+	ConstConfigPathEnabled = "general.stripesubscription.enabled"
+	ConstConfigPathPlans   = "general.stripesubscription.plans"
+
+	ConstConfigPathEmailCancelSubject     = "general.stripesubscription.emailCancelSubject"
+	ConstConfigPathEmailCancelTemplate    = "general.stripesubscription.emailCancelTemplate"
+	ConstConfigPathEmailSubscribeSubject  = "general.stripesubscription.emailSubscribeSubject"
+	ConstConfigPathEmailSubscribeTemplate = "general.stripesubscription.emailSubscribeTemplate"
+
 	ConstErrorModule                      = "stripesubscription"
 	ConstErrorLevel                       = env.ConstErrorLevelActor
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
@@ -32,20 +38,21 @@ type DefaultStripeSubscription struct {
 	BillingAddress  map[string]interface{}
 	ShippingAddress map[string]interface{}
 
-	StripeSubscriptionID string
-	StripeCustomerID     string
-	StripeCoupon         string
-	LastPaymentInfo      map[string]interface{}
-	NextPaymentAt        time.Time
+	Description     string
+	Status          string
+	LastPaymentInfo map[string]interface{}
 
-	Price float64
+	StripeCustomerID string
+	StripeCoupon     string
+	Price            float64
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Info      map[string]interface{}
 
-	Description string
-	Info        map[string]interface{}
-	Status      string
+	PeriodEnd     time.Time
+	NotifyRenew   bool
+	RenewNotified bool
 }
 
 // DefaultStripeSubscriptionCollection is a default implementer of InterfaceStripeSubscriptionCollection

@@ -81,7 +81,39 @@ func setupConfig() error {
 ]`,
 		Image: "",
 	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
+	// Cancel subscription email subject
+	//----------------------------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathEmailCancelSubject,
+		Value:       "Subscription was canceled",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     "",
+		Label:       "Cancel Subscription Email: Subject",
+		Description: "",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Cancel subscription email body
+	//----------------------------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path: ConstConfigPathEmailCancelTemplate,
+		Value: `Dear {{.Visitor.name}},
+Your subscription was canceled`,
+		Type:        env.ConstConfigTypeHTML,
+		Editor:      "multiline_text",
+		Options:     "",
+		Label:       "Cancel Subscription Email: Body",
+		Description: "",
+		Image:       "",
+	}, nil)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

@@ -17,36 +17,38 @@ func (it *DefaultStripeSubscription) Get(attribute string) interface{} {
 		return it.id
 	case "visitor_id":
 		return it.VisitorID
-	case "customer_name":
-		return it.CustomerName
 	case "customer_email":
 		return it.CustomerEmail
+	case "customer_name":
+		return it.CustomerName
 	case "billing_address":
 		return it.BillingAddress
 	case "shipping_address":
 		return it.ShippingAddress
-	case "stripe_subscription_id":
-		return it.StripeSubscriptionID
+	case "description":
+		return it.Description
+	case "status":
+		return it.Status
+	case "last_payment_info":
+		return it.LastPaymentInfo
 	case "stripe_customer_id":
 		return it.StripeCustomerID
 	case "stripe_coupon":
 		return it.StripeCoupon
-	case "last_payment_info":
-		return it.LastPaymentInfo
-	case "next_payment_at":
-		return it.NextPaymentAt
 	case "price":
 		return it.Price
 	case "created_at":
 		return it.CreatedAt
 	case "updated_at":
 		return it.UpdatedAt
-	case "description":
-		return it.Description
 	case "info":
 		return it.Info
-	case "status":
-		return it.Status
+	case "period_end":
+		return it.PeriodEnd
+	case "notify_renew":
+		return it.NotifyRenew
+	case "renew_notified":
+		return it.RenewNotified
 	}
 
 	return nil
@@ -67,28 +69,30 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 		it.BillingAddress = utils.InterfaceToMap(value)
 	case "shipping_address":
 		it.ShippingAddress = utils.InterfaceToMap(value)
-	case "stripe_subscription_id":
-		it.StripeSubscriptionID = utils.InterfaceToString(value)
+	case "description":
+		it.Description = utils.InterfaceToString(value)
+	case "status":
+		it.Status = utils.InterfaceToString(value)
+	case "last_payment_info":
+		it.LastPaymentInfo = utils.InterfaceToMap(value)
 	case "stripe_customer_id":
 		it.StripeCustomerID = utils.InterfaceToString(value)
 	case "stripe_coupon":
 		it.StripeCoupon = utils.InterfaceToString(value)
-	case "last_payment_info":
-		it.LastPaymentInfo = utils.InterfaceToMap(value)
-	case "next_payment_at":
-		it.NextPaymentAt = utils.InterfaceToTime(value)
 	case "price":
 		it.Price = utils.InterfaceToFloat64(value)
 	case "created_at":
 		it.CreatedAt = utils.InterfaceToTime(value)
 	case "updated_at":
 		it.UpdatedAt = utils.InterfaceToTime(value)
-	case "description":
-		it.Description = utils.InterfaceToString(value)
 	case "info":
 		it.Info = utils.InterfaceToMap(value)
-	case "status":
-		it.Status = utils.InterfaceToString(value)
+	case "period_end":
+		it.PeriodEnd = utils.InterfaceToTime(value)
+	case "notify_renew":
+		it.NotifyRenew = utils.InterfaceToBool(value)
+	case "renew_notified":
+		it.RenewNotified = utils.InterfaceToBool(value)
 	}
 
 	return nil
@@ -119,25 +123,27 @@ func (it *DefaultStripeSubscription) ToHashMap() map[string]interface{} {
 	result["billing_address"] = it.BillingAddress
 	result["shipping_address"] = it.ShippingAddress
 
-	result["stripe_subscription_id"] = it.StripeSubscriptionID
+	result["description"] = it.Description
+	result["status"] = it.Status
+	result["last_payment_info"] = it.LastPaymentInfo
+
 	result["stripe_customer_id"] = it.StripeCustomerID
 	result["stripe_coupon"] = it.StripeCoupon
-	result["last_payment_info"] = it.LastPaymentInfo
-	result["next_payment_at"] = it.NextPaymentAt
-
 	result["price"] = it.Price
 
 	result["created_at"] = it.CreatedAt
 	result["updated_at"] = it.UpdatedAt
-
-	result["description"] = it.Description
 	result["info"] = it.Info
-	result["status"] = it.Status
+
+	result["period_end"] = it.PeriodEnd
+	result["notify_renew"] = it.NotifyRenew
+	result["renew_notified"] = it.RenewNotified
 
 	return result
 }
 
 // GetAttributesInfo returns the Stripe Subscription attributes information in an array
+// TODO: list all attributes
 func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttributeInfo {
 	info := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
@@ -221,13 +227,43 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 		models.StructAttributeInfo{
 			Model:      stripesubscription.ConstModelNameStripeSubscription,
 			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "stripe_subscription_id",
-			Type:       db.ConstTypeVarchar,
-			IsRequired: true,
+			Attribute:  "description",
+			Type:       db.ConstTypeText,
+			IsRequired: false,
 			IsStatic:   true,
-			Label:      "Stripe Subscription ID",
+			Label:      "Description",
 			Group:      "General",
-			Editors:    "line_text",
+			Editors:    "not_editable",
+			Options:    "",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      stripesubscription.ConstModelNameStripeSubscription,
+			Collection: ConstCollectionNameStripeSubscription,
+			Attribute:  "status",
+			Type:       db.ConstTypeVarchar,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Status",
+			Group:      "General",
+			Editors:    "selector",
+			Options: strings.Join([]string{
+				ConstSubscriptionStatusSuspended,
+				ConstSubscriptionStatusConfirmed,
+				ConstSubscriptionStatusCanceled,
+			}, ","),
+			Default: "",
+		},
+		models.StructAttributeInfo{
+			Model:      stripesubscription.ConstModelNameStripeSubscription,
+			Collection: ConstCollectionNameStripeSubscription,
+			Attribute:  "last_payment_info",
+			Type:       db.ConstTypeJSON,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Last Payment Information",
+			Group:      "General",
+			Editors:    "not_editable",
 			Options:    "",
 			Default:    "",
 		},
@@ -254,32 +290,6 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Label:      "Stripe Coupon",
 			Group:      "General",
 			Editors:    "line_text",
-			Options:    "",
-			Default:    "",
-		},
-		models.StructAttributeInfo{
-			Model:      stripesubscription.ConstModelNameStripeSubscription,
-			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "last_payment_info",
-			Type:       db.ConstTypeJSON,
-			IsRequired: false,
-			IsStatic:   true,
-			Label:      "Last Payment Information",
-			Group:      "General",
-			Editors:    "not_editable",
-			Options:    "",
-			Default:    "",
-		},
-		models.StructAttributeInfo{
-			Model:      stripesubscription.ConstModelNameStripeSubscription,
-			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "next_payment_at",
-			Type:       db.ConstTypeDatetime,
-			IsRequired: false,
-			IsStatic:   true,
-			Label:      "Next Payment At",
-			Group:      "General",
-			Editors:    "not_editable",
 			Options:    "",
 			Default:    "",
 		},
@@ -325,32 +335,15 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 		models.StructAttributeInfo{
 			Model:      stripesubscription.ConstModelNameStripeSubscription,
 			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "description",
-			Type:       db.ConstTypeText,
+			Attribute:  "period_end",
+			Type:       db.ConstTypeDatetime,
 			IsRequired: false,
 			IsStatic:   true,
-			Label:      "Description",
+			Label:      "Period End",
 			Group:      "General",
 			Editors:    "not_editable",
 			Options:    "",
 			Default:    "",
-		},
-		models.StructAttributeInfo{
-			Model:      stripesubscription.ConstModelNameStripeSubscription,
-			Collection: ConstCollectionNameStripeSubscription,
-			Attribute:  "status",
-			Type:       db.ConstTypeVarchar,
-			IsRequired: false,
-			IsStatic:   true,
-			Label:      "Status",
-			Group:      "General",
-			Editors:    "selector",
-			Options: strings.Join([]string{
-				ConstSubscriptionStatusSuspended,
-				ConstSubscriptionStatusConfirmed,
-				ConstSubscriptionStatusCanceled,
-			}, ","),
-			Default: "",
 		},
 	}
 
