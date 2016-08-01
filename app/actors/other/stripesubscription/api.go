@@ -15,6 +15,7 @@ import (
 	"github.com/stripe/stripe-go/event"
 	"github.com/stripe/stripe-go/plan"
 	"github.com/stripe/stripe-go/sub"
+	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -55,8 +56,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// Set stripe api key
-	err = setStripeAPIKey()
-	if err != nil {
+	if err = setStripeAPIKey(); err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
@@ -79,12 +79,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 
 	// Process shipping address
 	//----------------------------
-	reqShippingAddress := requestData["shipping_address"]
-	if reqShippingAddress == nil {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c91225f6-6752-4608-90a6-4119d008a25b", "Shipping address should be specified")
-	}
-	shippingAddress, err := checkout.ValidateAddress(reqShippingAddress)
+	shippingAddress, err := checkout.ValidateAddress(requestData["shipping_address"])
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
@@ -93,12 +88,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 
 	// Process billing address
 	//----------------------------
-	reqBillingAddress := requestData["billing_address"]
-	if reqBillingAddress == nil {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "838ecfa5-3e58-45ef-b52d-061abeeeedc8", "Billing address should be specified")
-	}
-	billingAddress, err := checkout.ValidateAddress(reqBillingAddress)
+	billingAddress, err := checkout.ValidateAddress(requestData["billing_address"])
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
@@ -119,7 +109,7 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 	stripeSubscriptionInstance.Set("description", stripePlan.Name)
 	// Set price as plan amount
-	price := stripePlan.Amount
+	price := float64(stripePlan.Amount / 100.)
 
 	// Validate credit card token
 	//----------------------------
@@ -211,8 +201,7 @@ func APIGetCoupon(context api.InterfaceApplicationContext) (interface{}, error) 
 	}
 
 	// Set stripe api key
-	err := setStripeAPIKey()
-	if err != nil {
+	if err := setStripeAPIKey(); err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
@@ -300,8 +289,8 @@ func APICancelSubscription(context api.InterfaceApplicationContext) (interface{}
 	}
 
 	// Set stripe api key
-	err = setStripeAPIKey()
-	if err != nil {
+
+	if err = setStripeAPIKey(); err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
@@ -388,14 +377,15 @@ func APIProcessStripeEvent(context api.InterfaceApplicationContext) (interface{}
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
+	fmt.Println(requestData)
 
 	// Set stripe api key
-	err = setStripeAPIKey()
-	if err != nil {
+	if err = setStripeAPIKey(); err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
+	fmt.Println(requestData)
 	// Get stripe event
 	eventID := utils.InterfaceToString(requestData["id"])
 	if eventID == "" {
