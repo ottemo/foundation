@@ -1,59 +1,39 @@
 package stripesubscription
 
 import (
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/stripesubscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"github.com/stripe/stripe-go"
 )
 
-//eventCancelHandler changes subscription status and sends email to a customer when subscription was canceled
+// eventCancelHandler processes 'customer.subscription.deleted' event from Stripe
+// evt.Data.Obj describes Stripe subscription object https://stripe.com/docs/api#subscription_object
 func eventCancelHandler(evt *stripe.Event) error {
-	stripeCustomerID := utils.InterfaceToString(evt.Data.Obj["customer"])
+	stripeSub := evt.Data.Obj
+	stripeCustomerID := utils.InterfaceToString(stripeSub["customer"])
 	stripeSubscriptionCollection, err := getSubscriptionsByStripeCustomerID(stripeCustomerID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
-		status := currentSubscription.Get("status")
-		if status != "canceled" && status != "unpaid" {
-			currentSubscription.Set("status", evt.Data.Obj["status"])
-			currentSubscription.Save()
-
-			email := currentSubscription.GetCustomerEmail()
-			emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelTemplate))
-			emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelSubject))
-
-			if emailTemplate == "" {
-				emailTemplate = `Dear {{.Visitor.name}},
-Your subscription was canceled`
-			}
-			if emailSubject == "" {
-				emailSubject = "Subscription Cancelation"
-			}
-			templateMap := map[string]interface{}{
-				"Visitor": map[string]interface{}{"name": currentSubscription.Get("customer_name")},
-				"Site":    map[string]interface{}{"url": app.GetStorefrontURL("")},
-			}
-			emailToVisitor, err := utils.TextTemplate(emailTemplate, templateMap)
-			if err != nil {
-				return env.ErrorDispatch(err)
-			}
-
-			if err = app.SendMail(email, emailSubject, emailToVisitor); err != nil {
-				return env.ErrorDispatch(err)
-			}
+		currentSubscription.Set("status", stripeSub["status"])
+		err = currentSubscription.Save()
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// eventUpdateHandler updates subscription
+// eventUpdateHandler processes 'customer.subscription.updated' event from Stripe
+// evt.Data.Obj describes Stripe subscription object https://stripe.com/docs/api#subscription_object
+// updates subscription status, period, renew_notified flag
 func eventUpdateHandler(evt *stripe.Event) error {
-	stripeCustomerID := utils.InterfaceToString(evt.Data.Obj["customer"])
+	stripeSub := evt.Data.Obj
+	stripeCustomerID := utils.InterfaceToString(stripeSub["customer"])
 	stripeSubscriptionCollection, err := getSubscriptionsByStripeCustomerID(stripeCustomerID)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -63,30 +43,39 @@ func eventUpdateHandler(evt *stripe.Event) error {
 		// If subscription current period has been changed
 		// we want to send a renewing notify email to a customer
 		currPeriodEnd := currentSubscription.GetPeriodEnd()
-		newPeriodEnd := utils.InterfaceToTime(evt.Data.Obj["current_period_end"])
+		newPeriodEnd := utils.InterfaceToTime(stripeSub["current_period_end"])
 		if newPeriodEnd.After(currPeriodEnd) {
 			currentSubscription.Set("renew_notified", false)
 		}
 
 		currentSubscription.Set("period_end", newPeriodEnd)
-		currentSubscription.Set("status", evt.Data.Obj["status"])
-		currentSubscription.Save()
+		currentSubscription.Set("status", stripeSub["status"])
+		err = currentSubscription.Save()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// eventPaymentSucceededHandler saves last payment information
+// eventPaymentHandler processes 'invoice.payment_failed' and 'invoice.payment_succeeded' events from Stripe
+// evt.Data.Obj describes Stripe invoice object https://stripe.com/docs/api#invoice_object
+// saves all invoice data into last_payment_info
 func eventPaymentHandler(evt *stripe.Event) error {
-	stripeCustomerID := utils.InterfaceToString(evt.Data.Obj["customer"])
+	stripeInvoice := evt.Data.Obj
+	stripeCustomerID := utils.InterfaceToString(stripeInvoice["customer"])
 	stripeSubscriptionCollection, err := getSubscriptionsByStripeCustomerID(stripeCustomerID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
-		currentSubscription.Set("last_payment_info", evt.Data.Obj)
-		currentSubscription.Save()
+		currentSubscription.Set("last_payment_info", stripeInvoice)
+		err = currentSubscription.Save()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

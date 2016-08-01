@@ -2,6 +2,7 @@ package stripesubscription
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/stripesubscription"
@@ -185,6 +186,7 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 
 // APIGetSubscription returns specified stripe subscription information
 func APIGetSubscription(context api.InterfaceApplicationContext) (interface{}, error) {
+
 	return nil, nil
 }
 
@@ -224,6 +226,33 @@ func APICancelSubscription(context api.InterfaceApplicationContext) (interface{}
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a1f8f680-1c9d-4f96-bfdd-95aedd9ca4b0", err.Error())
+	}
+
+	stripeSubscriptionInstance.Set("status", stripeSub.Status)
+	stripeSubscriptionInstance.Save()
+
+	email := stripeSubscriptionInstance.GetCustomerEmail()
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelTemplate))
+	emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailCancelSubject))
+
+	if emailTemplate == "" {
+		emailTemplate = `Dear {{.Visitor.name}},
+Your subscription was canceled`
+	}
+	if emailSubject == "" {
+		emailSubject = "Subscription Cancelation"
+	}
+	templateMap := map[string]interface{}{
+		"Visitor": map[string]interface{}{"name": stripeSubscriptionInstance.Get("customer_name")},
+		"Site":    map[string]interface{}{"url": app.GetStorefrontURL("")},
+	}
+	emailToVisitor, err := utils.TextTemplate(emailTemplate, templateMap)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if err = app.SendMail(email, emailSubject, emailToVisitor); err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return stripeSub, nil
