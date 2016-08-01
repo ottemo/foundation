@@ -71,6 +71,7 @@ func eventPaymentHandler(evt *stripe.Event) error {
 	}
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
+		// TODO: convert dates
 		currentSubscription.Set("last_payment_info", stripeInvoice)
 		err = currentSubscription.Save()
 		if err != nil {
