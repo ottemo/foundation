@@ -11,8 +11,7 @@ import (
 // evt.Data.Obj describes Stripe subscription object https://stripe.com/docs/api#subscription_object
 func eventCancelHandler(evt *stripe.Event) error {
 	stripeSub := evt.Data.Obj
-	stripeCustomerID := utils.InterfaceToString(stripeSub["customer"])
-	stripeSubscriptionCollection, err := getSubscriptionsByStripeCustomerID(stripeCustomerID)
+	stripeSubscriptionCollection, err := getSubscriptionsByStripeCustomerID(utils.InterfaceToString(stripeSub["customer"]))
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

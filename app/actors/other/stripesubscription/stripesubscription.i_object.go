@@ -49,8 +49,6 @@ func (it *DefaultStripeSubscription) Get(attribute string) interface{} {
 		return it.PeriodEnd
 	case "notify_renew":
 		return it.NotifyRenew
-	case "renew_notified":
-		return it.RenewNotified
 	}
 
 	return nil
@@ -95,8 +93,6 @@ func (it *DefaultStripeSubscription) Set(attribute string, value interface{}) er
 		it.PeriodEnd = utils.InterfaceToTime(value)
 	case "notify_renew":
 		it.NotifyRenew = utils.InterfaceToBool(value)
-	case "renew_notified":
-		it.RenewNotified = utils.InterfaceToBool(value)
 	}
 
 	return nil
@@ -142,7 +138,6 @@ func (it *DefaultStripeSubscription) ToHashMap() map[string]interface{} {
 
 	result["period_end"] = it.PeriodEnd
 	result["notify_renew"] = it.NotifyRenew
-	result["renew_notified"] = it.RenewNotified
 
 	return result
 }

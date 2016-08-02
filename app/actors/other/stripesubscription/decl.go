@@ -51,9 +51,8 @@ type DefaultStripeSubscription struct {
 	UpdatedAt time.Time
 	Info      map[string]interface{}
 
-	PeriodEnd     time.Time
-	NotifyRenew   bool
-	RenewNotified bool
+	PeriodEnd   time.Time
+	NotifyRenew bool
 }
 
 // DefaultStripeSubscriptionCollection is a default implementer of InterfaceStripeSubscriptionCollection

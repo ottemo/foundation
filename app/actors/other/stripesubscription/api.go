@@ -15,7 +15,6 @@ import (
 	"github.com/stripe/stripe-go/event"
 	"github.com/stripe/stripe-go/plan"
 	"github.com/stripe/stripe-go/sub"
-	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -111,15 +110,8 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	// Set price as plan amount
 	price := float64(stripePlan.Amount / 100.)
 
-	// Validate credit card token
-	//----------------------------
-	ccToken := utils.InterfaceToString(requestData["cc_token"])
-	if ccToken == "" {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card token should be specified")
-	}
-
 	// Prepare parameters for Stripe subscription
+	//----------------------------
 	customerParams := &stripe.CustomerParams{
 		Email: visitorInstance.GetEmail(),
 		Plan:  planID,
@@ -136,6 +128,14 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 			},
 		},
 	}
+
+	// Validate credit card token
+	//----------------------------
+	ccToken := utils.InterfaceToString(requestData["cc_token"])
+	if ccToken == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card token should be specified")
+	}
 	customerParams.SetSource(ccToken)
 
 	// Process coupon and adjust price
@@ -148,13 +148,19 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 
 		if stripeCoupon.Valid != true {
 			context.SetResponseStatusBadRequest()
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10787e67-fa86-4728-8b1d-ca0f95c4c81c", "Coupon is not valid")
+			return "Coupon is not valid", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10787e67-fa86-4728-8b1d-ca0f95c4c81c", "Coupon is not valid")
 		}
 
 		stripeSubscriptionInstance.Set("stripe_coupon", stripeCoupon.ID)
-		//TODO: adjust price here
+
+		// Adjust price
+		if stripeCoupon.Percent != 0 {
+			price = stripeCoupon.Percent / 100. * price
+		} else if stripeCoupon.Amount != 0 {
+			price = price - float64(stripeCoupon.Amount / 100.)
+		}
 	}
-	stripeSubscriptionInstance.Set("price", price)
+	stripeSubscriptionInstance.Set("price", utils.RoundPrice(price))
 
 	// Set notify on renewing flag
 	if utils.InterfaceToBool(requestData["notify_on_renew"]) == true {
@@ -377,7 +383,6 @@ func APIProcessStripeEvent(context api.InterfaceApplicationContext) (interface{}
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
-	fmt.Println(requestData)
 
 	// Set stripe api key
 	if err = setStripeAPIKey(); err != nil {
@@ -385,7 +390,6 @@ func APIProcessStripeEvent(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
-	fmt.Println(requestData)
 	// Get stripe event
 	eventID := utils.InterfaceToString(requestData["id"])
 	if eventID == "" {
