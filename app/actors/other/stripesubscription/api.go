@@ -15,6 +15,7 @@ import (
 	"github.com/stripe/stripe-go/event"
 	"github.com/stripe/stripe-go/plan"
 	"github.com/stripe/stripe-go/sub"
+	"time"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -110,11 +111,26 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	// Set price as plan amount
 	price := float64(stripePlan.Amount / 100.)
 
+	// Calculate Trial period
+	dateCharge := utils.InterfaceToInt(env.ConfigGetValue(ConstConfigPathChargeDate))
+	if dateCharge == 0 {
+		dateCharge = ConstDefaultChargeDate
+	}
+	yearNow, monthNow, dateNow := time.Now().Date()
+	if (dateNow >= dateCharge) {
+		monthNow++
+		if monthNow > 12 {
+			yearNow++
+		}
+	}
+	trialEnd := time.Date(yearNow, monthNow, dateCharge, 0, 0, 0, 0, time.UTC)
+
 	// Prepare parameters for Stripe subscription
 	//----------------------------
 	customerParams := &stripe.CustomerParams{
 		Email: visitorInstance.GetEmail(),
 		Plan:  planID,
+		TrialEnd: trialEnd.Unix(),
 		Shipping: &stripe.CustomerShippingDetails{
 			Name:  shippingAddress.GetFirstName() + " " + shippingAddress.GetLastName(),
 			Phone: shippingAddress.GetPhone(),
@@ -168,7 +184,6 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	} else {
 		stripeSubscriptionInstance.Set("notify_renew", false)
 	}
-	stripeSubscriptionInstance.Set("renew_notified", false)
 
 	// Set gift information
 	if utils.InterfaceToBool(requestData["is_gift"]) == true {

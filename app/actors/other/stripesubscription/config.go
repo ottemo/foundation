@@ -118,5 +118,21 @@ Your subscription was canceled`,
 		return env.ErrorDispatch(err)
 	}
 
+	// Charge date
+	//----------------------------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path: ConstConfigPathChargeDate,
+		Value: 25,
+		Type:        env.ConstConfigTypeInteger,
+		Editor:      "text",
+		Options:     "",
+		Label:       "Charge on Date",
+		Description: "Users will be charged on this date of month",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

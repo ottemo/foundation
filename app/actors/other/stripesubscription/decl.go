@@ -12,6 +12,7 @@ const (
 	ConstConfigPathAPIKey  = "general.stripesubscription.apiKey"
 	ConstConfigPathEnabled = "general.stripesubscription.enabled"
 	ConstConfigPathPlans   = "general.stripesubscription.plans"
+	ConstConfigPathChargeDate = "general.stripesubscription.chargeDate"
 
 	ConstConfigPathEmailCancelSubject     = "general.stripesubscription.emailCancelSubject"
 	ConstConfigPathEmailCancelTemplate    = "general.stripesubscription.emailCancelTemplate"
@@ -22,9 +23,13 @@ const (
 	ConstErrorLevel                       = env.ConstErrorLevelActor
 	ConstCollectionNameStripeSubscription = "stripe_subscription"
 
-	ConstSubscriptionStatusSuspended = "suspended"
-	ConstSubscriptionStatusConfirmed = "confirmed"
-	ConstSubscriptionStatusCanceled  = "canceled"
+	ConstDefaultChargeDate = 25
+
+	ConstSubscriptionStatusActive = "active"
+	ConstSubscriptionStatusCanceled = "canceled"
+	ConstSubscriptionStatusPastDue = "past_due"
+	ConstSubscriptionStatusUnpaid = "unpaid"
+	ConstSubscriptionStatusTrialing = "trialing"
 )
 
 // DefaultStripeSubscription struct to hold subscription information and represent

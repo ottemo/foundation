@@ -248,9 +248,11 @@ func (it *DefaultStripeSubscription) GetAttributesInfo() []models.StructAttribut
 			Group:      "General",
 			Editors:    "selector",
 			Options: strings.Join([]string{
-				ConstSubscriptionStatusSuspended,
-				ConstSubscriptionStatusConfirmed,
+				ConstSubscriptionStatusActive,
 				ConstSubscriptionStatusCanceled,
+				ConstSubscriptionStatusPastDue,
+				ConstSubscriptionStatusUnpaid,
+				ConstSubscriptionStatusTrialing,
 			}, ","),
 			Default: "",
 		},
