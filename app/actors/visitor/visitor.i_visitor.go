@@ -259,8 +259,9 @@ func (it *DefaultVisitor) ResetPassword() error {
 		"reset_password_url": linkHref,
 		"reset_time_length":  "30",
 	}
-	shopInfo := map[string]string{
+	siteInfo := map[string]string{
 		"name": utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName)),
+		"url": app.GetStorefrontURL(""),
 	}
 
 	subject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathLostPasswordEmailSubject))
@@ -270,24 +271,24 @@ func (it *DefaultVisitor) ResetPassword() error {
 
 	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathLostPasswordEmailTemplate))
 	if emailTemplate == "" {
-		emailTemplate := `<p>You have requested to have your password reset for your account at {{.shop.name}}</p>
+		emailTemplate := `<p>You have requested to have your password reset for your account at {{.Site.name}}</p>
 		<p></p>
-		<p>Please visit this url within the next {{.customer.reset_time_length}} minutes to reset your password. </p>
+		<p>Please visit this url within the next {{.Customer.reset_time_length}} minutes to reset your password. </p>
 		<p></p>
-		<p><a href="{{.customer.reset_password_url}}">{{.customer.reset_password_url}}</a></p>
+		<p><a href="{{.Customer.reset_password_url}}">{{.Customer.reset_password_url}}</a></p>
 		<p></p>
 		<p>If you received this email in error, you may safely ignore this request.</p>`
 
 		if it.GetFullName() != "" {
-			emailTemplate = `<p>Dear {{.customer.name}},</p>
+			emailTemplate = `<p>Dear {{.Customer.name}},</p>
 			<p></p>` + emailTemplate
 		}
 	}
 
 	passwordRecoveryEmail, err := utils.TextTemplate(emailTemplate,
 		map[string]interface{}{
-			"customer": customerInfo,
-			"shop":     shopInfo,
+			"Customer": customerInfo,
+			"Site":     siteInfo,
 		})
 
 	if err != nil {

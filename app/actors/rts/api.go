@@ -243,7 +243,8 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 
 		todayFromStamp := todayFrom.Unix()
 		if _, present := statistic[todayFromStamp]; present && statistic[todayFromStamp] != nil {
-			visits += statistic[todayFromStamp].TotalVisits
+			// TODO: this is hack until we fix visit count for real
+			visits += statistic[todayFromStamp].TotalVisits / 2
 			addToCart += statistic[todayFromStamp].Cart
 			visitCheckout += statistic[todayFromStamp].VisitCheckout
 			setPayment += statistic[todayFromStamp].SetPayment

@@ -42,7 +42,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 // processOrder is called from the checkout handler to process the order and call Subscribe if the trigger sku is in the
 // order
-func processOrder(order order.InterfaceOrder) error {
+func processOrder(checkoutOrder order.InterfaceOrder) error {
 
 	var triggerSKU, listID string
 
@@ -57,15 +57,15 @@ func processOrder(order order.InterfaceOrder) error {
 	}
 
 	// inspect for sku
-	if orderHasSKU := containsItem(order, triggerSKU); orderHasSKU {
+	if orderHasSKU := containsItem(checkoutOrder, triggerSKU); orderHasSKU {
 
 		var registration Registration
-		registration.EmailAddress = utils.InterfaceToString(order.Get("customer_email"))
+		registration.EmailAddress = utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 		registration.Status = ConstMailchimpSubscribeStatus
 
-		// split Order.CustomerName into sub-parts
-		customerName := utils.InterfaceToString(order.Get("customer_name"))
-		firstName, lastName := splitName(customerName)
+		// split checkoutOrder.CustomerName into sub-parts
+		customerName := utils.InterfaceToString(checkoutOrder.Get("customer_name"))
+		firstName, lastName := order.SplitFullName(customerName)
 		registration.MergeFields = map[string]string{
 			"FNAME": firstName,
 			"LNAME": lastName,
@@ -78,27 +78,6 @@ func processOrder(order order.InterfaceOrder) error {
 	}
 
 	return nil
-}
-
-// splitName will take a fullname as a string and split it into first name and last names
-func splitName(name string) (string, string) {
-
-	var firstName, lastName string
-
-	fullName := strings.SplitN(name, " ", 2)
-
-	if len(fullName) == 2 {
-		firstName = fullName[0]
-		lastName = fullName[1]
-	} else if len(fullName) == 1 {
-		firstName = fullName[0]
-		lastName = ""
-	} else {
-		firstName = ""
-		lastName = ""
-	}
-
-	return firstName, lastName
 }
 
 //Subscribe a user to a MailChimp list when passed:
@@ -130,7 +109,7 @@ func Subscribe(listID string, registration Registration) error {
 }
 
 // containsItem will inspect an order for a sku in the trigger list
-func containsItem(order order.InterfaceOrder, triggerList string) bool {
+func containsItem(checkoutOrder order.InterfaceOrder, triggerList string) bool {
 
 	skuList := strings.Split(triggerList, ",")
 
@@ -139,7 +118,7 @@ func containsItem(order order.InterfaceOrder, triggerList string) bool {
 		skuList[index] = strings.TrimSpace(val)
 	}
 
-	for _, item := range order.GetItems() {
+	for _, item := range checkoutOrder.GetItems() {
 		if inList := utils.IsInListStr(item.GetSku(), skuList); inList {
 			return true
 		}

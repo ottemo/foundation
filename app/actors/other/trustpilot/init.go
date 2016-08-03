@@ -1,17 +1,20 @@
 package trustpilot
 
 import (
+	"time"
+
+	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // init makes package self-initialization routine before app start
 func init() {
 	app.OnAppStart(onAppStart)
 	env.RegisterOnConfigStart(setupConfig)
+	api.RegisterOnRestServiceStart(setupAPI)
 }
 
 // Function for every day checking for email sent to customers who order is already two week

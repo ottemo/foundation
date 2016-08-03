@@ -328,10 +328,12 @@ func registerVisitorAsOnlineHandler(event string, eventData map[string]interface
 				OnlineSessionsMax = OnlineSessionsCount
 			}
 		} else {
+			updateSync.RLock()
 			if OnlineSessions[sessionID].referrerType != referrerType {
 				DecreaseOnline(OnlineSessions[sessionID].referrerType)
 				IncreaseOnline(referrerType)
 			}
+			updateSync.RUnlock()
 		}
 
 		defer updateSync.Unlock()

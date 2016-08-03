@@ -8,7 +8,9 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
@@ -44,7 +46,101 @@ func setupAPI() error {
 	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
 	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
 
+	// TODO: remove after patching
+	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
+
 	return nil
+}
+
+// APIPatchOptions converts product options to snake case in products and subscriptions
+// TODO: remove after patching
+func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, error) {
+	warnings := make(map[string]string)
+
+	// get product collection
+	productCollection, err := product.GetProductCollectionModel()
+	if err != nil {
+		return warnings, env.ErrorDispatch(err)
+	}
+
+	// update products option
+	for _, currentProduct := range productCollection.ListProducts() {
+		newOptions := ConvertProductOptionsToSnakeCase(currentProduct)
+		err = currentProduct.Set("options", newOptions)
+		if err != nil {
+			warnings["product ID: "+currentProduct.GetID()] = utils.InterfaceToString(err)
+		}
+
+		err := currentProduct.Save()
+		if err != nil {
+			return warnings, env.ErrorDispatch(err)
+		}
+	}
+
+	// get subscriptions collection
+	subscriptionCollection, err := subscription.GetSubscriptionCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	currentCart, err := cart.GetCartModel()
+	if err != nil {
+		return warnings, env.ErrorDispatch(err)
+	}
+
+	for _, currentSubscription := range subscriptionCollection.ListSubscriptions() {
+		var updatedItems []subscription.StructSubscriptionItem
+		for _, subscriptionItem := range currentSubscription.GetItems() {
+			updatedOptions := make(map[string]interface{})
+			// Labels where used as a key for options key: value, so we will convert both of them
+			for optionKey, optionValue := range subscriptionItem.Options {
+				updatedOptions[utils.StrToSnakeCase(optionKey)] = utils.StrToSnakeCase(utils.InterfaceToString(optionValue))
+			}
+			subscriptionItem.Options = updatedOptions
+			if _, err = currentCart.AddItem(subscriptionItem.ProductID, subscriptionItem.Qty, subscriptionItem.Options); err != nil {
+				warnings["subscription ID: "+currentSubscription.GetID()] = utils.InterfaceToString(err)
+			}
+
+			updatedItems = append(updatedItems, subscriptionItem)
+		}
+
+		currentSubscription.Set("items", updatedItems)
+
+		err = currentSubscription.Save()
+		if err != nil {
+			return warnings, env.ErrorDispatch(err)
+		}
+	}
+
+	return warnings, nil
+}
+
+// ConvertProductOptionsToSnakeCase updates option keys for product to case_snake
+// TODO: remove after patching
+func ConvertProductOptionsToSnakeCase(product product.InterfaceProduct) map[string]interface{} {
+
+	newOptions := make(map[string]interface{})
+
+	// product options
+	for optionsName, currentOption := range product.GetOptions() {
+		currentOption := utils.InterfaceToMap(currentOption)
+
+		if option, present := currentOption["options"]; present {
+			newOptionValues := make(map[string]interface{})
+
+			// option values
+			for key, value := range utils.InterfaceToMap(option) {
+				newOptionValues[utils.StrToSnakeCase(key)] = value
+
+			}
+
+			currentOption["options"] = newOptionValues
+
+		}
+		newOptions[utils.StrToSnakeCase(optionsName)] = currentOption
+
+	}
+
+	return newOptions
 }
 
 // APIListProductAttributes returns a list of product attributes

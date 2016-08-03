@@ -458,7 +458,6 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 			"billing_name": billingName,
 		},
 	}
-
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
 	paymentResult, err := paymentMethod.Authorize(nil, paymentInfo)
 	if err != nil {
