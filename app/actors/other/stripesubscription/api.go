@@ -13,7 +13,6 @@ import (
 	"github.com/stripe/stripe-go/coupon"
 	"github.com/stripe/stripe-go/customer"
 	"github.com/stripe/stripe-go/event"
-	"github.com/stripe/stripe-go/plan"
 	"github.com/stripe/stripe-go/sub"
 	"time"
 )
@@ -102,34 +101,28 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b153941b-27d3-4653-bc9f-61683b6047a9", "Subscription plan ID should be specified")
 	}
-	stripePlan, err := plan.Get(planID, nil)
-	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ba0c64db-e723-4c0f-a646-d06c7ca8f17c", err.Error())
-	}
-	stripeSubscriptionInstance.Set("description", stripePlan.Name)
-	// Set price as plan amount
-	price := float64(stripePlan.Amount / 100.)
 
 	// Calculate Trial period
-	dateCharge := utils.InterfaceToInt(env.ConfigGetValue(ConstConfigPathChargeDate))
-	if dateCharge == 0 {
-		dateCharge = ConstDefaultChargeDate
+	//----------------------------
+	dateStart := utils.InterfaceToInt(env.ConfigGetValue(ConstConfigPathChargeDate))
+	if dateStart == 0 {
+		dateStart = ConstDefaultChargeDate
 	}
 	yearNow, monthNow, dateNow := time.Now().Date()
-	if (dateNow >= dateCharge) {
+	if dateNow >= dateStart {
 		monthNow++
 		if monthNow > 12 {
+			monthNow = 1
 			yearNow++
 		}
 	}
-	trialEnd := time.Date(yearNow, monthNow, dateCharge, 0, 0, 0, 0, time.UTC)
+	trialEnd := time.Date(yearNow, monthNow, dateStart, 0, 0, 0, 0, time.UTC)
 
-	// Prepare parameters for Stripe subscription
+	// Set parameters for Stripe subscription
 	//----------------------------
 	customerParams := &stripe.CustomerParams{
-		Email: visitorInstance.GetEmail(),
-		Plan:  planID,
+		Email:    visitorInstance.GetEmail(),
+		Plan:     planID,
 		TrialEnd: trialEnd.Unix(),
 		Shipping: &stripe.CustomerShippingDetails{
 			Name:  shippingAddress.GetFirstName() + " " + shippingAddress.GetLastName(),
@@ -145,38 +138,64 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 		},
 	}
 
-	// Validate credit card token
+	// Check credit card token
 	//----------------------------
 	ccToken := utils.InterfaceToString(requestData["cc_token"])
 	if ccToken == "" {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card token should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a20e1235-c23c-40f0-ae5a-5475abf3427e", "Credit card should be specified")
 	}
 	customerParams.SetSource(ccToken)
 
-	// Process coupon and adjust price
-	if utils.InterfaceToString(requestData["coupon"]) != "" {
-		stripeCoupon, err := getCoupon(utils.InterfaceToString(requestData["coupon"]))
+	// Process coupon
+	//----------------------------
+	couponID := utils.InterfaceToString(requestData["coupon"])
+	var stripeCoupon *stripe.Coupon
+	if couponID != "" {
+		stripeCoupon, err := coupon.Get(couponID, nil)
 		if err != nil {
-			context.SetResponseStatusInternalServerError()
-			return nil, env.ErrorDispatch(err)
+			context.SetResponseStatusNotFound()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10787e67-fa86-4728-8b1d-ca0f95c4c81c", "Can't obtain coupon")
 		}
 
 		if stripeCoupon.Valid != true {
-			context.SetResponseStatusBadRequest()
-			return "Coupon is not valid", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10787e67-fa86-4728-8b1d-ca0f95c4c81c", "Coupon is not valid")
+			context.SetResponseStatusNotFound()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10787e67-fa86-4728-8b1d-ca0f95c4c81c", "Coupon is not valid")
 		}
 
+		customerParams.Coupon = stripeCoupon.ID
 		stripeSubscriptionInstance.Set("stripe_coupon", stripeCoupon.ID)
+	}
 
-		// Adjust price
+	// Create subscription on Stripe
+	//----------------------------
+	stripeCustomer, err := customer.New(customerParams)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f3825627-1dd1-475f-a6f7-d3acaebe590e", err.Error())
+	}
+
+	stripeSub := stripeCustomer.Subs.Values[0]
+	stripePlan := stripeSub.Plan
+
+	// Calculate total price
+	//----------------------------
+	// Price is in cents in Stripe, so we convert it to USD
+	price := float64(stripePlan.Amount / 100.)
+	if stripeSubscriptionInstance.Get("stripe_coupon") != "" {
 		if stripeCoupon.Percent != 0 {
-			price = stripeCoupon.Percent / 100. * price
+			price = price - float64(stripeCoupon.Percent/100.)*price
 		} else if stripeCoupon.Amount != 0 {
-			price = price - float64(stripeCoupon.Amount / 100.)
+			price = price - float64(stripeCoupon.Amount/100.)
 		}
 	}
+
 	stripeSubscriptionInstance.Set("price", utils.RoundPrice(price))
+	stripeSubscriptionInstance.Set("description", stripeSub.Plan.Name)
+	stripeSubscriptionInstance.Set("status", stripeSub.Status)
+	stripeSubscriptionInstance.Set("stripe_customer_id", stripeCustomer.ID)
+	stripeSubscriptionInstance.Set("stripe_subscription_id", stripeSub.ID)
+	stripeSubscriptionInstance.Set("period_end", stripeSub.PeriodEnd)
 
 	// Set notify on renewing flag
 	if utils.InterfaceToBool(requestData["notify_on_renew"]) == true {
@@ -184,32 +203,36 @@ func APISubscription(context api.InterfaceApplicationContext) (interface{}, erro
 	} else {
 		stripeSubscriptionInstance.Set("notify_renew", false)
 	}
-
 	// Set gift information
 	if utils.InterfaceToBool(requestData["is_gift"]) == true {
 		stripeSubscriptionInstance.Set("info", map[string]interface{}{"Gift": true})
 	}
 
-	stripeCustomer, err := customer.New(customerParams)
-	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f3825627-1dd1-475f-a6f7-d3acaebe590e", err.Error())
+	// Send an email
+	//----------------------------
+	email := stripeSubscriptionInstance.GetCustomerEmail()
+	emailTemplate := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailSubscribeTemplate))
+	emailSubject := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmailSubscribeSubject))
+
+	if emailTemplate == "" {
+		emailTemplate = `Dear {{.Visitor.name}},
+Your successfully subscribed to StemBox`
 	}
-	stripeSub := stripeCustomer.Subs.Values[0]
-	stripeSubscriptionInstance.Set("status", stripeSub.Status)
-	stripeSubscriptionInstance.Set("stripe_customer_id", stripeCustomer.ID)
-	stripeSubscriptionInstance.Set("stripe_subscription_id", stripeSub.ID)
-	stripeSubscriptionInstance.Set("period_end", stripeSub.PeriodEnd)
-
-	err = stripeSubscriptionInstance.Save()
+	if emailSubject == "" {
+		emailSubject = "Stembox Subscription"
+	}
+	templateMap := map[string]interface{}{
+		"Visitor": map[string]interface{}{"name": stripeSubscriptionInstance.Get("customer_name")},
+		"Site":    map[string]interface{}{"url": app.GetStorefrontURL("")},
+	}
+	emailToVisitor, err := utils.TextTemplate(emailTemplate, templateMap)
 	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorDispatch(err)
+		env.ErrorDispatch(err)
 	}
 
-	// TODO: send email
+	app.SendMail(email, emailSubject, emailToVisitor)
 
-	return stripeSubscriptionInstance.ToHashMap(), nil
+	return stripeSubscriptionInstance.ToHashMap(), stripeSubscriptionInstance.Save()
 }
 
 // APIGetCoupon returns stripe coupon
@@ -227,10 +250,10 @@ func APIGetCoupon(context api.InterfaceApplicationContext) (interface{}, error) 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	stripeCoupon, err := getCoupon(id)
+	stripeCoupon, err := coupon.Get(id, nil)
 	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorDispatch(err)
+		context.SetResponseStatusNotFound()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "07e788a5-17ad-4a16-9345-38d210f3630a", "Coupon is not found")
 	}
 
 	if stripeCoupon.Valid != true {
@@ -310,7 +333,6 @@ func APICancelSubscription(context api.InterfaceApplicationContext) (interface{}
 	}
 
 	// Set stripe api key
-
 	if err = setStripeAPIKey(); err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
@@ -449,14 +471,4 @@ func setStripeAPIKey() error {
 	}
 	stripe.Key = stripeKey
 	return nil
-}
-
-// getCoupon obtain coupon from Stripe by coupon id
-func getCoupon(id string) (*stripe.Coupon, error) {
-	stripeCoupon, err := coupon.Get(id, nil)
-	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "91e36260-2b84-433b-8529-6ce58bf591e1", err.Error())
-	}
-
-	return stripeCoupon, nil
 }

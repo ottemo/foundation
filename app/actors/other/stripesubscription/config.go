@@ -121,8 +121,8 @@ Your subscription was canceled`,
 	// Charge date
 	//----------------------------
 	err = config.RegisterItem(env.StructConfigItem{
-		Path: ConstConfigPathChargeDate,
-		Value: 25,
+		Path:        ConstConfigPathChargeDate,
+		Value:       25,
 		Type:        env.ConstConfigTypeInteger,
 		Editor:      "text",
 		Options:     "",

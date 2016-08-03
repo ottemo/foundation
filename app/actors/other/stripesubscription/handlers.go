@@ -18,8 +18,7 @@ func eventCancelHandler(evt *stripe.Event) error {
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
 		currentSubscription.Set("status", stripeSub["status"])
-		err = currentSubscription.Save()
-		if err != nil {
+		if err = currentSubscription.Save(); err != nil {
 			return err
 		}
 	}
@@ -39,18 +38,9 @@ func eventUpdateHandler(evt *stripe.Event) error {
 	}
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
-		// If subscription current period has been changed
-		// we want to send a renewing notify email to a customer
-		currPeriodEnd := currentSubscription.GetPeriodEnd()
-		newPeriodEnd := utils.InterfaceToTime(stripeSub["current_period_end"])
-		if newPeriodEnd.After(currPeriodEnd) {
-			currentSubscription.Set("renew_notified", false)
-		}
-
-		currentSubscription.Set("period_end", newPeriodEnd)
+		currentSubscription.Set("period_end", stripeSub["current_period_end"])
 		currentSubscription.Set("status", stripeSub["status"])
-		err = currentSubscription.Save()
-		if err != nil {
+		if err = currentSubscription.Save(); err != nil {
 			return err
 		}
 	}
@@ -70,12 +60,14 @@ func eventPaymentHandler(evt *stripe.Event) error {
 	}
 
 	for _, currentSubscription := range stripeSubscriptionCollection.ListSubscriptions() {
-		// TODO: convert dates
+		// TODO: what data we want to save here?
 		currentSubscription.Set("last_payment_info", stripeInvoice)
-		err = currentSubscription.Save()
-		if err != nil {
+
+		if err = currentSubscription.Save(); err != nil {
 			return err
 		}
+
+		// TODO: send emails
 	}
 
 	return nil

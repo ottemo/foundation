@@ -8,10 +8,10 @@ import (
 
 // Package global constants
 const (
-	ConstConfigPathGroup   = "general.stripesubscription"
-	ConstConfigPathAPIKey  = "general.stripesubscription.apiKey"
-	ConstConfigPathEnabled = "general.stripesubscription.enabled"
-	ConstConfigPathPlans   = "general.stripesubscription.plans"
+	ConstConfigPathGroup      = "general.stripesubscription"
+	ConstConfigPathAPIKey     = "general.stripesubscription.apiKey"
+	ConstConfigPathEnabled    = "general.stripesubscription.enabled"
+	ConstConfigPathPlans      = "general.stripesubscription.plans"
 	ConstConfigPathChargeDate = "general.stripesubscription.chargeDate"
 
 	ConstConfigPathEmailCancelSubject     = "general.stripesubscription.emailCancelSubject"
@@ -25,10 +25,10 @@ const (
 
 	ConstDefaultChargeDate = 25
 
-	ConstSubscriptionStatusActive = "active"
+	ConstSubscriptionStatusActive   = "active"
 	ConstSubscriptionStatusCanceled = "canceled"
-	ConstSubscriptionStatusPastDue = "past_due"
-	ConstSubscriptionStatusUnpaid = "unpaid"
+	ConstSubscriptionStatusPastDue  = "past_due"
+	ConstSubscriptionStatusUnpaid   = "unpaid"
 	ConstSubscriptionStatusTrialing = "trialing"
 )
 
