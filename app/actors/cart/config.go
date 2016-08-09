@@ -18,6 +18,7 @@ func setupConfig() error {
 		Editor: "select",
 		Options: map[string]string{
 			"0":   "Never",
+			"-1":  "After 1 hour",
 			"-6":  "After 6 hours",
 			"-24": "After 24 hours",
 		},
