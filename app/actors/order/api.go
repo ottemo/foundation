@@ -34,6 +34,7 @@ func setupAPI() error {
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
 	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
 	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
+	service.POST("order/status", api.IsAdmin(APIChangeOrdersStatus))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitorOrders)
@@ -425,4 +426,42 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	csvWriter.Flush()
 
 	return "", nil
+}
+
+// APIChangeOrdersStatus change orders status
+//   - order ids should be specified in "IDs" argument
+//   - status should be specified in "status" argument
+func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {}, error){
+
+	// check request context
+	//---------------------
+	status := context.GetRequestArgument("status")
+	if status == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d00647d-505a-4092-b821-20dd8638e471", "new status should be specified")
+	}
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	orderIDsValue, present := requestData["IDs"]
+	if !present {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "order ids should be specified")
+	}
+
+	// operation
+	for _, orderID := range utils.InterfaceToArray(orderIDsValue) {
+		orderModel, err := order.LoadOrderByID(utils.InterfaceToString(orderID))
+		if  err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		if err = orderModel.SetStatus(status); err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+		orderModel.Save()
+	}
+
+	return "ok", nil
 }
