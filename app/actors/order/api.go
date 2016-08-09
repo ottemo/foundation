@@ -460,7 +460,9 @@ func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {
 		if err = orderModel.SetStatus(status); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		orderModel.Save()
+		if err = orderModel.Save(); err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
 	}
 
 	return "ok", nil
