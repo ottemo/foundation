@@ -30,12 +30,8 @@ type InterfaceProduct interface {
 	GetPrice() float64
 	GetWeight() float64
 
-	GetQty() int
-
 	GetAppliedOptions() map[string]interface{}
 	GetOptions() map[string]interface{}
-
-	GetInventory() []map[string]interface{}
 
 	ApplyOptions(map[string]interface{}) error
 
@@ -45,6 +41,7 @@ type InterfaceProduct interface {
 	models.InterfaceMedia
 	models.InterfaceListable
 	models.InterfaceCustomAttributes
+	models.InterfaceExternalAttributes
 }
 
 // InterfaceProductCollection represents interface to access business layer implementation of product collection

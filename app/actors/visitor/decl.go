@@ -46,7 +46,7 @@ type DefaultVisitor struct {
 
 	CreatedAt time.Time
 
-	*attributes.CustomAttributes
+	*attributes.ModelCustomAttributes
 }
 
 // DefaultVisitorCollection is a default implementer of InterfaceVisitorCollection
