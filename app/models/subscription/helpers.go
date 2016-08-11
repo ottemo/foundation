@@ -96,3 +96,11 @@ func GetSubscriptionPeriodValue(option string) int {
 func GetSubscriptionOptionValues() map[string]int {
 	return optionValues
 }
+
+// GetSubscriptionCronExpr return cron expression by option value
+func GetSubscriptionCronExpr(key int) string {
+	if cronExprValue, present := cronExpr[key]; present {
+		return cronExprValue
+	}
+	return cronExpr[optionValues[ConstConfigPathSubscriptionExecutionOptionHour]]
+}

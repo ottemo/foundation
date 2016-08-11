@@ -17,6 +17,8 @@ const (
 	ConstCollectionNameSubscription = "subscription"
 
 	ConstTimeDay = time.Hour * 24
+
+	ConstSchedulerTaskName = "subscriptionProcess"
 )
 
 var (
