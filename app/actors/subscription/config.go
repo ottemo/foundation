@@ -171,15 +171,15 @@ provider, please create new subscription using valid credit card.`,
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        subscription.ConstConfigPathSubscriptionExecutionTime,
-		Value:       subscription.ConstConfigPathSubscriptionExecutionOptionHour,
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "select",
+		Path:   subscription.ConstConfigPathSubscriptionExecutionTime,
+		Value:  subscription.ConstConfigPathSubscriptionExecutionOptionHour,
+		Type:   env.ConstConfigTypeVarchar,
+		Editor: "select",
 		Options: map[string]string{
-			subscription.ConstConfigPathSubscriptionExecutionOptionMinute:	"Every Minute",
-			subscription.ConstConfigPathSubscriptionExecutionOptionHour:	"Hourly",
+			subscription.ConstConfigPathSubscriptionExecutionOptionMinute: "Debug - Every Minute",
+			subscription.ConstConfigPathSubscriptionExecutionOptionHour:   "Production - Hourly",
 		},
-		Label:       "Execution Time of Subscription Processing",
+		Label:       "Mode of Execution",
 		Description: "If subscription enabled it will be processed in specified time.",
 		Image:       "",
 	}, env.FuncConfigValueValidator(executionTimeUpdate))

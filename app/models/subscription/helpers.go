@@ -1,11 +1,12 @@
 package subscription
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // GetSubscriptionCollectionModel retrieves current InterfaceSubscriptionCollection model implementation

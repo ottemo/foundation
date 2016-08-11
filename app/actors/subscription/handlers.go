@@ -295,7 +295,8 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 }
 
 func updateCronJob(newExecutionTimeOption interface{}) error {
-	executionTimeOption := utils.InterfaceToString(newExecutionTimeOption);
+
+	executionTimeOption := utils.InterfaceToString(newExecutionTimeOption)
 	executionTimeCronExpr := subscription.GetSubscriptionCronExpr(
 		subscription.GetSubscriptionPeriodValue(executionTimeOption))
 
