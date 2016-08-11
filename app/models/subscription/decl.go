@@ -16,6 +16,10 @@ const (
 
 	ConstConfigPathSubscription        = "general.subscription"
 	ConstConfigPathSubscriptionEnabled = "general.subscription.enabled"
+	ConstConfigPathSubscriptionExecutionTime	= "general.subscription.executionTime"
+
+	ConstConfigPathSubscriptionExecutionOptionHour		= "hour"
+	ConstConfigPathSubscriptionExecutionOptionMinute	= "minute"
 
 	ConstConfigPathSubscriptionProducts = "general.subscription.products"
 
@@ -41,7 +45,12 @@ const (
 var (
 	optionValues = map[string]int{
 		"every_5_days": 5, "every_30_days": 30, "every_60_days": 60, "every_90_days": 90, "every_120_days": 120,
-		"": 0, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1,
+		"": 0, "minute": 1, "10": 10, "30": 30, "60": 60, "90": 90, "hour": -1, "2hours": -2, "day": 1,
 		"just_once": 0, "30_days": 30, "60_days": 60, "90_days": 90, "120_days": 120,
+	}
+
+	cronExpr = map[int]string{
+		optionValues[ConstConfigPathSubscriptionExecutionOptionMinute]:	"* * * * *",
+		optionValues[ConstConfigPathSubscriptionExecutionOptionHour]:	"5 * * * *",
 	}
 )

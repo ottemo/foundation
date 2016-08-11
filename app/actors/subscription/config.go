@@ -161,5 +161,32 @@ provider, please create new subscription using valid credit card.`,
 		return env.ErrorDispatch(err)
 	}
 
+	executionTimeUpdate := func(newExecutionTimeOption interface{}) (interface{}, error) {
+
+		if err := updateCronJob(newExecutionTimeOption); err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		return newExecutionTimeOption, nil
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:   subscription.ConstConfigPathSubscriptionExecutionTime,
+		Value:  subscription.ConstConfigPathSubscriptionExecutionOptionHour,
+		Type:   env.ConstConfigTypeVarchar,
+		Editor: "select",
+		Options: map[string]string{
+			subscription.ConstConfigPathSubscriptionExecutionOptionMinute: "Debug - Every Minute",
+			subscription.ConstConfigPathSubscriptionExecutionOptionHour:   "Production - Hourly",
+		},
+		Label:       "Mode of Execution",
+		Description: "If subscription enabled it will be processed in specified time.",
+		Image:       "",
+	}, env.FuncConfigValueValidator(executionTimeUpdate))
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }
