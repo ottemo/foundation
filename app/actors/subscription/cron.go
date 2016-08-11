@@ -18,7 +18,7 @@ func placeOrders(params map[string]interface{}) error {
 		return nil
 	}
 
-	currentHourBeginning := time.Now().Truncate(time.Minute)
+	currentHourBeginning := time.Now().Truncate(time.Hour)
 
 	subscriptionCollection, err := db.GetCollection(ConstCollectionNameSubscription)
 	if err != nil {
