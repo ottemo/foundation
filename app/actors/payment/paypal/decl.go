@@ -39,8 +39,8 @@ const (
 	ConstConfigPathSignature = "payment.paypal.signature"
 	ConstConfigPathAction    = "payment.paypal.action"
 
-	ConstConfigStagingGateway = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout"
-	ConstConfigProductionGateway = "https://www.paypal.com/webscr?cmd=_express-checkout"
+	ConstConfigStagingPayPalExpressGateway = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout"
+	ConstConfigPayPalExpressProductionGateway = "https://www.paypal.com/webscr?cmd=_express-checkout"
 
 	// PayPal PayFlow Pro API constants
 
