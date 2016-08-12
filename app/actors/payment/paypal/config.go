@@ -79,16 +79,17 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	// choose PayPal gateway according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGateway,
-		Value:       "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout",
+		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     nil,
-		Label:       "Gateway",
-		Description: "PayPal gateway",
+		Editor:      "select",
+		Options:     map[string]string{ConstConfigStagingGateway: "Staging", ConstConfigProductionGateway: "Production"},
+		Label:       "Mode",
+		Description: "change PayPal gateway according to the workflow mode",
 		Image:       "",
-	}, nil)
+	    }, nil)
 
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -266,16 +267,17 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	// choose host according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathPayPalPayflowHost,
-		Value:       "pilot-payflowpro.paypal.com",
+		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     nil,
-		Label:       "Host",
-		Description: "Payflow host header value",
+		Editor:      "select",
+		Options:     map[string]string{ConstConfigPayPalStagingHost: "Staging", ConstConfigPayPalProductionHost: "Production"},
+		Label:       "Mode",
+		Description: "change PayPal host according to the workflow mode",
 		Image:       "",
-	}, nil)
+	    }, nil)
 
 	if err != nil {
 		return env.ErrorDispatch(err)
