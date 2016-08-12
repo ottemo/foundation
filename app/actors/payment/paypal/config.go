@@ -60,25 +60,6 @@ func setupConfig() error {
 		return value, nil
 	})
 
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathNVP,
-		Value:       "https://api-3t.sandbox.paypal.com/nvp",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     nil,
-		Label:       "NVP Gateway",
-		Description: "URL to send Name-Value Pair request",
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
 	// choose PayPal gateway according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathGateway,
