@@ -428,7 +428,7 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	return "", nil
 }
 
-// APIChangeOrderStatus change orders status
+// APIChangeOrderStatus will change orders to the state included in the status request variable
 //   - order ids should be specified in "IDs" argument
 //   - status should be specified in "status" argument
 func APIChangeOrderStatus(context api.InterfaceApplicationContext) (interface{}, error) {
@@ -448,10 +448,10 @@ func APIChangeOrderStatus(context api.InterfaceApplicationContext) (interface{},
 	}
 	status := utils.InterfaceToString(statusValue)
 
-	orderIDsValue, present := requestData["IDs"]
+	orderIDsValue, present := requestData["order_id"]
 	if !present {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "missing argument in request: IDs")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "missing argument in request: order_id")
 	}
 	orderIDs := utils.InterfaceToArray(orderIDsValue)
 
