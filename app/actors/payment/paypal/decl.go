@@ -40,7 +40,7 @@ const (
 	ConstConfigPathAction    = "payment.paypal.action"
 
 	ConstConfigStagingGateway = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout"
-	ConstConfigProductionGateway = ""
+	ConstConfigProductionGateway = "https://www.paypal.com/webscr?cmd=_express-checkout"
 
 	// PayPal PayFlow Pro API constants
 
@@ -60,8 +60,8 @@ const (
 	ConstConfigPathPayPalPayflowPass   = "payment.paypalpayflow.password"
 	ConstConfigPathPayPalPayflowVendor = "payment.paypalpayflow.vendor"
 
-	ConstConfigPayPalStagingHost = "https://pilot-payflowpro.paypal.com"
-	ConstConfigPayPalProductionHost = ""
+	ConstConfigPayPalStagingHost = "pilot-payflowpro.paypal.com"
+	ConstConfigPayPalProductionHost = "payflowpro.paypal.com"
 )
 
 // Package global variables
