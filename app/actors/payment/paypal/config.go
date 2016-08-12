@@ -59,6 +59,10 @@ func setupConfig() error {
 		}
 		return value, nil
 	})
+	
+	if err != nil {
+ 		return env.ErrorDispatch(err)
+	}
 
 	// choose PayPal gateway according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
