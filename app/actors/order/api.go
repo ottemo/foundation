@@ -437,7 +437,7 @@ func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {
 	//---------------------
 	status := context.GetRequestArgument("status")
 	if status == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d00647d-505a-4092-b821-20dd8638e471", "new status should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d00647d-505a-4092-b821-20dd8638e471", "missing argument in request: status")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -447,13 +447,19 @@ func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {
 
 	orderIDsValue, present := requestData["IDs"]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "order ids should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "missing argument in request: IDs")
 	}
 
-	// operation
-	for _, orderID := range utils.InterfaceToArray(orderIDsValue) {
+	orderIDs := utils.InterfaceToArray(orderIDsValue)
+	updateOrderStatus(orderIDs, status)
+
+	return "ok", nil
+}
+
+func updateOrderStatus(orderIDs []interface {}, status string) (interface {}, error){
+	for _, orderID := range orderIDs {
 		orderModel, err := order.LoadOrderByID(utils.InterfaceToString(orderID))
-		if  err != nil {
+		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 
@@ -464,6 +470,5 @@ func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {
 			return nil, env.ErrorDispatch(err)
 		}
 	}
-
 	return "ok", nil
 }
