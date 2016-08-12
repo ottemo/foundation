@@ -48,7 +48,7 @@ func (it *DefaultOrderItem) GetOptions() map[string]interface{} {
 	return it.Options
 }
 
-// GetSelectedOptions returns order item options values
+// GetOptionValues returns order item options values
 // optionId: optionValue or optionLabel: optionValueLabel
 func (it *DefaultOrderItem) GetOptionValues(labels bool) map[string]interface{} {
 	result := make(map[string]interface{})
