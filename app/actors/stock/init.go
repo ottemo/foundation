@@ -13,6 +13,7 @@ func init() {
 	instance := new(DefaultStock)
 	var _ product.InterfaceStock = instance
 
+	stockDelegate = new(StockDelegate)
 	api.RegisterOnRestServiceStart(setupAPI)
 	db.RegisterOnDatabaseStart(setupDB)
 	env.RegisterOnConfigStart(setupConfig)

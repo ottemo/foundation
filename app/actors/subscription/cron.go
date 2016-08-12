@@ -14,6 +14,10 @@ import (
 // placeOrders used to place orders for subscriptions
 func placeOrders(params map[string]interface{}) error {
 
+	if !subscriptionEnabled {
+		return nil
+	}
+
 	currentHourBeginning := time.Now().Truncate(time.Hour)
 
 	subscriptionCollection, err := db.GetCollection(ConstCollectionNameSubscription)
@@ -29,13 +33,6 @@ func placeOrders(params map[string]interface{}) error {
 	subscriptionsOnSubmit, err := subscriptionCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
-	}
-
-	if !subscriptionEnabled {
-		if len(subscriptionsOnSubmit) > 0 {
-			env.Log(subscription.ConstSubscriptionLogStorage, "Warn", "Subscription is turned off, some records are not processed for this hour "+currentHourBeginning.String())
-		}
-		return nil
 	}
 
 	for _, record := range subscriptionsOnSubmit {

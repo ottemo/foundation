@@ -1,12 +1,21 @@
 package product
 
+// DefaultProductCollection type implements:
+//	- InterfaceModel
+//	- InterfaceCollection
+//	- InterfaceProductCollection
+
 import (
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"github.com/ottemo/foundation/app/models/product"
 )
+
+// --------------------------------------------------------------------------------------
+// InterfaceCollection implementation (package "github.com/ottemo/foundation/app/models")
+// --------------------------------------------------------------------------------------
 
 // List enumerates items of Product model type
 func (it *DefaultProductCollection) List() ([]models.StructListItem, error) {
@@ -101,4 +110,59 @@ func (it *DefaultProductCollection) ListFilterReset() error {
 // ListLimit specifies selection paging
 func (it *DefaultProductCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
+}
+
+// ---------------------------------------------------------------------------------
+// InterfaceModel implementation (package "github.com/ottemo/foundation/app/models")
+// ---------------------------------------------------------------------------------
+
+// GetModelName returns model name
+func (it *DefaultProductCollection) GetModelName() string {
+	return product.ConstModelNameProductCollection
+}
+
+// GetImplementationName returns model implementation name
+func (it *DefaultProductCollection) GetImplementationName() string {
+	return "Default" + product.ConstModelNameProductCollection
+}
+
+// New returns new instance of model implementation object
+func (it *DefaultProductCollection) New() (models.InterfaceModel, error) {
+	dbCollection, err := db.GetCollection(ConstCollectionNameProduct)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return &DefaultProductCollection{listCollection: dbCollection, listExtraAtributes: make([]string, 0)}, nil
+}
+
+// -----------------------------------------------------------------------------------------------------
+// InterfaceProductCollection implementation (package "github.com/ottemo/foundation/app/models/product")
+// -----------------------------------------------------------------------------------------------------
+
+// GetDBCollection returns database collection
+func (it *DefaultProductCollection) GetDBCollection() db.InterfaceDBCollection {
+	return it.listCollection
+}
+
+// ListProducts returns array of products in model instance form
+func (it *DefaultProductCollection) ListProducts() []product.InterfaceProduct {
+	var result []product.InterfaceProduct
+
+	dbRecords, err := it.listCollection.Load()
+	if err != nil {
+		return result
+	}
+
+	for _, dbRecordData := range dbRecords {
+		productModel, err := product.GetProductModel()
+		if err != nil {
+			return result
+		}
+		productModel.FromHashMap(dbRecordData)
+
+		result = append(result, productModel)
+	}
+
+	return result
 }
