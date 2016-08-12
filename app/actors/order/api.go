@@ -28,13 +28,13 @@ func setupAPI() error {
 	service.GET("orders/attributes", api.IsAdmin(APIListOrderAttributes))
 	service.GET("orders", api.IsAdmin(APIListOrders))
 	service.POST("orders/exportToCSV", api.IsAdmin(APIExportOrders))
+	service.POST("orders/setStatus", api.IsAdmin(APIChangeOrderStatus))
 
 	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
 	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
 	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
 	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
-	service.POST("order/status", api.IsAdmin(APIChangeOrdersStatus))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitorOrders)
@@ -63,7 +63,7 @@ func apiFindSpecifiedOrder(context api.InterfaceApplicationContext) (order.Inter
 	orderModel, err := order.LoadOrderByID(orderID)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4fd03907-4e6d-46d5-981e-8f858f1aa83f9", "system error loading id from db: "+utils.InterfaceToString(orderID))
 	}
 
 	return orderModel, nil
@@ -428,47 +428,57 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 	return "", nil
 }
 
-// APIChangeOrdersStatus change orders status
+// APIChangeOrderStatus change orders status
 //   - order ids should be specified in "IDs" argument
 //   - status should be specified in "status" argument
-func APIChangeOrdersStatus(context api.InterfaceApplicationContext) (interface {}, error){
+func APIChangeOrderStatus(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	//---------------------
-	status := context.GetRequestArgument("status")
-	if status == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d00647d-505a-4092-b821-20dd8638e471", "missing argument in request: status")
-	}
-
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
+	statusValue, present := requestData["status"]
+	if !present {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3d00647d-505a-4092-b821-20dd8638e471", "missing argument in request: status")
+	}
+	status := utils.InterfaceToString(statusValue)
+
 	orderIDsValue, present := requestData["IDs"]
 	if !present {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4456c336-96f0-4b9b-a54a-ab0409645f64", "missing argument in request: IDs")
 	}
-
 	orderIDs := utils.InterfaceToArray(orderIDsValue)
-	updateOrderStatus(orderIDs, status)
+
+	if err = updateOrderStatus(orderIDs, status); err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
 
 	return "ok", nil
 }
 
-func updateOrderStatus(orderIDs []interface {}, status string) (interface {}, error){
+// change the order status and persist new status to the db
+//    - status is the new order status to be saved
+func updateOrderStatus(orderIDs []interface{}, status string) error {
+
 	for _, orderID := range orderIDs {
 		orderModel, err := order.LoadOrderByID(utils.InterfaceToString(orderID))
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8cb7a9cd-10fd-4a3b-9e5d-336075cd16e9", "error loading id from db: "+utils.InterfaceToString(orderID))
 		}
-
 		if err = orderModel.SetStatus(status); err != nil {
-			return nil, env.ErrorDispatch(err)
+			return env.ErrorDispatch(err)
 		}
 		if err = orderModel.Save(); err != nil {
-			return nil, env.ErrorDispatch(err)
+			return env.ErrorDispatch(err)
 		}
 	}
-	return "ok", nil
+
+	return nil
 }
