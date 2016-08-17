@@ -30,17 +30,20 @@ const (
 	ConstConfigPathEnabled = "payment.paypal.enabled"
 	ConstConfigPathTitle   = "payment.paypal.title"
 
-	ConstConfigPathNVP     = "payment.paypal.nvp"
-	ConstConfigPathGateway = "payment.paypal.gateway"
-
 	ConstConfigPathUser = "payment.paypal.user"
 	ConstConfigPathPass = "payment.paypal.password"
 
 	ConstConfigPathSignature = "payment.paypal.signature"
 	ConstConfigPathAction    = "payment.paypal.action"
 
-	ConstConfigStagingPayPalExpressGateway = "https://www.sandbox.paypal.com/webscr?cmd=_express-checkout"
-	ConstConfigPayPalExpressProductionGateway = "https://www.paypal.com/webscr?cmd=_express-checkout"
+	ConstConfigPathPayPalExpressGateway	= "payment.paypalexpress.gateway"
+	ConstConfigPathPayPalPayFlowGateway	= "payment.paypalpayflow.gateway"
+	ConstPaymentPayPalGatewayStaging	= "staging"
+	ConstPaymentPayPalGatewayProduction	= "production"
+	ConstPaymentPayPalGateway	= "gateway"
+	ConstPaymentPayPalHost		= "host"
+	ConstPaymentPayPalNvp		= "nvp"
+	ConstPaymentPayPalUrl		= "url"
 
 	// PayPal PayFlow Pro API constants
 
@@ -53,21 +56,37 @@ const (
 	ConstConfigPathPayPalPayflowTokenable = "payment.paypalpayflow.tokanable"
 	ConstConfigPathPayPalPayflowTitle     = "payment.paypalpayflow.title"
 
-	ConstConfigPathPayPalPayflowURL  = "payment.paypalpayflow.url"
-	ConstConfigPathPayPalPayflowHost = "payment.paypalpayflow.host"
-
 	ConstConfigPathPayPalPayflowUser   = "payment.paypalpayflow.user"
 	ConstConfigPathPayPalPayflowPass   = "payment.paypalpayflow.password"
 	ConstConfigPathPayPalPayflowVendor = "payment.paypalpayflow.vendor"
-
-	ConstConfigPayPalStagingHost = "pilot-payflowpro.paypal.com"
-	ConstConfigPayPalProductionHost = "payflowpro.paypal.com"
 )
 
 // Package global variables
 var (
 	waitingTokens      = make(map[string]interface{})
 	waitingTokensMutex sync.RWMutex
+
+	paymentPayPalExpress = map[string]map[string]string {
+		ConstPaymentPayPalNvp: {
+			ConstPaymentPayPalGatewayStaging:	"https://api-3t.sandbox.paypal.com/nvp",
+			ConstPaymentPayPalGatewayProduction:	"https://api-3t.paypal.com/nvp",
+		},
+		ConstPaymentPayPalGateway: {
+			ConstPaymentPayPalGatewayStaging:	"https://www.sandbox.paypal.com/webscr?cmd=_express-checkout",
+			ConstPaymentPayPalGatewayProduction:	"https://www.paypal.com/webscr?cmd=_express-checkout",
+		},
+	}
+
+	paymentPayPalPayFlow = map[string]map[string]string {
+		ConstPaymentPayPalUrl: {
+			ConstPaymentPayPalGatewayStaging:	"https://pilot-payflowpro.paypal.com",
+			ConstPaymentPayPalGatewayProduction:	"https://payflowpro.paypal.com",
+		},
+		ConstPaymentPayPalHost: {
+			ConstPaymentPayPalGatewayStaging:	"https://pilot-payflowpro.paypal.com",
+			ConstPaymentPayPalGatewayProduction:	"https://payflowpro.paypal.com",
+		},
+	}
 )
 
 // Express is a implementer of InterfacePaymentMethod for a PayPal Express method

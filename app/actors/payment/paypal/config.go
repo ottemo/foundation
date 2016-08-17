@@ -59,20 +59,22 @@ func setupConfig() error {
 		}
 		return value, nil
 	})
-	
+
 	if err != nil {
  		return env.ErrorDispatch(err)
 	}
 
 	// choose PayPal gateway according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathGateway,
-		Value:       ConstConfigStagingPayPalExpressGateway,
+		Path:        ConstConfigPathPayPalExpressGateway,
+		Value:       ConstPaymentPayPalGatewayStaging,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
-		Options:     map[string]string{ConstConfigStagingPayPalExpressGateway: "Staging", ConstConfigPayPalExpressProductionGateway: "Production"},
+		Options:     map[string]string{
+			ConstPaymentPayPalGatewayStaging:	"Staging",
+			ConstPaymentPayPalGatewayProduction:	"Production"},
 		Label:       "Gateway mode",
-		Description: "change PayPal gateway according to the workflow mode",
+		Description: "Change PayPal gateway according to the workflow mode",
 		Image:       "",
 	    }, nil)
 
@@ -193,21 +195,6 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathPayPalPayflowURL,
-		Value:       "https://pilot-payflowpro.paypal.com",
-		Type:        env.ConstConfigTypeVarchar,
-		Editor:      "line_text",
-		Options:     nil,
-		Label:       "Payflowpro Gateway",
-		Description: "URL to send request",
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathPayPalPayflowUser,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
@@ -254,13 +241,15 @@ func setupConfig() error {
 
 	// choose host according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathPayPalPayflowHost,
-		Value:       ConstConfigPayPalStagingHost,
+		Path:        ConstConfigPathPayPalPayFlowGateway,
+		Value:       ConstPaymentPayPalGatewayStaging,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
-		Options:     map[string]string{ConstConfigPayPalStagingHost: "Staging", ConstConfigPayPalProductionHost: "Production"},
-		Label:       "Host mode",
-		Description: "change PayPal host according to the workflow mode",
+		Options:     map[string]string{
+			ConstPaymentPayPalGatewayStaging:	"Staging",
+			ConstPaymentPayPalGatewayProduction:	"Production"},
+		Label:       "Gateway mode",
+		Description: "Change PayPal gateway according to the workflow mode",
 		Image:       "",
 	    }, nil)
 
