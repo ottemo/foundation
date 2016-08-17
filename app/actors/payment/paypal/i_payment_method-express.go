@@ -93,7 +93,7 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		ConstPaymentPayPalNvp][
 		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalExpressGateway))]
 
-		request, err := http.NewRequest("GET", nvpGateway+"?"+requestParams, nil)
+	request, err := http.NewRequest("GET", nvpGateway+"?"+requestParams, nil)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
