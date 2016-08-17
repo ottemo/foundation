@@ -18,7 +18,6 @@ func setupConfig() error {
 		Editor: "select",
 		Options: map[string]string{
 			"0":   "Never",
-			"-6":  "After 6 hours",
 			"-24": "After 24 hours",
 		},
 		Label:       "Abandoned Cart Email - Send Time",
