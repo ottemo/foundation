@@ -35,6 +35,7 @@ func setupAPI() error {
 	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
 	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
 	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
+	service.POST("order/:orderID/emailTrackingCode", api.IsAdmin(APIUpdateTrackingInfoAndSendEmail))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitorOrders)
@@ -481,4 +482,44 @@ func updateOrderStatus(orderIDs []interface{}, status string) error {
 	}
 
 	return nil
+}
+
+// APIUpdateTrackingInfoAndSendEmail updates order with shipping tracking information and sends a shipping status email
+// - carrier, tracking_number, tracking_url are required
+func APIUpdateTrackingInfoAndSendEmail(context api.InterfaceApplicationContext) (interface{}, error) {
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	orderModel, err := apiFindSpecifiedOrder(context)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	carrier := utils.InterfaceToString(requestData["carrier"])
+	trackingNumber := utils.InterfaceToString(requestData["tracking_number"])
+	trackingURL := utils.InterfaceToString(requestData["tracking_url"])
+	if carrier == "" || trackingNumber == "" || trackingURL == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	shippingInfo := utils.InterfaceToMap(orderModel.Get("shipping_info"))
+	shippingInfo["carrier"] = carrier
+	shippingInfo["tracking_number"] = trackingNumber
+	shippingInfo["tracking_url"] = trackingURL
+	orderModel.Set("shipping_info", shippingInfo)
+
+	err = orderModel.Save()
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	orderModel.SendShippingStatusUpdateEmail()
+
+	return "ok", nil
 }
