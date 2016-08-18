@@ -36,7 +36,7 @@ const (
 	ConstConfigPathSignature = "payment.paypal.signature"
 	ConstConfigPathAction    = "payment.paypal.action"
 
-	ConstConfigPathPayPalExpressGateway	= "payment.paypalexpress.gateway"
+	ConstConfigPathPayPalExpressGateway	= "payment.paypal.gateway"
 	ConstConfigPathPayPalPayFlowGateway	= "payment.paypalpayflow.gateway"
 	ConstPaymentPayPalGatewaySandbox	= "sandbox"
 	ConstPaymentPayPalGatewayProduction	= "production"
