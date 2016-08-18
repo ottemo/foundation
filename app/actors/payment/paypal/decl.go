@@ -38,7 +38,7 @@ const (
 
 	ConstConfigPathPayPalExpressGateway	= "payment.paypalexpress.gateway"
 	ConstConfigPathPayPalPayFlowGateway	= "payment.paypalpayflow.gateway"
-	ConstPaymentPayPalGatewayStaging	= "staging"
+	ConstPaymentPayPalGatewaySandbox	= "sandbox"
 	ConstPaymentPayPalGatewayProduction	= "production"
 	ConstPaymentPayPalGateway	= "gateway"
 	ConstPaymentPayPalHost		= "host"
@@ -68,22 +68,22 @@ var (
 
 	paymentPayPalExpress = map[string]map[string]string {
 		ConstPaymentPayPalNvp: {
-			ConstPaymentPayPalGatewayStaging:	"https://api-3t.sandbox.paypal.com/nvp",
+			ConstPaymentPayPalGatewaySandbox:	"https://api-3t.sandbox.paypal.com/nvp",
 			ConstPaymentPayPalGatewayProduction:	"https://api-3t.paypal.com/nvp",
 		},
 		ConstPaymentPayPalGateway: {
-			ConstPaymentPayPalGatewayStaging:	"https://www.sandbox.paypal.com/webscr?cmd=_express-checkout",
+			ConstPaymentPayPalGatewaySandbox:	"https://www.sandbox.paypal.com/webscr?cmd=_express-checkout",
 			ConstPaymentPayPalGatewayProduction:	"https://www.paypal.com/webscr?cmd=_express-checkout",
 		},
 	}
 
 	paymentPayPalPayFlow = map[string]map[string]string {
 		ConstPaymentPayPalUrl: {
-			ConstPaymentPayPalGatewayStaging:	"https://pilot-payflowpro.paypal.com",
+			ConstPaymentPayPalGatewaySandbox:	"https://pilot-payflowpro.paypal.com",
 			ConstPaymentPayPalGatewayProduction:	"https://payflowpro.paypal.com",
 		},
 		ConstPaymentPayPalHost: {
-			ConstPaymentPayPalGatewayStaging:	"https://pilot-payflowpro.paypal.com",
+			ConstPaymentPayPalGatewaySandbox:	"https://pilot-payflowpro.paypal.com",
 			ConstPaymentPayPalGatewayProduction:	"https://payflowpro.paypal.com",
 		},
 	}

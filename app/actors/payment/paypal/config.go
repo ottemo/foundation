@@ -67,11 +67,11 @@ func setupConfig() error {
 	// choose PayPal gateway according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathPayPalExpressGateway,
-		Value:       ConstPaymentPayPalGatewayStaging,
+		Value:       ConstPaymentPayPalGatewaySandbox,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
 		Options:     map[string]string{
-			ConstPaymentPayPalGatewayStaging:	"Staging",
+			ConstPaymentPayPalGatewaySandbox:	"Sandbox",
 			ConstPaymentPayPalGatewayProduction:	"Production"},
 		Label:       "Gateway mode",
 		Description: "Change PayPal gateway according to the workflow mode",
@@ -242,11 +242,11 @@ func setupConfig() error {
 	// choose host according to the workflow mode
 	err = config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathPayPalPayFlowGateway,
-		Value:       ConstPaymentPayPalGatewayStaging,
+		Value:       ConstPaymentPayPalGatewaySandbox,
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "select",
 		Options:     map[string]string{
-			ConstPaymentPayPalGatewayStaging:	"Staging",
+			ConstPaymentPayPalGatewaySandbox:	"Sandbox",
 			ConstPaymentPayPalGatewayProduction:	"Production"},
 		Label:       "Gateway mode",
 		Description: "Change PayPal gateway according to the workflow mode",
