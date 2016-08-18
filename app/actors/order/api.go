@@ -500,11 +500,19 @@ func APIUpdateTrackingInfoAndSendEmail(context api.InterfaceApplicationContext) 
 	}
 
 	carrier := utils.InterfaceToString(requestData["carrier"])
-	trackingNumber := utils.InterfaceToString(requestData["tracking_number"])
-	trackingURL := utils.InterfaceToString(requestData["tracking_url"])
-	if carrier == "" || trackingNumber == "" || trackingURL == "" {
+	if carrier == "" {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "29948535-f32a-4393-b5e8-c66092bbbe6d", "carrier should be specified")
+	}
+	trackingNumber := utils.InterfaceToString(requestData["tracking_number"])
+	if trackingNumber == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "73db2a29-c22d-40a1-a845-fc4ac03b100a", "tracking number should be specified")
+	}
+	trackingURL := utils.InterfaceToString(requestData["tracking_url"])
+	if trackingURL == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04865d8a-58b5-4296-8caa-c9dff49136a3", "tracking url should be specified")
 	}
 
 	shippingInfo := utils.InterfaceToMap(orderModel.Get("shipping_info"))
