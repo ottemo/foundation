@@ -67,7 +67,9 @@ func CompleteTransaction(orderInstance order.InterfaceOrder, token string, payer
 		"&PAYERID=" + payerID +
 		"&TOKEN=" + token
 
-	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathNVP))
+	nvpGateway := paymentPayPalExpress[
+		ConstPaymentPayPalNvp][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalExpressGateway))]
 
 	request, err := http.NewRequest("GET", nvpGateway+"?"+requestParams, nil)
 	if err != nil {
