@@ -20,14 +20,15 @@ type InterfaceSEOEngine interface {
 
 // InterfaceSEOItem represents interface to access business layer implementation of SEO item object
 type InterfaceSEOItem interface {
-	GetObjectID() string
-	SetObjectID(objectID string) error
-
-	GetType() string
-	SetType(newType string) error
-
 	GetURL() string
 	SetURL(newURL string) error
+
+	GetRewrite() string
+
+	GetTitle() string
+	GetType() string
+	GetMetaKeywords() string
+	GetMetaDescription() string
 
 	models.InterfaceModel
 	models.InterfaceObject

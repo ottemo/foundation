@@ -4,10 +4,16 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/seo"
 )
 
 // init makes package self-initialization routine
 func init() {
+	seoItemInstance := new(DefaultSEOItem)
+	var _ seo.InterfaceSEOItem = seoItemInstance
+	models.RegisterModel(seo.ConstModelNameSEOItem, seoItemInstance)
+
 	api.RegisterOnRestServiceStart(setupAPI)
 	db.RegisterOnDatabaseStart(setupDB)
 }
