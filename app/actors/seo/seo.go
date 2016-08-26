@@ -9,11 +9,11 @@ package seo
 import (
 	"strings"
 
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/app/models/seo"
 )
 
 // ---------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ func (it *DefaultSEOItem) Set(attribute string, value interface{}) error {
 		return env.ErrorNew(
 			ConstErrorModule,
 			ConstErrorLevel,
-			"03648446-637b-4249-8cdc-4560f2ed3c58", "unknown attribute " + attribute + " for SEOItem")
+			"03648446-637b-4249-8cdc-4560f2ed3c58", "unknown attribute "+attribute+" for SEOItem")
 	}
 
 	return nil
@@ -337,8 +337,3 @@ func (it *DefaultSEOItem) GetAttributesInfo() []models.StructAttributeInfo {
 
 	return result
 }
-
-
-
-
-

@@ -20,11 +20,11 @@ const (
 type DefaultSEOItem struct {
 	id string
 
-	Url string
+	Url     string
 	Rewrite string
 
-	Type string
-	Title string
-	MetaKeywords string
+	Type            string
+	Title           string
+	MetaKeywords    string
 	MetaDescription string
 }

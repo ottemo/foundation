@@ -3,8 +3,8 @@ package seo_test
 import (
 	"testing"
 
-	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/app/models/seo"
+	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
 )
 
