@@ -202,11 +202,14 @@ func (it *DefaultSEOItem) Set(attribute string, value interface{}) error {
 		it.MetaKeywords = utils.InterfaceToString(value)
 	case "meta_description":
 		it.MetaDescription = utils.InterfaceToString(value)
+	default:
+		return env.ErrorNew(
+			ConstErrorModule,
+			ConstErrorLevel,
+			"03648446-637b-4249-8cdc-4560f2ed3c58", "unknown attribute " + attribute + " for SEOItem")
 	}
-	return env.ErrorNew(
-		ConstErrorModule,
-		ConstErrorLevel,
-		"03648446-637b-4249-8cdc-4560f2ed3c58", "unknown attribute " + attribute + " for SEOItem")
+
+	return nil
 }
 
 // FromHashMap will populate object attributes from map[string]interface{}
