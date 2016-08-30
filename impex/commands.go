@@ -630,7 +630,11 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				}
 				client := &http.Client{Transport: transport}
-				req, _ := http.NewRequest("GET", mediaValue, nil)
+				req, err := http.NewRequest("GET", mediaValue, nil)
+				if err != nil {
+					return input, env.ErrorDispatch(err)
+				}
+				// send close header to terminate socket as soon as request finishes
 				req.Close = true
 
 				response, err := client.Do(req)
