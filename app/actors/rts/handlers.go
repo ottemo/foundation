@@ -1,6 +1,7 @@
 package rts
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -10,42 +11,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
-
-// func referrerHandler(event string, eventData map[string]interface{}) bool {
-
-// 	if _, present := eventData["context"]; present {
-// 		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-
-// 			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
-// 			if xReferrer == "" {
-// 				return true
-// 			}
-
-// 			referrer, err := GetReferrer(xReferrer)
-// 			if err != nil {
-// 				return true
-// 			}
-
-// 			// excluding itself (i.e. "storefront" requests)
-// 			if strings.Contains(app.GetStorefrontURL(""), referrer) {
-// 				return true
-// 			}
-
-// 			if _, present := referrers[referrer]; !present {
-// 				updateSync.Lock()
-// 				referrers[referrer] = 0
-// 				updateSync.Unlock()
-// 			}
-// 			referrers[referrer]++
-
-// 			if err := saveNewReferrer(referrer); err != nil {
-// 				env.ErrorDispatch(err)
-// 			}
-// 		}
-// 	}
-
-// 	return true
-// }
 
 func visitsHandler(event string, eventData map[string]interface{}) bool {
 
@@ -66,6 +31,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 				// Unique page views
 				statistic[currentHour].Visit++
+				fmt.Printf("visit handler fired: %v", statistic[currentHour].Visit)
 				monthStatistic.Visit++
 
 				err := SaveStatisticsData()
@@ -281,18 +247,3 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 
 	return true
 }
-
-// func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
-
-// 	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
-// 		if sessionID := sessionInstance.GetID(); sessionID != "" {
-// 			defer updateSync.Unlock()
-// 			updateSync.Lock()
-// 			if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] != nil {
-// 				OnlineSessions[sessionID].time = time.Now()
-// 			}
-// 		}
-// 	}
-
-// 	return true
-// }

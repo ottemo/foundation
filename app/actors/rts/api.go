@@ -43,26 +43,6 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 	return nil, nil
 }
 
-// APIGetReferrers returns list of unique referrers were registered
-// func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
-// 	var result []map[string]interface{}
-
-// 	for url, count := range referrers {
-// 		result = append(result, map[string]interface{}{
-// 			"url":   url,
-// 			"count": count,
-// 		})
-
-// 		if len(result) >= 20 {
-// 			break
-// 		}
-// 	}
-
-// 	result = utils.SortMapByKeys(result, true, "count", "url")
-
-// 	return result, nil
-// }
-
 // APIGetVisits returns site visit information for a specified local day
 func APIGetVisits(context api.InterfaceApplicationContext) (interface{}, error) {
 	result := make(map[string]interface{})
@@ -222,7 +202,7 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 		timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	}
 
-	// get a hours pasted for local day and count only for them
+	// get hours for current local day and count only for them
 	todayTo := time.Now().Truncate(time.Hour).Add(time.Hour)
 	todayFrom, _ := utils.MakeUTCOffsetTime(todayTo, timeZone)
 	if utils.IsZeroTime(todayFrom) {
@@ -232,33 +212,32 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 	todayHoursPast := time.Duration(todayFrom.Hour()) * time.Hour
 	todayFrom = todayTo.Add(-todayHoursPast)
 
-	visits := 0
-	addToCart := 0
-	visitCheckout := 0
-	setPayment := 0
-	sales := 0
+	visitorCount := 0
+	addToCartByVisitor := 0
+	visitCheckoutByVisitor := 0
+	setPaymentByVisitor := 0
+	saleTransactionsByVisitor := 0
 
-	// Go through period and summarise a visits
+	// Go through period and summarize visits
 	for todayFrom.Before(todayTo) {
 
 		todayFromStamp := todayFrom.Unix()
 		if _, present := statistic[todayFromStamp]; present && statistic[todayFromStamp] != nil {
-			// TODO: this is hack until we fix visit count for real
-			visits += statistic[todayFromStamp].TotalVisits / 2
-			addToCart += statistic[todayFromStamp].Cart
-			visitCheckout += statistic[todayFromStamp].VisitCheckout
-			setPayment += statistic[todayFromStamp].SetPayment
-			sales += statistic[todayFromStamp].Sales
+			visitorCount += statistic[todayFromStamp].Visit
+			addToCartByVisitor += statistic[todayFromStamp].Cart
+			visitCheckoutByVisitor += statistic[todayFromStamp].VisitCheckout
+			setPaymentByVisitor += statistic[todayFromStamp].SetPayment
+			saleTransactionsByVisitor += statistic[todayFromStamp].Sales
 		}
 
 		todayFrom = todayFrom.Add(time.Hour)
 	}
 
-	result["totalVisitors"] = visits
-	result["addedToCart"] = addToCart
-	result["visitCheckout"] = visitCheckout
-	result["setPayment"] = setPayment
-	result["purchased"] = sales
+	result["totalVisitors"] = visitorCount
+	result["addedToCart"] = addToCartByVisitor
+	result["visitCheckout"] = visitCheckoutByVisitor
+	result["setPayment"] = setPaymentByVisitor
+	result["purchased"] = saleTransactionsByVisitor
 
 	return result, nil
 }
