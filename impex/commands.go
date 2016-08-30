@@ -7,10 +7,11 @@ import (
 	"path"
 	"strings"
 
+	"strconv"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strconv"
 )
 
 // CheckModelImplements checks that model support InterfaceObject and InterfaceStorable interfaces
@@ -629,8 +630,10 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				}
 				client := &http.Client{Transport: transport}
+				req, _ := http.NewRequest("GET", mediaValue, nil)
+				req.Close = true
 
-				response, err := client.Get(mediaValue)
+				response, err := client.Do(req)
 				if err != nil {
 					return input, env.ErrorDispatch(err)
 				}
