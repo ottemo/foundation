@@ -1,7 +1,6 @@
 package rts
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -23,7 +22,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 			statistic[currentHour].TotalVisits++
 			monthStatistic.TotalVisits++
 
-			// Super flakey implementation for telling if the visitor has been tracked today
+			// TODO: Super flakey implementation for telling if the visitor has been tracked today
 			// by reusing an 'add to bag' tracking mechanism
 			// foundation/app/actors/rts/decl.go :45
 			if _, present := visitState[sessionID]; !present {
@@ -31,7 +30,6 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 				// Unique page views
 				statistic[currentHour].Visit++
-				fmt.Printf("visit handler fired: %v", statistic[currentHour].Visit)
 				monthStatistic.Visit++
 
 				err := SaveStatisticsData()
