@@ -21,14 +21,14 @@ func setupAPI() error {
 
 	service.GET("rts/visits", APIGetVisits)
 	service.GET("rts/visits/detail/:from/:to", APIGetVisitsDetails)
-	service.GET("rts/visits/realtime", APIGetVisitsRealtime)
+	// service.GET("rts/visits/realtime", APIGetVisitsRealtime)
 
 	service.GET("rts/sales", APIGetSales)
 	service.GET("rts/sales/detail/:from/:to", APIGetSalesDetails)
 
 	service.GET("rts/conversion", APIGetConversion)
 	service.GET("rts/bestsellers", APIGetBestsellers)
-	service.GET("rts/referrers", APIGetReferrers)
+	// service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
 }
@@ -41,26 +41,6 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 	env.Event("api.rts.visit", eventData)
 
 	return nil, nil
-}
-
-// APIGetReferrers returns list of unique referrers were registered
-func APIGetReferrers(context api.InterfaceApplicationContext) (interface{}, error) {
-	var result []map[string]interface{}
-
-	for url, count := range referrers {
-		result = append(result, map[string]interface{}{
-			"url":   url,
-			"count": count,
-		})
-
-		if len(result) >= 20 {
-			break
-		}
-	}
-
-	result = utils.SortMapByKeys(result, true, "count", "url")
-
-	return result, nil
 }
 
 // APIGetVisits returns site visit information for a specified local day
@@ -222,7 +202,7 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 		timeZone = utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreTimeZone))
 	}
 
-	// get a hours pasted for local day and count only for them
+	// get hours for current local day and count only for them
 	todayTo := time.Now().Truncate(time.Hour).Add(time.Hour)
 	todayFrom, _ := utils.MakeUTCOffsetTime(todayTo, timeZone)
 	if utils.IsZeroTime(todayFrom) {
@@ -232,33 +212,32 @@ func APIGetConversion(context api.InterfaceApplicationContext) (interface{}, err
 	todayHoursPast := time.Duration(todayFrom.Hour()) * time.Hour
 	todayFrom = todayTo.Add(-todayHoursPast)
 
-	visits := 0
-	addToCart := 0
-	visitCheckout := 0
-	setPayment := 0
-	sales := 0
+	visitorCount := 0
+	addToCartByVisitor := 0
+	visitCheckoutByVisitor := 0
+	setPaymentByVisitor := 0
+	saleTransactionsByVisitor := 0
 
-	// Go through period and summarise a visits
+	// Go through period and summarize visits
 	for todayFrom.Before(todayTo) {
 
 		todayFromStamp := todayFrom.Unix()
 		if _, present := statistic[todayFromStamp]; present && statistic[todayFromStamp] != nil {
-			// TODO: this is hack until we fix visit count for real
-			visits += statistic[todayFromStamp].TotalVisits / 2
-			addToCart += statistic[todayFromStamp].Cart
-			visitCheckout += statistic[todayFromStamp].VisitCheckout
-			setPayment += statistic[todayFromStamp].SetPayment
-			sales += statistic[todayFromStamp].Sales
+			visitorCount += statistic[todayFromStamp].Visit
+			addToCartByVisitor += statistic[todayFromStamp].Cart
+			visitCheckoutByVisitor += statistic[todayFromStamp].VisitCheckout
+			setPaymentByVisitor += statistic[todayFromStamp].SetPayment
+			saleTransactionsByVisitor += statistic[todayFromStamp].Sales
 		}
 
 		todayFrom = todayFrom.Add(time.Hour)
 	}
 
-	result["totalVisitors"] = visits
-	result["addedToCart"] = addToCart
-	result["visitCheckout"] = visitCheckout
-	result["setPayment"] = setPayment
-	result["purchased"] = sales
+	result["totalVisitors"] = visitorCount
+	result["addedToCart"] = addToCartByVisitor
+	result["visitCheckout"] = visitCheckoutByVisitor
+	result["setPayment"] = setPaymentByVisitor
+	result["purchased"] = saleTransactionsByVisitor
 
 	return result, nil
 }
@@ -517,44 +496,44 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 	return bestSellers, nil
 }
 
-// APIGetVisitsRealtime returns real-time information on current visits
-func APIGetVisitsRealtime(context api.InterfaceApplicationContext) (interface{}, error) {
-	result := make(map[string]interface{})
-	ratio := float64(0)
+// // APIGetVisitsRealtime returns real-time information on current visits
+// func APIGetVisitsRealtime(context api.InterfaceApplicationContext) (interface{}, error) {
+// 	result := make(map[string]interface{})
+// 	ratio := float64(0)
 
-	onlineSessionCount := len(OnlineSessions)
+// 	onlineSessionCount := len(OnlineSessions)
 
-	result["Online"] = onlineSessionCount
-	if OnlineSessionsMax == 0 || onlineSessionCount == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(onlineSessionCount) / float64(OnlineSessionsMax)
-	}
-	result["OnlineRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Online"] = onlineSessionCount
+// 	if OnlineSessionsMax == 0 || onlineSessionCount == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(onlineSessionCount) / float64(OnlineSessionsMax)
+// 	}
+// 	result["OnlineRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Direct"] = OnlineDirect
-	if OnlineDirectMax == 0 || OnlineDirect == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineDirect) / float64(OnlineDirectMax)
-	}
-	result["DirectRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Direct"] = OnlineDirect
+// 	if OnlineDirectMax == 0 || OnlineDirect == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineDirect) / float64(OnlineDirectMax)
+// 	}
+// 	result["DirectRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Search"] = OnlineSearch
-	if OnlineSearchMax == 0 || OnlineSearch == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineSearch) / float64(OnlineSearchMax)
-	}
-	result["SearchRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Search"] = OnlineSearch
+// 	if OnlineSearchMax == 0 || OnlineSearch == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineSearch) / float64(OnlineSearchMax)
+// 	}
+// 	result["SearchRatio"] = utils.Round(ratio, 0.5, 2)
 
-	result["Site"] = OnlineSite
-	if OnlineSiteMax == 0 || OnlineSite == 0 {
-		ratio = float64(0)
-	} else {
-		ratio = float64(OnlineSite) / float64(OnlineSiteMax)
-	}
-	result["SiteRatio"] = utils.Round(ratio, 0.5, 2)
+// 	result["Site"] = OnlineSite
+// 	if OnlineSiteMax == 0 || OnlineSite == 0 {
+// 		ratio = float64(0)
+// 	} else {
+// 		ratio = float64(OnlineSite) / float64(OnlineSiteMax)
+// 	}
+// 	result["SiteRatio"] = utils.Round(ratio, 0.5, 2)
 
-	return result, nil
-}
+// 	return result, nil
+// }

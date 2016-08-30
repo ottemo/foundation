@@ -1,8 +1,6 @@
 package rts
 
 import (
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/app"
@@ -11,65 +9,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
-
-// GetReferrer returns a string when provided a URL
-func GetReferrer(url string) (string, error) {
-	excludeURLs := []string{app.GetFoundationURL(""), app.GetDashboardURL("")}
-
-	r := regexp.MustCompile(`^(http|https):\/\/(.+)\/.*$`)
-	groups := r.FindStringSubmatch(url)
-	if len(groups) == 0 {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9ee22d7-f62d-4379-b48e-ec9a59e388c8", "Invalid URL in referrer")
-	}
-	result := groups[2]
-
-	for index := 0; index < len(excludeURLs); index++ {
-		if strings.Contains(excludeURLs[index], result) {
-			return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "841fa275-e0fb-4d29-868f-2bca20d5fe4e", "Invalid URL in referrer")
-		}
-	}
-
-	return result, nil
-}
-
-// IncreaseOnline is a method to increase the provided counter by 1
-func IncreaseOnline(typeCounter int) {
-	switch typeCounter {
-	case ConstReferrerTypeDirect:
-		OnlineDirect++
-		if OnlineDirect > OnlineDirectMax {
-			OnlineDirectMax = OnlineDirect
-		}
-	case ConstReferrerTypeSearch:
-		OnlineSearch++
-		if OnlineSearch > OnlineSearchMax {
-			OnlineSearchMax = OnlineSearch
-		}
-	case ConstReferrerTypeSite:
-		OnlineSite++
-		if OnlineSite > OnlineSiteMax {
-			OnlineSiteMax = OnlineSite
-		}
-	}
-}
-
-// DecreaseOnline is a method to decrease the provided counter by 1
-func DecreaseOnline(typeCounter int) {
-	switch typeCounter {
-	case ConstReferrerTypeDirect:
-		if OnlineDirect != 0 {
-			OnlineDirect--
-		}
-	case ConstReferrerTypeSearch:
-		if OnlineSearch != 0 {
-			OnlineSearch--
-		}
-	case ConstReferrerTypeSite:
-		if OnlineSite != 0 {
-			OnlineSite--
-		}
-	}
-}
 
 // GetDateFrom returns the a time.Time of last record of sales history
 func GetDateFrom() (time.Time, error) {
@@ -408,58 +347,4 @@ func CheckHourUpdateForStatistic() {
 	updateSync.Unlock()
 
 	lastUpdate = time.Now()
-}
-
-// saveNewReferrer make save a new referral to data base
-func saveNewReferrer(referral string) error {
-	visitorInfoCollection, err := db.GetCollection(ConstCollectionNameRTSReferrals)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	// rewrite existing referral with new count
-	visitorInfoCollection.AddFilter("referral", "=", referral)
-	visitorInfoCollection.SetLimit(0, 1)
-	dbRecord, err := visitorInfoCollection.Load()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	newRecord := make(map[string]interface{})
-
-	if len(dbRecord) > 0 {
-		newRecord["_id"] = dbRecord[0]["_id"]
-	}
-	newRecord["referral"] = referral
-	newRecord["count"] = referrers[referral]
-
-	// save data to database
-	_, err = visitorInfoCollection.Save(newRecord)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	return nil
-}
-
-// initReferrals get info from referrals database to variable
-func initReferrals() error {
-
-	rtsReferralsCollection, err := db.GetCollection(ConstCollectionNameRTSReferrals)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	dbRecords, err := rtsReferralsCollection.Load()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	updateSync.Lock()
-	for _, record := range dbRecords {
-		referrers[utils.InterfaceToString(record["referral"])] = utils.InterfaceToInt(record["count"])
-	}
-	updateSync.Unlock()
-
-	return nil
 }
