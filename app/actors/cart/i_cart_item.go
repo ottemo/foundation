@@ -129,8 +129,8 @@ func (it *DefaultCartItem) ValidateProduct() error {
 	}
 
 	// checking for right options
-	if cart := it.Cart; cart != nil {
-		if err := cart.checkOptions(cartProduct.GetOptions(), it.GetOptions()); err != nil {
+	if cartInstance := it.Cart; cartInstance != nil {
+		if err := cartInstance.checkOptions(cartProduct.GetOptions(), it.GetOptions()); err != nil {
 			return env.ErrorDispatch(err)
 		}
 	}
@@ -142,7 +142,7 @@ func (it *DefaultCartItem) ValidateProduct() error {
 
 	allowOversell := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathOversell))
 	if !allowOversell && product.GetRegisteredStock() != nil {
-		if qty := cartProduct.GetQty(); qty < it.GetQty() {
+		if qty := utils.InterfaceToInt(cartProduct.Get("qty")); qty < it.GetQty() {
 			var msg string
 			if qty == 0 {
 				msg = "No "

@@ -498,9 +498,12 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	// setting credit card owner to current visitor (for sure)
 	visitorCardModel.Set("visitor_id", currentVisitorID)
 
-	err = visitorCardModel.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+	// save card info if checkbox is checked on frontend
+	if utils.InterfaceToBool(creditCardInfo["save"]) {
+		err = visitorCardModel.Save()
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
 	}
 
 	return visitorCardModel, nil

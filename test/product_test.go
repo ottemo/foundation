@@ -1,4 +1,4 @@
-package tests
+package test
 
 import (
 	"math/rand"
@@ -20,7 +20,7 @@ func TestProductsOperations(tst *testing.T) {
 	}
 
 	productModel, err := product.GetProductModel()
-	if err != nil {
+	if err != nil || productModel == nil {
 		tst.Error(err)
 	}
 

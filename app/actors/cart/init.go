@@ -191,6 +191,8 @@ func getConfigSendBefore() (time.Time, bool) {
 
 	// Build out the time to send before, we are expecting a config
 	// that is a negative int
+	// 12 Aug 2016: Because of only one negative option available is -24
+	// we satisfy condition to take carts which are older than 24 hours.
 	beforeDuration := time.Duration(beforeConfig) * time.Hour
 	beforeDate := time.Now().Add(beforeDuration)
 
@@ -207,6 +209,8 @@ func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
 	cartCollection.AddFilter("active", "=", true)
 	cartCollection.AddFilter("custom_info.is_abandon_email_sent", "!=", true)
 	cartCollection.AddFilter("updated_at", "<", beforeDate)
+	// 12 Aug 2016: Take carts not older than 25 hours
+	cartCollection.AddFilter("updated_at", ">=", beforeDate.Add(-time.Hour))
 	cartCollection.AddSort("updated_at", true)
 	resultCarts, _ := cartCollection.Load()
 

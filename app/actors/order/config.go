@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
+// Configuration settings for order package
 const (
 	ConstConfigPathOrderGroup            = "general.order"
 	ConstConfigPathShippingEmailSubject  = "general.order.shipping_status_email_subject"

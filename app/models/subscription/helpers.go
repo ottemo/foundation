@@ -1,11 +1,12 @@
 package subscription
 
 import (
+	"strings"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"strings"
 )
 
 // GetSubscriptionCollectionModel retrieves current InterfaceSubscriptionCollection model implementation
@@ -95,4 +96,12 @@ func GetSubscriptionPeriodValue(option string) int {
 // GetSubscriptionOptionValues return map of known options for subscription
 func GetSubscriptionOptionValues() map[string]int {
 	return optionValues
+}
+
+// GetSubscriptionCronExpr return cron expression by option value
+func GetSubscriptionCronExpr(key int) string {
+	if cronExprValue, present := cronExpr[key]; present {
+		return cronExprValue
+	}
+	return cronExpr[optionValues[ConstConfigPathSubscriptionExecutionOptionHour]]
 }

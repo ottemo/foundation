@@ -2,11 +2,12 @@
 package subscription
 
 import (
+	"time"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"time"
 )
 
 // Package global constants
@@ -17,6 +18,8 @@ const (
 	ConstCollectionNameSubscription = "subscription"
 
 	ConstTimeDay = time.Hour * 24
+
+	ConstSchedulerTaskName = "subscriptionProcess"
 )
 
 var (

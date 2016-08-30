@@ -36,11 +36,6 @@ type DefaultProduct struct {
 
 	Weight float64
 
-	//Qty int
-	Qty int
-
-	Inventory []map[string]interface{}
-
 	Options map[string]interface{}
 
 	RelatedProductIds []string
@@ -48,7 +43,11 @@ type DefaultProduct struct {
 	// appliedOptions tracks options were applied to current instance
 	appliedOptions map[string]interface{}
 
-	*attributes.CustomAttributes
+	// updatedQty holds qty should be updated during save operation ("" item holds qty value)
+	updatedQty []map[string]interface{}
+
+	customAttributes   *attributes.ModelCustomAttributes
+	externalAttributes *attributes.ModelExternalAttributes
 }
 
 // DefaultProductCollection is a default implementer of InterfaceProduct

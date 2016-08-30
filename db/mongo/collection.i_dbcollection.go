@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/ottemo/foundation/db"
@@ -13,6 +14,9 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
 	err := it.collection.FindId(id).One(&result)
+	if err != nil {
+		err = fmt.Errorf("unable to load id: %v from mongodb (%v)", id, err)
+	}
 
 	return result, err
 }

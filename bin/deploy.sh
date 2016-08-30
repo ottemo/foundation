@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # location of foundation
+HOME=/home/ottemo
 SRCDIR=/home/ottemo/code/go/src/github.com/ottemo/foundation
 
 if [ "$BRANCH" == 'develop' ]; then

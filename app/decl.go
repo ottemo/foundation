@@ -10,7 +10,7 @@ import (
 const (
 	ConstVersionMajor = 1
 	ConstVersionMinor = 1
-	ConstSprintNumber = 28
+	ConstSprintNumber = 35
 
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"
