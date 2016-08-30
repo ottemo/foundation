@@ -293,3 +293,28 @@ func getOptionsExtend(event string, eventData map[string]interface{}) bool {
 	}
 	return true
 }
+
+func updateCronJob(newExecutionTimeOption interface{}) error {
+
+	executionTimeOption := utils.InterfaceToString(newExecutionTimeOption)
+	executionTimeCronExpr := subscription.GetSubscriptionCronExpr(
+		subscription.GetSubscriptionPeriodValue(executionTimeOption))
+
+	if scheduler := env.GetScheduler(); scheduler != nil {
+		schedules := scheduler.ListSchedules() //[]InterfaceSchedule
+		var schedule env.InterfaceSchedule
+
+		for _, schedule = range schedules {
+			if schedule.Get("task") == ConstSchedulerTaskName {
+				if err := schedule.Set("expr", executionTimeCronExpr); err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				if err := schedule.Set("time", time.Now()); err != nil {
+					return env.ErrorDispatch(err)
+				}
+			}
+		}
+	}
+	return nil
+}

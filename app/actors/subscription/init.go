@@ -83,8 +83,14 @@ func onAppStart() error {
 
 	// process order creation every one hour
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("subscriptionProcess", placeOrders)
-		scheduler.ScheduleRepeat("* */1 * * *", "subscriptionProcess", nil)
+		scheduler.RegisterTask(ConstSchedulerTaskName, placeOrders)
+		scheduler.ScheduleRepeat(
+			subscription.GetSubscriptionCronExpr(
+				subscription.GetSubscriptionPeriodValue(
+					utils.InterfaceToString(
+						env.ConfigGetValue(subscription.ConstConfigPathSubscriptionExecutionTime)))),
+			ConstSchedulerTaskName,
+			nil)
 	}
 
 	return nil

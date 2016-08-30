@@ -89,7 +89,9 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	//	println(requestParams)
 
-	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathNVP))
+	nvpGateway := paymentPayPalExpress[
+		ConstPaymentPayPalNvp][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalExpressGateway))]
 
 	request, err := http.NewRequest("GET", nvpGateway+"?"+requestParams, nil)
 	if err != nil {
@@ -129,7 +131,10 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	// redirecting user to PayPal server for following checkout
 	//---------------------------------------------------------
-	redirectGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGateway)) + "&token=" + responseValues.Get("TOKEN")
+	payPalGateway := paymentPayPalExpress[
+		ConstPaymentPayPalGateway][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalExpressGateway))]
+	redirectGateway := payPalGateway + "&token=" + responseValues.Get("TOKEN")
 	return api.StructRestRedirect{
 		Result:   "redirect",
 		Location: redirectGateway,

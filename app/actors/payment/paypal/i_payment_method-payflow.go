@@ -124,14 +124,18 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	}
 	requestParams = requestParams + "&" + accessTokenInfo
 
-	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowURL))
+	nvpGateway := paymentPayPalPayFlow[
+		ConstPaymentPayPalUrl][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))]
 	request, err := http.NewRequest("POST", nvpGateway, bytes.NewBufferString(requestParams))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	request.Header.Add("Content-Type", "text/name value")
-	request.Header.Add("Host", utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowHost)))
+	request.Header.Add("Host", paymentPayPalPayFlow[
+		ConstPaymentPayPalHost][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))])
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -216,7 +220,9 @@ func (it *PayFlowAPI) GetAccessToken(originRequestParams string) (string, error)
 		"&SILENTTRAN=TRUE" +
 		"&SECURETOKENID=" + secureTokenID
 
-	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowURL))
+	nvpGateway := paymentPayPalPayFlow[
+		ConstPaymentPayPalUrl][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))]
 
 	request, err := http.NewRequest("POST", nvpGateway, bytes.NewBufferString(requestParams))
 	if err != nil {
@@ -224,7 +230,9 @@ func (it *PayFlowAPI) GetAccessToken(originRequestParams string) (string, error)
 	}
 
 	request.Header.Add("Content-Type", "text/name value")
-	request.Header.Add("Host", utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowHost)))
+	request.Header.Add("Host", paymentPayPalPayFlow[
+		ConstPaymentPayPalHost][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))])
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -320,14 +328,18 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		requestParams = requestParams + "&CVV2=" + utils.InterfaceToString(ccSecureCode)
 	}
 
-	nvpGateway := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowURL))
+	nvpGateway := paymentPayPalPayFlow[
+		ConstPaymentPayPalUrl][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))]
 	request, err := http.NewRequest("POST", nvpGateway, bytes.NewBufferString(requestParams))
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	request.Header.Add("Content-Type", "text/name value")
-	request.Header.Add("Host", utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayflowHost)))
+	request.Header.Add("Host", paymentPayPalPayFlow[
+		ConstPaymentPayPalHost][
+		utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPayPalPayFlowGateway))])
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
