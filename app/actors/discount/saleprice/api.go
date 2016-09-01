@@ -105,20 +105,14 @@ func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}
 
 	// checking request context
 	//-------------------------
-	postValues, err := api.GetRequestContentAsMap(context)
-	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if !utils.KeysInMapAndNotBlank(postValues, "id") {
-		context.SetResponseStatusBadRequest()
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "5c00350a-1f06-4d7a-86a8-592d3c799f71")
+	salePriceID := context.GetRequestArgument("id")
+	if salePriceID == "" {
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
 	}
 
 	// operation
 	//-------------------------
-	return ReadSalePriceHashMapByIDHelper(context.GetRequestArgument("id"))
+	return ReadSalePriceHashMapByIDHelper(salePriceID)
 }
 
 // Update sale price
@@ -126,20 +120,22 @@ func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// checking request context
 	//-------------------------
+	salePriceID := context.GetRequestArgument("id")
+	if salePriceID == "" {
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
+	}
+
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(postValues, "id") {
-		context.SetResponseStatusBadRequest()
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "dfd27d74-1d49-4baa-b64e-213324630765")
-	}
+	delete(postValues, "id")
 
 	// operation
 	//----------
-	return UpdateSalePriceByHashMapHelper(context.GetRequestArgument("id"), postValues)
+	return UpdateSalePriceByHashMapHelper(salePriceID, postValues)
 }
 
 // Deletes specified sale price
@@ -147,20 +143,14 @@ func AdminAPIDeleteSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// checking request context
 	//-------------------------
-	postValues, err := api.GetRequestContentAsMap(context)
-	if err != nil {
-		context.SetResponseStatusInternalServerError()
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if !utils.KeysInMapAndNotBlank(postValues, "id") {
-		context.SetResponseStatusBadRequest()
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "c91464a9-b920-4229-af4b-8a5945a862ca")
+	salePriceID := context.GetRequestArgument("id")
+	if salePriceID == "" {
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
 	}
 
 	// operation
 	//-------------------------
-	err = DeleteSalePriceByIDHelper(context.GetRequestArgument("id"))
+	err := DeleteSalePriceByIDHelper(salePriceID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
