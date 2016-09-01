@@ -25,7 +25,7 @@ type DefaultSalePrice struct{
 
 	amount		float64
 	endDatetime	time.Time
-	product_id 	string
+	productId 	string
 	startDatetime	time.Time
 }
 

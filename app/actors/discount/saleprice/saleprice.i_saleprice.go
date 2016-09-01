@@ -30,13 +30,13 @@ func (it *DefaultSalePrice) GetEndDatetime() time.Time {
 
 // ProductID setter
 func (it *DefaultSalePrice) SetProductID(product_id string) error {
-	it.product_id = product_id
+	it.productId = product_id
 	return nil
 }
 
 // ProductID getter
 func (it *DefaultSalePrice) GetProductID() string {
-	return it.product_id
+	return it.productId
 }
 
 // StartDatetime setter
