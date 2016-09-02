@@ -3,6 +3,7 @@ package saleprice
 import (
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/db"
 )
 
 // Helper to produce new module level error
@@ -84,4 +85,13 @@ func DeleteSalePriceByIDHelper(id string) error {
 	}
 
 	return salePriceModel.Delete()
+}
+
+func ReadSalePriceListHelper() ([]map[string]interface{}, error) {
+	collection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return collection.Load()
 }

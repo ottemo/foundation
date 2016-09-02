@@ -30,3 +30,10 @@ type InterfaceSalePrice interface {
 	models.InterfaceObject
 	models.InterfaceStorable
 }
+
+// InterfaceSalePriceCollection represents interface to access business layer implementation of sale price collection
+type InterfaceSalePriceCollection interface {
+	ListCategories() []InterfaceSalePrice
+
+	models.InterfaceCollection
+}

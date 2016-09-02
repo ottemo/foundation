@@ -5,6 +5,7 @@ package saleprice
 import (
 	"github.com/ottemo/foundation/env"
 	"time"
+	"github.com/ottemo/foundation/db"
 )
 
 // Package global constants
@@ -29,11 +30,8 @@ type DefaultSalePrice struct{
 	startDatetime	time.Time
 }
 
-//type discount struct {
-//	//Code     string
-//	//Name     string
-//	//Total    float64
-//	//Amount   float64
-//	//Percents float64
-//	//Qty      int
-//}
+
+// DefaultSalePriceCollection is a default implementer of InterfaceSalePriceCollection
+type DefaultSalePriceCollection struct {
+	listCollection     db.InterfaceDBCollection
+}

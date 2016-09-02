@@ -12,6 +12,22 @@ import (
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
+// InterfaceModel implementation (package "github.com/ottemo/foundation/app/models/interfaces")
+// ---------------------------------------------------------------------------------------------------------------------
+
+func (it *DefaultSalePrice) GetModelName() string {
+	return ConstModelNameSalePrice
+}
+
+func (it *DefaultSalePrice) GetImplementationName() string {
+	return "Default" + ConstModelNameSalePrice
+}
+
+func (it *DefaultSalePrice) New() (models.InterfaceModel, error) {
+	return &DefaultSalePrice{}, nil
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // InterfaceObject implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -160,22 +176,6 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// InterfaceModel implementation (package "github.com/ottemo/foundation/app/models/interfaces")
-// ---------------------------------------------------------------------------------------------------------------------
-
-func (it *DefaultSalePrice) GetModelName() string {
-	return ConstModelNameSalePrice
-}
-
-func (it *DefaultSalePrice) GetImplementationName() string {
-	return "Default" + ConstModelNameSalePrice
-}
-
-func (it *DefaultSalePrice) New() (models.InterfaceModel, error) {
-	return &DefaultSalePrice{}, nil
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
 // InterfaceStorable implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -195,9 +195,13 @@ func (it *DefaultSalePrice) Save() error {
 	logDebugHelper("(it *DefaultSalePrice) Save " + utils.InterfaceToString(it.ToHashMap()))
 	// Check model data
 	//-----------------
+
+	// Check amount positive
 	if it.GetAmount() <= 0 {
 		return newErrorHelper("Amount should be greater than 0.", "ccf50f3f-a503-4720-b3a6-2ba1639fb8e7")
 	}
+
+	// Check start date before end date
 	if !it.GetStartDatetime().Before(it.GetEndDatetime()) {
 		return newErrorHelper("Start Datetime should be before End Datetime.", "668c3bd4-1a10-417a-aa68-2ec13e559a11")
 	}
@@ -264,3 +268,4 @@ func (it *DefaultSalePrice) Delete() error {
 
 	return nil
 }
+

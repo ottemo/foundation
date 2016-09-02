@@ -13,7 +13,7 @@ func setupAPI() error {
 	// Admin Only
 	//-----------
 
-	//service.GET("saleprices", api.IsAdmin(AdminAPIReadSalePriceList))
+	service.GET("saleprices", api.IsAdmin(AdminAPIReadSalePriceList))
 	//service.GET("saleprices/product/:id", api.IsAdmin(AdminAPIGetSalePriceListByProduct))
 
 	service.POST("saleprice", api.IsAdmin(AdminAPICreateSalePrice))
@@ -25,18 +25,9 @@ func setupAPI() error {
 }
 
 // Returns list of all registered sale prices.
-//func AdminAPIGetSalePriceList(context api.InterfaceApplicationContext) ([]map[string]interface{}, error) {
-//
-//	collection, err := db.GetCollection(ConstCollectionNameSalePrices)
-//	if err != nil {
-//		context.SetResponseStatusInternalServerError()
-//		return nil, env.ErrorDispatch(err)
-//	}
-//
-//	records, err := collection.Load()
-//
-//	return records, nil
-//}
+func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interface{}, error) {
+	return ReadSalePriceListHelper()
+}
 
 // Returns a list of registered sale prices for product
 // * product id should be specified in the "product_id" argument
@@ -130,8 +121,6 @@ func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
-
-	delete(postValues, "id")
 
 	// operation
 	//----------

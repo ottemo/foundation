@@ -13,6 +13,10 @@ func init() {
 	var _ saleprice.InterfaceSalePrice = salePriceInstance
 	models.RegisterModel(saleprice.ConstModelNameSalePrice, salePriceInstance)
 
+	salePriceCollectionInstance := new(DefaultSalePriceCollection)
+	var _ saleprice.InterfaceSalePriceCollection = salePriceCollectionInstance
+	models.RegisterModel(saleprice.ConstModelNameSalePriceCollection, salePriceCollectionInstance)
+
 	db.RegisterOnDatabaseStart(salePriceInstance.setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)
 }

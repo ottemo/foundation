@@ -6,6 +6,7 @@ package saleprice
 
 const (
 	ConstModelNameSalePrice	= "SalePrice"
+	ConstModelNameSalePriceCollection	= "SalePriceCollection"
 )
 
 //----------------------------------------------------------------------------------------------------------------------
