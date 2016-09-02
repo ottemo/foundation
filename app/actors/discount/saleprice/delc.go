@@ -34,4 +34,5 @@ type DefaultSalePrice struct{
 // DefaultSalePriceCollection is a default implementer of InterfaceSalePriceCollection
 type DefaultSalePriceCollection struct {
 	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
 }

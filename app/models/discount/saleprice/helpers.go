@@ -19,3 +19,18 @@ func GetSalePriceModel() (InterfaceSalePrice, error) {
 
 	return salePriceModel, nil
 }
+
+func GetSalePriceCollectionModel() (InterfaceSalePriceCollection, error) {
+	model, err := models.GetModel(ConstModelNameSalePriceCollection)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	salePriceCollectionModel, ok := model.(InterfaceSalePriceCollection)
+	if !ok {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a6fb5051-626d-4ab7-8e44-5b8b2a1180b5", "model "+model.GetImplementationName()+" is not 'InterfaceSalePriceCollection' capable")
+	}
+
+	return salePriceCollectionModel, nil
+}
+

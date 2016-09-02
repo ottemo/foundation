@@ -192,7 +192,6 @@ func (it *DefaultSalePrice) GetID() string {
 
 // Save function check model and save it to storage
 func (it *DefaultSalePrice) Save() error {
-	logDebugHelper("(it *DefaultSalePrice) Save " + utils.InterfaceToString(it.ToHashMap()))
 	// Check model data
 	//-----------------
 
@@ -213,7 +212,7 @@ func (it *DefaultSalePrice) Save() error {
 	}
 
 	// Check amount < product price
-	if it.GetAmount() < productModel.GetPrice() {
+	if it.GetAmount() >= productModel.GetPrice() {
 		return newErrorHelper("Amount should be less than product price.", "e30a767c-08a3-484f-9453-106290e99050")
 	}
 

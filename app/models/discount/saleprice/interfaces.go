@@ -13,7 +13,7 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelModel
 )
 
-// InterfaceCategory represents interface to access business layer implementation of category object
+// InterfaceSalePrice represents interface to access business layer implementation of sale price object
 type InterfaceSalePrice interface {
 	GetAmount() float64
 	SetAmount(float64) error
@@ -33,7 +33,7 @@ type InterfaceSalePrice interface {
 
 // InterfaceSalePriceCollection represents interface to access business layer implementation of sale price collection
 type InterfaceSalePriceCollection interface {
-	ListCategories() []InterfaceSalePrice
+	ListSalePrices() []InterfaceSalePrice
 
 	models.InterfaceCollection
 }

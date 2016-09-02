@@ -4,6 +4,8 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
+	"github.com/ottemo/foundation/app/models"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -14,7 +16,6 @@ func setupAPI() error {
 	//-----------
 
 	service.GET("saleprices", api.IsAdmin(AdminAPIReadSalePriceList))
-	//service.GET("saleprices/product/:id", api.IsAdmin(AdminAPIGetSalePriceListByProduct))
 
 	service.POST("saleprice", api.IsAdmin(AdminAPICreateSalePrice))
 	service.GET("saleprice/:id", api.IsAdmin(AdminAPIReadSalePrice))
@@ -26,46 +27,52 @@ func setupAPI() error {
 
 // Returns list of all registered sale prices.
 func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interface{}, error) {
-	return ReadSalePriceListHelper()
-}
+	salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
-// Returns a list of registered sale prices for product
-// * product id should be specified in the "product_id" argument
-//func AdminAPIGetSalePriceListByProduct(context api.InterfaceApplicationContext) ([]map[string]interface{}, error) {
-//
-//	var postValues map[string]interface{}
-//	var err error
-//
-//	if postValues, err = api.GetRequestContentAsMap(context); err != nil {
-//		context.SetResponseStatusInternalServerError()
-//		return nil, env.ErrorDispatch(err)
-//	}
-//
-//	if !utils.KeysInMapAndNotBlank(postValues, "product_id") {
-//		context.SetResponseStatusBadRequest()
-//		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5aea5a01-1601-40a3-9b4a-a6dcf7e4dff5", "Required field 'product_id' is not specified.")
-//	}
-//
-//	var collection db.InterfaceDBCollection
-//	if collection, err = db.GetCollection(ConstCollectionNameSalePrices); err != nil {
-//		context.SetResponseStatusInternalServerError()
-//		return nil, env.ErrorDispatch(err)
-//	}
-//
-//	valueProductId := utils.InterfaceToString(postValues["product_id"])
-//	if err = collection.AddFilter("product_id", "=", valueProductId); err != nil {
-//		context.SetResponseStatusInternalServerError()
-//		return nil, env.ErrorDispatch(err)
-//	}
-//
-//	var records []map[string]interface{}
-//	if records, err = collection.Load(); err != nil {
-//		context.SetResponseStatusInternalServerError()
-//		return nil, env.ErrorDispatch(err)
-//	}
-//
-//	return records, nil
-//}
+	// applying requested filters
+	models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection())
+
+	// excluding disabled categories for a regular visitor
+	if err := api.ValidateAdminRights(context); err != nil {
+		salePriceCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+	}
+
+	// checking for a "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return salePriceCollectionModel.GetDBCollection().Count()
+	}
+
+	// limit parameter handle
+	salePriceCollectionModel.ListLimit(models.GetListLimit(context))
+
+	// extra parameter handle
+	models.ApplyExtraAttributes(context, salePriceCollectionModel)
+
+	listItems, err := salePriceCollectionModel.List()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	var result []map[string]interface{}
+
+	for _, listItem := range listItems {
+		item := map[string]interface{}{
+			"ID":     listItem.ID,
+			"Name":   listItem.Name,
+			"Desc":   listItem.Desc,
+			"Extra":  listItem.Extra,
+			"Image":  listItem.Image,
+			"Images": []map[string]string{},
+		}
+
+		result = append(result, item)
+	}
+
+	return result, nil
+}
 
 // Check input parameters and store new Sale Price
 func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {

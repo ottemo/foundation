@@ -21,7 +21,12 @@ func (it *DefaultSalePriceCollection) GetImplementationName() string {
 }
 
 func (it *DefaultSalePriceCollection) New() (models.InterfaceModel, error) {
-	return &DefaultSalePriceCollection{}, nil
+	dbCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return &DefaultSalePriceCollection{listCollection: dbCollection, listExtraAtributes: make([]string, 0)}, nil
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -65,6 +70,16 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 			" from ["+utils.InterfaceToString(salePriceModel.GetStartDatetime())+"], "+
 			" to ["+utils.InterfaceToString(salePriceModel.GetEndDatetime())+"]"
 
+		// serving extra attributes
+		//-------------------------
+		if len(it.listExtraAtributes) > 0 {
+			resultItem.Extra = make(map[string]interface{})
+
+			for _, attributeName := range it.listExtraAtributes {
+				resultItem.Extra[attributeName] = salePriceModel.Get(attributeName)
+			}
+		}
+
 		result = append(result, *resultItem)
 	}
 
@@ -72,21 +87,32 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 }
 
 func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) error {
-	// TODO: just for now no external attributes
+
+	salePriceModel, err := saleprice.GetSalePriceModel()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	var allowedAttributes []string
+	for _, attributeInfo := range salePriceModel.GetAttributesInfo() {
+		allowedAttributes = append(allowedAttributes, attributeInfo.Attribute)
+	}
+
 	return nil
 }
 
 func (it *DefaultSalePriceCollection) ListFilterAdd(attribute string, operator string, value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	it.listCollection.AddFilter(attribute, operator, value.(string))
 	return nil
 }
 
-//func (it *DefaultSalePriceCollection) ListFilterReset() error {
-//
-//}
+func (it *DefaultSalePriceCollection) ListFilterReset() error {
+	it.listCollection.ClearFilters()
+	return nil
+}
 
-//func (it *DefaultSalePriceCollection) ListLimit(offset int, limit int) error {
-//
-//}
+func (it *DefaultSalePriceCollection) ListLimit(offset int, limit int) error {
+	return it.listCollection.SetLimit(offset, limit)
+}
 
 
