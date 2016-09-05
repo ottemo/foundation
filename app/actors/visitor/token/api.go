@@ -16,13 +16,16 @@ import (
 func setupAPI() error {
 
 	service := api.GetRestService()
+
 	service.POST("visit/token", APICreateToken)
 	service.GET("visit/tokens", APIListVisitorCards)
+	service.DELETE("visit/token", APIDeleteToken)
 
-	//	service.PUT("token/:tokenID", APIGetToken)
+	//service.PUT("token/:tokenID", APIGetToken)
 
 	return nil
 }
+
 
 // APICreateToken creates a request body for posting credit card info to payment system with 0 amount payment
 // for obtaining token on this card and saving it for visitor
@@ -158,6 +161,13 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	dbCollection := visitorCardCollectionModel.GetDBCollection()
 	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
 
+	// add allowed payment methods filter
+	paymentMethods := make([]string, 0)
+	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
+		paymentMethods = append(paymentMethods, paymentMethod.GetCode())
+	}
+	dbCollection.AddStaticFilter("payment", "IN", paymentMethods)
+
 	// filters handle
 	models.ApplyFilters(context, dbCollection)
 
@@ -172,5 +182,28 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	// extra parameter handle
 	models.ApplyExtraAttributes(context, visitorCardCollectionModel)
 
+
 	return visitorCardCollectionModel.List()
+}
+
+// APIDeleteToken deletes credit card token by provided token_id
+func APIDeleteToken (context api.InterfaceApplicationContext) (interface{}, error) {
+
+	tokenID := context.GetRequestArgument("token_id")
+	if tokenID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "babd0a3a-5372-405f-9464-16184cd27ea0", "token_id was not specified")
+	}
+
+	// list operation
+	//---------------
+	visitorCardCollectionModel, err := visitor.GetVisitorCardCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	dbCollection := visitorCardCollectionModel.GetDBCollection()
+	dbCollection.AddFilter("token_id", "=", tokenID)
+	dbCollection.Delete()
+
+	return "ok", nil
 }
