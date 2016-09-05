@@ -79,13 +79,12 @@ func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// checking request context
 	//-------------------------
-	postValues, err := api.GetRequestContentAsMap(context)
+	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(postValues, "amount", "start_datetime", "end_datetime", "product_id") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "start_datetime", "end_datetime", "product_id") {
 		context.SetResponseStatusBadRequest()
 		return nil, newErrorHelper(
 			"Required fields 'amount', 'start_datetime', 'end_datetime', 'product_id', cannot be blank.",
@@ -94,7 +93,25 @@ func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// operation
 	//----------
-	return CreateSalePriceFromHashMapHelper(postValues)
+
+	salePriceModel, err := saleprice.GetSalePriceModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for attribute, value := range requestData {
+		err := salePriceModel.Set(attribute, value)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	err = salePriceModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return salePriceModel.ToHashMap(), nil
 }
 
 // API returns a sale price with the specified ID
@@ -110,7 +127,17 @@ func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}
 
 	// operation
 	//-------------------------
-	return ReadSalePriceHashMapByIDHelper(salePriceID)
+	salePriceModel, err := saleprice.GetSalePriceModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = salePriceModel.Load(salePriceID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return salePriceModel.ToHashMap(), nil
 }
 
 // Update sale price
@@ -123,15 +150,36 @@ func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface
 		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
 	}
 
-	postValues, err := api.GetRequestContentAsMap(context)
+	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// operation
 	//----------
-	return UpdateSalePriceByHashMapHelper(salePriceID, postValues)
+	salePriceModel, err := saleprice.GetSalePriceModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = salePriceModel.Load(salePriceID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for attrName, attrVal := range requestData {
+		err = salePriceModel.Set(attrName, attrVal)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	err = salePriceModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return salePriceModel.ToHashMap(), nil
 }
 
 // Deletes specified sale price
@@ -146,7 +194,17 @@ func AdminAPIDeleteSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// operation
 	//-------------------------
-	err := DeleteSalePriceByIDHelper(salePriceID)
+	salePriceModel, err := saleprice.GetSalePriceModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = salePriceModel.Load(salePriceID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = salePriceModel.Delete()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
