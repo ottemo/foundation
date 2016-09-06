@@ -213,6 +213,7 @@ func (it *DefaultCheckout) GetPriceAdjustments(label string) []checkout.StructPr
 	it.GetItemSpecificTotal(0, label) // this function will do initial calculation of checkout if it wasn't done
 	var result []checkout.StructPriceAdjustment
 
+	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultCheckout GetPriceAdjustments ["+label+"] "+utils.InterfaceToString(it.priceAdjustments));
 	for _, priceAdjustment := range it.priceAdjustments {
 		if label == "" || utils.IsInListStr(label, priceAdjustment.Labels) {
 			result = append(result, priceAdjustment)
@@ -377,6 +378,7 @@ func (it *DefaultCheckout) applyAmount(idx interface{}, label string, amount flo
 // applyPriceAdjustment used to handle calculation of changes from price adjustment
 // and storing to all points with details
 func (it *DefaultCheckout) applyPriceAdjustment(priceAdjustment checkout.StructPriceAdjustment) {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "=== DefaultCheckout applyPriceAdjustment");
 	if priceAdjustment.Code == "" {
 		return
 	}
@@ -513,8 +515,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 					}
 				} else {
 					if priority == maxPriority {
+						env.Log("errors.log", env.ConstLogPrefixDebug, "=loop priceAdjustmentCall ");
 						for _, priceAdjustment := range priceAdjustmentCall(it, priority) {
+							env.Log("errors.log", env.ConstLogPrefixDebug, "=it "+utils.InterfaceToString(it)+", priority "+utils.InterfaceToString(priority));
+							env.Log("errors.log", env.ConstLogPrefixDebug, "=BEFORE "+utils.InterfaceToString(priceAdjustments));
 							priceAdjustments = append(priceAdjustments, priceAdjustment)
+							env.Log("errors.log", env.ConstLogPrefixDebug, "= AFTER "+utils.InterfaceToString(priceAdjustments));
 						}
 					}
 				}
@@ -522,7 +528,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 
 			// priceAdjustment lookup
 			for _, priceAdjustment := range priceAdjustments {
-
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=priceAdjustment "+utils.InterfaceToString(priceAdjustment));
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=searchMode "+utils.InterfaceToString(searchMode));
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=maxIsSet "+utils.InterfaceToString(maxIsSet));
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=maxPriority "+utils.InterfaceToString(maxPriority));
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=minIsSet "+utils.InterfaceToString(minIsSet));
+				env.Log("errors.log", env.ConstLogPrefixDebug, "=minPriority "+utils.InterfaceToString(minPriority));
 				if searchMode {
 					priority := priceAdjustment.Priority
 					if (!maxIsSet || priority < maxPriority) && (!minIsSet || priority > minPriority) {
@@ -530,7 +541,9 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 						maxIsSet = true
 					}
 				} else {
+					env.Log("errors.log", env.ConstLogPrefixDebug, "= priceAdjustment.Priority ?== maxPriority");
 					if priceAdjustment.Priority == maxPriority {
+						env.Log("errors.log", env.ConstLogPrefixDebug, "= priceAdjustment.Priority == maxPriority");
 						it.applyPriceAdjustment(priceAdjustment)
 					}
 				}

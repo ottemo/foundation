@@ -41,8 +41,8 @@ func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckou
 	var result []checkout.StructPriceAdjustment
 
 	logDebugHelper("checkout.ConstCalculateTargetGrandTotal "+utils.InterfaceToString(checkout.ConstCalculateTargetGrandTotal))
-	if currentPriority == checkout.ConstCalculateTargetGrandTotal {
-		logDebugHelper("checkout.ConstCalculateTargetGrandTotal")
+	if currentPriority == checkout.ConstCalculateTargetSubtotal {
+		logDebugHelper("checkout.ConstCalculateTargetSubtotal")
 
 		// loading information about applied coupons
 		salePriceCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
@@ -87,7 +87,7 @@ func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckou
 					logDebugHelper("today is in time range")
 					logDebugHelper("perItem key "+utils.InterfaceToString(item.GetIdx()))
 					perItem[utils.InterfaceToString(item.GetIdx())] =
-						-utils.InterfaceToFloat64(salePrice["amount"])
+						-(utils.InterfaceToFloat64(item.GetQty()) * utils.InterfaceToFloat64(salePrice["amount"]))
 				}
 			}
 		}
