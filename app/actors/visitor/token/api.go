@@ -19,7 +19,7 @@ func setupAPI() error {
 
 	service.POST("visit/token", APICreateToken)
 	service.GET("visit/tokens", APIListVisitorCards)
-	service.DELETE("visit/token", APIDeleteToken)
+	service.DELETE("visit/token/:tokenID", APIDeleteToken)
 
 	//service.PUT("token/:tokenID", APIGetToken)
 
@@ -162,9 +162,14 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
 
 	// add allowed payment methods filter
+	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+	isSubscription := currentCheckout.IsSubscription()
+
 	paymentMethods := make([]string, 0)
 	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
-		paymentMethods = append(paymentMethods, paymentMethod.GetCode())
+		if paymentMethod.IsAllowed(currentCheckout) && (!isSubscription || paymentMethod.IsTokenable(currentCheckout)) {
+			paymentMethods = append(paymentMethods, paymentMethod.GetCode())
+		}
 	}
 	dbCollection.AddStaticFilter("payment", "IN", paymentMethods)
 
@@ -189,21 +194,19 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 // APIDeleteToken deletes credit card token by provided token_id
 func APIDeleteToken (context api.InterfaceApplicationContext) (interface{}, error) {
 
-	tokenID := context.GetRequestArgument("token_id")
+	tokenID := context.GetRequestArgument("tokenID")
 	if tokenID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "babd0a3a-5372-405f-9464-16184cd27ea0", "token_id was not specified")
 	}
 
 	// list operation
 	//---------------
-	visitorCardCollectionModel, err := visitor.GetVisitorCardCollectionModel()
+	visitorCardCollectionModel, err := visitor.GetVisitorCardModelAndSetID(tokenID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	dbCollection := visitorCardCollectionModel.GetDBCollection()
-	dbCollection.AddFilter("token_id", "=", tokenID)
-	dbCollection.Delete()
+	visitorCardCollectionModel.Delete()
 
 	return "ok", nil
 }
