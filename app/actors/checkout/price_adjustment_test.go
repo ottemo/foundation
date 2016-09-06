@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"testing"
+	"github.com/ottemo/foundation/utils"
 )
 
 func TestPriceAdjustments(t *testing.T) {
@@ -22,6 +23,20 @@ func TestPriceAdjustments(t *testing.T) {
 				"2": 300, // product2 2x150
 			},
 		},
+
+		// sale price per item
+		checkout.StructPriceAdjustment{
+			Code:     "sale_price",
+			Name:     "Sale Price",
+			Amount:   0,
+			Priority: 1.1,
+			Labels:   []string{checkout.ConstLabelSalePriceAdjustment},
+			PerItem: map[string]float64{
+				"1": -1, // 1$ on product1
+				"2": -2, // 2$ on product2
+			},
+		},
+
 		checkout.StructPriceAdjustment{
 			Code:     "default",
 			Name:     "Flat Rate",
@@ -77,7 +92,7 @@ func TestPriceAdjustments(t *testing.T) {
 		},
 	}
 
-	debug := false // allows to print values
+	const DEBUG = false // allows to print values later on in this test
 
 	currentCheckout := new(DefaultCheckout)
 
@@ -90,7 +105,7 @@ func TestPriceAdjustments(t *testing.T) {
 
 		// after PA applied it added to checkout internal array with updated amount
 		appliedPriceAdjustment := currentCheckout.priceAdjustments[index]
-		if debug {
+		if DEBUG {
 			fmt.Println(currentCheckout.calculateAmount, appliedPriceAdjustment.Amount)
 			fmt.Println(currentCheckout.calculationDetailTotals)
 		}
@@ -99,7 +114,7 @@ func TestPriceAdjustments(t *testing.T) {
 			t.Error("Amount is equal to 0")
 		}
 	}
-	if debug {
+	if DEBUG {
 		fmt.Println(currentCheckout.GetPriceAdjustments(""))
 		fmt.Println("Subtotal: ", currentCheckout.GetSubtotal())
 		fmt.Println("Shipping: ", currentCheckout.GetShippingAmount())
@@ -111,7 +126,7 @@ func TestPriceAdjustments(t *testing.T) {
 	}
 
 	total := currentCheckout.GetSubtotal() + currentCheckout.GetShippingAmount() + currentCheckout.GetDiscountAmount() + currentCheckout.GetTaxAmount()
-	if total != currentCheckout.GetGrandTotal() {
+	if utils.RoundPrice(total) != utils.RoundPrice(currentCheckout.GetGrandTotal()) {
 		t.Error("Total obteined from adding part elements is not equal to grandtotal")
 	}
 
@@ -121,24 +136,38 @@ func TestPriceAdjustments(t *testing.T) {
 }
 
 /*
+This output is generated with
+const DEBUG = true
+defined earlier in this test
+
 400 400
-map[1:map[ST:100 GT:100] 0:map[GT:400 ST:400] 2:map[GT:300 ST:300]]
-500 100
-map[0:map[SP:100 GT:500 ST:400] 2:map[GT:300 ST:300] 1:map[GT:100 ST:100]]
-350 -150
-map[1:map[GT:100 ST:100] 0:map[GT:350 ST:250 SP:100] 2:map[GT:150 ST:150]]
-371 21
-map[1:map[GT:100 ST:100] 0:map[GT:371 ST:250 SP:100 T:21] 2:map[GT:150 ST:150]]
-393 22
-map[1:map[GT:110 ST:100 T:10] 0:map[GT:393 ST:250 SP:100 T:43] 2:map[ST:150 T:7 GT:157]]
-0 -393
-map[1:map[T:10 GT:110 ST:100] 0:map[GC:-393 GT:0 ST:250 SP:100 T:43] 2:map[GT:157 ST:150 T:7]]
+map[2:map[GT:300 ST:300] 1:map[GT:100 ST:100] 0:map[ST:400 GT:400]]
+397 -3
+map[1:map[GT:99 ST:100 SPA:-1] 0:map[SPA:-3 GT:397 ST:400] 2:map[GT:298 ST:300 SPA:-2]]
+497 100
+map[1:map[GT:99 ST:100 SPA:-1] 0:map[GT:497 ST:400 SPA:-3 SP:100] 2:map[GT:298 ST:300 SPA:-2]]
+347 -150
+map[1:map[GT:99 ST:100 SPA:-1] 0:map[GT:347 ST:400 SPA:-3 SP:100 D:-150] 2:map[D:-150 GT:148 ST:300 SPA:-2]]
+367.82 20.82
+map[0:map[T:20.82 GT:367.82 ST:400 SPA:-3 SP:100 D:-150] 2:map[GT:148 ST:300 SPA:-2 D:-150] 1:map[SPA:-1 GT:99 ST:100]]
+389.82 22
+map[1:map[GT:109 ST:100 SPA:-1 T:10] 0:map[SP:100 D:-150 T:42.82 GT:389.82 ST:400 SPA:-3] 2:map[ST:300 SPA:-2 D:-150 T:7 GT:155]]
+0 -389.82
+map[2:map[T:7 GT:155 ST:300 SPA:-2 D:-150] 1:map[GT:109 ST:100 SPA:-1 T:10] 0:map[GC:-389.82 GT:0 ST:400 SPA:-3 SP:100 D:-150 T:42.82]]
+
 [
 {ST ST 1 400 false [ST] map[1:100 2:300]}
+{sale_price Sale Price 1.1 -3 false [SPA] map[1:-1 2:-2]}
 {default Flat Rate 2 100 false [SP] map[]}
-{Free item ST 1 -150 false [ST] map[2:-150]}
-{Country-State Tax 2.5 21 true [T] map[]}
+{Free item one free item 2.1 -150 false [D] map[2:-150]}
+{Country-State Tax 2.5 20.82 true [T] map[]}
 {Product-Addings Tax 2.51 22 false [T] map[0:5 1:10 2:7]}
-{gift-card1 gift-card 3.1 -393 false [GC] map[]}
+{gift-card1 gift-card 3.1 -389.82 false [GC] map[]}
 ]
+
+Subtotal:  400
+Shipping:  100
+Discount:  -542.8199999999999
+Tax:  42.82
+Grandtotal:  0
 */
