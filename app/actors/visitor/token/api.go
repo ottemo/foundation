@@ -46,9 +46,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, err
 	}
 
-	fmt.Printf("Context contains: %v\n\n\n", requestData)
-
-	paymentMethodCode := utils.InterfaceToString(utils.GetFirstMapValue(requestData, "payment", "payment_method"))
+	paymentMethodCode := utils.InterfaceToString(requestData["payment_method"]))
 	if paymentMethodCode == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6d1691c8-2d26-44be-b90d-24d920e26301", "Please select a payment method.")
 	}
@@ -163,11 +161,10 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 
 	// add allowed payment methods filter
 	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
-	isSubscription := currentCheckout.IsSubscription()
 
 	paymentMethods := make([]string, 0)
 	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
-		if paymentMethod.IsAllowed(currentCheckout) && (!isSubscription || paymentMethod.IsTokenable(currentCheckout)) {
+		if paymentMethod.IsAllowed(currentCheckout) {
 			paymentMethods = append(paymentMethods, paymentMethod.GetCode())
 		}
 	}
