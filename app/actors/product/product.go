@@ -677,6 +677,7 @@ func (it *DefaultProduct) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
+	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct Load "+utils.InterfaceToString(it.externalAttributes));
 	err = it.externalAttributes.Load(id)
 	if err != nil {
 		return env.ErrorDispatch(err)

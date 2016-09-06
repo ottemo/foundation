@@ -6,6 +6,8 @@ import (
 	"github.com/ottemo/foundation/env"
 	"time"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // Package global constants
@@ -36,3 +38,17 @@ type DefaultSalePriceCollection struct {
 	listCollection     db.InterfaceDBCollection
 	listExtraAtributes []string
 }
+
+// SalePriceDelegate type implements InterfaceAttributesDelegate and have handles
+// on InterfaceStorable methods which should have call-back on model method call
+// in order to test it we are pushing the callback status to model instance
+type SalePriceDelegate struct {
+	productInstance  product.InterfaceProduct
+	//Inventory []map[string]interface{}
+	//Qty       int
+	SalePrices	[]map[string]interface{}
+}
+
+// salePriceDelegate variable that is currently used as a stock delegate to extend product attributes
+var salePriceDelegate models.InterfaceAttributesDelegate
+

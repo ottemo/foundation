@@ -60,6 +60,7 @@ func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interfa
 
 	for _, listItem := range listItems {
 		item := map[string]interface{}{
+			// TODO make more real attributes: start_datetime, end_datetime, amount
 			"ID":     listItem.ID,
 			"Name":   listItem.Name,
 			"Desc":   listItem.Desc,
