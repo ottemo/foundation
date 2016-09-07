@@ -6,6 +6,8 @@ import (
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/utils"
+	contextPkg "github.com/ottemo/foundation/api/context"
+	"time"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -20,6 +22,15 @@ func (it *SalePriceDelegate) New(productInstance interface{}) (models.InterfaceA
 }
 
 func (it *SalePriceDelegate) Get(attribute string) interface{} {
+	context := contextPkg.GetContext()
+	logDebugHelper("SalePriceDelegate Load "+utils.InterfaceToString(context))
+	isAdmin := false
+	if context != nil {
+		if isAdminContext, ok := context["is_admin"]; ok {
+			isAdmin = utils.InterfaceToBool(isAdminContext)
+		}
+	}
+
 	switch attribute {
 	case "sale_prices":
 		if it.SalePrices == nil {
@@ -36,6 +47,7 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 			}
 
 			var result []map[string]interface{}
+			today := time.Now()
 			for _, salePriceStructListItem := range salePriceStructListItems {
 				salePriceModel, err := saleprice.GetSalePriceModel()
 				if err != nil {
@@ -47,7 +59,11 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 					continue // TODO unhandled error
 				}
 
-				result = append(result, salePriceModel.ToHashMap())
+				if isAdmin || (
+					salePriceModel.GetStartDatetime().Before(today) &&
+					today.Before(salePriceModel.GetEndDatetime())) {
+					result = append(result, salePriceModel.ToHashMap())
+				}
 			}
 
 			it.SalePrices = result

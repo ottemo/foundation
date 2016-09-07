@@ -8,7 +8,7 @@ import (
 
 // package constants
 const (
-	debugOutput = false
+	debugOutput = true
 )
 
 // package variables

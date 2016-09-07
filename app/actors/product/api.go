@@ -14,6 +14,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+	contextPkg "github.com/ottemo/foundation/api/context"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -320,7 +321,6 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 // APIGetProduct return specified product information
 //   - product id should be specified in "productID" argument
 func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	// check request context
 	//---------------------
 	productID := context.GetRequestArgument("productID")
@@ -330,7 +330,12 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// load product operation
 	//-----------------------
-	productModel, err := product.LoadProductByID(productID)
+	// stoer context
+	var productModel product.InterfaceProduct
+	var err error
+	productModel, err = product.LoadProductByID(productID)
+
+	//productModel, err := product.LoadProductByID(productID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -346,7 +351,20 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// get product
-	result := productModel.ToHashMap()
+	var result map[string]interface{}
+	contextPkg.MakeContext(func () {
+		if callContext := contextPkg.GetContext(); callContext != nil {
+			//callContext["app_context"] = context
+			callContext["is_admin"] = false
+			if api.ValidateAdminRights(context) == nil {
+				callContext["is_admin"] = true
+			}
+		} else {
+			env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b94a499-9d71-403e-9f67-06fd90d6250d", "can not get context for APIGetProduct")
+		}
+
+		result = productModel.ToHashMap()
+	})
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
 	if err != nil {

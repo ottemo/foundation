@@ -53,7 +53,7 @@ func GetProductModelAndSetID(productID string) (InterfaceProduct, error) {
 
 // LoadProductByID loads product data into current InterfaceProduct model implementation
 func LoadProductByID(productID string) (InterfaceProduct, error) {
-
+	env.Log("errors.log", env.ConstLogPrefixDebug, "LoadProductByID")
 	productModel, err := GetProductModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)

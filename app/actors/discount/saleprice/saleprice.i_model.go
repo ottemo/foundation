@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
+	contextPkg "github.com/ottemo/foundation/api/context"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -236,6 +237,10 @@ func (it *DefaultSalePrice) Save() error {
 }
 
 func (it *DefaultSalePrice) Load(id string) error {
+	logDebugHelper("DefaultSalePrice Load")
+	context := contextPkg.GetContext()
+	logDebugHelper("DefaultSalePrice Load "+utils.InterfaceToString(context))
+
 	dbSalePriceCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -246,6 +251,7 @@ func (it *DefaultSalePrice) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
+	logDebugHelper("DefaultSalePrice Load dbRecord= "+utils.InterfaceToString(dbRecord))
 	err = it.FromHashMap(dbRecord)
 	if err != nil {
 		return env.ErrorDispatch(err)

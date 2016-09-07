@@ -661,7 +661,7 @@ func (it *DefaultProduct) SetID(id string) error {
 
 // Load loads product information from DB
 func (it *DefaultProduct) Load(id string) error {
-
+	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct Load")
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
