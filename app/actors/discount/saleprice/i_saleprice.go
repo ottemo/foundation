@@ -1,9 +1,9 @@
 package saleprice
 
 import (
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
 )
 
 // setupDB prepares system database for package usage
@@ -19,7 +19,7 @@ func (it *DefaultSalePrice) setupDB() error {
 	}
 
 	modelAttributesInfo := salePriceModel.GetAttributesInfo()
-	for _, attributeInfo := range(modelAttributesInfo) {
+	for _, attributeInfo := range modelAttributesInfo {
 		if attributeInfo.Attribute != "_id" {
 			dbSalePriceCollection.AddColumn(
 				attributeInfo.Attribute,

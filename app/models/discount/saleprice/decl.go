@@ -1,9 +1,6 @@
 package saleprice
 
-//----------------------------------------------------------------------------------------------------------------------
-// Public
-//----------------------------------------------------------------------------------------------------------------------
-
+// Public constants
 const (
 	ConstModelNameSalePrice           = "SalePrice"
 	ConstModelNameSalePriceCollection = "SalePriceCollection"

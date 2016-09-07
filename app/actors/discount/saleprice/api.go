@@ -2,10 +2,10 @@ package saleprice
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
-	"github.com/ottemo/foundation/app/models"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -25,7 +25,7 @@ func setupAPI() error {
 	return nil
 }
 
-// Returns list of all registered sale prices.
+// AdminAPIReadSalePriceList returns list of all registered sale prices.
 func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interface{}, error) {
 	salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
 	if err != nil {
@@ -75,7 +75,7 @@ func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interfa
 	return result, nil
 }
 
-// Check input parameters and store new Sale Price
+// AdminAPICreateSalePrice checks input parameters and store new Sale Price
 func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
@@ -114,7 +114,7 @@ func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface
 	return salePriceModel.ToHashMap(), nil
 }
 
-// API returns a sale price with the specified ID
+// AdminAPIReadSalePrice returns a sale price with the specified ID
 // * sale price id should be specified in the "id" argument
 func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
 
@@ -140,7 +140,7 @@ func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}
 	return salePriceModel.ToHashMap(), nil
 }
 
-// Update sale price
+// AdminAPIUpdateSalePrice updates sale price
 func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
@@ -182,7 +182,7 @@ func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface
 	return salePriceModel.ToHashMap(), nil
 }
 
-// Deletes specified sale price
+// AdminAPIDeleteSalePrice deletes specified sale price
 func AdminAPIDeleteSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context

@@ -1,4 +1,3 @@
-// Implementation of github.com/ottemo/foundation/app/models/checkout/interfaces InterfacePriceAdjustment
 package saleprice
 
 import (
@@ -10,6 +9,10 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
+
+//----------------------------------------------------------------------------------------------------------------------
+// Implementation of github.com/ottemo/foundation/app/models/checkout/interfaces InterfacePriceAdjustment
+//----------------------------------------------------------------------------------------------------------------------
 
 // GetName returns name of current sale price implementation
 func (it *DefaultSalePrice) GetName() string {

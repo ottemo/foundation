@@ -3,31 +3,31 @@
 package saleprice
 
 import (
-	"github.com/ottemo/foundation/env"
-	"time"
-	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+	"time"
 )
 
 // Package global constants
 const (
-	ConstConfigPathGroup   = "general.sale_price"
-	ConstConfigPathEnabled = "general.sale_price.enabled"
-	ConstConfigPathSalePriceApplyPriority	= "general.sale_price.priority"
+	ConstConfigPathGroup                  = "general.sale_price"
+	ConstConfigPathEnabled                = "general.sale_price.enabled"
+	ConstConfigPathSalePriceApplyPriority = "general.sale_price.priority"
 
 	ConstErrorModule = "saleprice"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 )
 
-// SalePrice is an implementer of InterfaceDiscount
-type DefaultSalePrice struct{
-	id	string
+// DefaultSalePrice is an implementer of InterfaceDiscount
+type DefaultSalePrice struct {
+	id string
 
-	amount		float64
-	endDatetime	time.Time
-	productId 	string
-	startDatetime	time.Time
+	amount        float64
+	endDatetime   time.Time
+	productID     string
+	startDatetime time.Time
 }
 
 // DefaultSalePriceCollection is a default implementer of InterfaceSalePriceCollection
@@ -40,12 +40,9 @@ type DefaultSalePriceCollection struct {
 // on InterfaceStorable methods which should have call-back on model method call
 // in order to test it we are pushing the callback status to model instance
 type SalePriceDelegate struct {
-	productInstance  product.InterfaceProduct
-	//Inventory []map[string]interface{}
-	//Qty       int
-	SalePrices	[]map[string]interface{}
+	productInstance product.InterfaceProduct
+	SalePrices      []map[string]interface{}
 }
 
 // salePriceDelegate variable that is currently used as a stock delegate to extend product attributes
 var salePriceDelegate models.InterfaceAttributesDelegate
-

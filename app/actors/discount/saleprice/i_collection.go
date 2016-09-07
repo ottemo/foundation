@@ -23,4 +23,3 @@ func (it *DefaultSalePriceCollection) ListSalePrices() []saleprice.InterfaceSale
 
 	return result
 }
-

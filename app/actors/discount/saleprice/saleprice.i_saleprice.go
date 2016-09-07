@@ -6,46 +6,46 @@ import "time"
 // InterfaceModel implementation (package "github.com/ottemo/foundation/app/models/discount/interfaces/InterfaceSalePrice")
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Amount setter
+// SetAmount : amount setter
 func (it *DefaultSalePrice) SetAmount(amount float64) error {
 	it.amount = amount
 	return nil
 }
 
-// Amount getter
+// GetAmount : amount getter
 func (it *DefaultSalePrice) GetAmount() float64 {
 	return it.amount
 }
 
-// EndDatetime setter
+// SetEndDatetime : endDatetime setter
 func (it *DefaultSalePrice) SetEndDatetime(endDatetime time.Time) error {
 	it.endDatetime = endDatetime
 	return nil
 }
 
-// EndDatetime getter
+// GetEndDatetime : endDatetime getter
 func (it *DefaultSalePrice) GetEndDatetime() time.Time {
 	return it.endDatetime
 }
 
-// ProductID setter
-func (it *DefaultSalePrice) SetProductID(product_id string) error {
-	it.productId = product_id
+// SetProductID : productID setter
+func (it *DefaultSalePrice) SetProductID(productID string) error {
+	it.productID = productID
 	return nil
 }
 
-// ProductID getter
+// GetProductID : productID getter
 func (it *DefaultSalePrice) GetProductID() string {
-	return it.productId
+	return it.productID
 }
 
-// StartDatetime setter
+// SetStartDatetime : startDatetime setter
 func (it *DefaultSalePrice) SetStartDatetime(startDatetime time.Time) error {
 	it.startDatetime = startDatetime
 	return nil
 }
 
-// StartDatetime getter
+// GetStartDatetime : startDatetime getter
 func (it *DefaultSalePrice) GetStartDatetime() time.Time {
 	return it.startDatetime
 }

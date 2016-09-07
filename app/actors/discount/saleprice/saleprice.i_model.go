@@ -3,12 +3,12 @@ package saleprice
 import (
 	"strings"
 
+	"github.com/ottemo/foundation/app/models"
+	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/app/models"
-	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ func (it *DefaultSalePrice) GetModelName() string {
 	return salepriceModel.ConstModelNameSalePrice
 }
 
-// GetModelName returns default model implementation
+// GetImplementationName returns default model implementation name
 func (it *DefaultSalePrice) GetImplementationName() string {
 	return "Default" + salepriceModel.ConstModelNameSalePrice
 }
@@ -299,4 +299,3 @@ func (it *DefaultSalePrice) Delete() error {
 
 	return nil
 }
-

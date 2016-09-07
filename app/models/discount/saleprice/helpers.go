@@ -34,4 +34,3 @@ func GetSalePriceCollectionModel() (InterfaceSalePriceCollection, error) {
 
 	return salePriceCollectionModel, nil
 }
-

@@ -1,12 +1,12 @@
 package saleprice
 
 import (
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/app/models/product"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
-	"github.com/ottemo/foundation/utils"
 	contextPkg "github.com/ottemo/foundation/api/context"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
+	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 	"time"
 )
 
@@ -64,8 +64,7 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 					continue
 				}
 
-				if isAdmin || (
-					salePriceModel.GetStartDatetime().Before(today) &&
+				if isAdmin || (salePriceModel.GetStartDatetime().Before(today) &&
 					today.Before(salePriceModel.GetEndDatetime())) {
 					result = append(result, salePriceModel.ToHashMap())
 				}
