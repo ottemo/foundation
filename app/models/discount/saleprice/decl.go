@@ -5,11 +5,6 @@ package saleprice
 //----------------------------------------------------------------------------------------------------------------------
 
 const (
-	ConstModelNameSalePrice	= "SalePrice"
-	ConstModelNameSalePriceCollection	= "SalePriceCollection"
+	ConstModelNameSalePrice           = "SalePrice"
+	ConstModelNameSalePriceCollection = "SalePriceCollection"
 )
-
-//----------------------------------------------------------------------------------------------------------------------
-// Private
-//----------------------------------------------------------------------------------------------------------------------
-

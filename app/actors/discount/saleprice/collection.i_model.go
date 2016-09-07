@@ -3,7 +3,7 @@ package saleprice
 import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
+	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -12,16 +12,19 @@ import (
 // InterfaceModel implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
+// GetModelName returns model name
 func (it *DefaultSalePriceCollection) GetModelName() string {
-	return saleprice.ConstModelNameSalePriceCollection
+	return salepriceModel.ConstModelNameSalePriceCollection
 }
 
+// GetImplementationName default model default implementation name
 func (it *DefaultSalePriceCollection) GetImplementationName() string {
-	return "Default" + saleprice.ConstModelNameSalePriceCollection
+	return "Default" + salepriceModel.ConstModelNameSalePriceCollection
 }
 
+// New returns new instance of model implementation object
 func (it *DefaultSalePriceCollection) New() (models.InterfaceModel, error) {
-	dbCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	dbCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -33,10 +36,12 @@ func (it *DefaultSalePriceCollection) New() (models.InterfaceModel, error) {
 // InterfaceCollection implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
+// GetDBCollection returns database collection
 func (it *DefaultSalePriceCollection) GetDBCollection() db.InterfaceDBCollection {
 	return it.listCollection
 }
 
+// List returns list of StructListItem items
 func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 	var result []models.StructListItem
 
@@ -50,7 +55,7 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 	// converting db record to StructListItem
 	//-----------------------------------
 	for _, dbItemData := range dbItems {
-		salePriceModel, err := saleprice.GetSalePriceModel()
+		salePriceModel, err := salepriceModel.GetSalePriceModel()
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
@@ -86,9 +91,10 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 	return result, nil
 }
 
+// ListAddExtraAttribute adds attribute to sale price collection
 func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) error {
 
-	salePriceModel, err := saleprice.GetSalePriceModel()
+	salePriceModel, err := salepriceModel.GetSalePriceModel()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -101,16 +107,19 @@ func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) er
 	return nil
 }
 
+// ListFilterAdd adds filter to sale price collection
 func (it *DefaultSalePriceCollection) ListFilterAdd(attribute string, operator string, value interface{}) error {
 	it.listCollection.AddFilter(attribute, operator, value.(string))
 	return nil
 }
 
+// ListFilterReset resets sale price collection filters
 func (it *DefaultSalePriceCollection) ListFilterReset() error {
 	it.listCollection.ClearFilters()
 	return nil
 }
 
+// ListLimit limits sale price collection selected records
 func (it *DefaultSalePriceCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
 }

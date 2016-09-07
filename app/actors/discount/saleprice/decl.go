@@ -12,11 +12,9 @@ import (
 
 // Package global constants
 const (
-	ConstModelNameSalePrice = ""
-
-	ConstCollectionNameSalePrices = "sale_prices"
-
-	ConstConfigPathSalePriceApplyPriority	= "general.discounts.salePrice_apply_priority"
+	ConstConfigPathGroup   = "general.sale_price"
+	ConstConfigPathEnabled = "general.sale_price.enabled"
+	ConstConfigPathSalePriceApplyPriority	= "general.sale_price.priority"
 
 	ConstErrorModule = "saleprice"
 	ConstErrorLevel  = env.ConstErrorLevelActor
@@ -31,7 +29,6 @@ type DefaultSalePrice struct{
 	productId 	string
 	startDatetime	time.Time
 }
-
 
 // DefaultSalePriceCollection is a default implementer of InterfaceSalePriceCollection
 type DefaultSalePriceCollection struct {

@@ -94,7 +94,6 @@ func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface
 
 	// operation
 	//----------
-
 	salePriceModel, err := saleprice.GetSalePriceModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)

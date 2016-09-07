@@ -8,7 +8,7 @@ import (
 
 // setupDB prepares system database for package usage
 func (it *DefaultSalePrice) setupDB() error {
-	dbSalePriceCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	dbSalePriceCollection, err := db.GetCollection(saleprice.ConstModelNameSalePriceCollection)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -20,10 +20,7 @@ func (it *DefaultSalePrice) setupDB() error {
 
 	modelAttributesInfo := salePriceModel.GetAttributesInfo()
 	for _, attributeInfo := range(modelAttributesInfo) {
-		//TODO: Strut. ID field should be filtered somewhat else.
 		if attributeInfo.Attribute != "_id" {
-			// TODO: AddColumn has parameter indexed, which is not
-			// predicted in StructAttributeInfo
 			dbSalePriceCollection.AddColumn(
 				attributeInfo.Attribute,
 				attributeInfo.Type,

@@ -8,22 +8,24 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
-	contextPkg "github.com/ottemo/foundation/api/context"
+	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // InterfaceModel implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
+// GetModelName returns model name
 func (it *DefaultSalePrice) GetModelName() string {
-	return ConstModelNameSalePrice
+	return salepriceModel.ConstModelNameSalePrice
 }
 
+// GetModelName returns default model implementation
 func (it *DefaultSalePrice) GetImplementationName() string {
-	return "Default" + ConstModelNameSalePrice
+	return "Default" + salepriceModel.ConstModelNameSalePrice
 }
 
+// New creates new model
 func (it *DefaultSalePrice) New() (models.InterfaceModel, error) {
 	return &DefaultSalePrice{}, nil
 }
@@ -32,6 +34,7 @@ func (it *DefaultSalePrice) New() (models.InterfaceModel, error) {
 // InterfaceObject implementation (package "github.com/ottemo/foundation/app/models/interfaces")
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Get return model attribute by name
 func (it *DefaultSalePrice) Get(attribute string) interface{} {
 	attribute = strings.ToLower(attribute)
 
@@ -80,6 +83,7 @@ func (it *DefaultSalePrice) Set(attribute string, value interface{}) error {
 	return nil
 }
 
+// FromHashMap converts object represented by hash map to object
 func (it *DefaultSalePrice) FromHashMap(input map[string]interface{}) error {
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
@@ -90,6 +94,7 @@ func (it *DefaultSalePrice) FromHashMap(input map[string]interface{}) error {
 	return nil
 }
 
+// ToHashMap converts object data to hash map presentation
 func (it *DefaultSalePrice) ToHashMap() map[string]interface{} {
 
 	result := make(map[string]interface{})
@@ -103,12 +108,13 @@ func (it *DefaultSalePrice) ToHashMap() map[string]interface{} {
 	return result
 }
 
+// GetAttributesInfo describes model attributes
 func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 
 	info := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
-			Model:      saleprice.ConstModelNameSalePrice,
-			Collection: ConstCollectionNameSalePrices,
+			Model:      salepriceModel.ConstModelNameSalePrice,
+			Collection: salepriceModel.ConstModelNameSalePriceCollection,
 			Attribute:  "_id",
 			Type:       db.ConstTypeID,
 			IsRequired: false,
@@ -120,8 +126,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      saleprice.ConstModelNameSalePrice,
-			Collection: ConstCollectionNameSalePrices,
+			Model:      salepriceModel.ConstModelNameSalePrice,
+			Collection: salepriceModel.ConstModelNameSalePriceCollection,
 			Attribute:  "amount",
 			Type:       db.ConstTypeMoney,
 			IsRequired: true,
@@ -133,8 +139,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      saleprice.ConstModelNameSalePrice,
-			Collection: ConstCollectionNameSalePrices,
+			Model:      salepriceModel.ConstModelNameSalePrice,
+			Collection: salepriceModel.ConstModelNameSalePriceCollection,
 			Attribute:  "end_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -146,8 +152,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      saleprice.ConstModelNameSalePrice,
-			Collection: ConstCollectionNameSalePrices,
+			Model:      salepriceModel.ConstModelNameSalePrice,
+			Collection: salepriceModel.ConstModelNameSalePriceCollection,
 			Attribute:  "product_id",
 			Type:       db.ConstTypeID,
 			IsRequired: true,
@@ -159,8 +165,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      saleprice.ConstModelNameSalePrice,
-			Collection: ConstCollectionNameSalePrices,
+			Model:      salepriceModel.ConstModelNameSalePrice,
+			Collection: salepriceModel.ConstModelNameSalePriceCollection,
 			Attribute:  "start_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -217,16 +223,39 @@ func (it *DefaultSalePrice) Save() error {
 		return newErrorHelper("Amount should be less than product price.", "e30a767c-08a3-484f-9453-106290e99050")
 	}
 
-	//TODO: check period is not overlapped with other periods for product if exists
-
-	// Save model to storage
-	//----------------------
-	dbCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	// Check period is not overlapped with other periods for product if exists
+	salePriceCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	newID, err := dbCollection.Save(it.ToHashMap())
+	err = salePriceCollection.AddFilter("product_id", "in", it.GetProductID())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	salePrices, err := salePriceCollection.Load()
+	if err != nil || len(salePrices) == 0 {
+		return env.ErrorDispatch(err)
+	}
+
+	for _, salePrice := range salePrices {
+		if utils.InterfaceToTime(salePrice["start_datetime"]).Before(it.GetEndDatetime()) &&
+			utils.InterfaceToTime(salePrice["end_datetime"]).After(it.GetEndDatetime()) {
+			return newErrorHelper(
+				"New datetime range is overlapped with other range already specified for product.",
+				"ae75884a-b239-4739-a8cf-fa9e1d9d5ee1")
+		}
+	}
+
+	// Save model to storage
+	//----------------------
+	err = salePriceCollection.ClearFilters()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	newID, err := salePriceCollection.Save(it.ToHashMap())
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -236,12 +265,9 @@ func (it *DefaultSalePrice) Save() error {
 	return nil
 }
 
+// Load loads model from storage
 func (it *DefaultSalePrice) Load(id string) error {
-	logDebugHelper("DefaultSalePrice Load")
-	context := contextPkg.GetContext()
-	logDebugHelper("DefaultSalePrice Load "+utils.InterfaceToString(context))
-
-	dbSalePriceCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	dbSalePriceCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -251,7 +277,6 @@ func (it *DefaultSalePrice) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	logDebugHelper("DefaultSalePrice Load dbRecord= "+utils.InterfaceToString(dbRecord))
 	err = it.FromHashMap(dbRecord)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -260,8 +285,9 @@ func (it *DefaultSalePrice) Load(id string) error {
 	return nil
 }
 
+// Delete deletes model from storage
 func (it *DefaultSalePrice) Delete() error {
-	dbCollection, err := db.GetCollection(ConstCollectionNameSalePrices)
+	dbCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

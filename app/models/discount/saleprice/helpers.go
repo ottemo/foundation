@@ -20,6 +20,7 @@ func GetSalePriceModel() (InterfaceSalePrice, error) {
 	return salePriceModel, nil
 }
 
+// GetSalePriceCollectionModel retrieves current InterfaceSalePriceCollection model implementation
 func GetSalePriceCollectionModel() (InterfaceSalePriceCollection, error) {
 	model, err := models.GetModel(ConstModelNameSalePriceCollection)
 	if err != nil {
