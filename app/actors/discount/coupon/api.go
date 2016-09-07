@@ -18,7 +18,7 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 	service.POST("cart/coupons", Apply)
-	service.DELETE("cart/coupons/:code", Revert)
+	service.DELETE("cart/coupons/:code", Remove)
 
 	// Admin Only
 	service.GET("coupons", api.IsAdmin(List))
@@ -235,13 +235,13 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2934505-06e9-4250-bb98-c22e4918799e", "Coupon code, "+strings.ToUpper(couponCode)+", is not a valid coupon code.")
 	}
 
-	return "Coupon Applied", nil
+	return "Coupon applied", nil
 }
 
-// Revert will remove the coupon code and its value from the current checkout
+// Remove will remove the coupon code and its value from the current checkout
 //   * "coupon" key refers to the coupon code
 //   * use a "*" as the coupon code to revert all discounts
-func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
+func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	couponCode := context.GetRequestArgument("code")
 
@@ -289,7 +289,7 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
-	return "Revert Successful", nil
+	return "Removed successful", nil
 }
 
 // DownloadCSV returns a csv file with the current coupons and their configuration
