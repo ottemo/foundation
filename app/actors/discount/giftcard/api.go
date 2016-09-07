@@ -13,10 +13,13 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
+	// store
 	service.GET("giftcards/:giftcode", GetSingleCode)
 	service.GET("giftcards", GetList)
-	service.GET("giftcards/:giftcode/apply", Apply)
-	service.GET("giftcards/:giftcode/remove", Remove)
+
+	// cart endpoints
+	service.POST("cart/giftcards/:giftcode", Apply)
+	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	return nil
 }
@@ -48,7 +51,8 @@ func GetSingleCode(context api.InterfaceApplicationContext) (interface{}, error)
 	return rows[0], nil
 }
 
-// GetList returns a list of gift cards
+// GetList returns a list of gift cards for the visitor id in the context passed
+//    - visitor must be logged in
 func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
