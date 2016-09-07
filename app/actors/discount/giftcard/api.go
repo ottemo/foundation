@@ -157,5 +157,5 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 		context.GetSession().Set(ConstSessionKeyAppliedGiftCardCodes, newAppliedCoupons)
 	}
 
-	return "Remove succesful", nil
+	return "Remove successful", nil
 }
