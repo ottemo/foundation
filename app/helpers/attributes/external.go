@@ -3,8 +3,6 @@ package attributes
 import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
-	"github.com/ottemo/foundation/api/context"
 )
 
 // perDelegateAttributes returns new map where the attributes are grouped by delegate
@@ -278,21 +276,14 @@ func (it *ModelExternalAttributes) SetID(id string) error {
 
 // Load proxies method to external attribute delegates
 func (it *ModelExternalAttributes) Load(id string) error {
-	env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes Load")
-	env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes Load context "+utils.InterfaceToString(context.GetContext()))
 	for delegate := range groupByDelegate(it.delegates) {
-		env.Log("errors.log", env.ConstLogPrefixDebug, "1 "+utils.InterfaceToString(delegate))
-		//delegate, ok := delegate.(interface {
-		//	Load(loadID string) error
-		//});
-		env.Log("errors.log", env.ConstLogPrefixDebug, "1.5 "+utils.InterfaceToString(delegate))
-		//if ok {
-		//	env.Log("errors.log", env.ConstLogPrefixDebug, "2 "+utils.InterfaceToString(delegate))
-		//	//if err := delegate.Load(id); err != nil {
-		//	//	return env.ErrorDispatch(err)
-		//	//}
-		//}
-		env.Log("errors.log", env.ConstLogPrefixDebug, "3 "+utils.InterfaceToString(delegate))
+		if delegate, ok := delegate.(interface {
+			Load(loadID string) error
+		}); ok {
+			if err := delegate.Load(id); err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
 	}
 	return nil
 }

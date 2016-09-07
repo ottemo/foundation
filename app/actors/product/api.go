@@ -321,6 +321,7 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 // APIGetProduct return specified product information
 //   - product id should be specified in "productID" argument
 func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error) {
+
 	// check request context
 	//---------------------
 	productID := context.GetRequestArgument("productID")
@@ -330,12 +331,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 
 	// load product operation
 	//-----------------------
-	// stoer context
-	var productModel product.InterfaceProduct
-	var err error
-	productModel, err = product.LoadProductByID(productID)
-
-	//productModel, err := product.LoadProductByID(productID)
+	productModel, err := product.LoadProductByID(productID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -351,10 +347,12 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// get product
+	//-------------
+
+	// store admin credentials for later in-call use
 	var result map[string]interface{}
 	contextPkg.MakeContext(func () {
 		if callContext := contextPkg.GetContext(); callContext != nil {
-			//callContext["app_context"] = context
 			callContext["is_admin"] = false
 			if api.ValidateAdminRights(context) == nil {
 				callContext["is_admin"] = true
