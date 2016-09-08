@@ -241,7 +241,7 @@ func (it *DefaultSalePrice) Save() error {
 
 	for _, salePrice := range salePrices {
 		if utils.InterfaceToTime(salePrice["start_datetime"]).Before(it.GetEndDatetime()) &&
-			utils.InterfaceToTime(salePrice["end_datetime"]).After(it.GetEndDatetime()) {
+			utils.InterfaceToTime(salePrice["end_datetime"]).After(it.GetStartDatetime()) {
 			return newErrorHelper(
 				"New datetime range is overlapped with other range already specified for product.",
 				"ae75884a-b239-4739-a8cf-fa9e1d9d5ee1")
