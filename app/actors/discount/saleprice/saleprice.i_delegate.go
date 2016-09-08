@@ -1,13 +1,14 @@
 package saleprice
 
 import (
+	"time"
+
 	contextPkg "github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"time"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -79,11 +80,63 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 }
 
 // Set saves product external attributes managed by sale price package
-// Not implemented yet
 func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 	switch attribute {
 	case "sale_prices":
 		// TODO: save sale prices edited on product editing page through sale price model
+		if value != nil {
+			salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			salePriceCollectionModel.GetDBCollection().AddFilter("product_id", "=", it.productInstance.GetID())
+
+			salePriceStructListItems, err := salePriceCollectionModel.List()
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			for _, salePriceStructListItem := range salePriceStructListItems {
+				salePriceModel, err := saleprice.GetSalePriceModel()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = salePriceModel.Load(salePriceStructListItem.ID)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = salePriceModel.Delete()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+			}
+
+			newSalePrices := utils.InterfaceToArray(value)
+			for _, salePrice := range newSalePrices {
+				salePriceHashMap := utils.InterfaceToMap(salePrice)
+				delete(salePriceHashMap, "_id")
+
+				salePriceModel, err := saleprice.GetSalePriceModel()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = salePriceModel.FromHashMap(salePriceHashMap)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = salePriceModel.Save()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				it.SalePrices = append(it.SalePrices, salePriceModel.ToHashMap())
+			}
+		}
 	}
 
 	return nil
