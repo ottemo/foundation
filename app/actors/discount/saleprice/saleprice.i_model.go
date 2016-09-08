@@ -235,7 +235,7 @@ func (it *DefaultSalePrice) Save() error {
 	}
 
 	salePrices, err := salePriceCollection.Load()
-	if err != nil || len(salePrices) == 0 {
+	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
