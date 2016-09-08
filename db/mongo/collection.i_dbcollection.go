@@ -273,12 +273,14 @@ func (it *DBCollection) HasColumn(ColumnName string) bool {
 	}
 
 	// looking in cache first
+	attributeTypesMutex.Lock()
 	_, present := attributeTypes[it.Name][ColumnName]
 	if !present {
 		// updating cache, and looking again
 		it.ListColumns()
 		_, present = attributeTypes[it.Name][ColumnName]
 	}
+	attributeTypesMutex.Unlock()
 
 	return present
 }
