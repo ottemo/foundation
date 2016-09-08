@@ -17,7 +17,7 @@ func init() {
 
 	salePriceCollectionInstance := new(DefaultSalePriceCollection)
 	var _ saleprice.InterfaceSalePriceCollection = salePriceCollectionInstance
-	models.RegisterModel(saleprice.ConstModelNameSalePriceCollection, salePriceCollectionInstance)
+	models.RegisterModel(saleprice.ConstSalePriceDbCollectionName, salePriceCollectionInstance)
 
 	var _ checkout.InterfacePriceAdjustment = salePriceInstance
 	checkout.RegisterPriceAdjustment(salePriceInstance)

@@ -26,20 +26,19 @@ func (it *DefaultSalePrice) GetCode() string {
 
 // GetPriority returns the priority of sale price adjustment during checkout calculation
 func (it *DefaultSalePrice) GetPriority() []float64 {
-	return []float64{
-		checkout.ConstCalculateTargetSubtotal,
-		utils.InterfaceToFloat64(
-			env.ConfigGetValue(ConstConfigPathSalePriceApplyPriority)),
-		checkout.ConstCalculateTargetGrandTotal}
+	return []float64{utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathSalePriceApplyPriority))}
 }
 
 // Calculate calculates and returns amount and set of applied discounts to given checkout
 func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckout, currentPriority float64) []checkout.StructPriceAdjustment {
 	var result []checkout.StructPriceAdjustment
 
-	if currentPriority == checkout.ConstCalculateTargetSubtotal {
+	allowedApplyPriority := utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathSalePriceApplyPriority))
+	cardGrandTotal := checkoutInstance.GetItemSpecificTotal(0, checkout.ConstLabelGrandTotal)
 
-		salePriceCollection, err := db.GetCollection(saleprice.ConstModelNameSalePriceCollection)
+	if currentPriority == allowedApplyPriority && cardGrandTotal > 0 {
+
+		salePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 		if err != nil {
 			return result
 		}
@@ -68,11 +67,23 @@ func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckou
 				return result
 			}
 
+			itemGrandTotal := checkoutInstance.GetItemSpecificTotal(item.GetIdx(), checkout.ConstLabelGrandTotal)
+
 			for _, salePrice := range salePrices {
+				suggestedSalePrice := utils.InterfaceToFloat64(item.GetQty()) * utils.InterfaceToFloat64(salePrice["amount"])
+
+				// do not use sale price if it greater than current item calculated total
+				if itemGrandTotal < suggestedSalePrice {
+					continue
+				}
+
 				if utils.InterfaceToTime(salePrice["start_datetime"]).Before(today) &&
 					utils.InterfaceToTime(salePrice["end_datetime"]).After(today) {
-					perItem[utils.InterfaceToString(item.GetIdx())] =
-						-(utils.InterfaceToFloat64(item.GetQty()) * utils.InterfaceToFloat64(salePrice["amount"]))
+					perItem[utils.InterfaceToString(item.GetIdx())] = -suggestedSalePrice
+
+					// Because of time ranges are not overlapped, first found sale price is
+					// acceptable
+					break
 				}
 			}
 		}
@@ -85,7 +96,7 @@ func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckou
 			Name:      it.GetName(),
 			Amount:    0,
 			IsPercent: false,
-			Priority:  checkout.ConstCalculateTargetSubtotal,
+			Priority:  allowedApplyPriority,
 			Labels:    []string{checkout.ConstLabelSalePriceAdjustment},
 			PerItem:   perItem,
 		})

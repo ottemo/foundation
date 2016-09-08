@@ -8,7 +8,7 @@ import (
 
 // setupDB prepares system database for package usage
 func (it *DefaultSalePrice) setupDB() error {
-	dbSalePriceCollection, err := db.GetCollection(saleprice.ConstModelNameSalePriceCollection)
+	dbSalePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

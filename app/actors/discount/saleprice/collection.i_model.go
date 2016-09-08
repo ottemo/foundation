@@ -14,17 +14,17 @@ import (
 
 // GetModelName returns model name
 func (it *DefaultSalePriceCollection) GetModelName() string {
-	return salepriceModel.ConstModelNameSalePriceCollection
+	return salepriceModel.ConstSalePriceDbCollectionName
 }
 
 // GetImplementationName default model default implementation name
 func (it *DefaultSalePriceCollection) GetImplementationName() string {
-	return "Default" + salepriceModel.ConstModelNameSalePriceCollection
+	return "Default" + salepriceModel.ConstSalePriceDbCollectionName
 }
 
 // New returns new instance of model implementation object
 func (it *DefaultSalePriceCollection) New() (models.InterfaceModel, error) {
-	dbCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
+	dbCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

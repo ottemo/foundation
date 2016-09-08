@@ -94,7 +94,7 @@ func (it *SalePriceDelegate) GetAttributesInfo() []models.StructAttributeInfo {
 	return []models.StructAttributeInfo{
 		models.StructAttributeInfo{
 			Model:      product.ConstModelNameProduct,
-			Collection: saleprice.ConstModelNameSalePriceCollection,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "sale_prices",
 			Type:       utils.ConstDataTypeJSON,
 			Label:      "SalePrices",

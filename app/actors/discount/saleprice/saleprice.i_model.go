@@ -114,7 +114,7 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 	info := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
 			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstModelNameSalePriceCollection,
+			Collection: salepriceModel.ConstSalePriceDbCollectionName,
 			Attribute:  "_id",
 			Type:       db.ConstTypeID,
 			IsRequired: false,
@@ -127,7 +127,7 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 		models.StructAttributeInfo{
 			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstModelNameSalePriceCollection,
+			Collection: salepriceModel.ConstSalePriceDbCollectionName,
 			Attribute:  "amount",
 			Type:       db.ConstTypeMoney,
 			IsRequired: true,
@@ -140,7 +140,7 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 		models.StructAttributeInfo{
 			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstModelNameSalePriceCollection,
+			Collection: salepriceModel.ConstSalePriceDbCollectionName,
 			Attribute:  "end_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -153,7 +153,7 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 		models.StructAttributeInfo{
 			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstModelNameSalePriceCollection,
+			Collection: salepriceModel.ConstSalePriceDbCollectionName,
 			Attribute:  "product_id",
 			Type:       db.ConstTypeID,
 			IsRequired: true,
@@ -166,7 +166,7 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 		},
 		models.StructAttributeInfo{
 			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstModelNameSalePriceCollection,
+			Collection: salepriceModel.ConstSalePriceDbCollectionName,
 			Attribute:  "start_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -224,7 +224,7 @@ func (it *DefaultSalePrice) Save() error {
 	}
 
 	// Check period is not overlapped with other periods for product if exists
-	salePriceCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
+	salePriceCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -267,7 +267,7 @@ func (it *DefaultSalePrice) Save() error {
 
 // Load loads model from storage
 func (it *DefaultSalePrice) Load(id string) error {
-	dbSalePriceCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
+	dbSalePriceCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -287,7 +287,7 @@ func (it *DefaultSalePrice) Load(id string) error {
 
 // Delete deletes model from storage
 func (it *DefaultSalePrice) Delete() error {
-	dbCollection, err := db.GetCollection(salepriceModel.ConstModelNameSalePriceCollection)
+	dbCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
