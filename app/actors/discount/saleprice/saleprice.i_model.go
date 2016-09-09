@@ -2,6 +2,7 @@ package saleprice
 
 import (
 	"strings"
+	"time"
 
 	"github.com/ottemo/foundation/app/models"
 	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
@@ -202,6 +203,10 @@ func (it *DefaultSalePrice) Save() error {
 	// Check model data
 	//-----------------
 
+	// Truncate datetimes by hour
+	it.SetStartDatetime(it.GetStartDatetime().Truncate(time.Hour))
+	it.SetEndDatetime(it.GetEndDatetime().Truncate(time.Hour))
+
 	// Check amount positive
 	if it.GetAmount() <= 0 {
 		return newErrorHelper("Amount should be greater than 0.", "ccf50f3f-a503-4720-b3a6-2ba1639fb8e7")
@@ -229,7 +234,17 @@ func (it *DefaultSalePrice) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = salePriceCollection.AddFilter("product_id", "in", it.GetProductID())
+	err = salePriceCollection.AddFilter("product_id", "=", it.GetProductID())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = salePriceCollection.AddFilter("start_datetime", "<=", it.GetEndDatetime())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = salePriceCollection.AddFilter("end_datetime", ">=", it.GetStartDatetime())
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -238,14 +253,10 @@ func (it *DefaultSalePrice) Save() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-
-	for _, salePrice := range salePrices {
-		if utils.InterfaceToTime(salePrice["start_datetime"]).Before(it.GetEndDatetime()) &&
-			utils.InterfaceToTime(salePrice["end_datetime"]).After(it.GetStartDatetime()) {
-			return newErrorHelper(
-				"New datetime range is overlapped with other range already specified for product.",
-				"ae75884a-b239-4739-a8cf-fa9e1d9d5ee1")
-		}
+	if len(salePrices) > 0 {
+		return newErrorHelper(
+			"New datetime range is overlapped with other range already specified for product.",
+			"ae75884a-b239-4739-a8cf-fa9e1d9d5ee1")
 	}
 
 	// Save model to storage
