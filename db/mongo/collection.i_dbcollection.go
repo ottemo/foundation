@@ -234,8 +234,13 @@ func (it *DBCollection) ListColumns() map[string]string {
 	}
 
 	// updating cached attribute types information
-	if _, present := attributeTypes[it.Name]; !present {
+	attributeTypesMutex.Lock()
+	_, present := attributeTypes[it.Name]
+	attributeTypesMutex.Unlock()
+	if !present {
+		attributeTypesMutex.Lock()
 		attributeTypes[it.Name] = make(map[string]string)
+		attributeTypesMutex.Unlock()
 	}
 
 	attributeTypesMutex.Lock()
@@ -255,11 +260,15 @@ func (it *DBCollection) GetColumnType(ColumnName string) string {
 	}
 
 	// looking in cache first
+	attributeTypesMutex.Lock()
 	attributeType, present := attributeTypes[it.Name][ColumnName]
+	attributeTypesMutex.Unlock()
 	if !present {
 		// updating cache, and looking again
 		it.ListColumns()
+		attributeTypesMutex.Lock()
 		attributeType, present = attributeTypes[it.Name][ColumnName]
+		attributeTypesMutex.Unlock()
 	}
 
 	return attributeType
@@ -273,11 +282,15 @@ func (it *DBCollection) HasColumn(ColumnName string) bool {
 	}
 
 	// looking in cache first
+	attributeTypesMutex.Lock()
 	_, present := attributeTypes[it.Name][ColumnName]
+	attributeTypesMutex.Unlock()
 	if !present {
 		// updating cache, and looking again
 		it.ListColumns()
+		attributeTypesMutex.Lock()
 		_, present = attributeTypes[it.Name][ColumnName]
+		attributeTypesMutex.Unlock()
 	}
 
 	return present
