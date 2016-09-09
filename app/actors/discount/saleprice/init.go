@@ -28,3 +28,19 @@ func init() {
 	salePriceDelegate = new(SalePriceDelegate)
 	env.RegisterOnConfigStart(setupConfig)
 }
+
+// setupDB prepares system database for package usage
+func (it *DefaultSalePrice) setupDB() error {
+	dbSalePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	dbSalePriceCollection.AddColumn("amount", db.ConstTypeMoney, false)
+	dbSalePriceCollection.AddColumn("end_datetime", db.ConstTypeDatetime, true)
+	dbSalePriceCollection.AddColumn("product_id", db.ConstTypeID, true)
+	dbSalePriceCollection.AddColumn("start_datetime", db.ConstTypeDatetime, true)
+
+	return nil
+
+}
