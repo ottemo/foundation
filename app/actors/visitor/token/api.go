@@ -16,11 +16,9 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.POST("visit/token", APICreateToken)
+	service.POST("visit/tokens", APICreateToken)
 	service.GET("visit/tokens", APIListVisitorCards)
-	service.DELETE("visit/token/:tokenID", APIDeleteToken)
-
-	//service.PUT("token/:tokenID", APIGetToken)
+	service.DELETE("visit/tokens/:tokenID", APIDeleteToken)
 
 	return nil
 }
