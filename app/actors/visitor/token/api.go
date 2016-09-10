@@ -1,7 +1,6 @@
 package token
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ottemo/foundation/api"
@@ -16,26 +15,24 @@ import (
 func setupAPI() error {
 
 	service := api.GetRestService()
-	service.POST("visit/token", APICreateToken)
-	service.GET("visit/tokens", APIListVisitorCards)
 
-	//	service.PUT("token/:tokenID", APIGetToken)
+	service.POST("visit/tokens", APICreateToken)
+	service.GET("visit/tokens", APIListVisitorCards)
+	service.DELETE("visit/tokens/:tokenID", APIDeleteToken)
 
 	return nil
 }
+
 
 // APICreateToken creates a request body for posting credit card info to payment system with 0 amount payment
 // for obtaining token on this card and saving it for visitor
 func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		return "You are not logged in, please log in.", nil
-	}
-
-	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+	visitorModel, err := visitor.GetCurrentVisitor(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
+	} else if visitorModel == nil {
+		return "You are not logged in, please log in.", nil
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -43,9 +40,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, err
 	}
 
-	fmt.Printf("Context contains: %v\n\n\n", requestData)
-
-	paymentMethodCode := utils.InterfaceToString(utils.GetFirstMapValue(requestData, "payment", "payment_method"))
+	paymentMethodCode := utils.InterfaceToString(requestData["payment_method"])
 	if paymentMethodCode == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6d1691c8-2d26-44be-b90d-24d920e26301", "Please select a payment method.")
 	}
@@ -54,7 +49,6 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 	if !present {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2e9f1bfc-ec9f-4017-83c6-4d04b95b9c08", "Missing field in credit card data.")
 	}
-
 	creditCardInfo := utils.InterfaceToMap(value)
 
 	var paymentMethod checkout.InterfacePaymentMethod
@@ -72,19 +66,20 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c80c4106-1208-4d0b-8577-0889f608869b", "Provided payment method does not exist.")
 	}
 
-	// add email, first and lastname to paymentInfo map
-	email := currentCheckout.GetVisitor().GetEmail()
-	billingFirstName := currentCheckout.GetBillingAddress().GetFirstName()
-	billingLastName := currentCheckout.GetBillingAddress().GetLastName()
+	holder := utils.InterfaceToString(requestData["holder"])
+	if holder == "" {
+		holder = visitorModel.GetFullName()
+	}
 
 	paymentInfo := map[string]interface{}{
 		checkout.ConstPaymentActionTypeKey: checkout.ConstPaymentActionTypeCreateToken,
 		"cc": creditCardInfo,
 		"extra": map[string]interface{}{
-			"email":        email,
-			"billing_name": billingFirstName + " " + billingLastName,
+			"email":        visitorModel.GetEmail(),
+			"billing_name": holder,
 		},
 	}
+
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
 	paymentResult, err := paymentMethod.Authorize(nil, paymentInfo)
 	if err != nil {
@@ -105,7 +100,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	// create credit card map with info
 	tokenRecord := map[string]interface{}{
-		"visitor_id":      visitorID,
+		"visitor_id":      visitorModel.GetID(),
 		"payment":         paymentMethodCode,
 		"type":            cardInfoMap["creditCardType"],
 		"number":          cardInfoMap["creditCardLastFour"],
@@ -158,6 +153,17 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	dbCollection := visitorCardCollectionModel.GetDBCollection()
 	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
 
+	// add allowed payment methods filter
+	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+
+	paymentMethods := make([]string, 0)
+	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
+		if paymentMethod.IsAllowed(currentCheckout) {
+			paymentMethods = append(paymentMethods, paymentMethod.GetCode())
+		}
+	}
+	dbCollection.AddStaticFilter("payment", "IN", paymentMethods)
+
 	// filters handle
 	models.ApplyFilters(context, dbCollection)
 
@@ -172,5 +178,25 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	// extra parameter handle
 	models.ApplyExtraAttributes(context, visitorCardCollectionModel)
 
+
 	return visitorCardCollectionModel.List()
+}
+
+// APIDeleteToken deletes credit card token by provided token_id
+func APIDeleteToken (context api.InterfaceApplicationContext) (interface{}, error) {
+
+	tokenID := utils.InterfaceToString(context.GetRequestArgument("tokenID"))
+	if tokenID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "babd0a3a-5372-405f-9464-16184cd27ea0", "token_id was not specified")
+	}
+
+	// list operation
+	//---------------
+	visitorCardModel, err := visitor.GetVisitorCardModelAndSetID(tokenID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	visitorCardModel.Delete()
+
+	return "ok", nil
 }
