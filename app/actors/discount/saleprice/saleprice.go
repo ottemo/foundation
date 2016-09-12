@@ -240,38 +240,8 @@ func (it *DefaultSalePrice) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = salePriceCollection.AddFilter("product_id", "=", it.GetProductID())
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = salePriceCollection.AddFilter("start_datetime", "<=", it.GetEndDatetime())
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = salePriceCollection.AddFilter("end_datetime", ">=", it.GetStartDatetime())
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	salePrices, err := salePriceCollection.Load()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-	if len(salePrices) > 0 {
-		return newErrorHelper(
-			"New datetime range is overlapped with other range already specified for product.",
-			"ae75884a-b239-4739-a8cf-fa9e1d9d5ee1")
-	}
-
 	// Save model to storage
 	//----------------------
-	err = salePriceCollection.ClearFilters()
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
 	newID, err := salePriceCollection.Save(it.ToHashMap())
 	if err != nil {
 		return env.ErrorDispatch(err)

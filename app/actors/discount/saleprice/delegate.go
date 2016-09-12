@@ -102,27 +102,17 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 				return env.ErrorDispatch(err)
 			}
 
-			for _, salePriceStructListItem := range salePriceStructListItems {
-				salePriceModel, err := saleprice.GetSalePriceModel()
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
-
-				err = salePriceModel.Load(salePriceStructListItem.ID)
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
-
-				err = salePriceModel.Delete()
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
-			}
-
 			newSalePrices := utils.InterfaceToArray(value)
+			var newSalePriceIDs []string
 			for _, salePrice := range newSalePrices {
 				salePriceHashMap := utils.InterfaceToMap(salePrice)
-				delete(salePriceHashMap, "_id")
+
+				if salePriceHashMap["_id"] != nil {
+					newSalePriceID := utils.InterfaceToString(salePriceHashMap["_id"])
+					if newSalePriceID != "" {
+						newSalePriceIDs = append(newSalePriceIDs, newSalePriceID)
+					}
+				}
 
 				salePriceModel, err := saleprice.GetSalePriceModel()
 				if err != nil {
@@ -142,14 +132,44 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 				err = salePriceModel.Save()
 				// do not exit on save error
 				if err != nil {
-					// store error
+					// store first error
 					if saveError == nil {
 						saveError = err
 					}
-					err = nil;
+					err = nil
 				}
 
 				it.SalePrices = append(it.SalePrices, salePriceModel.ToHashMap())
+			}
+
+			for _, salePriceStructListItem := range salePriceStructListItems {
+				// check new set of records do not include old record
+				foundOld := false
+
+				for _, newSalePriceID := range newSalePriceIDs {
+					if utils.InterfaceToString(newSalePriceID) ==
+						salePriceStructListItem.ID {
+						foundOld = true
+					}
+				}
+
+				// is there are no corresponding new item - remove old one
+				if !foundOld {
+					salePriceModel, err := saleprice.GetSalePriceModel()
+					if err != nil {
+						return env.ErrorDispatch(err)
+					}
+
+					err = salePriceModel.Load(salePriceStructListItem.ID)
+					if err != nil {
+						return env.ErrorDispatch(err)
+					}
+
+					err = salePriceModel.Delete()
+					if err != nil {
+						return env.ErrorDispatch(err)
+					}
+				}
 			}
 		}
 	}
