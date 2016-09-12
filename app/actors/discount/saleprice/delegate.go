@@ -84,6 +84,8 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 
 // Set saves product external attributes managed by sale price package
 func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
+	var saveError error
+
 	switch attribute {
 	case "sale_prices":
 		// TODO: save sale prices edited on product editing page through sale price model
@@ -138,13 +140,23 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 				}
 
 				err = salePriceModel.Save()
+				// do not exit on save error
 				if err != nil {
-					return env.ErrorDispatch(err)
+					// store error
+					if saveError == nil {
+						saveError = err
+					}
+					err = nil;
 				}
 
 				it.SalePrices = append(it.SalePrices, salePriceModel.ToHashMap())
 			}
 		}
+	}
+
+	// dispatch first save error
+	if saveError != nil {
+		return env.ErrorDispatch(saveError)
 	}
 
 	return nil
