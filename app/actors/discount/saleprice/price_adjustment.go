@@ -73,7 +73,7 @@ func (it *DefaultSalePrice) Calculate(checkoutInstance checkout.InterfaceCheckou
 			itemGrandTotal := checkoutInstance.GetItemSpecificTotal(item.GetIdx(), checkout.ConstLabelGrandTotal)
 
 			for _, salePrice := range salePrices {
-				suggestedSalePrice := utils.InterfaceToFloat64(item.GetQty()) * utils.InterfaceToFloat64(salePrice["amount"])
+				suggestedSalePrice := utils.InterfaceToFloat64(item.GetQty()) * (productItem.GetPrice() - utils.InterfaceToFloat64(salePrice["amount"]))
 
 				// do not use sale price if it greater than current item calculated total
 				if itemGrandTotal < suggestedSalePrice {
