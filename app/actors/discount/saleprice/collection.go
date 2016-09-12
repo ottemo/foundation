@@ -1,5 +1,9 @@
 package saleprice
 
+// DefaultSalePriceCollection type implements:
+// 	- InterfaceModel
+//	- InterfaceCollection
+
 import (
 	"github.com/ottemo/foundation/app/models"
 	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
@@ -112,4 +116,30 @@ func (it *DefaultSalePriceCollection) ListFilterReset() error {
 // ListLimit limits sale price collection selected records
 func (it *DefaultSalePriceCollection) ListLimit(offset int, limit int) error {
 	return it.listCollection.SetLimit(offset, limit)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//  implementation (package "github.com/ottemo/foundation/app/models/interfaces")
+// ---------------------------------------------------------------------------------------------------------------------
+
+// ListSalePrices returns list of sale price model items
+func (it *DefaultSalePriceCollection) ListSalePrices() []salepriceModel.InterfaceSalePrice {
+	var result []salepriceModel.InterfaceSalePrice
+
+	dbRecords, err := it.listCollection.Load()
+	if err != nil {
+		return result
+	}
+
+	for _, recordData := range dbRecords {
+		salePriceModel, err := salepriceModel.GetSalePriceModel()
+		if err != nil {
+			return result
+		}
+		salePriceModel.FromHashMap(recordData)
+
+		result = append(result, salePriceModel)
+	}
+
+	return result
 }

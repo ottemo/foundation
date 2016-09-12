@@ -1,5 +1,8 @@
 package saleprice
 
+// SalePriceDelegate type implements:
+//	- InterfaceAttributesDelegate
+
 import (
 	"time"
 

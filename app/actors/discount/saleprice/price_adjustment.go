@@ -1,5 +1,8 @@
 package saleprice
 
+// DefaultSalePrice type implements:
+//	- InterfacePriceAdjustment
+
 import (
 	"time"
 
@@ -11,7 +14,7 @@ import (
 )
 
 //----------------------------------------------------------------------------------------------------------------------
-// Implementation of github.com/ottemo/foundation/app/models/checkout/interfaces InterfacePriceAdjustment
+// InterfacePriceAdjustment implementation (package "github.com/ottemo/foundation/app/models/checkout/interfaces")
 //----------------------------------------------------------------------------------------------------------------------
 
 // GetName returns name of current sale price implementation
