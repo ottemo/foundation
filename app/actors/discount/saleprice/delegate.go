@@ -132,6 +132,11 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 					return env.ErrorDispatch(err)
 				}
 
+				salePriceModel.SetProductID(it.productInstance.GetID())
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
 				err = salePriceModel.Save()
 				if err != nil {
 					return env.ErrorDispatch(err)
