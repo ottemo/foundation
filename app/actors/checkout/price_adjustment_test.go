@@ -2,8 +2,9 @@ package checkout
 
 import (
 	"fmt"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"testing"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/utils"
 )
 

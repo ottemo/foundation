@@ -51,17 +51,19 @@ func runTask(context api.InterfaceApplicationContext) (interface{}, error) {
 		params = make(map[string]interface{})
 	}
 
+	var taskName string
 	for index, schedule := range currentSchedules {
 		if index == taskIndex {
 			err := schedule.RunTask(params)
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
+			taskName = utils.InterfaceToString(params["task"])
 			break
 		}
 	}
 
-	return "ok", nil
+	return taskName, nil
 }
 
 // getSchedule to get information about current schedules

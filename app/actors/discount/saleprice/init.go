@@ -2,11 +2,12 @@ package saleprice
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/env"
 )
 
 // init makes package self-initialization routine

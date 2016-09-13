@@ -6,12 +6,13 @@ package saleprice
 import (
 	"time"
 
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -1,9 +1,10 @@
 package saleprice
 
 import (
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // setupConfig setups package configuration values for a system
