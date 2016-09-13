@@ -14,7 +14,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
-	contextPkg "github.com/ottemo/foundation/api/context"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -349,20 +348,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	// get product
 	//-------------
 
-	// store admin credentials for later in-call use
-	var result map[string]interface{}
-	contextPkg.MakeContext(func () {
-		if callContext := contextPkg.GetContext(); callContext != nil {
-			callContext["is_admin"] = false
-			if api.ValidateAdminRights(context) == nil {
-				callContext["is_admin"] = true
-			}
-		} else {
-			env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b94a499-9d71-403e-9f67-06fd90d6250d", "can not get context for APIGetProduct")
-		}
-
-		result = productModel.ToHashMap()
-	})
+	result := productModel.ToHashMap()
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
 	if err != nil {

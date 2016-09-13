@@ -47,5 +47,5 @@ type SalePriceDelegate struct {
 	SalePrices      []saleprice.InterfaceSalePrice
 }
 
-// salePriceDelegate variable that is currently used as a stock delegate to extend product attributes
+// salePriceDelegate variable that is currently used as a sale price delegate to extend product attributes
 var salePriceDelegate models.InterfaceAttributesDelegate

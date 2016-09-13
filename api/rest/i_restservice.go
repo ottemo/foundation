@@ -14,6 +14,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
@@ -214,8 +215,24 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		eventData := map[string]interface{}{"session": currentSession, "context": applicationContext}
 		env.Event("api.request", eventData)
 
-		// API handler processing
-		result, err := handler(applicationContext)
+		// store admin credentials for later in-call use
+		var result interface{}
+		context.MakeContext(func() {
+			if callContext := context.GetContext(); callContext != nil {
+				callContext["is_admin"] = false
+				if api.ValidateAdminRights(applicationContext) == nil {
+					callContext["is_admin"] = true
+				}
+			} else {
+				err = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b94a499-9d71-403e-9f67-06fd90d6250d", "can not get context for API handler")
+			}
+
+			if err == nil {
+				// API handler processing
+				result, err = handler(applicationContext)
+			}
+		})
+
 		if err != nil {
 			env.ErrorDispatch(err)
 			env.LogEvent(env.LogFields{
