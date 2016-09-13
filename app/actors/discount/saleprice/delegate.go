@@ -85,8 +85,8 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 
 	switch attribute {
 	case "sale_prices":
-		// TODO: save sale prices edited on product editing page through sale price model
 		if value != nil {
+			// store old records to compare
 			salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
 			if err != nil {
 				return env.ErrorDispatch(err)
@@ -99,6 +99,7 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 				return env.ErrorDispatch(err)
 			}
 
+			// try to save updated/new records
 			newSalePrices := utils.InterfaceToArray(value)
 			var newSalePriceIDs []string
 			for _, salePrice := range newSalePrices {
@@ -139,6 +140,7 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 				it.SalePrices = append(it.SalePrices, salePriceModel.ToHashMap())
 			}
 
+			// remove old records which are not present
 			for _, salePriceStructListItem := range salePriceStructListItems {
 				// check new set of records do not include old record
 				foundOld := false
@@ -157,7 +159,7 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 						return env.ErrorDispatch(err)
 					}
 
-					err = salePriceModel.Load(salePriceStructListItem.ID)
+					salePriceModel.SetID(salePriceStructListItem.ID)
 					if err != nil {
 						return env.ErrorDispatch(err)
 					}

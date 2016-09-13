@@ -234,14 +234,13 @@ func (it *DefaultSalePrice) Save() error {
 		return newErrorHelper("Amount should be less than product price.", "e30a767c-08a3-484f-9453-106290e99050")
 	}
 
-	// Check period is not overlapped with other periods for product if exists
+	// Save model to storage
+	//----------------------
 	salePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	// Save model to storage
-	//----------------------
 	newID, err := salePriceCollection.Save(it.ToHashMap())
 	if err != nil {
 		return env.ErrorDispatch(err)
