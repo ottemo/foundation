@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -42,7 +43,7 @@ type DefaultSalePriceCollection struct {
 // in order to test it we are pushing the callback status to model instance
 type SalePriceDelegate struct {
 	productInstance product.InterfaceProduct
-	SalePrices      []map[string]interface{}
+	SalePrices      []saleprice.InterfaceSalePrice
 }
 
 // salePriceDelegate variable that is currently used as a stock delegate to extend product attributes
