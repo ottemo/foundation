@@ -2,10 +2,11 @@ package saleprice
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -15,18 +16,18 @@ func setupAPI() error {
 	// Admin Only
 	//-----------
 
-	service.GET("saleprices", api.IsAdmin(AdminAPIReadSalePriceList))
+	service.GET("saleprices", api.IsAdmin(listAllScheduled))
 
-	service.POST("saleprice", api.IsAdmin(AdminAPICreateSalePrice))
-	service.GET("saleprice/:id", api.IsAdmin(AdminAPIReadSalePrice))
-	service.PUT("saleprice/:id", api.IsAdmin(AdminAPIUpdateSalePrice))
-	service.DELETE("saleprice/:id", api.IsAdmin(AdminAPIDeleteSalePrice))
+	service.POST("saleprice", api.IsAdmin(createSalePrice))
+	service.GET("saleprice/:id", api.IsAdmin(priceByID))
+	service.PUT("saleprice/:id", api.IsAdmin(updateByID))
+	service.DELETE("saleprice/:id", api.IsAdmin(deleteByID))
 
 	return nil
 }
 
-// AdminAPIReadSalePriceList returns list of all registered sale prices.
-func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interface{}, error) {
+// listAllScheduled returns list of all registered sale price promotions scheduled.
+func listAllScheduled(context api.InterfaceApplicationContext) (interface{}, error) {
 	salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -54,8 +55,8 @@ func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interfa
 	return listItems, nil
 }
 
-// AdminAPICreateSalePrice checks input parameters and store new Sale Price
-func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
+// createSalePrice checks input parameters and store new Sale Price
+func createSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
 	//-------------------------
@@ -93,9 +94,9 @@ func AdminAPICreateSalePrice(context api.InterfaceApplicationContext) (interface
 	return salePriceModel.ToHashMap(), nil
 }
 
-// AdminAPIReadSalePrice returns a sale price with the specified ID
+// priceByID returns a sale price with the specified ID
 // * sale price id should be specified in the "id" argument
-func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
+func priceByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
 	//-------------------------
@@ -119,8 +120,8 @@ func AdminAPIReadSalePrice(context api.InterfaceApplicationContext) (interface{}
 	return salePriceModel.ToHashMap(), nil
 }
 
-// AdminAPIUpdateSalePrice updates sale price
-func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
+// updateByID updates sale price
+func updateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
 	//-------------------------
@@ -161,8 +162,8 @@ func AdminAPIUpdateSalePrice(context api.InterfaceApplicationContext) (interface
 	return salePriceModel.ToHashMap(), nil
 }
 
-// AdminAPIDeleteSalePrice deletes specified sale price
-func AdminAPIDeleteSalePrice(context api.InterfaceApplicationContext) (interface{}, error) {
+// deleteByID deletes specified sale price
+func deleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// checking request context
 	//-------------------------
