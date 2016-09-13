@@ -10,12 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -35,6 +36,11 @@ func (it *DefaultSalePrice) GetImplementationName() string {
 // New creates new model
 func (it *DefaultSalePrice) New() (models.InterfaceModel, error) {
 	return &DefaultSalePrice{}, nil
+}
+
+// newErrorHelper produce new module level error is declared to minimize repeatable code
+func newErrorHelper(msg, code string) error {
+	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, code, msg)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
