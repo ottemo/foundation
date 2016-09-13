@@ -6,9 +6,10 @@ package saleprice
 
 import (
 	"github.com/ottemo/foundation/app/models"
-	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -17,17 +18,17 @@ import (
 
 // GetModelName returns model name
 func (it *DefaultSalePriceCollection) GetModelName() string {
-	return salepriceModel.ConstSalePriceDbCollectionName
+	return saleprice.ConstSalePriceDbCollectionName
 }
 
 // GetImplementationName default model default implementation name
 func (it *DefaultSalePriceCollection) GetImplementationName() string {
-	return "Default" + salepriceModel.ConstSalePriceDbCollectionName
+	return "Default" + saleprice.ConstSalePriceDbCollectionName
 }
 
 // New returns new instance of model implementation object
 func (it *DefaultSalePriceCollection) New() (models.InterfaceModel, error) {
-	dbCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
+	dbCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -58,7 +59,7 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 	// converting db record to StructListItem
 	//-----------------------------------
 	for _, dbItemData := range dbItems {
-		salePriceModel, err := salepriceModel.GetSalePriceModel()
+		salePriceModel, err := saleprice.GetSalePriceModel()
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
@@ -88,7 +89,7 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 // ListAddExtraAttribute adds attribute to sale price collection
 func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) error {
 
-	salePriceModel, err := salepriceModel.GetSalePriceModel()
+	salePriceModel, err := saleprice.GetSalePriceModel()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -96,6 +97,16 @@ func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) er
 	var allowedAttributes []string
 	for _, attributeInfo := range salePriceModel.GetAttributesInfo() {
 		allowedAttributes = append(allowedAttributes, attributeInfo.Attribute)
+	}
+
+	if utils.IsInArray(attribute, allowedAttributes) {
+		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
+			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
+		} else {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7df7cc4f-eace-4fb8-865a-3146ec310383", "attribute already in list")
+		}
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0fc8658d-8755-4608-9b26-7ab8910f5b01", "not allowed attribute")
 	}
 
 	return nil
@@ -123,8 +134,8 @@ func (it *DefaultSalePriceCollection) ListLimit(offset int, limit int) error {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // ListSalePrices returns list of sale price model items
-func (it *DefaultSalePriceCollection) ListSalePrices() []salepriceModel.InterfaceSalePrice {
-	var result []salepriceModel.InterfaceSalePrice
+func (it *DefaultSalePriceCollection) ListSalePrices() []saleprice.InterfaceSalePrice {
+	var result []saleprice.InterfaceSalePrice
 
 	dbRecords, err := it.listCollection.Load()
 	if err != nil {
@@ -132,7 +143,7 @@ func (it *DefaultSalePriceCollection) ListSalePrices() []salepriceModel.Interfac
 	}
 
 	for _, recordData := range dbRecords {
-		salePriceModel, err := salepriceModel.GetSalePriceModel()
+		salePriceModel, err := saleprice.GetSalePriceModel()
 		if err != nil {
 			return result
 		}

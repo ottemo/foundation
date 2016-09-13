@@ -1,7 +1,6 @@
 package saleprice
 
 import (
-	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -28,8 +27,6 @@ func setupConfig() error {
 		validateEnabled := func(value interface{}) (interface{}, error) {
 			boolValue := utils.InterfaceToBool(value)
 			if boolValue {
-				saleprice.RegisterSalePrice(new(DefaultSalePrice))
-
 				productModel, err := product.GetProductModel()
 				if err != nil {
 					env.LogError(err)
@@ -40,8 +37,6 @@ func setupConfig() error {
 				}
 
 			} else {
-				saleprice.UnRegisterSalePrice()
-
 				productModel, err := product.GetProductModel()
 				if err != nil {
 					env.LogError(err)
@@ -83,8 +78,6 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-
-		validateEnabled(env.ConfigGetValue(ConstConfigPathEnabled))
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "de6ed851-1543-4b05-9058-fc098021578f", "Unable to obtain configuration for Sale Price")
 		return env.ErrorDispatch(err)

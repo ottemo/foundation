@@ -8,8 +8,3 @@ import (
 func newErrorHelper(msg, code string) error {
 	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, code, msg)
 }
-
-// logWarnHelper writes WARN level message to global errors.log file
-func logWarnHelper(msg string) {
-	env.GetLogger().Log("errors.log", env.ConstLogPrefixWarning, msg)
-}

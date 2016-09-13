@@ -35,11 +35,6 @@ func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interfa
 	// applying requested filters
 	models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection())
 
-	// excluding disabled categories for a regular visitor
-	if err := api.ValidateAdminRights(context); err != nil {
-		salePriceCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
-	}
-
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
 		return salePriceCollectionModel.GetDBCollection().Count()
@@ -56,23 +51,7 @@ func AdminAPIReadSalePriceList(context api.InterfaceApplicationContext) (interfa
 		return nil, env.ErrorDispatch(err)
 	}
 
-	var result []map[string]interface{}
-
-	for _, listItem := range listItems {
-		item := map[string]interface{}{
-			// TODO make more real attributes: start_datetime, end_datetime, amount
-			"ID":     listItem.ID,
-			"Name":   listItem.Name,
-			"Desc":   listItem.Desc,
-			"Extra":  listItem.Extra,
-			"Image":  listItem.Image,
-			"Images": []map[string]string{},
-		}
-
-		result = append(result, item)
-	}
-
-	return result, nil
+	return listItems, nil
 }
 
 // AdminAPICreateSalePrice checks input parameters and store new Sale Price

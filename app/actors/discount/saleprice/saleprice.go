@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/app/models"
-	salepriceModel "github.com/ottemo/foundation/app/models/discount/saleprice"
+	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -24,12 +24,12 @@ import (
 
 // GetModelName returns model name
 func (it *DefaultSalePrice) GetModelName() string {
-	return salepriceModel.ConstModelNameSalePrice
+	return saleprice.ConstModelNameSalePrice
 }
 
 // GetImplementationName returns default model implementation name
 func (it *DefaultSalePrice) GetImplementationName() string {
-	return "Default" + salepriceModel.ConstModelNameSalePrice
+	return "Default" + saleprice.ConstModelNameSalePrice
 }
 
 // New creates new model
@@ -120,8 +120,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 
 	info := []models.StructAttributeInfo{
 		models.StructAttributeInfo{
-			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstSalePriceDbCollectionName,
+			Model:      saleprice.ConstModelNameSalePrice,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "_id",
 			Type:       db.ConstTypeID,
 			IsRequired: false,
@@ -133,8 +133,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstSalePriceDbCollectionName,
+			Model:      saleprice.ConstModelNameSalePrice,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "amount",
 			Type:       db.ConstTypeMoney,
 			IsRequired: true,
@@ -146,8 +146,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstSalePriceDbCollectionName,
+			Model:      saleprice.ConstModelNameSalePrice,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "end_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -159,8 +159,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstSalePriceDbCollectionName,
+			Model:      saleprice.ConstModelNameSalePrice,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "product_id",
 			Type:       db.ConstTypeID,
 			IsRequired: true,
@@ -172,8 +172,8 @@ func (it *DefaultSalePrice) GetAttributesInfo() []models.StructAttributeInfo {
 			Default:    "",
 		},
 		models.StructAttributeInfo{
-			Model:      salepriceModel.ConstModelNameSalePrice,
-			Collection: salepriceModel.ConstSalePriceDbCollectionName,
+			Model:      saleprice.ConstModelNameSalePrice,
+			Collection: saleprice.ConstSalePriceDbCollectionName,
 			Attribute:  "start_datetime",
 			Type:       db.ConstTypeDatetime,
 			IsRequired: true,
@@ -235,7 +235,7 @@ func (it *DefaultSalePrice) Save() error {
 	}
 
 	// Check period is not overlapped with other periods for product if exists
-	salePriceCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
+	salePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -254,7 +254,7 @@ func (it *DefaultSalePrice) Save() error {
 
 // Load loads model from storage
 func (it *DefaultSalePrice) Load(id string) error {
-	dbSalePriceCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
+	dbSalePriceCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -274,7 +274,7 @@ func (it *DefaultSalePrice) Load(id string) error {
 
 // Delete deletes model from storage
 func (it *DefaultSalePrice) Delete() error {
-	dbCollection, err := db.GetCollection(salepriceModel.ConstSalePriceDbCollectionName)
+	dbCollection, err := db.GetCollection(saleprice.ConstSalePriceDbCollectionName)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

@@ -6,7 +6,7 @@ package saleprice
 import (
 	"time"
 
-	contextPkg "github.com/ottemo/foundation/api/context"
+	"github.com/ottemo/foundation/api/context"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/discount/saleprice"
 	"github.com/ottemo/foundation/app/models/product"
@@ -23,16 +23,16 @@ func (it *SalePriceDelegate) New(productInstance interface{}) (models.InterfaceA
 	if productModel, ok := productInstance.(product.InterfaceProduct); ok {
 		return &SalePriceDelegate{productInstance: productModel}, nil
 	}
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6ac6965a-1f1e-44ae-b854-ad430d5b85a6", "unexpected instance for sale price delegate")
+	return nil, newErrorHelper("unexpected instance for sale price delegate", "6ac6965a-1f1e-44ae-b854-ad430d5b85a6")
 }
 
 // Get returns product external attributes managed by sale price package
 func (it *SalePriceDelegate) Get(attribute string) interface{} {
-	context := contextPkg.GetContext()
+	currentContext := context.GetContext()
 	isAdmin := false
-	if context != nil {
-		if isAdminContext, ok := context["is_admin"]; ok {
-			isAdmin = utils.InterfaceToBool(isAdminContext)
+	if currentContext != nil {
+		if contextIsAdmin, ok := currentContext["is_admin"]; ok {
+			isAdmin = utils.InterfaceToBool(contextIsAdmin)
 		}
 	}
 
@@ -41,7 +41,7 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 		if it.SalePrices == nil {
 			salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
 			if err != nil {
-				logWarnHelper("Can not get sale price collection [1ee355c3-20f4-4706-9723-9fe6c7e1bda4]")
+				newErrorHelper("can not get sale price collection", "1ee355c3-20f4-4706-9723-9fe6c7e1bda4")
 				return nil
 			}
 
@@ -49,32 +49,29 @@ func (it *SalePriceDelegate) Get(attribute string) interface{} {
 
 			salePriceStructListItems, err := salePriceCollectionModel.List()
 			if err != nil {
-				logWarnHelper("Can not get sale prices list [9d77e24b-e45f-426a-8b7d-dd859271b0d2]")
+				newErrorHelper("can not get sale prices list", "9d77e24b-e45f-426a-8b7d-dd859271b0d2")
 				return nil
 			}
 
-			var result []map[string]interface{}
 			today := time.Now()
 			for _, salePriceStructListItem := range salePriceStructListItems {
 				salePriceModel, err := saleprice.GetSalePriceModel()
 				if err != nil {
-					logWarnHelper("Can not get sale price model [d5f43503-d73c-4d60-a349-2668ae37c6b0]")
+					newErrorHelper("can not get sale price model", "d5f43503-d73c-4d60-a349-2668ae37c6b0")
 					continue
 				}
 
 				err = salePriceModel.Load(salePriceStructListItem.ID)
 				if err != nil {
-					logWarnHelper("Can not load sale price model [dd08dffe-6147-4d96-8306-c6b60dcb704f]")
+					newErrorHelper("can not load sale price model", "dd08dffe-6147-4d96-8306-c6b60dcb704f")
 					continue
 				}
 
 				if isAdmin || (salePriceModel.GetStartDatetime().Before(today) &&
 					today.Before(salePriceModel.GetEndDatetime())) {
-					result = append(result, salePriceModel.ToHashMap())
+					it.SalePrices = append(it.SalePrices, salePriceModel.ToHashMap())
 				}
 			}
-
-			it.SalePrices = result
 		}
 
 		return it.SalePrices
