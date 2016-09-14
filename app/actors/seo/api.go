@@ -11,9 +11,11 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -41,15 +43,32 @@ func setupAPI() error {
 // APIListSEOItems returns a list registered SEO records
 func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	// retrieve collection model
+	seoItemCollectionModel, err := GetSEOItemCollectionModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.SetResultColumns("url", "type", "rewrite")
-	records, err := collection.Load()
+	// filters handle
+	models.ApplyFilters(context, seoItemCollectionModel.GetDBCollection())
 
-	return records, env.ErrorDispatch(err)
+	// check "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return seoItemCollectionModel.GetDBCollection().Count()
+	}
+
+	// limit parameter handle
+	seoItemCollectionModel.ListLimit(models.GetListLimit(context))
+
+	// extra parameter handle
+	models.ApplyExtraAttributes(context, seoItemCollectionModel)
+
+	listItems, err := seoItemCollectionModel.List()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return listItems, nil
 }
 
 // APIListSEOItemsAlt returns a list registered SEO records
@@ -99,15 +118,26 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 // APIGetSEOItemByID returns SEO item for a specified id
 func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	// checking request context
+	//-------------------------
+	seoItemID := context.GetRequestArgument("id")
+	if seoItemID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2070ec2c-43c6-4a98-98aa-6334e684a23a", "Required field 'id' is blank or absend.")
+	}
+
+	// operation
+	//-------------------------
+	seoItemModel, err := seo.GetSEOItemModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	id := context.GetRequestArgument("id")
-	records, err := collection.LoadByID(id)
+	err = seoItemModel.Load(seoItemID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
-	return records, env.ErrorDispatch(err)
+	return seoItemModel.ToHashMap(), nil
 }
 
 // APIUpdateSEOItem updates existing SEO item
