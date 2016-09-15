@@ -346,6 +346,8 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// get product
+	//-------------
+
 	result := productModel.ToHashMap()
 
 	itemImages, err := mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstProductMediaTypeImage)
