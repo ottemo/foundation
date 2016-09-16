@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -338,10 +339,16 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	csvFile := context.GetRequestFile("file")
-	if csvFile == nil {
+	csvFileName := context.GetRequestArgument("file")
+	if csvFileName == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "A file name must be specified.")
+	}
+
+	csvFile := context.GetRequestFile(csvFileName)
+	if csvFile == nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b0cf271-ce1c-43ae-8f18-261120972bd0", "A file must be specified.")
 	}
 
 	csvReader := csv.NewReader(csvFile)
