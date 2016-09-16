@@ -254,12 +254,14 @@ func (it *ImportCmdInsert) Process(itemData map[string]interface{}, input interf
 	//--------------------------
 	for attribute, value := range itemData {
 		if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
+			env.Log("errors.log", env.ConstLogPrefixDebug, "=SET= "+attribute+"="+utils.InterfaceToString(value))
 			err := modelAsObject.Set(attribute, value)
 			if err != nil && !it.skipErrors {
 				return nil, err
 			}
 		}
 	}
+	env.Log("errors.log", env.ConstLogPrefixDebug, "=SET DONE= \n")
 
 	// storing model
 	//---------------

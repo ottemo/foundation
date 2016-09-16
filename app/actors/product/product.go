@@ -676,6 +676,7 @@ func (it *DefaultProduct) Load(id string) error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
+	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct) Load "+utils.InterfaceToString(it))
 
 	err = it.externalAttributes.Load(id)
 	if err != nil {
@@ -707,6 +708,7 @@ func (it *DefaultProduct) Delete() error {
 
 // Save stores current product to DB
 func (it *DefaultProduct) Save() error {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct) Save: "+utils.InterfaceToString(it))
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -727,12 +729,12 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.externalAttributes.Save()
+	err = it.SetID(newID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.SetID(newID)
+	err = it.externalAttributes.Save()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
