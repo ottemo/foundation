@@ -56,6 +56,7 @@ func (it *StockDelegate) Set(attribute string, value interface{}) error {
 		env.Log("errors.log", env.ConstLogPrefixDebug, "StockDelegate) Set 3 "+utils.InterfaceToString(it.Qty))
 
 	case "inventory":
+		env.Log("errors.log", env.ConstLogPrefixDebug, "StockDelegate) Set Inventory "+utils.InterfaceToString(it.Qty))
 		inventory := utils.InterfaceToArray(value)
 		for _, options := range inventory {
 			it.Inventory = append(it.Inventory, utils.InterfaceToMap(options))
@@ -115,6 +116,19 @@ func (it *StockDelegate) Load(productID string) error {
 func (it *StockDelegate) Save() error {
 	env.Log("errors.log", env.ConstLogPrefixDebug, "StockDelegate) Save: "+utils.InterfaceToString(it));
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+
+		// recalculate total qty if options present
+		var itQty int
+		var optionsPresent bool = false
+		for _, productOptions := range it.Inventory {
+			itQty += utils.InterfaceToInt(productOptions["qty"])
+			optionsPresent = true
+		}
+
+		if optionsPresent {
+			it.Qty = itQty
+		}
+
 		productID := it.instance.GetID()
 		env.Log("errors.log", env.ConstLogPrefixDebug, "StockDelegate) Save: productID "+utils.InterfaceToString(productID));
 		// remove current stock
