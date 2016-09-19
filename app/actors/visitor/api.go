@@ -18,7 +18,6 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 
 	"github.com/ottemo/foundation/app/models/order"
-	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
