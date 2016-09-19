@@ -50,6 +50,7 @@ const (
 	ConstLabelGrandTotal         = "GT"
 	ConstLabelGiftCard           = "GC"
 	ConstLabelGiftCardAdjustment = "GCA"
+	ConstLabelSalePriceAdjustment = "SPA"
 	ConstLabelDiscount           = "D"
 	ConstLabelTax                = "T"
 
