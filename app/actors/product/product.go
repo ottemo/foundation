@@ -14,12 +14,13 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/helpers/attributes"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // ---------------------------------------------------------------------------------
@@ -676,7 +677,6 @@ func (it *DefaultProduct) Load(id string) error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct) Load "+utils.InterfaceToString(it))
 
 	err = it.externalAttributes.Load(id)
 	if err != nil {
@@ -708,7 +708,6 @@ func (it *DefaultProduct) Delete() error {
 
 // Save stores current product to DB
 func (it *DefaultProduct) Save() error {
-	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultProduct) Save: "+utils.InterfaceToString(it))
 	collection, err := db.GetCollection(ConstCollectionNameProduct)
 	if err != nil {
 		return env.ErrorDispatch(err)

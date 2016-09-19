@@ -1,9 +1,9 @@
 package attributes
 
 import (
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
 )
 
 // perDelegateAttributes returns new map where the attributes are grouped by delegate
@@ -277,19 +277,15 @@ func (it *ModelExternalAttributes) SetID(id string) error {
 
 // Load proxies method to external attribute delegates
 func (it *ModelExternalAttributes) Load(id string) error {
-	env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes) Load Start")
 	for delegate := range groupByDelegate(it.delegates) {
-		env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes) Load delegate: "+utils.InterfaceToString(delegate))
 		if delegate, ok := delegate.(interface {
 			Load(loadID string) error
 		}); ok {
-			env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes) Load delegate has Load(id)")
 			if err := delegate.Load(id); err != nil {
 				return env.ErrorDispatch(err)
 			}
 		}
 	}
-	env.Log("errors.log", env.ConstLogPrefixDebug, "ModelExternalAttributes) Load Done")
 	return nil
 }
 

@@ -143,7 +143,6 @@ func (it *DefaultStock) RemoveProductQty(productID string, options map[string]in
 // SetProductQty updates stock qty for a product-options pair to be exact given value
 //   - use UpdateProductQty in all cases you can as it is more safer option
 func (it *DefaultStock) SetProductQty(productID string, options map[string]interface{}, qty int) error {
-	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultStock) SetProductQty productID "+utils.InterfaceToString(productID));
 
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
@@ -165,7 +164,6 @@ func (it *DefaultStock) SetProductQty(productID string, options map[string]inter
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultStock) SetProductQty dbRecords "+utils.InterfaceToString(dbRecords));
 
 	// looking for records matching request
 	recordsProcessed := 0
@@ -183,7 +181,6 @@ func (it *DefaultStock) SetProductQty(productID string, options map[string]inter
 		}
 
 		dbRecord["qty"] = qty
-		env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultStock) SetProductQty dbRecord "+utils.InterfaceToString(dbRecord));
 		_, err = dbCollection.Save(dbRecord)
 
 		if err != nil {
@@ -195,7 +192,6 @@ func (it *DefaultStock) SetProductQty(productID string, options map[string]inter
 
 	// no records was - adding new
 	if recordsProcessed == 0 {
-		env.Log("errors.log", env.ConstLogPrefixDebug, "DefaultStock) SetProductQty recordsProcessed == 0 "+utils.InterfaceToString(map[string]interface{}{"product_id": productID, "options": options, "qty": qty}));
 		_, err := dbCollection.Save(map[string]interface{}{"product_id": productID, "options": options, "qty": qty})
 		if err != nil {
 			return env.ErrorDispatch(err)
