@@ -728,6 +728,7 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
+	// set new ID before saving external attributes, because external attributes requires it
 	err = it.SetID(newID)
 	if err != nil {
 		return env.ErrorDispatch(err)

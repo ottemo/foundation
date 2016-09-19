@@ -23,6 +23,7 @@ func (it *StockDelegate) New(instance interface{}) (models.InterfaceAttributesDe
 }
 
 // Get is a getter for external attributes
+// This method should not read data from db. It is Load responsibility.
 func (it *StockDelegate) Get(attribute string) interface{} {
 	switch attribute {
 	case "qty":
