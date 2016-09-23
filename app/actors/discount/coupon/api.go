@@ -212,7 +212,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		if minimumCartAmount > currentCheckout.GetSubtotal() {
 
 			context.SetResponseStatusBadRequest()
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "cart amount is less then required in your discount")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "you have not met the minium purchase amount to apply this discount which is: $%.2f", minimumCartAmount)
 		}
 
 		// to be applicable, the coupon should satisfy following conditions:
