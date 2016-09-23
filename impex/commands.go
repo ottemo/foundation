@@ -9,9 +9,10 @@ import (
 
 	"strconv"
 
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
 )
 
 // CheckModelImplements checks that model support InterfaceObject and InterfaceStorable interfaces

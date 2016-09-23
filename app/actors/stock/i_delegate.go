@@ -1,10 +1,11 @@
 package stock
 
 import (
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // --------------------
@@ -22,20 +23,12 @@ func (it *StockDelegate) New(instance interface{}) (models.InterfaceAttributesDe
 }
 
 // Get is a getter for external attributes
+// This method should not read data from db. It is Load responsibility.
 func (it *StockDelegate) Get(attribute string) interface{} {
 	switch attribute {
 	case "qty":
-		if stockManager := product.GetRegisteredStock(); stockManager != nil {
-			it.Qty = stockManager.GetProductQty(it.instance.GetID(), it.instance.GetAppliedOptions())
-		}
 		return it.Qty
 	case "inventory":
-		if it.Inventory == nil {
-			if stockManager := product.GetRegisteredStock(); stockManager != nil {
-				it.Inventory = stockManager.GetProductOptions(it.instance.GetID())
-			}
-		}
-
 		return it.Inventory
 	}
 	return nil
@@ -92,8 +85,7 @@ func (it *StockDelegate) GetAttributesInfo() []models.StructAttributeInfo {
 }
 
 // Load is a modelInstance.Load() method handler for external attributes, updates qty and inventory values
-func (it *StockDelegate) Load() error {
-
+func (it *StockDelegate) Load(productID string) error {
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
 		it.Qty = stockManager.GetProductQty(it.instance.GetID(), it.instance.GetAppliedOptions())
 		it.Inventory = stockManager.GetProductOptions(it.instance.GetID())
@@ -106,6 +98,19 @@ func (it *StockDelegate) Load() error {
 // methods toHashMap is called to Save instance so Get methods would be executed before Save
 func (it *StockDelegate) Save() error {
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
+
+		// recalculate total qty if options present
+		var itQty int
+		var optionsPresent = false
+		for _, productOptions := range it.Inventory {
+			itQty += utils.InterfaceToInt(productOptions["qty"])
+			optionsPresent = true
+		}
+
+		if optionsPresent {
+			it.Qty = itQty
+		}
+
 		productID := it.instance.GetID()
 		// remove current stock
 		err := stockManager.RemoveProductQty(productID, make(map[string]interface{}))
