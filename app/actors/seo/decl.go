@@ -2,6 +2,7 @@
 package seo
 
 import (
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 )
 
@@ -20,11 +21,17 @@ const (
 type DefaultSEOItem struct {
 	id string
 
-	Url     string
+	URL     string
 	Rewrite string
 
 	Type            string
 	Title           string
 	MetaKeywords    string
 	MetaDescription string
+}
+
+// DefaultSEOCollection is a default implementer of InterfaceSEOCollection
+type DefaultSEOCollection struct {
+	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
 }

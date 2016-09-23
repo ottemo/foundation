@@ -34,3 +34,10 @@ type InterfaceSEOItem interface {
 	models.InterfaceObject
 	models.InterfaceStorable
 }
+
+// InterfaceSEOCollection represents interface to access business layer implementation of SEO items collection
+type InterfaceSEOCollection interface {
+	ListSEOItems() []InterfaceSEOItem
+
+	models.InterfaceCollection
+}
