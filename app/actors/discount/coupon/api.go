@@ -2,6 +2,7 @@ package coupon
 
 import (
 	"encoding/csv"
+	"fmt"
 	"strings"
 	"time"
 
@@ -213,7 +214,7 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		if minimumCartAmount > currentCheckout.GetSubtotal() {
 
 			context.SetResponseStatusBadRequest()
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "minium purchase amount of $%.2f not met.", minimumCartAmount)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "minium purchase amount of $"+fmt.Sprintf("%.2f", minimumCartAmount)+" not met.")
 		}
 
 		// to be applicable, the coupon should satisfy following conditions:
