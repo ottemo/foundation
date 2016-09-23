@@ -200,6 +200,21 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		validStart := isValidStart(discountCoupon["since"])
 		validEnd := isValidEnd(discountCoupon["until"])
 
+		// check if subtotal is more then required by the discount
+		currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		limits := utils.InterfaceToMap(discountCoupon["limits"])
+		minimumCartAmount := utils.InterfaceToFloat64(limits["minimum_cart_amount"])
+
+		if minimumCartAmount > currentCheckout.GetSubtotal() {
+
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "cart amount is less then required in your discount")
+		}
+
 		// to be applicable, the coupon should satisfy following conditions:
 		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
 		if (applyTimes == -1 || applyTimes > 0) && validStart && validEnd {
