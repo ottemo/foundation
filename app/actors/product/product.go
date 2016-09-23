@@ -143,6 +143,7 @@ func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	// taking item specified options and product options
 	productOptions := it.GetOptions()
+	env.Log("errors.log", env.ConstLogPrefixDebug, "========================\n\nproductOptions: "+utils.InterfaceToString(productOptions))
 
 	// storing start price for a case of percentage price modifier
 	startPrice := it.GetPrice()
@@ -223,6 +224,70 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 				it.Sku = skuModifier
 			}
 		}
+	}
+
+	var selectedProductIDs []string
+	for itemOptionName := range options {
+		// get product option
+		productOption, ok := productOptions[itemOptionName]
+		env.Log("errors.log", env.ConstLogPrefixDebug, "productOption: "+utils.InterfaceToString(productOption))
+		if !ok {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96246e83-fb80-4781-b671-2d3d75a65e56", "unknown option '"+itemOptionName+"'")
+		}
+
+		productOptionHashMap, ok := productOption.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check it required and have options
+		optionOptions, ok := productOptionHashMap["options"]
+		env.Log("errors.log", env.ConstLogPrefixDebug, "optionOptions: "+utils.InterfaceToString(optionOptions))
+		if !ok {
+			continue
+		}
+
+		optionOptionsHashMap, ok := optionOptions.(map[string]interface{})
+		env.Log("errors.log", env.ConstLogPrefixDebug, "optionOptionsHashMap: "+utils.InterfaceToString(optionOptionsHashMap))
+		if !ok {
+			continue
+		}
+
+		// check single value
+		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
+		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
+		if !present {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f2baf8a-af91-44f3-8364-b42099959ec4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
+		}
+
+		optionOptionsItemHashMap, ok := optionOptionsItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		productIDsHashMap, present := optionOptionsItemHashMap["product_ids"]
+		if !present {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f2baf8a-af91-44f3-8364-b42099959ec4", "no product specified for '"+itemOptionName+"' option value: '"+itemOptionValue+"'")
+		}
+
+		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
+		if len(selectedProductIDs) == 0 {
+			selectedProductIDs = productIDs
+		} else {
+			var newProductIDs []string
+			for _, productID := range productIDs {
+				if utils.IsInArray(productID, selectedProductIDs) {
+					newProductIDs = append(newProductIDs, productID)
+				}
+			}
+			selectedProductIDs = newProductIDs
+		}
+
+		env.Log("errors.log", env.ConstLogPrefixDebug, "found optionOptionsValue: "+utils.InterfaceToString(optionOptionsItemHashMap));
+	}
+
+	if len(selectedProductIDs) != 1 {
+		//return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d02be30-ca5e-46e4-94c7-2f01782f30b2", "unexpected option value for "+itemOptionName+" option")
 	}
 
 	// loop over item applied option in right order
