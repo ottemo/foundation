@@ -24,6 +24,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("seo/items", APIListSEOItems)
+	service.GET("seo/attributes", api.IsAdmin(APIListSeoAttributes))
 
 	service.GET("seo/url", APIGetSEOItem)
 	service.GET("seo/url/:url", APIGetSEOItem)
@@ -69,6 +70,17 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	return listItems, nil
+}
+
+// APIListSeoAttributes returns a list of seo item attributes
+func APIListSeoAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	seoItemModel, err := seo.GetSEOItemModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return seoItemModel.GetAttributesInfo(), nil
 }
 
 // APIListSEOItemsAlt returns a list registered SEO records
