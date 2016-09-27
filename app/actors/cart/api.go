@@ -24,7 +24,7 @@ func setupAPI() error {
 
 // APICartInfo returns get cart related information
 func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
-
+	env.Log("errors.log", env.ConstLogPrefixDebug, "********** APICartInfo");
 	currentCart, err := cart.GetCurrentCart(context, false)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -89,6 +89,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 // APICartItemAdd adds specified product to cart
 //   - "productID" and "qty" should be specified as arguments
 func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error) {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "********** APICartItemAdd");
 
 	// check request context
 	//---------------------
@@ -144,6 +145,7 @@ func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error
 // APICartItemUpdate changes qty and/or option for cart item
 //   - "itemIdx" and "qty" should be specified as arguments
 func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, error) {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "********** APICartItemUpdate");
 
 	// check request context
 	//---------------------
@@ -202,6 +204,7 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 // APICartItemDelete removes specified item from cart item from cart
 //   - "itemIdx" should be specified as argument (item index can be obtained from APICartInfo)
 func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, error) {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "********** APICartItemDelete");
 
 	reqItemIdx := context.GetRequestArgument("itemIdx")
 	if reqItemIdx == "" {

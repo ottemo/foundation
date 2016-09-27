@@ -141,6 +141,7 @@ func (it *DefaultProduct) GetAppliedOptions() map[string]interface{} {
 // ApplyOptions updates current product attributes according to given product options,
 // returns error if specified option are not possible for the product
 func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "========================\n\nRequested options: "+utils.InterfaceToString(options))
 	// taking item specified options and product options
 	productOptions := it.GetOptions()
 	env.Log("errors.log", env.ConstLogPrefixDebug, "========================\n\nproductOptions: "+utils.InterfaceToString(productOptions))
@@ -227,12 +228,13 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	}
 
 	var selectedProductIDs []string
+	var foundOptionsCount int
 	for itemOptionName := range options {
-		// get product option
+		// get product option (color, size, etc)
 		productOption, ok := productOptions[itemOptionName]
 		env.Log("errors.log", env.ConstLogPrefixDebug, "productOption: "+utils.InterfaceToString(productOption))
 		if !ok {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96246e83-fb80-4781-b671-2d3d75a65e56", "unknown option '"+itemOptionName+"'")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b7d5166-f687-4c65-b109-5c2cee27e3f5", "unknown option '"+itemOptionName+"'")
 		}
 
 		productOptionHashMap, ok := productOption.(map[string]interface{})
@@ -240,7 +242,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			continue
 		}
 
-		// check it required and have options
+		// check it have options (color:{options:...})
 		optionOptions, ok := productOptionHashMap["options"]
 		env.Log("errors.log", env.ConstLogPrefixDebug, "optionOptions: "+utils.InterfaceToString(optionOptions))
 		if !ok {
@@ -253,27 +255,35 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			continue
 		}
 
-		// check single value
+		// check single value (color:{options:{red:{...}}})
 		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
+		env.Log("errors.log", env.ConstLogPrefixDebug, "looking for "+utils.InterfaceToString(itemOptionName)+"="+utils.InterfaceToString(itemOptionValue))
 		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
 		if !present {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f2baf8a-af91-44f3-8364-b42099959ec4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "11b4cf1b-2324-4ed1-b592-32bd66b751e4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
 		}
 
 		optionOptionsItemHashMap, ok := optionOptionsItem.(map[string]interface{})
 		if !ok {
 			continue
 		}
+		env.Log("errors.log", env.ConstLogPrefixDebug, "optionOptionsItemHashMap: "+utils.InterfaceToString(optionOptionsItemHashMap))
+		foundOptionsCount++
 
+		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
 		productIDsHashMap, present := optionOptionsItemHashMap["product_ids"]
 		if !present {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f2baf8a-af91-44f3-8364-b42099959ec4", "no product specified for '"+itemOptionName+"' option value: '"+itemOptionValue+"'")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9ed53c4-1400-4ffb-b2a4-5d78b9ee2904", "no product specified for '"+itemOptionName+"' option value: '"+itemOptionValue+"'")
 		}
 
+		// filter selected product ids by current option product ids
 		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
+		env.Log("errors.log", env.ConstLogPrefixDebug, "productIDs: "+utils.InterfaceToString(productIDs));
 		if len(selectedProductIDs) == 0 {
+			// initialization
 			selectedProductIDs = productIDs
 		} else {
+			// filtering
 			var newProductIDs []string
 			for _, productID := range productIDs {
 				if utils.IsInArray(productID, selectedProductIDs) {
@@ -286,8 +296,44 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		env.Log("errors.log", env.ConstLogPrefixDebug, "found optionOptionsValue: "+utils.InterfaceToString(optionOptionsItemHashMap));
 	}
 
-	if len(selectedProductIDs) != 1 {
-		//return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d02be30-ca5e-46e4-94c7-2f01782f30b2", "unexpected option value for "+itemOptionName+" option")
+	env.Log("errors.log", env.ConstLogPrefixDebug, "foundOptionsCount: "+utils.InterfaceToString(foundOptionsCount));
+	env.Log("errors.log", env.ConstLogPrefixDebug, "selectedProductIDs: "+utils.InterfaceToString(selectedProductIDs));
+	if foundOptionsCount > 0 {
+		if len(selectedProductIDs) < 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ae359d4-36b8-4182-bb12-c302938b28ad", "no product specified for selected options")
+		} else if len(selectedProductIDs) > 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
+		} else {
+			configuredProduct, err := product.LoadProductByID(selectedProductIDs[0])
+			if err {
+				return env.ErrorDispatch(err)
+			}
+
+			// partial attributes copying
+			it.SetID(configuredProduct.GetID())
+			it.Sku = configuredProduct.GetSku()
+			it.Name = configuredProduct.GetName()
+			it.ShortDescription = configuredProduct.GetShortDescription()
+			it.Description = configuredProduct.GetDescription()
+			it.DefaultImage = configuredProduct.GetDefaultImage()
+//case "sku":
+//return it.Sku
+//case "name":
+//return it.Name
+//case "short_description":
+//return it.ShortDescription
+//case "description":
+//return it.Description
+//case "default_image", "defaultimage":
+//return it.DefaultImage
+//case "price":
+//return it.Price
+//case "weight":
+//return it.Weight
+//case "options":
+//return it.GetOptions()
+//case "related_pids":
+		}
 	}
 
 	// loop over item applied option in right order
@@ -411,6 +457,7 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 
 // Set will apply the given attribute value to the product or return an error
 func (it *DefaultProduct) Set(attribute string, value interface{}) error {
+	env.Log("errors.log", env.ConstLogPrefixDebug, "SET: "+attribute+"="+utils.InterfaceToString(value));
 	lowerCaseAttribute := strings.ToLower(attribute)
 
 	if _, present := it.externalAttributes.ListExternalAttributes()[lowerCaseAttribute]; present {
