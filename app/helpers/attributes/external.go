@@ -1,8 +1,9 @@
 package attributes
 
 import (
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+
+	"github.com/ottemo/foundation/app/models"
 )
 
 // perDelegateAttributes returns new map where the attributes are grouped by delegate

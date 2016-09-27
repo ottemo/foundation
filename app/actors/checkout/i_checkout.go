@@ -203,7 +203,9 @@ func (it *DefaultCheckout) GetTaxAmount() float64 {
 
 // GetDiscountAmount returns total amount of discounts applied for current checkout
 func (it *DefaultCheckout) GetDiscountAmount() float64 {
-	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount) + it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
+	return it.GetItemSpecificTotal(0, checkout.ConstLabelDiscount) +
+		it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard) +
+		it.GetItemSpecificTotal(0, checkout.ConstLabelSalePriceAdjustment)
 }
 
 // GetPriceAdjustments collects price adjustments applied for current checkout
@@ -233,6 +235,9 @@ func (it *DefaultCheckout) GetDiscounts() []checkout.StructPriceAdjustment {
 	result := it.GetPriceAdjustments(checkout.ConstLabelDiscount)
 	for _, giftCardPA := range it.GetPriceAdjustments(checkout.ConstLabelGiftCard) {
 		result = append(result, giftCardPA)
+	}
+	for _, salePricePA := range it.GetPriceAdjustments(checkout.ConstLabelSalePriceAdjustment) {
+		result = append(result, salePricePA)
 	}
 
 	return result

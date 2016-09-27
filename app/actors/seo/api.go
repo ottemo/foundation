@@ -11,9 +11,11 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/seo"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -22,6 +24,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("seo/items", APIListSEOItems)
+	service.GET("seo/attributes", api.IsAdmin(APIListSeoAttributes))
 
 	service.GET("seo/url", APIGetSEOItem)
 	service.GET("seo/url/:url", APIGetSEOItem)
@@ -41,15 +44,46 @@ func setupAPI() error {
 // APIListSEOItems returns a list registered SEO records
 func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	// retrieve collection model
+	seoItemCollectionModel, err := GetSEOItemCollectionModel()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.SetResultColumns("url", "type", "rewrite")
-	records, err := collection.Load()
+	// filters handle
+	models.ApplyFilters(context, seoItemCollectionModel.GetDBCollection())
 
-	return records, env.ErrorDispatch(err)
+	// check "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return seoItemCollectionModel.GetDBCollection().Count()
+	}
+
+	// limit parameter handle
+	seoItemCollectionModel.ListLimit(models.GetListLimit(context))
+
+	// extra parameter handle
+	models.ApplyExtraAttributes(context, seoItemCollectionModel)
+
+	listItems, err := seoItemCollectionModel.List()
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return listItems, nil
+}
+
+// APIListSeoAttributes returns a list of seo item attributes
+func APIListSeoAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	seoItemModel, err := seo.GetSEOItemModel()
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return seoItemModel.GetAttributesInfo(), nil
 }
 
 // APIListSEOItemsAlt returns a list registered SEO records
@@ -57,12 +91,14 @@ func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, e
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	// If you give us a url to match we are only going to return one item
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -75,6 +111,7 @@ func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, e
 
 	records, err := collection.Load()
 
+	context.SetResponseStatusInternalServerError()
 	return records, env.ErrorDispatch(err)
 }
 
@@ -84,6 +121,7 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -93,21 +131,35 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 	collection.AddFilter("url", "=", specifiedURL)
 	records, err := collection.Load()
 
+	context.SetResponseStatusInternalServerError()
 	return records, env.ErrorDispatch(err)
 }
 
 // APIGetSEOItemByID returns SEO item for a specified id
 func APIGetSEOItemByID(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
+	// checking request context
+	//-------------------------
+	seoItemID := context.GetRequestArgument("id")
+	if seoItemID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2070ec2c-43c6-4a98-98aa-6334e684a23a", "Required field 'id' is blank or absend.")
+	}
+
+	// operation
+	//-------------------------
+	seoItemModel, err := seo.GetSEOItemModel()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	id := context.GetRequestArgument("id")
-	records, err := collection.LoadByID(id)
+	err = seoItemModel.Load(seoItemID)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
 
-	return records, env.ErrorDispatch(err)
+	return seoItemModel.ToHashMap(), nil
 }
 
 // APIUpdateSEOItem updates existing SEO item
@@ -116,17 +168,20 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	urlRewriteID := context.GetRequestArgument("itemID")
 	record, err := collection.LoadByID(urlRewriteID)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -138,9 +193,11 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 		collection.AddFilter("url", "=", urlValue)
 		recordsNumber, err := collection.Count()
 		if err != nil {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
 		if recordsNumber > 0 {
+			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c2a2e89d-b358-4c3b-9b65-4d161188b592", "rewrite for url '"+urlValue+"' already exists")
 		}
 
@@ -160,6 +217,7 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 	//---------------
 	_, err = collection.Save(record)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -172,10 +230,12 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 
 	postValues, err := api.GetRequestContentAsMap(context)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	if !utils.KeysInMapAndNotBlank(postValues, "url", "rewrite") {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a3901a1-48d5-4055-bacb-2b02681bbb71", "'url' and 'rewrite' context should be specified")
 	}
 
@@ -186,15 +246,18 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 	//-----------------------------
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	collection.AddFilter("url", "=", valueURL)
 	recordsNumber, err := collection.Count()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	if recordsNumber > 0 {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77987a83-3420-4baf-99f0-af9c47689d3b", "rewrite for url '"+valueURL+"' already exists")
 	}
 
@@ -218,6 +281,7 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 
 	newID, err := collection.Save(newRecord)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -232,11 +296,13 @@ func APIDeleteSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 
 	collection, err := db.GetCollection(ConstCollectionNameURLRewrites)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	err = collection.DeleteByID(context.GetRequestArgument("itemID"))
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -247,7 +313,7 @@ func APIDeleteSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 //   - result is not a JSON but "text/xml"
 func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	// if sitemap expied - generating new one
+	// if sitemap expired - generate new one
 	info, err := os.Stat(ConstSitemapFilePath)
 	if err != nil || (time.Now().Unix()-info.ModTime().Unix() >= ConstSitemapExpireSec) {
 		return APIGenerateSitemap(context)
@@ -256,6 +322,7 @@ func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error)
 	// using generated otherwise
 	sitemapFile, err := os.Open(ConstSitemapFilePath)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	defer sitemapFile.Close()
@@ -277,6 +344,7 @@ func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error)
 		}
 	}
 
+	context.SetResponseStatusInternalServerError()
 	return nil, env.ErrorDispatch(err)
 }
 
@@ -291,6 +359,7 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 	// creating sitemap file
 	sitemapFile, err := os.Create(ConstSitemapFilePath)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	defer sitemapFile.Close()

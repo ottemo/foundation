@@ -2,14 +2,16 @@ package coupon
 
 import (
 	"encoding/csv"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -200,6 +202,21 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		validStart := isValidStart(discountCoupon["since"])
 		validEnd := isValidEnd(discountCoupon["until"])
 
+		// check if subtotal is more then required by the discount
+		currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		limits := utils.InterfaceToMap(discountCoupon["limits"])
+		minimumCartAmount := utils.InterfaceToFloat64(limits["minimum_cart_amount"])
+
+		if minimumCartAmount > currentCheckout.GetSubtotal() {
+
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "minium purchase amount of $"+fmt.Sprintf("%.2f", minimumCartAmount)+" not met.")
+		}
+
 		// to be applicable, the coupon should satisfy following conditions:
 		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
 		if (applyTimes == -1 || applyTimes > 0) && validStart && validEnd {
@@ -338,10 +355,16 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	csvFile := context.GetRequestFile("file")
-	if csvFile == nil {
+	csvFileName := context.GetRequestArgument("file")
+	if csvFileName == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "A file name must be specified.")
+	}
+
+	csvFile := context.GetRequestFile(csvFileName)
+	if csvFile == nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b0cf271-ce1c-43ae-8f18-261120972bd0", "A file must be specified.")
 	}
 
 	csvReader := csv.NewReader(csvFile)
