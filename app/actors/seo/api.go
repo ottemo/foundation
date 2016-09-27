@@ -110,9 +110,12 @@ func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, e
 	}
 
 	records, err := collection.Load()
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
 
-	context.SetResponseStatusInternalServerError()
-	return records, env.ErrorDispatch(err)
+	return records, nil
 }
 
 // APIGetSEOItem returns SEO item for a specified url
@@ -131,8 +134,12 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 	collection.AddFilter("url", "=", specifiedURL)
 	records, err := collection.Load()
 
-	context.SetResponseStatusInternalServerError()
-	return records, env.ErrorDispatch(err)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return records, nil
 }
 
 // APIGetSEOItemByID returns SEO item for a specified id
@@ -344,8 +351,12 @@ func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error)
 		}
 	}
 
-	context.SetResponseStatusInternalServerError()
-	return nil, env.ErrorDispatch(err)
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return nil, nil
 }
 
 // APIGenerateSitemap generates a new sitemap based on SEO records
