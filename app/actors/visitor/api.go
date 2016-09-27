@@ -69,6 +69,13 @@ func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, err
 
 	dbCollection := orderCollectionModel.GetDBCollection()
 	dbCollection.AddFilter("visitor_id", "=", "")
+
+	// handle filters
+	models.ApplyFilters(context, dbCollection)
+
+	// remove limits to get right GROUP BY result
+	dbCollection.SetLimit(0, 0)
+
 	orders := orderCollectionModel.ListOrders()
 
 	guests := make([]map[string]interface{}, 0)
@@ -90,6 +97,7 @@ func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, err
 			guests = append(guests, item)
 		}
 	}
+
 	count := len(guests)
 
 	// limit handle
