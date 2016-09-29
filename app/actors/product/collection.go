@@ -161,6 +161,11 @@ func (it *DefaultProductCollection) ListProducts() []product.InterfaceProduct {
 		}
 		productModel.FromHashMap(dbRecordData)
 
+		err = productModel.LoadExternalAttributes()
+		if err != nil {
+			return result
+		}
+
 		result = append(result, productModel)
 	}
 
