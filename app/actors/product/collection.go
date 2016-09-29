@@ -56,6 +56,13 @@ func (it *DefaultProductCollection) List() ([]models.StructListItem, error) {
 
 		// if extra attributes were required
 		if len(it.listExtraAtributes) > 0 {
+			// load external attributes
+			err = productModel.LoadExternalAttributes()
+			if err != nil {
+				return result, env.ErrorDispatch(err)
+			}
+
+			// populate required attribute values
 			resultItem.Extra = make(map[string]interface{})
 
 			for _, attributeName := range it.listExtraAtributes {
@@ -161,6 +168,7 @@ func (it *DefaultProductCollection) ListProducts() []product.InterfaceProduct {
 		}
 		productModel.FromHashMap(dbRecordData)
 
+		// load external attributes
 		err = productModel.LoadExternalAttributes()
 		if err != nil {
 			return result
