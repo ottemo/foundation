@@ -9,11 +9,12 @@ package seo
 import (
 	"strings"
 
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/seo"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/seo"
 )
 
 // ---------------------------------------------------------------------------------
@@ -43,12 +44,12 @@ func (it *DefaultSEOItem) New() (models.InterfaceModel, error) {
 
 // GetURL returns url for the given seo
 func (it *DefaultSEOItem) GetURL() string {
-	return it.Url
+	return it.URL
 }
 
 // SetURL sets url for the given seo
 func (it *DefaultSEOItem) SetURL(value string) error {
-	it.Url = value
+	it.URL = value
 
 	return nil
 }
@@ -167,7 +168,7 @@ func (it *DefaultSEOItem) Get(attribute string) interface{} {
 	case "_id", "id":
 		return it.id
 	case "url":
-		return it.Url
+		return it.URL
 	case "rewrite":
 		return it.Rewrite
 	case "type":
@@ -191,7 +192,7 @@ func (it *DefaultSEOItem) Set(attribute string, value interface{}) error {
 	case "_id", "id":
 		it.id = utils.InterfaceToString(value)
 	case "url":
-		it.Url = utils.InterfaceToString(value)
+		it.URL = utils.InterfaceToString(value)
 	case "rewrite":
 		it.Rewrite = utils.InterfaceToString(value)
 	case "type":
@@ -228,7 +229,7 @@ func (it *DefaultSEOItem) ToHashMap() map[string]interface{} {
 
 	result["_id"] = it.id
 
-	result["url"] = it.Url
+	result["url"] = it.URL
 	result["rewrite"] = it.Rewrite
 
 	result["type"] = it.Type
