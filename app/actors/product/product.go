@@ -306,7 +306,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
 		} else {
 			simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
-			if err {
+			if err != nil {
 				return env.ErrorDispatch(err)
 			}
 
@@ -335,6 +335,8 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 
 			// required ID attribute
 			it.SetID(simpleProduct.GetID())
+
+			return nil
 		}
 	}
 
