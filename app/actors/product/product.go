@@ -304,42 +304,43 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		} else if len(selectedProductIDs) > 1 {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
 		} else {
-			configuredProduct, err := product.LoadProductByID(selectedProductIDs[0])
+			simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
 			if err {
 				return env.ErrorDispatch(err)
 			}
 
-			// partial attributes copying
-			it.SetID(configuredProduct.GetID())
-			it.Sku = configuredProduct.GetSku()
-			it.Name = configuredProduct.GetName()
-			it.ShortDescription = configuredProduct.GetShortDescription()
-			it.Description = configuredProduct.GetDescription()
-			it.DefaultImage = configuredProduct.GetDefaultImage()
-//case "sku":
-//return it.Sku
-//case "name":
-//return it.Name
-//case "short_description":
-//return it.ShortDescription
-//case "description":
-//return it.Description
-//case "default_image", "defaultimage":
-//return it.DefaultImage
-//case "price":
-//return it.Price
-//case "weight":
-//return it.Weight
-//case "options":
-//return it.GetOptions()
-//case "related_pids":
+			// required attributes of simple product
+			it.Enabled = simpleProduct.GetEnabled()
+			it.Sku = simpleProduct.GetSku()
+			it.Name = simpleProduct.GetName()
+			it.Price = simpleProduct.GetPrice()
+			it.Weight = simpleProduct.GetWeight()
+
+			// not required attributes of simple product
+			if simpleProduct.GetShortDescription() != "" {
+				it.ShortDescription = simpleProduct.GetShortDescription()
+			}
+
+			if simpleProduct.GetDescription() != "" {
+				it.Description = simpleProduct.GetDescription()
+			}
+
+			if simpleProduct.GetDefaultImage() != "" {
+				it.DefaultImage = simpleProduct.GetDefaultImage()
+			}
+
+			// store configurable id
+			it.Options["configurable_id"] = it.GetID()
+
+			// required ID attribute
+			it.SetID(simpleProduct.GetID())
 		}
 	}
 
 	// loop over item applied option in right order
-	for _, itemOptionName := range optionsApplyOrder {
-		// decoding key order after sort
-		itemOptionName := itemOptionName[strings.Index(itemOptionName, " ")+1:]
+	for i := 0; i < len(optionsApplyOrder); i++ {
+		itemOptionNameKey := optionsApplyOrder[i]
+		itemOptionName := itemOptionNameKey[strings.Index(itemOptionNameKey, " ")+1:]
 		itemOptionValue := options[itemOptionName]
 
 		if productOption, present := productOptions[itemOptionName]; present {
