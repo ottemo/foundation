@@ -20,7 +20,7 @@ import (
 	"github.com/ottemo/foundation/app/models/product"
 )
 
-func TestApplyOptions(t *testing.T) {
+func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	// starting application and getting product model
 	err := test.StartAppInTestingMode()
@@ -31,6 +31,7 @@ func TestApplyOptions(t *testing.T) {
 	// options to apply
 	options := map[string]interface{}{
 		"color": "red",
+		"field_option": "field_option value",
 	}
 
 	// create simple product
@@ -69,8 +70,11 @@ func TestApplyOptions(t *testing.T) {
 	// options example {"color":{"code":"color","controls_inventory":true,"key":"color","label":"Color","options":{
 	// "blue":{"key":"blue","label":"Blue","order":2,"price":"11","sku":"-blue"},
 	// "red":{"key":"red","label":"Red","order":1,"price":"10","sku":"-red"}},
-	// "order":1,"required":true,"type":"select"}}
-	var productJson = []byte(`{
+	// "order":1,"required":true,"type":"select"},
+	// "field_option":{"code":"field_option","controls_inventory":false,"key":"field_option","label":"FieldOption",
+	// "order":2,"price":"13","required":false,"sku":"-fo","type":"field"}}
+
+	var productJson = `{
 		"id": "123456789012345678901234",
 		"sku": "test",
 		"name": "Test Product",
@@ -81,23 +85,26 @@ func TestApplyOptions(t *testing.T) {
 		"weight": 0.5,
 		"test": "ok",
 		"options" : {
+			"field_option":{
+				"code": "field_option", "controls_inventory": false, "key": "field_option",
+				"label": "FieldOption", "order": 2, "price": "13", "required": false,
+				"sku": "-fo", "type": "field"},
 			"color" : {
 				"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
 				"order": 1, "required": true, "type": "select",
 				"options" : {
 					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
-					"red":   {"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red", "simple_pids": ["`)
-	productJson = append(productJson, []byte(simpleProductModel.GetID())...)
-	productJson = append(productJson, []byte(`"]}
+					"red":   {"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",`+
+					`"`+product.ConstOptionSimpleIDsName + `": ["` + simpleProductModel.GetID()+ `"]}
 				}
 			}
 		}
-	}`)...)
+	}`
 
-	fmt.Println(utils.InterfaceToString("= Simple product original ID: " + simpleProductModel.GetID()))
+	fmt.Println(utils.InterfaceToString("\n= Simple product original ID: " + simpleProductModel.GetID()))
 
-	productData, err := utils.DecodeJSONToStringKeyMap(productJson)
+	productData, err := utils.DecodeJSONToStringKeyMap([]byte(productJson))
 	if err != nil {
 		t.Error(err)
 	}
@@ -113,7 +120,7 @@ func TestApplyOptions(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("= Original configurable product: " + utils.InterfaceToString(productModel))
+	fmt.Println("\n= Original configurable product: " + utils.InterfaceToString(productModel))
 	var configurableProductID = productModel.GetID()
 
 	// apply options
@@ -122,7 +129,7 @@ func TestApplyOptions(t *testing.T) {
 		t.Error("error applying options")
 	}
 
-	fmt.Println("= Configurable with applied options: " + utils.InterfaceToString(productModel))
+	fmt.Println("\n= Configurable with applied options: " + utils.InterfaceToString(productModel))
 
 	// check "configurable" prodcut populated by simple product values
 	var productHashMap = productModel.ToHashMap()
@@ -130,7 +137,7 @@ func TestApplyOptions(t *testing.T) {
 		originalValue, present := simpleProductData[key]
 		var newValueStr = utils.InterfaceToString(newValue)
 		if !present {
-			fmt.Println("= New key [" + key + "] with value [" + newValueStr + "] found")
+			fmt.Println("\n= New key [" + key + "] with value [" + newValueStr + "] found")
 		}
 
 		var originalValueStr = utils.InterfaceToString(originalValue)
@@ -148,8 +155,14 @@ func TestApplyOptions(t *testing.T) {
 		t.Error("Options are wrong")
 	}
 
+	// configurable_id should be stored to reference it in reports
 	if productOptionHashMap["configurable_id"] != configurableProductID {
 		t.Error("ID of configurable product is not stored")
+	}
+
+	// other options should be stored too
+	if _, present := productOptionHashMap["field_option"]; !present {
+		t.Error("[field_option] absent in new product")
 	}
 
 	// deleting simple product

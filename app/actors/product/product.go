@@ -148,11 +148,123 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	// storing start price for a case of percentage price modifier
 	startPrice := it.GetPrice()
 
+	var selectedProductIDs []string
+	var foundOptions []string
+	for itemOptionName := range options {
+		// get product option (color, size, etc)
+		productOption, ok := productOptions[itemOptionName]
+		if !ok {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b7d5166-f687-4c65-b109-5c2cee27e3f5", "unknown option '"+itemOptionName+"'")
+		}
+
+		productOptionHashMap, ok := productOption.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check receiver have options (color:{options:...})
+		optionOptions, ok := productOptionHashMap["options"]
+		if !ok {
+			continue
+		}
+
+		optionOptionsHashMap, ok := optionOptions.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check single value (color:{options:{red:{...}}})
+		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
+		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
+		if !present {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "11b4cf1b-2324-4ed1-b592-32bd66b751e4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
+		}
+
+		optionOptionsItemHashMap, ok := optionOptionsItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
+		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionSimpleIDsName]
+		if !present {
+			continue
+		}
+		foundOptions = append(foundOptions, itemOptionName)
+
+		// filter selected product ids by current option product ids
+		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
+		if len(selectedProductIDs) == 0 {
+			// initialization
+			selectedProductIDs = productIDs
+		} else {
+			// filtering
+			var newProductIDs []string
+			for _, productID := range productIDs {
+				if utils.IsInArray(productID, selectedProductIDs) {
+					newProductIDs = append(newProductIDs, productID)
+				}
+			}
+			selectedProductIDs = newProductIDs
+		}
+
+
+	}
+
+	var optionsWithoutSimpleIds = make(map[string]interface{})
+
+	// if options with simple product ids found
+	if len(foundOptions) > 0 {
+		if len(selectedProductIDs) < 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ae359d4-36b8-4182-bb12-c302938b28ad", "no product specified for selected options")
+		} else if len(selectedProductIDs) > 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
+		} else {
+			simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// required attributes of simple product
+			it.Enabled = simpleProduct.GetEnabled()
+			it.Sku = simpleProduct.GetSku()
+			it.Name = simpleProduct.GetName()
+			it.Price = simpleProduct.GetPrice()
+			it.Weight = simpleProduct.GetWeight()
+
+			// not required attributes of simple product
+			if simpleProduct.GetShortDescription() != "" {
+				it.ShortDescription = simpleProduct.GetShortDescription()
+			}
+
+			if simpleProduct.GetDescription() != "" {
+				it.Description = simpleProduct.GetDescription()
+			}
+
+			if simpleProduct.GetDefaultImage() != "" {
+				it.DefaultImage = simpleProduct.GetDefaultImage()
+			}
+
+			// store configurable id
+			it.Options["configurable_id"] = it.GetID()
+
+			// required ID attribute
+			it.SetID(simpleProduct.GetID())
+		}
+	}
+
+	// filter already processed options
+	for optionName, optionValue := range(options) {
+		if !utils.IsInArray(optionName, foundOptions) {
+			optionsWithoutSimpleIds[optionName] = optionValue
+		}
+	}
+
 	// sorting applicable product attributes according to "order" field
 	// optionsApplyOrder := make([]string, 0)
 	var optionsApplyOrder []string
 
-	for itemOptionName := range options {
+	for itemOptionName := range optionsWithoutSimpleIds {
 
 		// looking only for options that customer set for item
 		if productOption, present := productOptions[itemOptionName]; present {
@@ -226,114 +338,6 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		}
 	}
 
-	var selectedProductIDs []string
-	var foundOptionsCount int
-	for itemOptionName := range options {
-		// get product option (color, size, etc)
-		productOption, ok := productOptions[itemOptionName]
-		if !ok {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b7d5166-f687-4c65-b109-5c2cee27e3f5", "unknown option '"+itemOptionName+"'")
-		}
-
-		productOptionHashMap, ok := productOption.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// check it have options (color:{options:...})
-		optionOptions, ok := productOptionHashMap["options"]
-		if !ok {
-			fmt.Println("!ok")
-			continue
-		}
-
-		optionOptionsHashMap, ok := optionOptions.(map[string]interface{})
-		if !ok {
-			fmt.Println("!ok")
-			continue
-		}
-
-		// check single value (color:{options:{red:{...}}})
-		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
-		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
-		if !present {
-			fmt.Println("!present")
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "11b4cf1b-2324-4ed1-b592-32bd66b751e4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
-		}
-
-		optionOptionsItemHashMap, ok := optionOptionsItem.(map[string]interface{})
-		if !ok {
-			fmt.Println("!ok")
-			continue
-		}
-		foundOptionsCount++
-
-		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
-		productIDsHashMap, present := optionOptionsItemHashMap["simple_pids"]
-		if !present {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9ed53c4-1400-4ffb-b2a4-5d78b9ee2904", "no product specified for '"+itemOptionName+"' option value: '"+itemOptionValue+"'")
-		}
-
-		// filter selected product ids by current option product ids
-		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
-		if len(selectedProductIDs) == 0 {
-			// initialization
-			selectedProductIDs = productIDs
-		} else {
-			// filtering
-			var newProductIDs []string
-			for _, productID := range productIDs {
-				if utils.IsInArray(productID, selectedProductIDs) {
-					newProductIDs = append(newProductIDs, productID)
-				}
-			}
-			selectedProductIDs = newProductIDs
-		}
-	}
-
-	if foundOptionsCount > 0 {
-		if len(selectedProductIDs) < 1 {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ae359d4-36b8-4182-bb12-c302938b28ad", "no product specified for selected options")
-		} else if len(selectedProductIDs) > 1 {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
-		} else {
-			simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
-			if err != nil {
-				return env.ErrorDispatch(err)
-			}
-
-			// required attributes of simple product
-			it.Enabled = simpleProduct.GetEnabled()
-			it.Sku = simpleProduct.GetSku()
-			it.Name = simpleProduct.GetName()
-			it.Price = simpleProduct.GetPrice()
-			it.Weight = simpleProduct.GetWeight()
-
-			// not required attributes of simple product
-			if simpleProduct.GetShortDescription() != "" {
-				it.ShortDescription = simpleProduct.GetShortDescription()
-			}
-
-			if simpleProduct.GetDescription() != "" {
-				it.Description = simpleProduct.GetDescription()
-			}
-
-			if simpleProduct.GetDefaultImage() != "" {
-				it.DefaultImage = simpleProduct.GetDefaultImage()
-			}
-
-			// store configurable id
-			it.Options = map[string]interface{}{
-				"configurable_id": it.GetID(),
-			}
-
-			// required ID attribute
-			it.SetID(simpleProduct.GetID())
-
-			return nil
-		}
-	}
-
 	// loop over item applied option in right order
 	for i := 0; i < len(optionsApplyOrder); i++ {
 		itemOptionNameKey := optionsApplyOrder[i]
@@ -403,7 +407,9 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 				productOption["value"] = options[productOptionName]
 			}
 		} else {
-			delete(productOptions, productOptionName)
+			if productOptionName != "configurable_id" {
+				delete(productOptions, productOptionName)
+			}
 		}
 	}
 
