@@ -208,10 +208,16 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			selectedProductIDs = newProductIDs
 		}
 
-
+		// cleaning option values were not used by customer
+		for optionOptionsItemName := range optionOptionsHashMap {
+			if optionOptionsItemName != itemOptionValue {
+				delete(optionOptionsHashMap, optionOptionsItemName)
+			}
+		}
 	}
 
 	var optionsWithoutSimpleIds = make(map[string]interface{})
+	var isSimpleProductUsed = false
 
 	// if options with simple product ids found
 	if len(foundOptions) > 0 {
@@ -250,11 +256,13 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 
 			// required ID attribute
 			it.SetID(simpleProduct.GetID())
+
+			isSimpleProductUsed = true
 		}
 	}
 
 	// filter already processed options
-	for optionName, optionValue := range(options) {
+	for optionName, optionValue := range options {
 		if !utils.IsInArray(optionName, foundOptions) {
 			optionsWithoutSimpleIds[optionName] = optionValue
 		}
@@ -288,7 +296,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	applyOptionModifiers := func(optionToApply map[string]interface{}) {
 
 		// price modifier
-		if optionValue, present := optionToApply["price"]; present {
+		if optionValue, present := optionToApply["price"]; present && !isSimpleProductUsed {
 			if stringValue, ok := optionValue.(string); ok {
 				if stringValue != "" && strings.Trim(stringValue, "1234567890+-%.") == "" {
 					isDelta := false
@@ -328,7 +336,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		}
 
 		// sku modifier
-		if optionValue, present := optionToApply["sku"]; present {
+		if optionValue, present := optionToApply["sku"]; present && !isSimpleProductUsed {
 			skuModifier := utils.InterfaceToString(optionValue)
 			if strings.HasPrefix(skuModifier, "-") || strings.HasPrefix(skuModifier, "_") {
 				it.Sku += skuModifier
