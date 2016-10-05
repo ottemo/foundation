@@ -469,7 +469,6 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 
 // Set will apply the given attribute value to the product or return an error
 func (it *DefaultProduct) Set(attribute string, value interface{}) error {
-	env.Log("errors.log", env.ConstLogPrefixDebug, "SET: "+attribute+"="+utils.InterfaceToString(value))
 	lowerCaseAttribute := strings.ToLower(attribute)
 
 	if _, present := it.externalAttributes.ListExternalAttributes()[lowerCaseAttribute]; present {
