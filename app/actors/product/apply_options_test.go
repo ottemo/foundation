@@ -12,12 +12,16 @@ package product_test
 import (
 	"testing"
 
-	"fmt"
-
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/product"
+	"fmt"
+)
+
+const (
+	PRESENT = "$present"
+	ABSENT = "$absent"
 )
 
 type testDataType struct {
@@ -44,7 +48,7 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 	}`)
 
 	var configurable = populateProductModel(t, `{
-		"id": "123456789012345678901234",
+		"_id": "123456789012345678901234",
 		"sku": "test",
 		"name": "Test Product",
 		"short_description": "something short",
@@ -66,17 +70,46 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
+						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
 					}
 				}
 			}
 		}
 	}`)
 
-	configurable = applyOptions(t, configurable, map[string]interface{}{
+	appliedOptions := map[string]interface{}{
 		"color":        "red",
 		"field_option": "field_option value",
-	})
+	}
+
+	checkJson := `{
+		"_id": "`+simpleProduct.GetID()+`",
+		"sku": "`+simpleProduct.GetSku()+`",
+		"price": 1.0,
+		"options": {
+			"field_option": {
+				"value": "`+utils.InterfaceToString(appliedOptions["field_option"])+`"
+			},
+			"color": {
+				"options": {
+					"red": "`+PRESENT+`",
+					"black": "`+ABSENT+`",
+					"blue": "`+ABSENT+`"
+				}
+			},
+			"configurable_id": "`+configurable.GetID()+`"
+		}
+	}`
+
+	configurable = applyOptions(t, configurable, appliedOptions)
+
+	check, err := utils.DecodeJSONToInterface(checkJson)
+	if err != nil {
+		fmt.Println("checkJson: "+checkJson)
+		t.Error(err)
+	}
+
+	checkResults(t, configurable.ToHashMap(), check.(map[string]interface{}))
 
 	deleteProduct(t, simpleProduct)
 }
@@ -108,8 +141,6 @@ func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
 	if err != nil {
 		t.Error(err)
 	}
-
-	fmt.Println(utils.InterfaceToString("\n= Additional product original ID: " + productModel.GetID()))
 
 	return productModel
 }
@@ -153,3 +184,32 @@ func applyOptions(
 	return productModel
 }
 
+func checkResults(
+	t *testing.T,
+	valueMap map[string]interface{},
+	checkMap map[string]interface{}) {
+
+	for key, checkValue := range checkMap {
+		value := valueMap[key]
+		switch typedCheckValue := checkValue.(type) {
+		case map[string]interface{}:
+			checkResults(t, value.(map[string]interface{}), typedCheckValue)
+		default:
+			valueStr := utils.InterfaceToString(value)
+			checkValueStr := utils.InterfaceToString(checkValue)
+			if checkValueStr == PRESENT {
+				if _, present := valueMap[key]; !present {
+					t.Error("Key ["+key+"] not present.")
+				}
+			} else if checkValueStr == ABSENT {
+				if _, present := valueMap[key]; present {
+					t.Error("Key ["+key+"] present.")
+				}
+			} else if valueStr != checkValueStr {
+				t.Error("["+key+"]: ["+valueStr+"] != ["+checkValueStr+"]")
+			} else {
+				// everything allright?
+			}
+		}
+	}
+}
