@@ -32,6 +32,77 @@ type testDataType struct {
 	additionalProductJson string
 }
 
+func TestProductApplyOptions(t *testing.T) {
+
+	start(t)
+
+	var product = populateProductModel(t, `{
+		"_id": "123456789012345678901234",
+		"sku": "test",
+		"name": "Test Product",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.1,
+		"weight": 0.5,
+		"test": "ok",
+		"options" : {
+			"field_option":{
+				"code": "field_option", "controls_inventory": false, "key": "field_option",
+				"label": "FieldOption", "order": 2, "price": "+13", "required": false,
+				"sku": "-fo", "type": "field"
+			},
+			"another_option":{
+				"code": "another_option", "controls_inventory": false, "key": "another_option",
+				"label": "AnotherOption", "order": 3, "price": "14", "required": false,
+				"sku": "-ao", "type": "field"
+			},
+			"color" : {
+				"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
+				"order": 1, "required": true, "type": "select",
+				"options" : {
+					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
+					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
+					"red":   {
+						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red"
+					}
+				}
+			}
+		}
+	}`)
+
+	appliedOptions := map[string]interface{}{
+		"color":        "red",
+		"field_option": "field_option value",
+	}
+
+	checkJson := `{
+		"sku": "test-red-fo",
+		"price": 113,
+		"options": {
+			"field_option": "`+PRESENT+`",
+			"another_option": "`+ABSENT+`",
+			"color": {
+				"options": {
+					"red": "`+PRESENT+`",
+					"black": "`+ABSENT+`",
+					"blue": "`+ABSENT+`"
+				}
+			}
+		}
+	}`
+
+	product = applyOptions(t, product, appliedOptions)
+
+	check, err := utils.DecodeJSONToInterface(checkJson)
+	if err != nil {
+		fmt.Println("checkJson: "+checkJson)
+		t.Error(err)
+	}
+
+	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
+}
+
 func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	start(t)
@@ -124,6 +195,7 @@ func start(t *testing.T) {
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
 	productData, err := utils.DecodeJSONToStringKeyMap(json)
 	if err != nil {
+		fmt.Println("json: "+json)
 		t.Error(err)
 	}
 
