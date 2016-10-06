@@ -9,17 +9,17 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	api.RegisterOnRestServiceStart(setupAPI)
 	app.OnAppStart(onAppStart)
+	api.RegisterOnRestServiceStart(setupAPI)
 }
 
 func onAppStart() error {
-	mediaStorage, err := media.GetMediaStorage()
+
+	var err error
+	mediaStorage, err = media.GetMediaStorage()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	// skip "unused variable"
-	_ = mediaStorage
 
 	return nil
 }

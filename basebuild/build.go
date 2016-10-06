@@ -18,6 +18,7 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/cms"             // CMS Page/Block module
 	_ "github.com/ottemo/foundation/app/actors/product"         // Product module
 	_ "github.com/ottemo/foundation/app/actors/product/review"  // Product Reviews module
+	_ "github.com/ottemo/foundation/app/actors/swatch"          // Product Reviews module
 	_ "github.com/ottemo/foundation/app/actors/visitor"         // Visitor module
 	_ "github.com/ottemo/foundation/app/actors/visitor/address" // Visitor Address module
 	_ "github.com/ottemo/foundation/app/actors/visitor/token"   // Visitor Token module
