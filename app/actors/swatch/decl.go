@@ -13,6 +13,9 @@ const (
 	ConstStorageModel     = "swatch"
 	ConstStorageObjectID  = "media"
 	ConstStorageMediaType = "image"
+
+	ConstImageDefaultFormat = "png"
+	ConstImageDefaultExtention = "png"
 )
 
 var (

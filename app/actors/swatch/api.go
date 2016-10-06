@@ -1,6 +1,9 @@
 package swatch
 
 import (
+	"bytes"
+	"image"
+	"image/png"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -15,17 +18,19 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("swatch/media", APIListMediaImages)
+	service.GET("swatch/media/:mediaName", swatchByName)
 
 	// Admin only
-	service.POST("swatch/media", api.IsAdmin(APIAddMediaImages))
-	service.DELETE("swatch/media/:mediaName", api.IsAdmin(APIRemoveMediaImage))
+	service.GET("swatch/media", api.IsAdmin(listAllSwatches))
+
+	service.POST("swatch/media", api.IsAdmin(createSwatch))
+	service.DELETE("swatch/media/:mediaName", api.IsAdmin(deleteByName))
 
 	return nil
 }
 
-// APIListMediaImages returns list of media files from media storage
-func APIListMediaImages(context api.InterfaceApplicationContext) (interface{}, error) {
+// listAllSwatches returns list of media files from media storage
+func listAllSwatches(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// skip "unused parameter"
 	_ = context
@@ -33,9 +38,9 @@ func APIListMediaImages(context api.InterfaceApplicationContext) (interface{}, e
 	return mediaStorage.ListMediaDetail(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType)
 }
 
-// APIAddMediaImages uploads images to the media
+// createSwatch uploads images to the media
 //   - media file should be provided in "file" field with full name
-func APIAddMediaImages(context api.InterfaceApplicationContext) (interface{}, error) {
+func createSwatch(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	var result []interface{}
 
@@ -50,6 +55,22 @@ func APIAddMediaImages(context api.InterfaceApplicationContext) (interface{}, er
 			return result, env.ErrorDispatch(err)
 		}
 
+		decodedImage, imageFormat, err := image.Decode(bytes.NewReader(fileContent))
+		if err != nil {
+			return result, env.ErrorDispatch(err)
+		}
+
+		var newFileExtention string
+		if imageFormat != ConstImageDefaultFormat {
+			buffer := bytes.NewBuffer(nil)
+			err = png.Encode(buffer, decodedImage)
+			if err != nil {
+				return result, env.ErrorDispatch(err)
+			}
+			fileContent = buffer.Bytes()
+			newFileExtention = ConstImageDefaultExtention
+		}
+
 		if !strings.Contains(fileName, ".") {
 			result = append(result, "Image: '"+fileName+"', should contain extension")
 			continue
@@ -58,7 +79,10 @@ func APIAddMediaImages(context api.InterfaceApplicationContext) (interface{}, er
 		// Handle image name, adding unique values to name
 		fileName = strings.TrimSpace(fileName)
 		mediaNameParts := strings.SplitN(fileName, ".", 2)
-		imageName := mediaNameParts[0] + "_" + utils.InterfaceToString(time.Now().Nanosecond()) + "." + mediaNameParts[1]
+		if len(newFileExtention) == 0 {
+			newFileExtention = mediaNameParts[1]
+		}
+		imageName := mediaNameParts[0] + "_" + utils.InterfaceToString(time.Now().Nanosecond()) + "." + newFileExtention
 
 		// save to media storage operation
 		err = mediaStorage.Save(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName, fileContent)
@@ -74,9 +98,9 @@ func APIAddMediaImages(context api.InterfaceApplicationContext) (interface{}, er
 	return result, nil
 }
 
-// APIRemoveMediaImage removes image from media
+// deleteByName removes image from media
 //   - media name must be specified in "mediaName" argument
-func APIRemoveMediaImage(context api.InterfaceApplicationContext) (interface{}, error) {
+func deleteByName(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	//---------------------
@@ -91,6 +115,27 @@ func APIRemoveMediaImage(context api.InterfaceApplicationContext) (interface{}, 
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}
+
+	return "ok", nil
+}
+
+// swatchByName returns a swatch with the specified name
+//   - media name must be specified in "mediaName" argument WITHOUT extention
+func swatchByName(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// check request context
+	//---------------------
+	imageName := context.GetRequestArgument("mediaName")
+	if imageName == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f2e0f51e-601e-4fda-86e7-c31307d17d26", "media name was not specified")
+	}
+
+	// remove media operation
+	//---------------------
+	//buffer, err := mediaStorage.Load(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName+"."+ConstImageDefaultExtention)
+	//if err != nil {
+	//	return "", env.ErrorDispatch(err)
+	//}
 
 	return "ok", nil
 }
