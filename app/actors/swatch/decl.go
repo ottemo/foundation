@@ -1,5 +1,4 @@
 // Package swatch is a default implementation of product swatches
-
 package swatch
 
 import (
@@ -14,7 +13,7 @@ const (
 	ConstStorageObjectID  = "media"
 	ConstStorageMediaType = "image"
 
-	ConstImageDefaultFormat = "png"
+	ConstImageDefaultFormat    = "png"
 	ConstImageDefaultExtention = "png"
 )
 
