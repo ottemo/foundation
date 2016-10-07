@@ -6,19 +6,15 @@ import (
 	"image/png"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/utils"
 )
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
 	service := api.GetRestService()
-
-	service.GET("swatch/media/:mediaName", swatchByName)
 
 	// Admin only
 	service.GET("swatch/media", api.IsAdmin(listAllSwatches))
@@ -82,7 +78,12 @@ func createSwatch(context api.InterfaceApplicationContext) (interface{}, error) 
 		if len(newFileExtention) == 0 {
 			newFileExtention = mediaNameParts[1]
 		}
-		imageName := mediaNameParts[0] + "_" + utils.InterfaceToString(time.Now().Nanosecond()) + "." + newFileExtention
+		imageName := mediaNameParts[0] + "." + newFileExtention
+
+		_, err = mediaStorage.Load(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName)
+		if err == nil {
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "715bbe6a-aece-46fc-8fd1-e6c2e07bab29", "image with name "+mediaNameParts[0]+" already exists")
+		}
 
 		// save to media storage operation
 		err = mediaStorage.Save(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName, fileContent)
@@ -115,27 +116,6 @@ func deleteByName(context api.InterfaceApplicationContext) (interface{}, error) 
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}
-
-	return "ok", nil
-}
-
-// swatchByName returns a swatch with the specified name
-//   - media name must be specified in "mediaName" argument WITHOUT extention
-func swatchByName(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	// check request context
-	//---------------------
-	imageName := context.GetRequestArgument("mediaName")
-	if imageName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f2e0f51e-601e-4fda-86e7-c31307d17d26", "media name was not specified")
-	}
-
-	// remove media operation
-	//---------------------
-	//buffer, err := mediaStorage.Load(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName+"."+ConstImageDefaultExtention)
-	//if err != nil {
-	//	return "", env.ErrorDispatch(err)
-	//}
 
 	return "ok", nil
 }
