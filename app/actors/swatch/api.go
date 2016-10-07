@@ -16,9 +16,10 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	// Admin only
-	service.GET("swatch/media", api.IsAdmin(listAllSwatches))
+	service.GET("swatch/media", listAllSwatches)
+	service.GET("swatch/media/extention", getDefaultExtention)
 
+	// Admin only
 	service.POST("swatch/media", api.IsAdmin(createSwatch))
 	service.DELETE("swatch/media/:mediaName", api.IsAdmin(deleteByName))
 
@@ -32,6 +33,16 @@ func listAllSwatches(context api.InterfaceApplicationContext) (interface{}, erro
 	_ = context
 
 	return mediaStorage.ListMediaDetail(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType)
+}
+
+// getDefaultExtention returns default media extention. This value is necessary to select image by name
+//   "swatchType-swatchValue.extention" list returned by from "listAllSwatches".
+func getDefaultExtention(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// skip "unused parameter"
+	_ = context
+
+	return ConstImageDefaultExtention, nil
 }
 
 // createSwatch uploads images to the media
