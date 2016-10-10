@@ -16,6 +16,9 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstProductMediaTypeImage = "image"
+
+	ConstSwatchImageDefaultFormat    = "jpeg"
+	ConstSwatchImageDefaultExtention = "jpeg"
 )
 
 // DefaultProduct is a default implementer of InterfaceProduct
