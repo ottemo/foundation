@@ -4,7 +4,6 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/app"
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
@@ -48,7 +47,9 @@ func setupDB() error {
 
 	if shouldFillVisibleField {
 		env.Log(ConstErrorModule, env.ConstLogPrefixInfo, "Field 'visible' have been added. Make all products visible.")
-		app.OnAppStart(fillVisibleField)
+		if err:= fillVisibleField(); err != nil {
+			return env.ErrorDispatch(err)
+		}
 	} else {
 		env.Log(ConstErrorModule, env.ConstLogPrefixInfo, "'visible' value need no update.")
 	}
