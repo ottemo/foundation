@@ -691,9 +691,10 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	// filters handle
 	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
 
-	// exclude disabled products for visitors, but not Admins
+	// exclude disabled and hidden products for visitors, but not Admins
 	if err := api.ValidateAdminRights(context); err != nil {
 		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+		productCollectionModel.GetDBCollection().AddFilter("visible", "=", true)
 	}
 
 	// check "count" request

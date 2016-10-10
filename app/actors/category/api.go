@@ -315,9 +315,10 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 	models.ApplyFilters(context, productsCollection.GetDBCollection())
 
-	// not allowing to see disabled products if not admin
+	// not allowing to see disabled and hidden products if not admin
 	if err := api.ValidateAdminRights(context); err != nil {
 		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+		productsCollection.GetDBCollection().AddFilter("visible", "=", true)
 	}
 
 	// checking for a "count" request
