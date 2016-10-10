@@ -462,6 +462,8 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 		return it.GetOptions()
 	case "related_pids":
 		return it.GetRelatedProductIds()
+	case "visible":
+		return it.Visible
 	}
 
 	return it.customAttributes.Get(attribute)
@@ -499,6 +501,8 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.Weight = utils.InterfaceToFloat64(value)
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
+	case "visible":
+		it.Visible = utils.InterfaceToBool(value)
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
 
@@ -592,6 +596,8 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	result["weight"] = it.Weight
 
 	result["options"] = it.GetOptions()
+
+	result["visible"] = it.Visible
 
 	result["related_pids"] = it.Get("related_pids")
 
@@ -750,6 +756,19 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			Editors:    "product_selector",
 			Options:    "",
 			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      product.ConstModelNameProduct,
+			Collection: ConstCollectionNameProduct,
+			Attribute:  "visible",
+			Type:       db.ConstTypeBoolean,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Visible",
+			Group:      "General",
+			Editors:    "boolean",
+			Options:    "",
+			Default:    "true",
 		},
 	}
 

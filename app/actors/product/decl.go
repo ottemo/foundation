@@ -40,6 +40,8 @@ type DefaultProduct struct {
 
 	RelatedProductIds []string
 
+	Visible bool
+
 	// appliedOptions tracks options were applied to current instance
 	appliedOptions map[string]interface{}
 
