@@ -40,6 +40,10 @@ func APIListProductReviews(context api.InterfaceApplicationContext) (interface{}
 		return nil, env.ErrorDispatch(err)
 	}
 
+	if err := api.ValidateAdminRights(context); err != nil {
+		collection.AddFilter("approved", "=", true)
+	}
+
 	collection.AddFilter("product_id", "=", productObject.GetID())
 	collection.AddFilter("review", "!=", "")
 
