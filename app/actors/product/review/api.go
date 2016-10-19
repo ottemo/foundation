@@ -10,6 +10,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/app/models"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -20,7 +21,7 @@ func setupAPI() error {
 	service.POST("product/:productID/review", APICreateProductReview)
 	service.POST("product/:productID/ratedreview/:stars", APICreateProductReview)
 
-	service.GET("product/:productID/reviews", APIListProductReviews)
+	service.GET("product/reviews", APIListReviews)
 	service.GET("product/:productID/rating", APIGetProductRating)
 
 	service.PUT("product/review/:reviewID", APIUpdateProductReview)
@@ -31,25 +32,28 @@ func setupAPI() error {
 }
 
 // APIListProductReviews returns a list of reviews for specified products
-//   - product id should be specified in "productID" argument
-func APIListProductReviews(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	productObject, err := product.LoadProductByID(context.GetRequestArgument("productID"))
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
+//   - product id could be specified in "productID" parameter
+func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	collection, err := db.GetCollection(ConstReviewCollectionName)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// product filter, limit
+	if err := models.ApplyFilters(context, collection); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	if err := api.ValidateAdminRights(context); err != nil {
+		collection.AddFilter("review", "!=", "")
 		collection.AddFilter("approved", "=", true)
 	}
 
-	collection.AddFilter("product_id", "=", productObject.GetID())
-	collection.AddFilter("review", "!=", "")
+	// check "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return collection.Count()
+	}
 
 	records, err := collection.Load()
 	if err != nil {
@@ -132,7 +136,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 }
 
 // APIDeleteProductReview  deletes existing review
-//   - review if should be specified in "reviewID" argiment
+//   - review ID should be specified in "reviewID" argiment
 func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	reviewID := context.GetRequestArgument("reviewID")
@@ -224,6 +228,7 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 }
 
 // APIUpdateProductReview updates an existing review
+//   - review ID should be specified in "reviewID" argiment
 func APIUpdateProductReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// admin or visitor
