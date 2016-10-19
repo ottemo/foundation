@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/product"
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -16,12 +17,15 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("product/:productID/reviews", APIListProductReviews)
 	service.POST("product/:productID/review", APICreateProductReview)
 	service.POST("product/:productID/ratedreview/:stars", APICreateProductReview)
-	service.DELETE("product/:productID/review/:reviewID", APIDeleteProductReview)
 
+	service.GET("product/:productID/reviews", APIListProductReviews)
 	service.GET("product/:productID/rating", APIGetProductRating)
+
+	service.PUT("product/review/:reviewID", APIUpdateProductReview)
+
+	service.DELETE("product/review/:reviewID", APIDeleteProductReview)
 
 	return nil
 }
@@ -103,38 +107,6 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 		}
 
 		ratingValue = starsNum
-
-		ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
-		ratingCollection.AddFilter("product_id", "=", productObject.GetID())
-		ratingRecords, err := ratingCollection.Load()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
-		recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
-		var ratingRecord map[string]interface{}
-
-		if len(ratingRecords) > 0 {
-			ratingRecord = ratingRecords[0]
-
-			ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + 1
-		} else {
-			ratingRecord = map[string]interface{}{
-				"product_id": productObject.GetID(),
-				"stars_1":    0,
-				"stars_2":    0,
-				"stars_3":    0,
-				"stars_4":    0,
-				"stars_5":    0,
-			}
-
-			ratingRecord[recordAttribute] = 1
-		}
-		ratingCollection.Save(ratingRecord)
 	}
 
 	// review add new record
@@ -146,6 +118,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 		"rating":     ratingValue,
 		"review":     context.GetRequestContent(),
 		"created_at": time.Now(),
+		"approved":   false,
 	}
 
 	newID, err := reviewCollection.Save(storingValues)
@@ -170,7 +143,7 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 	}
 
 	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to edit review")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to delete review")
 	}
 
 	collection, err := db.GetCollection(ConstReviewCollectionName)
@@ -249,3 +222,95 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 
 	return ratingRecords, nil
 }
+
+// APIUpdateProductReview updates an existing review
+func APIUpdateProductReview(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	// admin or visitor
+	var isAdmin = (api.ValidateAdminRights(context) == nil)
+	var visitorObject visitor.InterfaceVisitor
+	if !isAdmin {
+		var err error
+		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		if visitorObject.IsGuest() {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3de19977-8e20-484c-9ed0-7868118d767f", "guest visitor is no allowed to update review")
+		}
+	}
+
+	reviewID := context.GetRequestArgument("reviewID")
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	reviewCollection, err := db.GetCollection(ConstReviewCollectionName)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	record, err := reviewCollection.LoadByID(reviewID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if isAdmin {
+		if record["approved"] != context.GetRequestArgument("approved") {
+			ratingValue := utils.InterfaceToInt(record["rating"])
+			var diff = -1
+			if context.GetRequestArgument("approved") == "true" {
+				diff = 1
+			}
+
+			ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+
+			ratingCollection.AddFilter("product_id", "=", record["product_id"])
+			ratingRecords, err := ratingCollection.Load()
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+
+			recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
+			var ratingRecord map[string]interface{}
+
+			if len(ratingRecords) > 0 {
+				ratingRecord = ratingRecords[0]
+
+				ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + diff
+			} else {
+				ratingRecord = map[string]interface{}{
+					"product_id": record["product_id"],
+					"stars_1":    0,
+					"stars_2":    0,
+					"stars_3":    0,
+					"stars_4":    0,
+					"stars_5":    0,
+				}
+
+				if diff > 0 {
+					ratingRecord[recordAttribute] = 1
+				}
+			}
+			ratingCollection.Save(ratingRecord)
+		}
+	} else { // not admin
+		record["approved"] = false
+	}
+
+	for attribute, value := range requestData {
+		record[attribute] = value
+	}
+
+	if _, err := reviewCollection.Save(record); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return record, nil
+}
+
