@@ -325,8 +325,10 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 		record["approved"] = false
 	}
 
-	for attribute, value := range requestData {
-		record[attribute] = value
+	for attrName := range record {
+		if value, present := requestData[attrName]; present {
+			record[attrName] = value
+		}
 	}
 
 	if _, err := reviewCollection.Save(record); err != nil {

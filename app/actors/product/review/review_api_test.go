@@ -297,8 +297,8 @@ func deleteExistingReviewsByAdmin(t *testing.T, context *testContext) {
 	}
 
 	reviewsMap := utils.InterfaceToArray(reviews)
-	for _, review := range reviewsMap {
-		reviewMap := utils.InterfaceToMap(review)
+	for _, reviewRecord := range reviewsMap {
+		reviewMap := utils.InterfaceToMap(reviewRecord)
 		context.RequestArguments = map[string]string{
 			"reviewID": utils.InterfaceToString(reviewMap["_id"]),
 		}
@@ -317,14 +317,15 @@ func createReview(t *testing.T, context *testContext, visitorID interface{}, pro
 		"productID": utils.InterfaceToString(productID),
 	}
 	context.RequestContent = map[string]interface{}{
-		"review": reviewValue,
+		"review":        reviewValue,
+		"unknown_field": "value",
 	}
 
-	review, err := apiCreateProductReview(context)
+	reviewecord, err := apiCreateProductReview(context)
 	if err != nil {
 		t.Error(err)
 	}
-	reviewMap := utils.InterfaceToMap(review)
+	reviewMap := utils.InterfaceToMap(reviewecord)
 
 	if utils.InterfaceToString(reviewMap["approved"]) != "false" {
 		t.Error("New review should not be approved.")
@@ -399,7 +400,8 @@ func updateByVisitorOwnReview(t *testing.T, context *testContext, visitorID inte
 
 	context.ContextValues = map[string]interface{}{}
 	context.RequestContent = map[string]interface{}{
-		"review": reviewValue,
+		"review":        reviewValue,
+		"unknown_field": "value",
 	}
 
 	context.RequestArguments = map[string]string{
