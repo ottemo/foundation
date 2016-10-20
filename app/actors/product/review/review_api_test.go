@@ -3,7 +3,6 @@ package review_test
 import (
 	"fmt"
 	"io"
-	"strings"
 	"testing"
 	"time"
 
@@ -147,6 +146,7 @@ var apiCreateProductReview = review.APICreateProductReview
 
 // GET
 var apiListReviews = review.APIListReviews
+var apiGetReview = review.APIGetReview
 
 //var apiGetProductRating = review.APIGetProductRating
 // PUT
@@ -173,93 +173,117 @@ func TestReviewAPI(t *testing.T) {
 	context := new(testContext)
 	context.SetSession(session)
 
-	// var
-	var numberOfUsers = 2
-	var numberOfProducts = 2
-	var newVisitors []interface{}
-	var newProducts []interface{}
-	var newReviews []interface{}
-
 	// scenario
-	createUsers(t, context, numberOfUsers, &newVisitors)
-	createProducts(t, context, numberOfProducts, &newProducts)
+	var visitor1 = createVisitor(t, context, "1")
+	var visitor2 = createVisitor(t, context, "2")
+	_ = visitor1
+	_ = visitor2
+
+	var product3 = createProduct(t, context, "3")
+	var product4 = createProduct(t, context, "4")
+	_ = product3
+	_ = product4
+
+	//--------------------------------------------------------------------------------------------------------------
+	// Count
+	//--------------------------------------------------------------------------------------------------------------
 
 	// admin could retrieve all reviews
 	// admin could delete reviews
 	deleteExistingReviewsByAdmin(t, context)
 
 	// visitor could create review
-	createReviewsAllUsersAllProducts(t, context, newProducts, newVisitors, &newReviews)
+	var reviewMap = createReview(t, context, visitor1["_id"], product3["_id"], "")
 
-	// guest couldn't retrieve unapproved reviews
-	checkReviewsCount(t, context, "guest unapproved", false, "", "0", "")
+	// NOT approved
+	checkReviewsCount(t, context, "guest without content", "", "", "0")
+	checkReviewsCount(t, context, "visitor own without content", visitor1["_id"], "", "1")
+	checkReviewsCount(t, context, "visitor other without content", visitor2["_id"], "", "0")
+	checkReviewsCount(t, context, "admin without content", "admin", "", "1")
 
 	// admin could update review
 	// admin could approve review
-	approveSomeReviewsByAdmin(t, context, newReviews)
+	reviewMap = approveReview(t, context, reviewMap["_id"])
 
-	// guest could retrieve approved reviews for product
-	checkReviewsCount(t, context, "guest product approved", false, "", "1", utils.InterfaceToString(utils.InterfaceToMap(newProducts[0])["_id"]))
-
-	// admin could retrieve all reviews
-	checkReviewsCount(t, context, "admin all", true, "", "4", "")
-
-	// logged in visitor could get list of his/her reviews
-	checkReviewsCount(t, context, "logged personal", false, utils.InterfaceToString(utils.InterfaceToMap(newVisitors[0])["_id"]), "2", "")
-
-	// logged in visitor could get list of approved non empty reviews for product
-	checkReviewsCount(
-		t,
-		context,
-		"logged for product",
-		false,
-		utils.InterfaceToString(utils.InterfaceToMap(newVisitors[1])["_id"]),
-		"1",
-		utils.InterfaceToString(utils.InterfaceToMap(newProducts[0])["_id"]))
+	// APPROVED WITHOUT content
+	checkReviewsCount(t, context, "guest without content approved", "", "", "0")
+	checkReviewsCount(t, context, "visitor own without content approved", visitor1["_id"], "", "1")
+	checkReviewsCount(t, context, "visitor other without content approved", visitor2["_id"], "", "0")
+	checkReviewsCount(t, context, "admin without content approved", "admin", "", "1")
 
 	// logged in visitor could update his/her review
-	updateReviewByUser(
-		t,
-		context,
-		utils.InterfaceToString(utils.InterfaceToMap(newVisitors[0])["_id"]),
-		utils.InterfaceToString(utils.InterfaceToMap(newReviews[0])["_id"]))
+	reviewMap = updateByVisitorOwnReview(t, context, visitor1["_id"], reviewMap["_id"])
+	reviewMap = approveReview(t, context, reviewMap["_id"])
+
+	// APPROVED WITH content
+	checkReviewsCount(t, context, "guest content approved", "", "", "1")
+	checkReviewsCount(t, context, "visitor own content approved", visitor1["_id"], "", "1")
+	checkReviewsCount(t, context, "visitor other content approved", visitor2["_id"], "", "0")
+	checkReviewsCount(t, context, "admin content approved", "admin", "", "1")
+
+	// logged in visitor could not update other visitor review
+	updateByVisitorOtherReview(t, context, visitor2["_id"], reviewMap["_id"])
+
+	//--------------------------------------------------------------------------------------------------------------
+	// Single record
+	//--------------------------------------------------------------------------------------------------------------
+
+	deleteExistingReviewsByAdmin(t, context)
+	reviewMap = createReview(t, context, visitor1["_id"], product3["_id"], "")
+
+	checkGetReview(t, context, "", reviewMap["_id"], "not aproved, guest", false)
+	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "not aproved, owner", true)
+	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "not aproved, other", false)
+	checkGetReview(t, context, "admin", reviewMap["_id"], "not aproved, admin", true)
+
+	reviewMap = updateByVisitorOwnReview(t, context, visitor1["_id"], reviewMap["_id"])
+
+	checkGetReview(t, context, "", reviewMap["_id"], "not aproved, guest", false)
+	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "not aproved, owner", true)
+	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "not aproved, other", false)
+	checkGetReview(t, context, "admin", reviewMap["_id"], "not aproved, admin", true)
+
+	reviewMap = approveReview(t, context, reviewMap["_id"])
+
+	checkGetReview(t, context, "", reviewMap["_id"], "aproved, guest", true)
+	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "aproved, owner", true)
+	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "aproved, other", true)
+	checkGetReview(t, context, "admin", reviewMap["_id"], "aproved, admin", true)
+
 }
 
-func createUsers(t *testing.T, context *testContext, numberOfUsers int, newVisitors *[]interface{}) {
+func createVisitor(t *testing.T, context *testContext, counter string) map[string]interface{} {
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
 	context.ContextValues = map[string]interface{}{}
 	context.RequestArguments = map[string]string{}
 
-	for i := 0; i < numberOfUsers; i++ {
-		context.RequestContent = map[string]interface{}{
-			"email": "user" + utils.InterfaceToString(time.Now().Unix()) + utils.InterfaceToString(i) + "@test.com",
-		}
-		newVisitor, err := visitor.APICreateVisitor(context)
-		if err != nil {
-			t.Error(err)
-		}
-		*newVisitors = append(*newVisitors, newVisitor)
+	context.RequestContent = map[string]interface{}{
+		"email": "user" + utils.InterfaceToString(time.Now().Unix()) + counter + "@test.com",
+	}
+	newVisitor, err := visitor.APICreateVisitor(context)
+	if err != nil {
+		t.Error(err)
 	}
 
+	return utils.InterfaceToMap(newVisitor)
 }
 
-func createProducts(t *testing.T, context *testContext, numberOfProducts int, newProducts *[]interface{}) {
+func createProduct(t *testing.T, context *testContext, counter string) map[string]interface{} {
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
 	context.ContextValues = map[string]interface{}{}
 	context.RequestArguments = map[string]string{}
 
-	for i := 0; i < numberOfProducts; i++ {
-		context.RequestContent = map[string]interface{}{
-			"sku":  "sku" + utils.InterfaceToString(time.Now().Unix()) + utils.InterfaceToString(i),
-			"name": "product name" + utils.InterfaceToString(time.Now().Unix()) + utils.InterfaceToString(i),
-		}
-
-		newProduct, err := product.APICreateProduct(context)
-		if err != nil {
-			t.Error(err)
-		}
-		*newProducts = append(*newProducts, newProduct)
+	context.RequestContent = map[string]interface{}{
+		"sku":  "sku" + utils.InterfaceToString(time.Now().Unix()) + counter,
+		"name": "product name" + utils.InterfaceToString(time.Now().Unix()) + counter,
 	}
+
+	newProduct, err := product.APICreateProduct(context)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return utils.InterfaceToMap(newProduct)
 }
 
 func deleteExistingReviewsByAdmin(t *testing.T, context *testContext) {
@@ -284,55 +308,44 @@ func deleteExistingReviewsByAdmin(t *testing.T, context *testContext) {
 	}
 }
 
-func createReviewsAllUsersAllProducts(
-	t *testing.T,
-	context *testContext,
-	newProducts []interface{},
-	newVisitors []interface{},
-	newReviews *[]interface{}) {
+func createReview(t *testing.T, context *testContext, visitorID interface{}, productID interface{}, reviewValue string) map[string]interface{} {
 
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
 	context.ContextValues = map[string]interface{}{}
-
-	var counter = 0
-	for _, productItem := range newProducts {
-		var productMap = utils.InterfaceToMap(productItem)
-
-		for _, visitorItem := range newVisitors {
-			var visitorMap = utils.InterfaceToMap(visitorItem)
-
-			context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorMap["_id"])
-			context.RequestArguments = map[string]string{
-				"productID": utils.InterfaceToString(productMap["_id"]),
-			}
-			context.RequestContent = map[string]interface{}{
-				"review": strings.Repeat("r", counter),
-			}
-			counter++
-
-			review, err := apiCreateProductReview(context)
-			if err != nil {
-				t.Error(err)
-			}
-			reviewMap := utils.InterfaceToMap(review)
-
-			if utils.InterfaceToString(reviewMap["approved"]) != "false" {
-				t.Error("New review should not be approved.")
-			}
-
-			*newReviews = append(*newReviews, review)
-		}
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+	context.RequestArguments = map[string]string{
+		"productID": utils.InterfaceToString(productID),
 	}
+	context.RequestContent = map[string]interface{}{
+		"review": reviewValue,
+	}
+
+	review, err := apiCreateProductReview(context)
+	if err != nil {
+		t.Error(err)
+	}
+	reviewMap := utils.InterfaceToMap(review)
+
+	if utils.InterfaceToString(reviewMap["approved"]) != "false" {
+		t.Error("New review should not be approved.")
+	}
+
+	return (utils.InterfaceToMap(reviewMap))
 }
 
 func checkReviewsCount(
 	t *testing.T,
 	context *testContext,
 	msg string,
-	isAdmin bool,
-	visitorID string,
-	requiredCount string,
-	productID string) {
+	visitorID interface{},
+	productID interface{},
+	requiredCount string) {
+
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
 
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
 	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
@@ -343,10 +356,10 @@ func checkReviewsCount(
 		"action": "count",
 	}
 	if productID != "" {
-		context.RequestArguments["product_id"] = productID
+		context.RequestArguments["product_id"] = utils.InterfaceToString(productID)
 	}
 	if visitorID != "" {
-		context.RequestArguments["visitor_id"] = visitorID
+		context.RequestArguments["visitor_id"] = utils.InterfaceToString(visitorID)
 	}
 
 	countResult, err := apiListReviews(context)
@@ -360,38 +373,25 @@ func checkReviewsCount(
 	}
 }
 
-func approveSomeReviewsByAdmin(t *testing.T, context *testContext, newReviews []interface{}) {
+func approveReview(t *testing.T, context *testContext, reviewID interface{}) map[string]interface{} {
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
 	context.ContextValues = map[string]interface{}{}
-
-	var approvedProductID = ""
-	var approvedVisitorID = ""
-	for _, reviewItem := range newReviews {
-		var reviewMap = utils.InterfaceToMap(reviewItem)
-
-		if approvedVisitorID != reviewMap["visitor_id"] && approvedProductID != reviewMap["product_id"] {
-			context.RequestArguments = map[string]string{
-				"reviewID": utils.InterfaceToString(reviewMap["_id"]),
-			}
-			context.RequestContent = map[string]interface{}{
-				"approved": true,
-			}
-
-			updateResult, err := apiUpdateProductReview(context)
-			if err != nil {
-				t.Error(err)
-			}
-			_ = updateResult
-		}
-
-		if approvedVisitorID == "" && approvedProductID == "" {
-			approvedVisitorID = utils.InterfaceToString(reviewMap["visitor_id"])
-			approvedProductID = utils.InterfaceToString(reviewMap["product_id"])
-		}
+	context.RequestArguments = map[string]string{
+		"reviewID": utils.InterfaceToString(reviewID),
 	}
+	context.RequestContent = map[string]interface{}{
+		"approved": true,
+	}
+
+	updateResult, err := apiUpdateProductReview(context)
+	if err != nil {
+		t.Error(err)
+	}
+
+	return (utils.InterfaceToMap(updateResult))
 }
 
-func updateReviewByUser(t *testing.T, context *testContext, visitorID string, reviewID string) {
+func updateByVisitorOwnReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}) map[string]interface{} {
 	var reviewValue = "review text"
 
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
@@ -417,5 +417,51 @@ func updateReviewByUser(t *testing.T, context *testContext, visitorID string, re
 	}
 	if utils.InterfaceToString(updateResultMap["review"]) != reviewValue {
 		t.Error("updated by visitor review is incorrect")
+	}
+
+	return utils.InterfaceToMap(updateResult)
+}
+
+func updateByVisitorOtherReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}) {
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+
+	context.ContextValues = map[string]interface{}{}
+	context.RequestContent = map[string]interface{}{}
+
+	context.RequestArguments = map[string]string{
+		"reviewID": utils.InterfaceToString(reviewID),
+	}
+
+	_, err := apiUpdateProductReview(context)
+	if err == nil {
+		t.Error("visitor can not update other visitor review")
+	}
+}
+
+func checkGetReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}, msg string, canGet bool) {
+
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
+
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+
+	context.ContextValues = map[string]interface{}{}
+	context.RequestContent = map[string]interface{}{}
+	context.RequestArguments = map[string]string{
+		"reviewID": utils.InterfaceToString(reviewID),
+	}
+
+	_, err := apiGetReview(context)
+	if err != nil {
+		if canGet {
+			t.Error(err)
+		}
+	} else if !canGet {
+		t.Error(msg, ", should not be able to get review")
 	}
 }

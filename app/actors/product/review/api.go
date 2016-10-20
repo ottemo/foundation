@@ -22,6 +22,7 @@ func setupAPI() error {
 	service.POST("ratedreview/:productID/:stars", APICreateProductReview)
 
 	service.GET("reviews", APIListReviews)
+	service.GET("review/:reviewID", APIGetReview)
 	service.GET("rating/:productID", APIGetProductRating)
 
 	service.PUT("review/:reviewID", APIUpdateReview)
@@ -119,6 +120,11 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 		ratingValue = starsNum
 	}
 
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	// review add new record
 	//----------------------
 	storingValues := map[string]interface{}{
@@ -126,7 +132,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 		"visitor_id": visitorObject.GetID(),
 		"username":   visitorObject.GetFullName(),
 		"rating":     ratingValue,
-		"review":     context.GetRequestContent(),
+		"review":     requestData["review"],
 		"created_at": time.Now(),
 		"approved":   false,
 	}
@@ -142,7 +148,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 }
 
 // APIDeleteProductReview  deletes existing review
-//   - review ID should be specified in "reviewID" argiment
+//   - review ID should be specified in "reviewID" argument
 func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	reviewID := context.GetRequestArgument("reviewID")
@@ -235,7 +241,7 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 }
 
 // APIUpdateReview updates an existing review
-//   - review ID should be specified in "reviewID" argiment
+//   - review ID should be specified in "reviewID" argument
 func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// admin or visitor
@@ -267,6 +273,10 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 	record, err := reviewCollection.LoadByID(reviewID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
+	}
+
+	if visitorObject != nil && visitorObject.GetID() != "" && visitorObject.GetID() != record["visitor_id"] {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ba19a94b-088c-4a28-861c-6fe2145f2348", "you not allowed to update review")
 	}
 
 	if isAdmin {
@@ -321,6 +331,43 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 
 	if _, err := reviewCollection.Save(record); err != nil {
 		return nil, env.ErrorDispatch(err)
+	}
+
+	return record, nil
+}
+
+// APIGetReview returns an existing review for owner or admin
+//   - review ID should be specified in "reviewID" argument
+func APIGetReview(context api.InterfaceApplicationContext) (interface{}, error) {
+	// admin or visitor
+	var isAdmin = (api.ValidateAdminRights(context) == nil)
+	var visitorObject visitor.InterfaceVisitor
+	if !isAdmin {
+		var err error
+		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+	}
+
+	reviewID := context.GetRequestArgument("reviewID")
+
+	reviewCollection, err := db.GetCollection(ConstReviewCollectionName)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	record, err := reviewCollection.LoadByID(reviewID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if visitorObject != nil {
+		if !utils.InterfaceToBool(record["approved"]) ||
+			utils.InterfaceToString(record["review"]) == "" {
+			if visitorObject.GetID() != utils.InterfaceToString(record["visitor_id"]) {
+				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "69578b10-e0c4-412d-aa54-4bacb7277262", "not allowed to get review")
+			}
+		}
 	}
 
 	return record, nil
