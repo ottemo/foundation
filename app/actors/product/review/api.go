@@ -8,9 +8,9 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"github.com/ottemo/foundation/app/models"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -18,20 +18,20 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.POST("product/:productID/review", APICreateProductReview)
-	service.POST("product/:productID/ratedreview/:stars", APICreateProductReview)
+	service.POST("review/:productID", APICreateProductReview)
+	service.POST("ratedreview/:productID/:stars", APICreateProductReview)
 
-	service.GET("product/reviews", APIListReviews)
-	service.GET("product/:productID/rating", APIGetProductRating)
+	service.GET("reviews", APIListReviews)
+	service.GET("rating/:productID", APIGetProductRating)
 
-	service.PUT("product/review/:reviewID", APIUpdateProductReview)
+	service.PUT("review/:reviewID", APIUpdateReview)
 
-	service.DELETE("product/review/:reviewID", APIDeleteProductReview)
+	service.DELETE("review/:reviewID", APIDeleteProductReview)
 
 	return nil
 }
 
-// APIListProductReviews returns a list of reviews for specified products
+// APIListReviews returns a list of reviews for specified products
 //   - product id could be specified in "productID" parameter
 func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error) {
 
@@ -46,8 +46,14 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	if err := api.ValidateAdminRights(context); err != nil {
-		collection.AddFilter("review", "!=", "")
-		collection.AddFilter("approved", "=", true)
+		visitorObject, err := visitor.GetCurrentVisitor(context)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+		if visitorObject.IsGuest() {
+			collection.AddFilter("review", "!=", "")
+			collection.AddFilter("approved", "=", true)
+		}
 	}
 
 	// check "count" request
@@ -141,13 +147,15 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 
 	reviewID := context.GetRequestArgument("reviewID")
 
-	visitorObject, err := visitor.GetCurrentVisitor(context)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to delete review")
+	var visitorObject visitor.InterfaceVisitor
+	if err := api.ValidateAdminRights(context); err != nil {
+		visitorObject, err = visitor.GetCurrentVisitor(context)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+		if visitorObject.IsGuest() {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to delete review")
+		}
 	}
 
 	collection, err := db.GetCollection(ConstReviewCollectionName)
@@ -161,7 +169,6 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 	}
 
 	if visitorID, present := reviewRecord["visitor_id"]; present {
-
 		// check rights
 		if err := api.ValidateAdminRights(context); err != nil {
 			if visitorID != visitorObject.GetID() {
@@ -227,9 +234,9 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 	return ratingRecords, nil
 }
 
-// APIUpdateProductReview updates an existing review
+// APIUpdateReview updates an existing review
 //   - review ID should be specified in "reviewID" argiment
-func APIUpdateProductReview(context api.InterfaceApplicationContext) (interface{}, error) {
+func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// admin or visitor
 	var isAdmin = (api.ValidateAdminRights(context) == nil)
@@ -318,4 +325,3 @@ func APIUpdateProductReview(context api.InterfaceApplicationContext) (interface{
 
 	return record, nil
 }
-

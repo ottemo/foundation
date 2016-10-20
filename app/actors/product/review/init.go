@@ -33,7 +33,7 @@ func setupDB() error {
 
 		if shouldFillApprovedField {
 			env.Log(ConstErrorModule, env.ConstLogPrefixInfo, "Field 'approved' have been added. Make all reviews approved.")
-			if err:= fillApprovedField(); err != nil {
+			if err := fillApprovedField(); err != nil {
 				return env.ErrorDispatch(err)
 			}
 		} else {
@@ -77,7 +77,7 @@ func fillApprovedField() error {
 	}
 
 	for _, currentReview := range reviewMaps {
-		currentReview["approved"] = true;
+		currentReview["approved"] = true
 
 		_, err := reviewCollection.Save(currentReview)
 		if err != nil {
