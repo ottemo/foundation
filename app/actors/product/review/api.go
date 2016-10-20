@@ -18,6 +18,10 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
+	//--------------------------------------------------------------------------------------------------------------
+	// In case of api names change - please, fix test.
+	//--------------------------------------------------------------------------------------------------------------
+
 	service.POST("review/:productID", APICreateProductReview)
 	service.POST("ratedreview/:productID/:stars", APICreateProductReview)
 
