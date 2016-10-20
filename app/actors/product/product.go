@@ -635,7 +635,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			IsStatic:   true,
 			Label:      "Related Products",
 			Group:      "General",
-			Editors:    "product_selector",
+			Editors:    "products_selector",
 			Options:    "",
 			Default:    "",
 		},
