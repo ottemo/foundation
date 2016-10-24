@@ -179,11 +179,10 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
 				var oiItemPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
 				orderItem.UnitPrice = utils.RoundPrice(oiItemPrice)
-
-				calculatedTotal += oiItemPrice * utils.InterfaceToFloat64(orderItem.Quantity)
 			}
 		}
 
+		calculatedTotal += orderItem.UnitPrice * utils.InterfaceToFloat64(orderItem.Quantity)
 		orderDetails.Items = append(orderDetails.Items, orderItem)
 	}
 
