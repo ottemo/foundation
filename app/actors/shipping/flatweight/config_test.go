@@ -19,21 +19,21 @@ var ValidateAndApplyTests = []struct {
 		// Starting with no stored rates
 		"[{\"title\": \"Standard Shipping\",\"code\": \"std_1\",\"price\": 1.99,\"weight_from\": 0.0,\"weight_to\": 5.0}]",
 		make(Rates, 0),
-		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0}},
+		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0, "", ""}},
 		false,
 	},
 	{
 		// Updating the price of a stored rate
 		"[{\"title\": \"Standard Shipping\",\"code\": \"std_1\",\"price\": 5.99,\"weight_from\": 0.0,\"weight_to\": 5.0}]",
-		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0}},
-		[]Rate{Rate{"Standard Shipping", "std_1", 5.99, 0.0, 5.0}},
+		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0, "", ""}},
+		[]Rate{Rate{"Standard Shipping", "std_1", 5.99, 0.0, 5.0, "", ""}},
 		false,
 	},
 	{
 		// Updating the label of a stored rate
 		"[{\"title\": \"Shipping\",\"code\": \"std_1\",\"price\": 1.99,\"weight_from\": 0.0,\"weight_to\": 5.0}]",
-		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0}},
-		[]Rate{Rate{"Shipping", "std_1", 1.99, 0.0, 5.0}},
+		[]Rate{Rate{"Standard Shipping", "std_1", 1.99, 0.0, 5.0, "", ""}},
+		[]Rate{Rate{"Shipping", "std_1", 1.99, 0.0, 5.0, "", ""}},
 		false,
 	},
 
