@@ -44,3 +44,4 @@ db/sqlite/test/ottemo.db
 ottemo.db
 ottemo.ini
 .DS_Store
+ottemo.ini.*
