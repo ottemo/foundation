@@ -428,6 +428,16 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	return nil
 }
 
+// LoadExternalAttributes loads external attributes from storage
+func (it *DefaultProduct) LoadExternalAttributes() error {
+	err := it.externalAttributes.Load(it.GetID())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	return nil
+}
+
 // ----------------------------------------------------------------------------------
 // InterfaceObject implementation (package "github.com/ottemo/foundation/app/models")
 // ----------------------------------------------------------------------------------
@@ -753,7 +763,7 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			IsStatic:   true,
 			Label:      "Related Products",
 			Group:      "General",
-			Editors:    "product_selector",
+			Editors:    "products_selector",
 			Options:    "",
 			Default:    "",
 		},
@@ -819,7 +829,7 @@ func (it *DefaultProduct) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.externalAttributes.Load(id)
+	err = it.LoadExternalAttributes()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
