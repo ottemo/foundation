@@ -1,15 +1,18 @@
 package fsmedia
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/jpeg"
+	"image/png"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/disintegration/imaging"
+
 	"github.com/ottemo/foundation/env"
 )
 
@@ -211,7 +214,19 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 			return env.ErrorDispatch(err)
 		}
 
-		sourceImage, err := imaging.Open(sourceFileName)
+		fileContents, err := ioutil.ReadFile(sourceFileName)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		// should decode image to find format
+		_, sourceImageFormat, err := image.Decode(bytes.NewReader(fileContents))
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		// should decode one more time because imaging.toNRGBA is private
+		sourceImage, err := imaging.Decode(bytes.NewReader(fileContents))
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
@@ -249,7 +264,14 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 		}
 		defer file.Close()
 
-		err = jpeg.Encode(file, resizedImage, &jpeg.Options{Quality: 80})
+		switch sourceImageFormat {
+		case "png":
+			err = png.Encode(file, resizedImage)
+		case "jpeg":
+			err = jpeg.Encode(file, resizedImage, &jpeg.Options{Quality: 80})
+		default:
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d1494cdc-6884-4cbb-babd-13c5c0669559", "Unknown image format: "+sourceFileName)
+		}
 		if err != nil {
 			env.ErrorDispatch(err)
 		}

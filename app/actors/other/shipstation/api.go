@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/order"
 )
 
 func setupAPI() error {
@@ -35,7 +37,6 @@ func isEnabled(next api.FuncAPIHandler) api.FuncAPIHandler {
 
 func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 	return func(context api.InterfaceApplicationContext) (interface{}, error) {
-
 		authHash := utils.InterfaceToString(context.GetRequestSetting("Authorization"))
 		username := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShipstationUsername))
 		password := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathShipstationPassword))
@@ -120,6 +121,8 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 	// Base Order Details
 	createdAt := utils.InterfaceToTime(oItem.Get("created_at"))
 	updatedAt := utils.InterfaceToTime(oItem.Get("updated_at"))
+	var customInfo = utils.InterfaceToMap(oItem.Get("custom_info"))
+	var calculation = utils.InterfaceToMap(customInfo["calculation"])
 
 	orderDetails := Order{
 		OrderId:        oItem.GetID(),
@@ -150,6 +153,12 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 		Country:    oShipAddress.GetCountry(),
 	}
 
+	// Shipstation knows nothing about discounts, so prices per item should be corrected by applying discounts
+	// First: apply per item discount
+	// Second: apply order discount proportionally
+	// calculatedTotal is total, calculated by applying per item discounts
+	var calculatedTotal float64
+
 	// Order Items
 	for _, oiItem := range allOrderItems {
 		isThisOrder := oiItem["order_id"] == oItem.GetID()
@@ -164,7 +173,42 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 			UnitPrice: utils.InterfaceToFloat64(oiItem["price"]), // TODO: FORMAT?
 		}
 
+		if calculation != nil {
+			var oiItemIdx = utils.InterfaceToString(oiItem["idx"])
+			if oiItemCalculation := calculation[oiItemIdx]; oiItemCalculation != nil {
+				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
+				var oiItemPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
+				orderItem.UnitPrice = utils.RoundPrice(oiItemPrice)
+			}
+		}
+
+		calculatedTotal += orderItem.UnitPrice * utils.InterfaceToFloat64(orderItem.Quantity)
 		orderDetails.Items = append(orderDetails.Items, orderItem)
+	}
+
+	// apply order discounts to item prices
+	if calculation != nil {
+		// calculate order discount
+		var additionalDiscount = calculatedTotal - (orderDetails.OrderTotal - orderDetails.ShippingAmount - orderDetails.TaxAmount)
+		// calculate percentage of discount
+		var additionalDiscountPercent = additionalDiscount / (additionalDiscount + orderDetails.OrderTotal)
+
+		// store discount reminder to fill last item
+		var discountRemainder = additionalDiscount
+		for i, orderItem := range orderDetails.Items {
+			var itemDiscount float64
+			if i < len(orderDetails.Items)-1 {
+				// calculate price adjustment based on percentage
+				itemDiscount = utils.RoundPrice(orderItem.UnitPrice * additionalDiscountPercent)
+			} else {
+				// set price adjustment for full discount reminder for last item
+				itemDiscount = utils.RoundPrice(discountRemainder / utils.InterfaceToFloat64(orderItem.Quantity))
+			}
+			discountRemainder -= itemDiscount * utils.InterfaceToFloat64(orderItem.Quantity)
+			orderItem.UnitPrice = utils.RoundPrice(orderItem.UnitPrice - itemDiscount)
+
+			orderDetails.Items[i] = orderItem
+		}
 	}
 
 	return orderDetails

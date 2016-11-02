@@ -1,18 +1,19 @@
 package stock_test
 
 import (
-	"github.com/ottemo/foundation/app/models/product"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/tests"
-	"github.com/ottemo/foundation/utils"
-
 	"fmt"
 	"testing"
+
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/test"
+	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // TestStock validates product inventory model to works properly
 func TestStock(t *testing.T) {
-	err := tests.StartAppInTestingMode()
+	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
 		return
@@ -40,8 +41,10 @@ func TestStock(t *testing.T) {
 		"inventory": [
 			{"options": {"color": "black"}, "qty": 1 },
 			{"options": {"color": "blue"},  "qty": 5 },
+			{"options": {"color": "green"}, "qty": 2 },
 			{"options": {"size":  "s"},     "qty": 5 },
-			{"options": {"size":  "l"},     "qty": 1 }
+			{"options": {"size":  "l"},     "qty": 1 },
+			{"options": {"size":  "xl"},    "qty": 5 }
 		],
 		"options": {
 			"color": {
@@ -89,26 +92,23 @@ func TestStock(t *testing.T) {
 	defer productModel.Delete()
 
 	productID := productModel.GetID()
+	registeredStock := product.GetRegisteredStock()
 
-	productTestModel, _ := product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{}{"color": "black", "size": "s"})
-	if qty := productTestModel.GetQty(); qty != 1 {
+	qty := registeredStock.GetProductQty(productID, map[string]interface{}{"color": "black", "size": "s"})
+	if qty != 1 {
 		t.Error("The black,s color qty should be 1 and not", qty)
 		return
 	}
 
-	// TODO: find out why second ApplyOptions call to existing model have no effect
-	productTestModel, _ = product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{}{"color": "blue", "size": "s"})
-	if qty := productTestModel.GetQty(); qty != 5 {
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{"color": "blue", "size": "s"})
+	if qty != 5 {
 		t.Error("The blue,s color qty should be 5 and not", qty)
 		return
 	}
 
-	productTestModel, _ = product.LoadProductByID(productID)
-	productTestModel.ApplyOptions(map[string]interface{}{"color": "green", "size": "xl"})
-	if qty := productTestModel.GetQty(); qty != 10 {
-		t.Error("The green,xl color qty should be 10 and not", qty)
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{"color": "green", "size": "xl"})
+	if qty != 2 {
+		t.Error("The green,xl color qty should be 2 and not", qty)
 		return
 	}
 
@@ -116,7 +116,7 @@ func TestStock(t *testing.T) {
 
 // TestStock validates product inventory model calculations
 func TestDecrementingStock(t *testing.T) {
-	err := tests.StartAppInTestingMode()
+	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
 		return
@@ -195,7 +195,7 @@ func TestDecrementingStock(t *testing.T) {
 	defer productModel.Delete()
 
 	productID := productModel.GetID()
-	stock := product.GetRegisteredStock()
+	registeredStock := product.GetRegisteredStock()
 
 	// test options
 	optionsWrapY := map[string]interface{}{"wrap": "Y"}
@@ -204,16 +204,15 @@ func TestDecrementingStock(t *testing.T) {
 	optionsColorGreenSizeXL := map[string]interface{}{"color": "Green", "size": "XL"}
 
 	// setting stock for test options
-	stock.SetProductQty(productID, optionsSizeS, 20)
-	stock.SetProductQty(productID, optionsColorRedSizeS, 5)
-	stock.SetProductQty(productID, optionsColorGreenSizeXL, 20)
+	registeredStock.SetProductQty(productID, optionsSizeS, 20)
+	registeredStock.SetProductQty(productID, optionsColorRedSizeS, 5)
+	registeredStock.SetProductQty(productID, optionsColorGreenSizeXL, 20)
 
 	// Test Case 1
-	stock.UpdateProductQty(productID, map[string]interface{}{"wrap": "Y"}, -5)
+	registeredStock.UpdateProductQty(productID, map[string]interface{}{"wrap": "Y"}, -5)
 
-	productTestModel, _ := product.LoadProductByID(productID)
-	qty := productTestModel.GetQty()
-	qtyWrapY := stock.GetProductQty(productID, optionsWrapY)
+	qty := registeredStock.GetProductQty(productID, map[string]interface{}{})
+	qtyWrapY := registeredStock.GetProductQty(productID, optionsWrapY)
 	if qty != 95 || qtyWrapY != 95 {
 		msg := fmt.Sprintln("Test case 1 error")
 		msg += fmt.Sprintln("\t qty:", qty, "(95 expected)")
@@ -224,11 +223,10 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 2
-	stock.UpdateProductQty(productID, map[string]interface{}{"size": "S"}, -5)
+	registeredStock.UpdateProductQty(productID, map[string]interface{}{"size": "S"}, -5)
 
-	productTestModel, _ = product.LoadProductByID(productID)
-	qty = productTestModel.GetQty()
-	qtySizeS := stock.GetProductQty(productID, optionsSizeS)
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
+	qtySizeS := registeredStock.GetProductQty(productID, optionsSizeS)
 	if qty != 90 || qtySizeS != 15 {
 		msg := fmt.Sprintln("Test case 2 error")
 		msg += fmt.Sprintln("\t qty:", qty, "(90 expected)")
@@ -239,13 +237,12 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 3
-	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S"}, -1)
+	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S"}, -1)
 
 	// TODO: check is it possible to add more than we have
-	productTestModel, _ = product.LoadProductByID(productID)
-	qty = productTestModel.GetQty()
-	qtySizeS = stock.GetProductQty(productID, optionsSizeS)
-	qtyColorRedSizeS := stock.GetProductQty(productID, optionsColorRedSizeS)
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
+	qtySizeS = registeredStock.GetProductQty(productID, optionsSizeS)
+	qtyColorRedSizeS := registeredStock.GetProductQty(productID, optionsColorRedSizeS)
 	if qty != 89 || qtySizeS != 14 || qtyColorRedSizeS != 4 {
 		msg := fmt.Sprintln("Test case 3 error")
 		msg += fmt.Sprintln("\t qty:", qty, "(89 expected)")
@@ -257,11 +254,10 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 4
-	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Green", "size": "XL"}, -5)
+	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Green", "size": "XL"}, -5)
 
-	productTestModel, _ = product.LoadProductByID(productID)
-	qty = productTestModel.GetQty()
-	qtyColorGreenSizeXL := stock.GetProductQty(productID, optionsColorGreenSizeXL)
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
+	qtyColorGreenSizeXL := registeredStock.GetProductQty(productID, optionsColorGreenSizeXL)
 	if qty != 84 || qtyColorGreenSizeXL != 15 {
 		msg := fmt.Sprintln("Test case 4 error")
 		msg += fmt.Sprintln("\t qty:", qty, "(84 expected)")
@@ -272,13 +268,12 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 5
-	stock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S", "wrap": "Y"}, -1)
+	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S", "wrap": "Y"}, -1)
 
-	productTestModel, _ = product.LoadProductByID(productID)
-	qty = productTestModel.GetQty()
-	qtyWrapY = stock.GetProductQty(productID, optionsWrapY)
-	qtySizeS = stock.GetProductQty(productID, optionsSizeS)
-	qtyColorRedSizeS = stock.GetProductQty(productID, optionsColorRedSizeS)
+	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
+	qtyWrapY = registeredStock.GetProductQty(productID, optionsWrapY)
+	qtySizeS = registeredStock.GetProductQty(productID, optionsSizeS)
+	qtyColorRedSizeS = registeredStock.GetProductQty(productID, optionsColorRedSizeS)
 	if qty != 83 && qtyWrapY != 83 && qtySizeS != 13 && qtyColorRedSizeS != 3 {
 		msg := fmt.Sprintln("Test case 5 error")
 		msg += fmt.Sprintln("\t qty=", qty, "(83 expected)")
