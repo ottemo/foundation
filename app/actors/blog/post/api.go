@@ -14,6 +14,7 @@ func setupAPI() error {
 
 	service.GET("blog/posts", APIListPosts)
 	service.GET("blog/post/:id", APIPostByID)
+	service.GET("blog/posts/attributes", APIListPostAttributes)
 
 	// admin
 	service.POST("blog/post", api.IsAdmin(APICreateBlogPost))
@@ -159,6 +160,17 @@ func APIPostByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	return result, nil
+}
+
+// APIListPostAttributes returns a list of blog post attributes
+func APIListPostAttributes(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	postModel, err := post.GetBlogPostModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return postModel.GetAttributesInfo(), nil
 }
 
 // APICreateBlogPost creates blog post by provided data
