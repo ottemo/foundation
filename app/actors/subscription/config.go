@@ -71,7 +71,7 @@ func setupConfig() error {
 		Path:        subscription.ConstConfigPathSubscriptionProducts,
 		Value:       ``,
 		Type:        db.TypeArrayOf(db.ConstTypeID),
-		Editor:      "product_selector",
+		Editor:      "products_selector",
 		Options:     nil,
 		Label:       "Applicable Products",
 		Description: "",
