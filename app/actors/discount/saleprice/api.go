@@ -65,10 +65,10 @@ func createSalePrice(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "amount", "start_datetime", "end_datetime", "product_id") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "start_datetime", "product_id") {
 		context.SetResponseStatusBadRequest()
 		return nil, newErrorHelper(
-			"Required fields 'amount', 'start_datetime', 'end_datetime', 'product_id', cannot be blank.",
+			"Required fields 'amount', 'start_datetime', 'product_id', cannot be blank.",
 			"a54d2879-d080-42fb-a733-1411911bd4d1")
 	}
 
