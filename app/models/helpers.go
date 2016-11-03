@@ -98,6 +98,8 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 				filterOperator = "like"
 			}
 
+			attributeType := collection.GetColumnType(attributeName)
+
 			switch {
 			case strings.Contains(attributeValue, ".."):
 				rangeValues := strings.Split(attributeValue, "..")
@@ -108,7 +110,9 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 					collection.AddGroupFilter(groupName, attributeName, "<=", rangeValues[1])
 				}
 
-			case strings.Contains(attributeValue, ","):
+			// check also if value without commas but field type is array
+			case strings.Contains(attributeValue, ",") || strings.HasPrefix(attributeType, "[]"):
+				attributeValue = strings.Trim(attributeValue, ",")
 				options := strings.Split(attributeValue, ",")
 				if filterOperator == "=" {
 					collection.AddGroupFilter(groupName, attributeName, "in", options)
@@ -121,7 +125,6 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 				}
 
 			default:
-				attributeType := collection.GetColumnType(attributeName)
 				if attributeType != db.ConstTypeText && attributeType != db.ConstTypeID &&
 					!strings.Contains(attributeType, db.ConstTypeVarchar) &&
 					filterOperator == "like" {
