@@ -114,9 +114,19 @@ func (it *DefaultSalePrice) ToHashMap() map[string]interface{} {
 
 	result["_id"] = it.GetID()
 	result["amount"] = it.GetAmount()
-	result["end_datetime"] = it.GetEndDatetime()
 	result["product_id"] = it.GetProductID()
-	result["start_datetime"] = it.GetStartDatetime()
+
+	if it.GetEndDatetime().IsZero() {
+		result["end_datetime"] = nil
+	} else {
+		result["end_datetime"] = it.GetEndDatetime()
+	}
+
+	if it.GetStartDatetime().IsZero() {
+		result["start_datetime"] = nil
+	} else {
+		result["start_datetime"] = it.GetStartDatetime()
+	}
 
 	return result
 }
