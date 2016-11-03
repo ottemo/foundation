@@ -447,8 +447,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 		}
 
 		basePoints := map[float64]func() checkout.StructPriceAdjustment{
-			checkout.ConstCalculateTargetSubtotal: func() checkout.StructPriceAdjustment { return it.calculateSubtotal() },
-			checkout.ConstCalculateTargetShipping: func() checkout.StructPriceAdjustment { return it.calculateShipping() },
+			checkout.ConstCalculateTargetSubtotal: func() checkout.StructPriceAdjustment {
+				return it.calculateSubtotal()
+			},
+			checkout.ConstCalculateTargetShipping: func() checkout.StructPriceAdjustment {
+				return it.calculateShipping()
+			},
 		}
 
 		var minPriority float64
@@ -696,6 +700,10 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	// cause they can be not calculated at this point in case of direct post
 	it.CalculateAmount(checkout.ConstCalculateTargetGrandTotal)
 
+	customInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
+	customInfo["calculation"] = it.Info["calculation"]
+	checkoutOrder.Set("custom_info", customInfo)
+
 	if !paymentMethod.IsAllowed(it) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a5490ee-daa3-42b4-a84a-dade12d103e8", "Payment method not allowed")
 	}
@@ -738,7 +746,6 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 			orderDescription += ", "
 		}
 		orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
-
 	}
 
 	checkoutOrder.Set("description", orderDescription)

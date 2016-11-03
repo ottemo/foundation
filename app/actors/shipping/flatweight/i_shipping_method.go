@@ -1,6 +1,10 @@
 package flatweight
 
 import (
+	"strings"
+
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/app/models/checkout"
 )
 
@@ -39,7 +43,7 @@ func (it ShippingMethod) GetRates(checkoutInstance checkout.InterfaceCheckout) [
 
 	// Gather allowed rates
 	for _, r := range rates {
-		if r.validForWeight(orderWeight) {
+		if r.validForWeight(orderWeight) && rateIsAllowedCountry(utils.InterfaceToMap(r), checkoutInstance) {
 			allowedRates = append(allowedRates, r.toCheckoutStruct())
 		}
 	}
@@ -55,4 +59,34 @@ func (it ShippingMethod) GetAllRates() []checkout.StructShippingRate {
 	}
 
 	return allRates
+}
+
+// rateIsAllowedCountry used to check rate for allowed by country rules and presense of main keys
+func rateIsAllowedCountry(shippingRate map[string]interface{}, checkoutObject checkout.InterfaceCheckout) bool {
+
+	if len(shippingRate) > 3 {
+		country := "Default"
+
+		shippingAddress := checkoutObject.GetShippingAddress()
+		if shippingAddress != nil {
+			country = utils.InterfaceToString(shippingAddress.GetCountry())
+		}
+
+		for limitingKey, limitingValue := range shippingRate {
+
+			switch strings.ToLower(limitingKey) {
+			case "bannedcountries":
+				if strings.Contains(utils.InterfaceToString(limitingValue), country) {
+					return false
+				}
+			case "allowedcountries":
+				limitingString := utils.InterfaceToString(limitingValue)
+				if len(limitingString) > 0 && !strings.Contains(limitingString, country) {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
 }

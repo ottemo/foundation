@@ -53,9 +53,15 @@ func CheckModelImplements(modelName string, neededInterfaces []string) (models.I
 
 // ArgsGetAsNamed collects arguments into map, unnamed arguments will go as position index
 func ArgsGetAsNamed(args []string, includeIndexes bool) map[string]string {
+	return ArgsGetAsNamedBySeparators(args, includeIndexes, '=',':')
+}
+
+// ArgsGetAsNamedBySeparators collects arguments into map, unnamed arguments will go as position index
+// - separators could be defined as argument
+func ArgsGetAsNamedBySeparators(args []string, includeIndexes bool, separators ...rune) map[string]string {
 	result := make(map[string]string)
 	for idx, arg := range args {
-		splited := utils.SplitQuotedStringBy(arg, '=', ':')
+		splited := utils.SplitQuotedStringBy(arg, separators...)
 		if len(splited) > 1 {
 			key := splited[0]
 			key = strings.Trim(strings.TrimSpace(key), "\"'`")
@@ -739,7 +745,7 @@ func (it *ImportCmdAttributeAdd) Init(args []string, exchange map[string]interfa
 
 	attributeName := ""
 
-	namedArgs := ArgsGetAsNamed(args, true)
+	namedArgs := ArgsGetAsNamedBySeparators(args, true, '=')
 	for _, checkingKey := range []string{"attribute", "attr", "2"} {
 		if argValue, present := namedArgs[checkingKey]; present {
 			attributeName = argValue

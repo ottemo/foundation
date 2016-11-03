@@ -1,8 +1,9 @@
 package flatweight
 
 import (
-	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/env"
+
+	"github.com/ottemo/foundation/app/models/checkout"
 )
 
 const (
@@ -28,11 +29,13 @@ type ShippingMethod struct{}
 type Rates []Rate
 
 type Rate struct {
-	Title      string
-	Code       string
-	Price      float64
-	WeightFrom float64
-	WeightTo   float64
+	Title            string
+	Code             string
+	Price            float64
+	WeightFrom       float64
+	WeightTo         float64
+	AllowedCountries string
+	BannedCountries  string
 }
 
 func (it Rate) validForWeight(weight float64) bool {
