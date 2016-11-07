@@ -105,6 +105,7 @@ type ImportCmdMedia struct {
 	mediaField string
 	mediaType  string
 	mediaName  string
+	skipErrors bool
 }
 
 // ImportCmdStore is a implementer of InterfaceImpexImportCmd
