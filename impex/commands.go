@@ -618,130 +618,129 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 
 		prevMediaName := ""
 
-		// adding found media value(s)
-		for mediaIdx, mediaValue := range mediaArray {
+		var storeMediaFunc = func(srcMediaValue string, srcPrevMediaName string, srcMediaIdx int) (tgtPrevMediaName string, err error) {
+			var tgtMediaValue = srcMediaValue
+			tgtPrevMediaName = srcPrevMediaName
 
-			var storeMediaFunc = func(srcMediaValue string, srcPrevMediaName string, srcMediaIdx int) (tgtPrevMediaName string, err error) {
-				var tgtMediaValue = srcMediaValue
-				tgtPrevMediaName = srcPrevMediaName
+			mediaContents := []byte{}
 
-				mediaContents := []byte{}
+			// looking for media type
+			mediaType := it.mediaType
+			if nameValue, present := itemData[it.mediaType]; present {
+				mediaType = utils.InterfaceToString(nameValue)
+			}
 
-				// looking for media type
-				mediaType := it.mediaType
-				if nameValue, present := itemData[it.mediaType]; present {
-					mediaType = utils.InterfaceToString(nameValue)
+			// looking for media name
+			mediaName := it.mediaName
+			if nameValue, present := itemData[it.mediaName]; present {
+				mediaName = utils.InterfaceToString(nameValue)
+			}
+
+			// checking value type
+			if strings.HasPrefix(tgtMediaValue, "http") {
+				// we have http(s) link
+				transport := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				}
-
-				// looking for media name
-				mediaName := it.mediaName
-				if nameValue, present := itemData[it.mediaName]; present {
-					mediaName = utils.InterfaceToString(nameValue)
+				client := &http.Client{Transport: transport}
+				req, err := http.NewRequest("GET", tgtMediaValue, nil)
+				if err != nil {
+					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
+				// send close header to terminate socket as soon as request finishes
+				req.Close = true
 
-				// checking value type
-				if strings.HasPrefix(tgtMediaValue, "http") {
-					// we have http(s) link
-					transport := &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					}
-					client := &http.Client{Transport: transport}
-					req, err := http.NewRequest("GET", tgtMediaValue, nil)
-					if err != nil {
-						return srcPrevMediaName, env.ErrorDispatch(err)
-					}
-					// send close header to terminate socket as soon as request finishes
-					req.Close = true
-
-					response, err := client.Do(req)
-					if err != nil {
-						return srcPrevMediaName, env.ErrorDispatch(err)
-					}
-
-					if response.StatusCode != 200 {
-						return srcPrevMediaName, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image " + srcMediaValue + " (Status: " + response.Status + ")")
-					}
-
-					// updating media type if wasn't set
-					if contentType := response.Header.Get("Content-Type"); mediaType == "" && contentType != "" {
-						if value := strings.Split(contentType, "/"); len(value) == 2 {
-							mediaType = value[0]
-						}
-					}
-
-					// updating media name if wasn't set
-					if mediaName == "" {
-						mediaName = path.Base(response.Request.URL.Path)
-					}
-
-					// receiving media contents
-					mediaContents, err = ioutil.ReadAll(response.Body)
-					if err != nil {
-						return srcPrevMediaName, env.ErrorDispatch(err)
-					}
-				} else {
-					// we have regular file
-
-					// updating media name if wasn't set
-					if mediaName == "" {
-						mediaName = path.Base(tgtMediaValue)
-					}
-
-					// receiving media contents
-					mediaContents, err = ioutil.ReadFile(tgtMediaValue)
-					if err != nil {
-						return srcPrevMediaName, env.ErrorDispatch(err)
-					}
-				}
-
-				// checking if media type and name still not set
-				if mediaType == "" && mediaName != "" {
-					for _, imageExt := range []string{".jpg", ".jpeg", ".png", ".gif", ".svg", ".ico", ".bmp", ".tif", ".tiff"} {
-						if strings.Contains(mediaName, imageExt) {
-							mediaType = "image"
-							break
-						}
-					}
-					if mediaType == "" {
-						for _, imageExt := range []string{".txt", ".rtf", ".pdf", ".doc", "docx", ".xls", ".xlsx", ".ppt", ".pptx"} {
-							if strings.Contains(mediaName, imageExt) {
-								mediaType = "document"
-								break
-							}
-						}
-					}
-				}
-
-				if mediaType == "" {
-					mediaType = "unknown"
-				}
-
-				if mediaName == "" {
-					mediaName = "media"
-
-					if object, ok := inputAsMedia.(models.InterfaceObject); ok {
-						if objectID := utils.InterfaceToString(object.Get("_id")); objectID != "" {
-							mediaName += "_" + objectID
-						}
-					}
-				}
-
-				// so, if media name is static and we have array we want images to not be replaced
-				if tgtPrevMediaName == mediaName {
-					mediaName = strconv.Itoa(srcMediaIdx) + "_" + mediaName
-				} else {
-					tgtPrevMediaName = mediaName
-				}
-
-				// finally adding media to object
-				err = inputAsMedia.AddMedia(mediaType, mediaName, mediaContents)
+				response, err := client.Do(req)
 				if err != nil {
 					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
 
-				return tgtPrevMediaName, nil
+				if response.StatusCode != 200 {
+					return srcPrevMediaName, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image " + srcMediaValue + " (Status: " + response.Status + ")")
+				}
+
+				// updating media type if wasn't set
+				if contentType := response.Header.Get("Content-Type"); mediaType == "" && contentType != "" {
+					if value := strings.Split(contentType, "/"); len(value) == 2 {
+						mediaType = value[0]
+					}
+				}
+
+				// updating media name if wasn't set
+				if mediaName == "" {
+					mediaName = path.Base(response.Request.URL.Path)
+				}
+
+				// receiving media contents
+				mediaContents, err = ioutil.ReadAll(response.Body)
+				if err != nil {
+					return srcPrevMediaName, env.ErrorDispatch(err)
+				}
+			} else {
+				// we have regular file
+
+				// updating media name if wasn't set
+				if mediaName == "" {
+					mediaName = path.Base(tgtMediaValue)
+				}
+
+				// receiving media contents
+				mediaContents, err = ioutil.ReadFile(tgtMediaValue)
+				if err != nil {
+					return srcPrevMediaName, env.ErrorDispatch(err)
+				}
 			}
 
+			// checking if media type and name still not set
+			if mediaType == "" && mediaName != "" {
+				for _, imageExt := range []string{".jpg", ".jpeg", ".png", ".gif", ".svg", ".ico", ".bmp", ".tif", ".tiff"} {
+					if strings.Contains(mediaName, imageExt) {
+						mediaType = "image"
+						break
+					}
+				}
+				if mediaType == "" {
+					for _, imageExt := range []string{".txt", ".rtf", ".pdf", ".doc", "docx", ".xls", ".xlsx", ".ppt", ".pptx"} {
+						if strings.Contains(mediaName, imageExt) {
+							mediaType = "document"
+							break
+						}
+					}
+				}
+			}
+
+			if mediaType == "" {
+				mediaType = "unknown"
+			}
+
+			if mediaName == "" {
+				mediaName = "media"
+
+				if object, ok := inputAsMedia.(models.InterfaceObject); ok {
+					if objectID := utils.InterfaceToString(object.Get("_id")); objectID != "" {
+						mediaName += "_" + objectID
+					}
+				}
+			}
+
+			// so, if media name is static and we have array we want images to not be replaced
+			if tgtPrevMediaName == mediaName {
+				mediaName = strconv.Itoa(srcMediaIdx) + "_" + mediaName
+			} else {
+				tgtPrevMediaName = mediaName
+			}
+
+			// finally adding media to object
+			err = inputAsMedia.AddMedia(mediaType, mediaName, mediaContents)
+			if err != nil {
+				return srcPrevMediaName, env.ErrorDispatch(err)
+			}
+
+			return tgtPrevMediaName, nil
+		}
+
+		// adding found media value(s)
+		for mediaIdx, mediaValue := range mediaArray {
 			var err error
 			prevMediaName, err = storeMediaFunc(mediaValue, prevMediaName, mediaIdx)
 			if err != nil && !it.skipErrors {
