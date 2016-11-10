@@ -226,36 +226,52 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		} else if len(selectedProductIDs) > 1 {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
 		} else {
-			simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
-			if err != nil {
+			// TODO: next is temporary changes
+
+			//simpleProduct, err := product.LoadProductByID(selectedProductIDs[0])
+			//fmt.Println("simpleProduct: ", utils.InterfaceToString(simpleProduct))
+			//fmt.Println("simpleProduct2: ", utils.InterfaceToString(simpleProduct.ToHashMap()))
+			//if err != nil {
+			//	return env.ErrorDispatch(err)
+			//}
+			//
+			//// required attributes of simple product
+			//it.Enabled = simpleProduct.GetEnabled()
+			//it.Sku = simpleProduct.GetSku()
+			//it.Name = simpleProduct.GetName()
+			//it.Price = simpleProduct.GetPrice()
+			//it.Weight = simpleProduct.GetWeight()
+			//
+			//// not required attributes of simple product
+			//if simpleProduct.GetShortDescription() != "" {
+			//	it.ShortDescription = simpleProduct.GetShortDescription()
+			//}
+			//
+			//if simpleProduct.GetDescription() != "" {
+			//	it.Description = simpleProduct.GetDescription()
+			//}
+			//
+			//if simpleProduct.GetDefaultImage() != "" {
+			//	it.DefaultImage = simpleProduct.GetDefaultImage()
+			//}
+			//
+			//// store configurable id
+			//it.Options["configurable_id"] = it.GetID()
+			//
+			//// required ID attribute
+			//it.SetID(simpleProduct.GetID())
+
+			var storedOptions = it.GetOptions();
+			var storedID = it.GetID()
+			if err := it.Load(selectedProductIDs[0]); err != nil {
 				return env.ErrorDispatch(err)
 			}
 
-			// required attributes of simple product
-			it.Enabled = simpleProduct.GetEnabled()
-			it.Sku = simpleProduct.GetSku()
-			it.Name = simpleProduct.GetName()
-			it.Price = simpleProduct.GetPrice()
-			it.Weight = simpleProduct.GetWeight()
-
-			// not required attributes of simple product
-			if simpleProduct.GetShortDescription() != "" {
-				it.ShortDescription = simpleProduct.GetShortDescription()
+			if err := it.Set("options", storedOptions); err != nil {
+				return env.ErrorDispatch(err)
 			}
 
-			if simpleProduct.GetDescription() != "" {
-				it.Description = simpleProduct.GetDescription()
-			}
-
-			if simpleProduct.GetDefaultImage() != "" {
-				it.DefaultImage = simpleProduct.GetDefaultImage()
-			}
-
-			// store configurable id
-			it.Options["configurable_id"] = it.GetID()
-
-			// required ID attribute
-			it.SetID(simpleProduct.GetID())
+			it.Options["configurable_id"] = storedID
 
 			isSimpleProductUsed = true
 		}

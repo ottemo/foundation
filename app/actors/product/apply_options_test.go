@@ -116,7 +116,13 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 		"description": "something long",
 		"default_image": "",
 		"price": 1.0,
-		"weight": 0.4
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
 	}`)
 
 	var configurable = populateProductModel(t, `{
