@@ -147,7 +147,6 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 
 	// storing start price for a case of percentage price modifier
 	var startPrice = it.GetPrice()
-	var startID = it.GetID()
 
 	var selectedProductIDs []string
 	var foundOptions []string
@@ -228,8 +227,15 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
 		} else {
 			var storedOptions = it.GetOptions();
+			var storedID = it.GetID()
 
+			// replace configurable product with simple product
 			if err := it.Load(selectedProductIDs[0]); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// use configurable ID and options
+			if err := it.SetID(storedID); err != nil {
 				return env.ErrorDispatch(err)
 			}
 
@@ -385,10 +391,6 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		} else {
 			delete(productOptions, productOptionName)
 		}
-	}
-
-	if isSimpleProductUsed {
-		it.Options["configurable_id"] = startID
 	}
 
 	it.Price = utils.RoundPrice(it.Price)

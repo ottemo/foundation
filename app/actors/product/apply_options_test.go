@@ -161,7 +161,7 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 	}
 
 	checkJson := `{
-		"_id": "` + simpleProduct.GetID() + `",
+		"_id": "` + configurable.GetID() + `",
 		"sku": "` + simpleProduct.GetSku() + `",
 		"price": 1.0,
 		"options": {
@@ -174,8 +174,7 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 					"black": "` + ABSENT + `",
 					"blue": "` + ABSENT + `"
 				}
-			},
-			"configurable_id": "` + configurable.GetID() + `"
+			}
 		}
 	}`
 
