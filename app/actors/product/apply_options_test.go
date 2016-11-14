@@ -12,6 +12,8 @@ package product_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"fmt"
 
 	"github.com/ottemo/foundation/test"
@@ -296,6 +298,107 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 	deleteProduct(t, simpleProduct)
 }
 
+func TestFailedConfigurableProductApplyOptions(t *testing.T) {
+
+	start(t)
+
+	var simpleProduct = createProductFromJson(t, `{
+		"sku": "test-simple",
+		"enabled": "true",
+		"name": "Test Simple Product",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.0,
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
+	}`)
+
+	var configurable = populateProductModel(t, `{
+		"_id": "123456789012345678901234",
+		"sku": "test",
+		"name": "Test Product",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.1,
+		"weight": 0.5,
+		"test": "ok",
+		"options" : {
+			"field_option":{
+				"code": "field_option", "controls_inventory": false, "key": "field_option",
+				"label": "FieldOption", "order": 2, "price": "13", "required": false,
+				"sku": "-fo", "type": "field"},
+			"color" : {
+				"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
+				"order": 1, "required": true, "type": "select",
+				"options" : {
+					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
+					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
+					"red":   {
+						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
+						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+					}
+				}
+			},
+			"size" : {
+				"code": "size", "controls_inventory": true, "key": "size", "label": "Size",
+				"order": 2, "required": true, "type": "select",
+				"options" : {
+					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl"},
+					"xxl":   {
+						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
+						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+					}
+				}
+			}
+		}
+	}`)
+
+	appliedOptions := map[string]interface{}{
+		"color":        "red",
+		"size":         "xxl",
+		"field_option": "field_option value",
+	}
+
+	checkJson := `{
+		"_id": "` + configurable.GetID() + `",
+		"sku": "` + simpleProduct.GetSku() + `",
+		"price": 1.0,
+		"options": {
+			"field_option": {
+				"value": "` + utils.InterfaceToString(appliedOptions["field_option"]) + `"
+			},
+			"color": {
+				"options": {
+					"black": "` + PRESENT + `"
+				}
+			},
+			"size": {
+				"options": {
+					"xl": "` + PRESENT + `"
+				}
+			}
+		}
+	}`
+
+	configurable = applyOptions(t, configurable, appliedOptions)
+
+	check, err := utils.DecodeJSONToInterface(checkJson)
+	if err != nil {
+		fmt.Println("checkJson: " + checkJson)
+		t.Error(err)
+	}
+	checkFailedResults(t, configurable.ToHashMap(), check.(map[string]interface{}))
+
+	deleteProduct(t, simpleProduct)
+}
+
 func start(t *testing.T) {
 	err := test.StartAppInTestingMode()
 	if err != nil {
@@ -371,7 +474,6 @@ func checkResults(
 	t *testing.T,
 	valueMap map[string]interface{},
 	checkMap map[string]interface{}) {
-
 	for key, checkValue := range checkMap {
 		value := valueMap[key]
 		switch typedCheckValue := checkValue.(type) {
@@ -388,10 +490,36 @@ func checkResults(
 				if _, present := valueMap[key]; present {
 					t.Error("Key [" + key + "] present.")
 				}
-			} else if valueStr != checkValueStr {
-				t.Error("[" + key + "]: [" + valueStr + "] != [" + checkValueStr + "]")
 			} else {
-				// everything allright?
+				assert.Equal(t, valueStr, checkValueStr)
+			}
+		}
+	}
+}
+
+func checkFailedResults(
+	t *testing.T,
+	valueMap map[string]interface{},
+	checkMap map[string]interface{}) {
+        // @todo need refactoring if one option not failed function not work
+	for key, checkValue := range checkMap {
+		value := valueMap[key]
+		switch typedCheckValue := checkValue.(type) {
+		case map[string]interface{}:
+			checkFailedResults(t, value.(map[string]interface{}), typedCheckValue)
+		default:
+			valueStr := utils.InterfaceToString(value)
+			checkValueStr := utils.InterfaceToString(checkValue)
+			if checkValueStr == PRESENT {
+				if _, present := valueMap[key]; present {
+					t.Error("Key [" + key + "] present.")
+				}
+			} else if checkValueStr == ABSENT {
+				if _, present := valueMap[key]; !present {
+					t.Error("Key [" + key + "] not present.")
+				}
+			} else {
+				assert.Equal(t, valueStr, checkValueStr)
 			}
 		}
 	}
