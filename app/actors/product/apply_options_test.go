@@ -104,7 +104,7 @@ func TestProductApplyOptions(t *testing.T) {
 	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
 }
 
-func TestConfigurableProductApplyOptions(t *testing.T) {
+func TestConfigurableProductApplyOption(t *testing.T) {
 
 	start(t)
 
@@ -173,6 +173,111 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 					"red": "` + PRESENT + `",
 					"black": "` + ABSENT + `",
 					"blue": "` + ABSENT + `"
+				}
+			}
+		}
+	}`
+
+	configurable = applyOptions(t, configurable, appliedOptions)
+
+	check, err := utils.DecodeJSONToInterface(checkJson)
+	if err != nil {
+		fmt.Println("checkJson: " + checkJson)
+		t.Error(err)
+	}
+
+	checkResults(t, configurable.ToHashMap(), check.(map[string]interface{}))
+
+	deleteProduct(t, simpleProduct)
+}
+
+func TestConfigurableProductApplyOptions(t *testing.T) {
+
+	start(t)
+
+	var simpleProduct = createProductFromJson(t, `{
+		"sku": "test-simple",
+		"enabled": "true",
+		"name": "Test Simple Product",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.0,
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
+	}`)
+
+	var configurable = populateProductModel(t, `{
+		"_id": "123456789012345678901234",
+		"sku": "test",
+		"name": "Test Product",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.1,
+		"weight": 0.5,
+		"test": "ok",
+		"options" : {
+			"field_option":{
+				"code": "field_option", "controls_inventory": false, "key": "field_option",
+				"label": "FieldOption", "order": 2, "price": "13", "required": false,
+				"sku": "-fo", "type": "field"},
+			"color" : {
+				"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
+				"order": 1, "required": true, "type": "select",
+				"options" : {
+					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
+					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
+					"red":   {
+						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
+						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+					}
+				}
+			},
+			"size" : {
+				"code": "size", "controls_inventory": true, "key": "size", "label": "Size",
+				"order": 2, "required": true, "type": "select",
+				"options" : {
+					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl"},
+					"xxl":   {
+						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
+						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+					}
+				}
+			}
+		}
+	}`)
+
+	appliedOptions := map[string]interface{}{
+		"color":        "red",
+		"size":         "xxl",
+		"field_option": "field_option value",
+	}
+
+	checkJson := `{
+		"_id": "` + configurable.GetID() + `",
+		"sku": "` + simpleProduct.GetSku() + `",
+		"price": 1.0,
+		"options": {
+			"field_option": {
+				"value": "` + utils.InterfaceToString(appliedOptions["field_option"]) + `"
+			},
+			"color": {
+				"options": {
+					"red": "` + PRESENT + `",
+					"black": "` + ABSENT + `",
+					"blue": "` + ABSENT + `"
+				}
+			},
+			"size": {
+				"options": {
+					"xl": "` + ABSENT + `",
+					"xxl": "` + PRESENT + `"
 				}
 			}
 		}
