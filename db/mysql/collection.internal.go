@@ -140,6 +140,9 @@ func (it *DBCollection) getSQLFilters() string {
 					joinOperator = " OR "
 				}
 				subFilters := collectSubfilters(filterGroupName)
+				if len(subFilters) > 0 {
+					subFilters = append([]string{""}, subFilters...)
+				}
 				filterValue := "(" + strings.Join(filterGroup.FilterValues, joinOperator) + strings.Join(subFilters, joinOperator) + ")"
 				result = append(result, filterValue)
 			}
