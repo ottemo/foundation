@@ -9,10 +9,11 @@ const (
 
 	ConstEmmaSubscribeStatus = "subscribed"
 
-	ConstConfigPathEmma               = "general.emma"
-	ConstConfigPathEmmaEnabled        = "general.emma.enabled"
-	ConstConfigPathEmmaPublickAPIKey  = "general.emma.publick_api_key"
-	ConstConfigPathEmmaPrivateAPIKey  = "general.emma.private_api_key"
-	ConstConfigPathEmmaAccountID      = "general.emma.account_id"
+	ConstConfigPathEmma                = "general.emma"
+	ConstConfigPathEmmaEnabled         = "general.emma.enabled"
+	ConstConfigPathEmmaPublicAPIKey    = "general.emma.public_api_key"
+	ConstConfigPathEmmaPrivateAPIKey   = "general.emma.private_api_key"
+	ConstConfigPathEmmaAccountID       = "general.emma.account_id"
+	ConstConfigPathEmmaDefaultGroupID  = "general.emma.default_group_id"
 )
 

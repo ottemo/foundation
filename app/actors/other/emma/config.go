@@ -8,7 +8,7 @@ func setupConfig() error {
 
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Mailchimp module")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Emma module")
 		return env.ErrorDispatch(err)
 	}
 
@@ -43,7 +43,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathEmmaPublickAPIKey,
+		Path:        ConstConfigPathEmmaPublicAPIKey,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -80,6 +80,21 @@ func setupConfig() error {
 		Options:     nil,
 		Label:       "Emma Account Id",
 		Description: "Enter your Emma Account Id",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathEmmaDefaultGroupID,
+		Value:       "",
+		Type:        env.ConstConfigTypeID,
+		Editor:      "integer",
+		Options:     nil,
+		Label:       "Emma Default Group Id",
+		Description: "Enter your Emma Default Group Id",
 		Image:       "",
 	}, nil)
 
