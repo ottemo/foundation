@@ -87,20 +87,5 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathEmmaDefaultGroupID,
-		Value:       "",
-		Type:        env.ConstConfigTypeID,
-		Editor:      "integer",
-		Options:     nil,
-		Label:       "Emma Default Group Id",
-		Description: "Enter your Emma Default Group Id",
-		Image:       "",
-	}, nil)
-
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
 	return nil
 }

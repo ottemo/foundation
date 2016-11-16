@@ -14,6 +14,5 @@ const (
 	ConstConfigPathEmmaPublicAPIKey    = "general.emma.public_api_key"
 	ConstConfigPathEmmaPrivateAPIKey   = "general.emma.private_api_key"
 	ConstConfigPathEmmaAccountID       = "general.emma.account_id"
-	ConstConfigPathEmmaDefaultGroupID  = "general.emma.default_group_id"
 )
 
