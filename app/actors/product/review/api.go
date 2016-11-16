@@ -58,6 +58,14 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 		if visitorObject.IsGuest() {
 			collection.AddFilter("review", "!=", "")
 			collection.AddFilter("approved", "=", true)
+		} else {
+			collection.SetupFilterGroup("visible", true, "default")
+
+			collection.SetupFilterGroup("content", false, "visible")
+			collection.AddGroupFilter("content", "review", "!=", "")
+			collection.AddGroupFilter("content", "approved", "=", true)
+
+			collection.AddGroupFilter("visible", "visitor_id", "=", visitorObject.GetID())
 		}
 	}
 
