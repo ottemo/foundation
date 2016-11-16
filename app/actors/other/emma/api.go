@@ -9,9 +9,6 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-const (
-	EMMA_API_URL = "https://api.e2ma.net/"
-)
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
@@ -30,7 +27,7 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	//If emma is not enabled, ignore this request and do nothing
 	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled)); !enabled {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "feb3a463-622b-477e-a22d-c0a3fd1972dc", "emma does not active")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b3548446-1453-4862-a649-393fc0aafda1", "emma does not active")
 	}
 
 	// check request context
@@ -42,25 +39,29 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	email := utils.InterfaceToString(requestData["email"])
 	if email == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "feb3a463-622b-477e-a22d-c0a3fd1972dc", "email was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email was not specified")
+	}
+
+	if !utils.ValidEmailAddress(email) {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, " + email + ", is not in valid format.")
 	}
 
 	var account_id = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
 	if account_id == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "feb3a463-622b-477e-a22d-c0a3fd1972dc", "account id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 	}
 
 	var public_api_key = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
 	if public_api_key == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "feb3a463-622b-477e-a22d-c0a3fd1972dc", "public api key was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1b5c42f5-d856-48c5-98a2-fd8b5929703c", "public api key was not specified")
 	}
 
 	var private_api_key = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
 	if private_api_key == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "feb3a463-622b-477e-a22d-c0a3fd1972dc", "private api key was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
 
-	var url = EMMA_API_URL + account_id + "/members/add"
+	var url = ConstEmmaApiUrl + account_id + "/members/add"
 
 	postData := map[string]interface{}{"email": email}
 	postDataJson := utils.EncodeToJSONString(postData)
