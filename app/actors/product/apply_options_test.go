@@ -24,7 +24,7 @@ import (
 
 const (
 	PRESENT = "$present"
-	ABSENT  = "$absent"
+	ABSENT = "$absent"
 )
 
 type testDataType struct {
@@ -150,7 +150,7 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
 					}
 				}
 			}
@@ -237,7 +237,7 @@ func TestFailedConfigurableProductApplyOption(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
 					}
 				}
 			}
@@ -282,10 +282,61 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	start(t)
 
-	var simpleProduct = createProductFromJson(t, `{
-		"sku": "test-simple",
+	var simpleProduct1 = createProductFromJson(t, `{
+		"sku": "test-simple-1",
 		"enabled": "true",
-		"name": "Test Simple Product",
+		"name": "Test Simple Product 1",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.0,
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
+	}`)
+
+	var simpleProduct2 = createProductFromJson(t, `{
+		"sku": "test-simple-2",
+		"enabled": "true",
+		"name": "Test Simple Product 2",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.0,
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
+	}`)
+
+	var simpleProduct3 = createProductFromJson(t, `{
+		"sku": "test-simple-3",
+		"enabled": "true",
+		"name": "Test Simple Product 3",
+		"short_description": "something short",
+		"description": "something long",
+		"default_image": "",
+		"price": 1.0,
+		"weight": 0.4,
+		"inventory": [
+			{
+        			"options": { },
+        			"qty": 13
+			}
+		]
+	}`)
+
+	var simpleProduct4 = createProductFromJson(t, `{
+		"sku": "test-simple-4",
+		"enabled": "true",
+		"name": "Test Simple Product 4",
 		"short_description": "something short",
 		"description": "something long",
 		"default_image": "",
@@ -319,10 +370,12 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"order": 1, "required": true, "type": "select",
 				"options" : {
 					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
-					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
+					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue",
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct3.GetID() + `", "` + simpleProduct4.GetID() + `"]
+					},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct2.GetID() + `"]
 					}
 				}
 			},
@@ -330,10 +383,12 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"code": "size", "controls_inventory": true, "key": "size", "label": "Size",
 				"order": 2, "required": true, "type": "select",
 				"options" : {
-					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl"},
+					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl",
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct3.GetID() + `"]
+					},
 					"xxl":   {
 						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct2.GetID() + `", "` + simpleProduct4.GetID() + `"]
 					}
 				}
 			}
@@ -348,7 +403,7 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	checkJson := `{
 		"_id": "` + configurable.GetID() + `",
-		"sku": "` + simpleProduct.GetSku() + `",
+		"sku": "` + simpleProduct2.GetSku() + `",
 		"price": 1.0,
 		"options": {
 			"field_option": {
@@ -380,7 +435,10 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	checkResults(t, configurable.ToHashMap(), check.(map[string]interface{}))
 
-	deleteProduct(t, simpleProduct)
+	deleteProduct(t, simpleProduct1)
+	deleteProduct(t, simpleProduct2)
+	deleteProduct(t, simpleProduct3)
+	deleteProduct(t, simpleProduct4)
 }
 
 func TestFailedConfigurableProductApplyOptions(t *testing.T) {
@@ -427,7 +485,7 @@ func TestFailedConfigurableProductApplyOptions(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
 					}
 				}
 			},
@@ -438,7 +496,7 @@ func TestFailedConfigurableProductApplyOptions(t *testing.T) {
 					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl"},
 					"xxl":   {
 						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
 					}
 				}
 			}
