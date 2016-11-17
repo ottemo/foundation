@@ -1,11 +1,10 @@
 package emma
 
 import (
-	"fmt"
+	"github.com/andelf/go-curl"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
-	"github.com/andelf/go-curl"
 	"github.com/ottemo/foundation/utils"
 )
 
