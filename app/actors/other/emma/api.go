@@ -81,13 +81,13 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 	})
 
 	if err := easy.Perform(); err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8a462945-21b8-4ce8-84de-bc0b49aaa103", err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	var result = "Error occurred";
 	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE);
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6dfe6d2b-0a0d-4b09-8898-84998f77c074", err)
+		return nil, env.ErrorDispatch(err)
 	} else if responseCode == 200 && err == nil {
 		jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 		if err != nil {
