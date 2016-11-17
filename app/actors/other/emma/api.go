@@ -1,6 +1,7 @@
 package emma
 
 import (
+	"net/http"
 	"github.com/andelf/go-curl"
 
 	"github.com/ottemo/foundation/api"
@@ -88,7 +89,8 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE);
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
-	} else if responseCode == 200 && err == nil {
+	// require response code of 200
+	} else if responseCode == http.StatusOK {
 		jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
