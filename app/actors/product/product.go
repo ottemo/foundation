@@ -186,7 +186,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		}
 
 		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
-		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionSimpleIDsName]
+		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionProductIDs]
 		if !present {
 			continue
 		}

@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	PRESENT = "$present"
-	ABSENT = "$absent"
+	ConstPresent = "$present"
+	ConstAbsent = "$absent"
 )
 
 type testDataType struct {
@@ -83,13 +83,13 @@ func TestProductApplyOptions(t *testing.T) {
 		"sku": "test-red-fo",
 		"price": 113,
 		"options": {
-			"field_option": "` + PRESENT + `",
-			"another_option": "` + ABSENT + `",
+			"field_option": "` + ConstPresent + `",
+			"another_option": "` + ConstAbsent + `",
 			"color": {
 				"options": {
-					"red": "` + PRESENT + `",
-					"black": "` + ABSENT + `",
-					"blue": "` + ABSENT + `"
+					"red": "` + ConstPresent + `",
+					"black": "` + ConstAbsent + `",
+					"blue": "` + ConstAbsent + `"
 				}
 			}
 		}
@@ -150,7 +150,7 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct.GetID() + `"]
+						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct.GetID() + `"]
 					}
 				}
 			}
@@ -172,9 +172,9 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 			},
 			"color": {
 				"options": {
-					"red": "` + PRESENT + `",
-					"black": "` + ABSENT + `",
-					"blue": "` + ABSENT + `"
+					"red": "` + ConstPresent + `",
+					"black": "` + ConstAbsent + `",
+					"blue": "` + ConstAbsent + `"
 				}
 			}
 		}
@@ -286,11 +286,11 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"options" : {
 					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct3.GetID() + `", "` + simpleProduct4.GetID() + `"]
+						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct3.GetID() + `", "` + simpleProduct4.GetID() + `"]
 					},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct2.GetID() + `"]
+						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct2.GetID() + `"]
 					}
 				}
 			},
@@ -299,11 +299,11 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"order": 2, "required": true, "type": "select",
 				"options" : {
 					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct3.GetID() + `"]
+						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct3.GetID() + `"]
 					},
 					"xxl":   {
 						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
-						"` + product.ConstOptionSimpleIDsName + `": ["` + simpleProduct2.GetID() + `", "` + simpleProduct4.GetID() + `"]
+						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct2.GetID() + `", "` + simpleProduct4.GetID() + `"]
 					}
 				}
 			}
@@ -326,15 +326,15 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 			},
 			"color": {
 				"options": {
-					"red": "` + PRESENT + `",
-					"black": "` + ABSENT + `",
-					"blue": "` + ABSENT + `"
+					"red": "` + ConstPresent + `",
+					"black": "` + ConstAbsent + `",
+					"blue": "` + ConstAbsent + `"
 				}
 			},
 			"size": {
 				"options": {
-					"xl": "` + ABSENT + `",
-					"xxl": "` + PRESENT + `"
+					"xl": "` + ConstAbsent + `",
+					"xxl": "` + ConstPresent + `"
 				}
 			}
 		}
@@ -439,11 +439,11 @@ func checkResults(
 		default:
 			valueStr := utils.InterfaceToString(value)
 			checkValueStr := utils.InterfaceToString(checkValue)
-			if checkValueStr == PRESENT {
+			if checkValueStr == ConstPresent {
 				if _, present := valueMap[key]; !present {
 					t.Error("Key [" + key + "] not present.")
 				}
-			} else if checkValueStr == ABSENT {
+			} else if checkValueStr == ConstAbsent {
 				if _, present := valueMap[key]; present {
 					t.Error("Key [" + key + "] present.")
 				}
