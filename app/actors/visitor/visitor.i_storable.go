@@ -112,6 +112,16 @@ func (it *DefaultVisitor) Save() error {
 		storableValues["billing_address_id"] = it.BillingAddress.GetID()
 	}
 
+	// token save
+	if it.Token != nil {
+		err := it.Token.Save()
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		storableValues["token_id"] = it.Token.GetID()
+	}
+
 	// saving visitor
 	if newID, err := collection.Save(storableValues); err == nil {
 		it.Set("_id", newID)

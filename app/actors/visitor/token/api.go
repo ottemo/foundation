@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -18,6 +19,7 @@ func setupAPI() error {
 
 	service.POST("visit/tokens", APICreateToken)
 	service.GET("visit/tokens", APIListVisitorCards)
+	service.POST("visit/tokens/default", APISetDefaultToken)
 	service.DELETE("visit/tokens/:tokenID", APIDeleteToken)
 
 	return nil
@@ -178,12 +180,11 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	// extra parameter handle
 	models.ApplyExtraAttributes(context, visitorCardCollectionModel)
 
-
 	return visitorCardCollectionModel.List()
 }
 
 // APIDeleteToken deletes credit card token by provided token_id
-func APIDeleteToken (context api.InterfaceApplicationContext) (interface{}, error) {
+func APIDeleteToken(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	tokenID := utils.InterfaceToString(context.GetRequestArgument("tokenID"))
 	if tokenID == "" {
@@ -197,6 +198,48 @@ func APIDeleteToken (context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 	visitorCardModel.Delete()
+
+	return "ok", nil
+}
+
+// APISetDefaultToken set default credit card token by provided token_id
+func APISetDefaultToken(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	visitorModel, err := visitor.GetCurrentVisitor(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	} else if visitorModel == nil {
+		return "You are not logged in, please log in.", nil
+	}
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	tokenID := utils.InterfaceToString(requestData["tokenID"])
+	if tokenID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4bd1fe4d-9327-4423-9114-8991787b4b1e", "token_id was not specified")
+	}
+
+	// list operation
+	//---------------
+	visitorCardModel, err := visitor.GetVisitorCardModelAndSetID(tokenID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	//visitorModel.FromHashMap(map[string]interface{}{
+	//	"token_id":      visitorCardModel.GetID(),
+	//	"token":      visitorCardModel,
+	//})
+fmt.Println(visitorCardModel)
+	visitorModel.SetToken(visitorCardModel)
+
+	err = visitorModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	return "ok", nil
 }
