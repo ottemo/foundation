@@ -39,6 +39,8 @@ type DefaultVisitor struct {
 	BillingAddress  visitor.InterfaceVisitorAddress
 	ShippingAddress visitor.InterfaceVisitorAddress
 
+	Token visitor.InterfaceVisitorCard
+
 	Password        string
 	VerificationKey string
 
