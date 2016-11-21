@@ -149,6 +149,7 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	var startPrice = it.GetPrice()
 
 	var selectedProductIDs []string
+	var storedImageName string
 	var foundOptions []string
 	for itemOptionName := range options {
 		// get product option (color, size, etc)
@@ -186,11 +187,15 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 		}
 
 		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
-		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionSimpleIDsName]
+		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionProductIDs]
 		if !present {
 			continue
 		}
 		foundOptions = append(foundOptions, itemOptionName)
+
+		if newImageName, present := optionOptionsItemHashMap[product.ConstOptionImageName]; present {
+			storedImageName = utils.InterfaceToString(newImageName)
+		}
 
 		// filter selected product ids by current option product ids
 		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
@@ -229,6 +234,10 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			var storedOptions = it.GetOptions();
 			var storedID = it.GetID()
 
+			if len(storedImageName) == 0 {
+				storedImageName = it.GetDefaultImage()
+			}
+
 			// replace configurable product with simple product
 			if err := it.Load(selectedProductIDs[0]); err != nil {
 				return env.ErrorDispatch(err)
@@ -240,6 +249,10 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			}
 
 			if err := it.Set("options", storedOptions); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			if err := it.Set("default_image", storedImageName); err != nil {
 				return env.ErrorDispatch(err)
 			}
 

@@ -148,7 +148,7 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"`+product.ConstOptionSimpleIDsName+`": ["`+simpleProduct.GetID()+`"]
+						"`+product.ConstOptionProductIDs +`": ["`+simpleProduct.GetID()+`"]
 					}
 				}
 			}
