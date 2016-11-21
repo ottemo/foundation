@@ -106,7 +106,7 @@ considered that application code will use utils package as often as can.
 
   Example:
   --------
-      x := map[string]interface{} {"a": "10", "b": "20")
+      x := map[string]interface{} {"a": "10", "b": "20"}
       y := utils.EncodeToJSONString(x)
       fmt.Println(y)
 

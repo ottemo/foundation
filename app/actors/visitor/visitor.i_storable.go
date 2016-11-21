@@ -86,6 +86,7 @@ func (it *DefaultVisitor) Save() error {
 
 	delete(storableValues, "billing_address")
 	delete(storableValues, "shipping_address")
+	delete(storableValues, "token")
 
 	storableValues["facebook_id"] = it.FacebookID
 	storableValues["google_id"] = it.GoogleID
@@ -110,6 +111,16 @@ func (it *DefaultVisitor) Save() error {
 		}
 
 		storableValues["billing_address_id"] = it.BillingAddress.GetID()
+	}
+
+	// token save
+	if it.Token != nil {
+		err := it.Token.Save()
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		storableValues["token_id"] = it.Token.GetID()
 	}
 
 	// saving visitor

@@ -59,7 +59,7 @@ func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) erro
 	for _, attributeInfo := range visitorModel.GetAttributesInfo() {
 		allowedAttributes = append(allowedAttributes, attributeInfo.Attribute)
 	}
-	allowedAttributes = append(allowedAttributes, "billing_address", "shipping_address")
+	allowedAttributes = append(allowedAttributes, "billing_address", "shipping_address", "token")
 
 	if utils.IsInArray(attribute, allowedAttributes) {
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
