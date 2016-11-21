@@ -145,42 +145,52 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "Unable to set the Address due to an unknown error.")
 		}
 
-	// address detailed information was specified
+	// only token id was specified - trying to load it
+	case "token_id":
+		value := utils.InterfaceToString(value)
+
+		var card visitor.InterfaceVisitorCard
+		var err error
+
+		if value != "" {
+			card, err = visitor.LoadVisitorCardByID(value)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
+
+		if card == nil || card.GetID() != "" {
+			it.Token = card
+		}
+
+	// token detailed information was specified
 	case "token":
 		switch typedValue := value.(type) {
 
 		// we have already have structure
-		case visitor.InterfaceVisitorAddress:
-			if attribute == "billing_address" {
-				it.BillingAddress = typedValue
-			} else {
-				it.ShippingAddress = typedValue
-			}
+		case visitor.InterfaceVisitorCard:
+			it.Token = typedValue
 
 		// we have sub-map, supposedly InterfaceVisitorAddress capable
 		case map[string]interface{}:
-			var addressModel visitor.InterfaceVisitorAddress
+			var card visitor.InterfaceVisitorCard
 			var err error
 
 			if len(typedValue) != 0 {
-				addressModel, err = visitor.GetVisitorAddressModel()
+				card, err = visitor.GetVisitorCardModel()
 				if err != nil {
 					return env.ErrorDispatch(err)
 				}
 
-				err = addressModel.FromHashMap(typedValue)
+				err = card.FromHashMap(typedValue)
 				if err != nil {
 					return env.ErrorDispatch(err)
 				}
 			}
 
-			if attribute == "billing_address" {
-				it.BillingAddress = addressModel
-			} else {
-				it.ShippingAddress = addressModel
-			}
+			it.Token = card
 		default:
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "Unable to set the Address due to an unknown error.")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0030cbd2-dda5-4109-9cd5-f37f2492d58a", "Unable to set the Token due to an unknown error.")
 		}
 
 	default:

@@ -233,7 +233,7 @@ func APISetDefaultToken(context api.InterfaceApplicationContext) (interface{}, e
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorModel.Set("token", visitorCardModel)
+	visitorModel.Set("token_id", visitorCardModel.GetID())
 
 	err = visitorModel.Save()
 	if err != nil {
