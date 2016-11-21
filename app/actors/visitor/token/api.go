@@ -9,7 +9,6 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -224,17 +223,17 @@ func APISetDefaultToken(context api.InterfaceApplicationContext) (interface{}, e
 
 	// list operation
 	//---------------
-	visitorCardModel, err := visitor.GetVisitorCardModelAndSetID(tokenID)
+	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	//visitorModel.FromHashMap(map[string]interface{}{
-	//	"token_id":      visitorCardModel.GetID(),
-	//	"token":      visitorCardModel,
-	//})
-fmt.Println(visitorCardModel)
-	visitorModel.SetToken(visitorCardModel)
+	err = visitorCardModel.Load(tokenID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	visitorModel.Set("token", visitorCardModel)
 
 	err = visitorModel.Save()
 	if err != nil {
