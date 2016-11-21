@@ -39,9 +39,10 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/shipping/flatweight" // Flat Weight
 	_ "github.com/ottemo/foundation/app/actors/shipping/usps"       // USPS
 
-	_ "github.com/ottemo/foundation/app/actors/discount/coupon"   // Coupon based discounts
-	_ "github.com/ottemo/foundation/app/actors/discount/giftcard" // Gift Cards
-	_ "github.com/ottemo/foundation/app/actors/tax"               // Tax Rates
+	_ "github.com/ottemo/foundation/app/actors/discount/coupon"    // Coupon based discounts
+	_ "github.com/ottemo/foundation/app/actors/discount/giftcard"  // Gift Cards
+	_ "github.com/ottemo/foundation/app/actors/discount/saleprice" // Sale Price
+	_ "github.com/ottemo/foundation/app/actors/tax"                // Tax Rates
 
 	_ "github.com/ottemo/foundation/app/actors/reporting" // Reporting
 	_ "github.com/ottemo/foundation/app/actors/rts"       // Real Time Statistics service
@@ -52,4 +53,6 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/other/mailchimp"   // MailChimp integration
 	_ "github.com/ottemo/foundation/app/actors/other/shipstation" // Shipstation integration
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot"  // TrustPilot integration
+
+	_ "github.com/ottemo/foundation/app/actors/blog"             // Blog module
 )

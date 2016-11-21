@@ -1,53 +1,15 @@
 package rts
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
-
-func referrerHandler(event string, eventData map[string]interface{}) bool {
-
-	if _, present := eventData["context"]; present {
-		if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-
-			xReferrer := utils.InterfaceToString(api.GetContentValue(context, "referrer"))
-			if xReferrer == "" {
-				return true
-			}
-
-			referrer, err := GetReferrer(xReferrer)
-			if err != nil {
-				return true
-			}
-
-			// excluding itself (i.e. "storefront" requests)
-			if strings.Contains(app.GetStorefrontURL(""), referrer) {
-				return true
-			}
-
-			if _, present := referrers[referrer]; !present {
-				updateSync.Lock()
-				referrers[referrer] = 0
-				updateSync.Unlock()
-			}
-			referrers[referrer]++
-
-			if err := saveNewReferrer(referrer); err != nil {
-				env.ErrorDispatch(err)
-			}
-		}
-	}
-
-	return true
-}
 
 func visitsHandler(event string, eventData map[string]interface{}) bool {
 
@@ -60,7 +22,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 			statistic[currentHour].TotalVisits++
 			monthStatistic.TotalVisits++
 
-			// Super flakey implementation for telling if the visitor has been tracked today
+			// TODO: Super flakey implementation for telling if the visitor has been tracked today
 			// by reusing an 'add to bag' tracking mechanism
 			// foundation/app/actors/rts/decl.go :45
 			if _, present := visitState[sessionID]; !present {
@@ -277,84 +239,6 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 					env.ErrorDispatch(err)
 					return true
 				}
-			}
-		}
-	}
-
-	return true
-}
-
-func registerVisitorAsOnlineHandler(event string, eventData map[string]interface{}) bool {
-
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok {
-		sessionID := sessionInstance.GetID()
-
-		referrerType := ConstReferrerTypeDirect
-		referrer := ""
-
-		if event == "api.rts.visit" {
-			if context, ok := eventData["context"].(api.InterfaceApplicationContext); ok && context != nil {
-				referrer = utils.InterfaceToString(api.GetContentValue(context, "referrer"))
-			}
-		}
-
-		if referrer != "" {
-			referrer, err := GetReferrer(referrer)
-			if err != nil {
-				return true
-			}
-
-			isSearchEngine := false
-			for index := 0; index < len(knownSearchEngines); index++ {
-				if strings.Contains(referrer, knownSearchEngines[index]) {
-					isSearchEngine = true
-				}
-			}
-
-			if isSearchEngine {
-				referrerType = ConstReferrerTypeSearch
-			} else {
-				referrerType = ConstReferrerTypeSite
-			}
-		}
-
-		if _, present := OnlineSessions[sessionID]; !present || OnlineSessions[sessionID] == nil {
-			updateSync.Lock()
-			OnlineSessions[sessionID] = &OnlineReferrer{}
-			updateSync.Unlock()
-
-			IncreaseOnline(referrerType)
-			if OnlineSessionsCount := len(OnlineSessions); OnlineSessionsCount > OnlineSessionsMax {
-				OnlineSessionsMax = OnlineSessionsCount
-			}
-		} else {
-			updateSync.RLock()
-			if OnlineSessions[sessionID].referrerType != referrerType {
-				DecreaseOnline(OnlineSessions[sessionID].referrerType)
-				IncreaseOnline(referrerType)
-			}
-			updateSync.RUnlock()
-		}
-
-		defer updateSync.Unlock()
-		updateSync.Lock()
-		if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] == nil {
-			OnlineSessions[sessionID].time = time.Now()
-			OnlineSessions[sessionID].referrerType = referrerType
-		}
-	}
-
-	return true
-}
-
-func visitorOnlineActionHandler(event string, eventData map[string]interface{}) bool {
-
-	if sessionInstance, ok := eventData["session"].(api.InterfaceSession); ok && sessionInstance != nil {
-		if sessionID := sessionInstance.GetID(); sessionID != "" {
-			defer updateSync.Unlock()
-			updateSync.Lock()
-			if _, present := OnlineSessions[sessionID]; present && OnlineSessions[sessionID] != nil {
-				OnlineSessions[sessionID].time = time.Now()
 			}
 		}
 	}

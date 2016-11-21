@@ -88,11 +88,13 @@ func validateAndApplyRates(rawRates interface{}) (interface{}, error) {
 
 		// Assemble new rate
 		rate := Rate{
-			Title:      utils.InterfaceToString(parsedRate["title"]),
-			Code:       utils.InterfaceToString(parsedRate["code"]),
-			Price:      utils.InterfaceToFloat64(parsedRate["price"]),
-			WeightFrom: utils.InterfaceToFloat64(parsedRate["weight_from"]),
-			WeightTo:   utils.InterfaceToFloat64(parsedRate["weight_to"]),
+			Title:            utils.InterfaceToString(parsedRate["title"]),
+			Code:             utils.InterfaceToString(parsedRate["code"]),
+			Price:            utils.InterfaceToFloat64(parsedRate["price"]),
+			WeightFrom:       utils.InterfaceToFloat64(parsedRate["weight_from"]),
+			WeightTo:         utils.InterfaceToFloat64(parsedRate["weight_to"]),
+			AllowedCountries: utils.InterfaceToString(parsedRate["allowed_countries"]),
+			BannedCountries:  utils.InterfaceToString(parsedRate["banned_countries"]),
 		}
 
 		validRates = append(validRates, rate)

@@ -14,12 +14,13 @@ import (
 	"strings"
 
 	"github.com/ottemo/foundation/app/helpers/attributes"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // ---------------------------------------------------------------------------------
@@ -301,6 +302,16 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	it.Price = utils.RoundPrice(it.Price)
 
 	it.appliedOptions = options
+
+	return nil
+}
+
+// LoadExternalAttributes loads external attributes from storage
+func (it *DefaultProduct) LoadExternalAttributes() error {
+	err := it.externalAttributes.Load(it.GetID())
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	return nil
 }
@@ -677,7 +688,7 @@ func (it *DefaultProduct) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.externalAttributes.Load(id)
+	err = it.LoadExternalAttributes()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -727,12 +738,13 @@ func (it *DefaultProduct) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.externalAttributes.Save()
+	// set new ID before saving external attributes, because external attributes requires it
+	err = it.SetID(newID)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	err = it.SetID(newID)
+	err = it.externalAttributes.Save()
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}

@@ -16,6 +16,8 @@ import (
 
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/visitor"
+
+	"github.com/ottemo/foundation/app/models/order"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -34,6 +36,7 @@ func setupAPI() error {
 	service.DELETE("visitors/attribute/:attribute", api.IsAdmin(APIDeleteVisitorAttribute))
 	service.PUT("visitors/attribute/:attribute", api.IsAdmin(APIUpdateVisitorAttribute))
 	service.POST("visitors/attribute", api.IsAdmin(APICreateVisitorAttribute))
+	service.GET("visitors/guests", api.IsAdmin(APIGetGuestsList))
 
 	// Storefront API
 	service.POST("visitors/register", APIRegisterVisitor)
@@ -54,6 +57,64 @@ func setupAPI() error {
 
 	return nil
 }
+
+
+// APIGetGuestsList returns list of guests GROUP(ed) BY customer_email
+func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	orderCollectionModel, err := order.GetOrderCollectionModel()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	dbCollection := orderCollectionModel.GetDBCollection()
+	dbCollection.AddFilter("visitor_id", "=", "")
+
+	// handle filters
+	models.ApplyFilters(context, dbCollection)
+
+	// remove limits to get right GROUP BY result
+	dbCollection.SetLimit(0, 0)
+
+	orders := orderCollectionModel.ListOrders()
+
+	guests := make([]map[string]interface{}, 0)
+	uniqEmails := make([]string, 0)
+
+	for _, order := range orders {
+		orderItem := order.ToHashMap()
+		email := utils.InterfaceToString(orderItem["customer_email"])
+		name := utils.InterfaceToString(orderItem["customer_name"])
+
+		// GROUP BY customer_email
+		if !utils.IsInListStr(email, uniqEmails) && name != "" {
+			item := map[string]interface{} {
+				"customer_email": email,
+				"customer_name": name,
+			}
+
+			uniqEmails = append(uniqEmails, email)
+			guests = append(guests, item)
+		}
+	}
+
+	count := len(guests)
+
+	// limit handle
+	from, howMany := models.GetListLimit(context)
+	to := from + howMany
+	if to > count {
+		to = count
+	}
+
+	result := map[string]interface{} {
+		"guests": guests[from:to],
+		"count": count,
+	}
+
+	return result, nil
+}
+
 
 // APICreateVisitor creates a new visitor
 //   - visitor attributes should be specified in content

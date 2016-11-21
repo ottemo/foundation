@@ -35,6 +35,8 @@ type InterfaceProduct interface {
 
 	ApplyOptions(map[string]interface{}) error
 
+	LoadExternalAttributes() error
+
 	models.InterfaceModel
 	models.InterfaceObject
 	models.InterfaceStorable

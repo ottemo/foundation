@@ -1,13 +1,14 @@
-package mailchimp
+package mailchimp_test
 
 import (
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/test"
-
 	"fmt"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/ottemo/foundation/app/actors/other/mailchimp"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/test"
 )
 
 func TestMailchimpSubscribe(tst *testing.T) {
@@ -17,12 +18,12 @@ func TestMailchimpSubscribe(tst *testing.T) {
 
 	//set the configuration to allow mailchimp
 	var config = env.GetConfig()
-	config.SetValue(ConstConfigPathMailchimpEnabled, true)
-	config.SetValue(ConstConfigPathMailchimpAPIKey, "23dbf42618e8f43e624a6dd89de9bd46-us12")
-	config.SetValue(ConstConfigPathMailchimpBaseURL, "https://us12.api.mailchimp.com/3.0/")
+	config.SetValue(mailchimp.ConstConfigPathMailchimpEnabled, true)
+	config.SetValue(mailchimp.ConstConfigPathMailchimpAPIKey, "23dbf42618e8f43e624a6dd89de9bd46-us12")
+	config.SetValue(mailchimp.ConstConfigPathMailchimpBaseURL, "https://us12.api.mailchimp.com/3.0/")
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	testRegistration := Registration{
+	testRegistration := mailchimp.Registration{
 		EmailAddress: fmt.Sprintf("test+%d@myottemotest.com", rand.Int()),
 		Status:       "subscribed",
 		MergeFields: map[string]string{
@@ -31,7 +32,7 @@ func TestMailchimpSubscribe(tst *testing.T) {
 		},
 	}
 
-	if err := Subscribe("b9537d1e65", testRegistration); err != nil {
+	if err := mailchimp.Subscribe("b9537d1e65", testRegistration); err != nil {
 		tst.Error(err)
 	}
 

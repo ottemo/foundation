@@ -13,17 +13,20 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("giftcards/:giftcode", APIGetGiftCard)
-	service.GET("giftcards", APIGetGiftCardList)
-	service.GET("giftcards/:giftcode/apply", APIApplyGiftCard)
-	service.GET("giftcards/:giftcode/neglect", APINeglectGiftCard)
+	// store
+	service.GET("giftcards/:giftcode", GetSingleCode)
+	service.GET("giftcards", GetList)
+
+	// cart endpoints
+	service.POST("cart/giftcards/:giftcode", Apply)
+	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	return nil
 }
 
-// APIGetGiftCard returns the gift card and related info
+// GetSingleCode returns the gift card and related info
 //    - giftcode must be specified on the request
-func APIGetGiftCard(context api.InterfaceApplicationContext) (interface{}, error) {
+func GetSingleCode(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("giftcode")
 	if giftCardID == "" {
@@ -48,18 +51,21 @@ func APIGetGiftCard(context api.InterfaceApplicationContext) (interface{}, error
 	return rows[0], nil
 }
 
-// APIGetGiftCardList returns a list of gift cards
-func APIGetGiftCardList(context api.InterfaceApplicationContext) (interface{}, error) {
+// GetList returns a list of gift cards for the visitor id in the context passed
+//    - visitor must be logged in
+func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// check request context
 	//---------------------
 	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
 	}
 
@@ -72,9 +78,9 @@ func APIGetGiftCardList(context api.InterfaceApplicationContext) (interface{}, e
 	return dbRecords, env.ErrorDispatch(err)
 }
 
-// APIApplyGiftCard applies the provided gift card to current checkout
+// Apply applies the provided gift card to current checkout
 //   - Gift Card code should be specified in "giftcode" argument
-func APIApplyGiftCard(context api.InterfaceApplicationContext) (interface{}, error) {
+func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardCode := context.GetRequestArgument("giftcode")
 
@@ -83,21 +89,25 @@ func APIApplyGiftCard(context api.InterfaceApplicationContext) (interface{}, err
 
 	// checking if codes have previously been applied
 	if utils.IsInArray(giftCardCode, appliedGiftCardCodes) {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1c310f79-0f79-493a-b761-ad4f24542559", "This code, "+giftCardCode+" has already been applied.")
 	}
 
 	// loading gift codes for specified code
 	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 	err = collection.AddFilter("code", "=", giftCardCode)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
 	records, err := collection.Load()
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -112,26 +122,28 @@ func APIApplyGiftCard(context api.InterfaceApplicationContext) (interface{}, err
 		context.GetSession().Set(ConstSessionKeyAppliedGiftCardCodes, appliedGiftCardCodes)
 
 	} else {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2b55d714-2cba-49f8-ad7d-fdc542bfc2a3", "The provided giftcard code cannot be found, "+giftCardCode+".")
 	}
 
 	return "ok", nil
 }
 
-// APINeglectGiftCard removes the application of the gift card value from the
+// Remove removes the application of the gift card value from the
 // current checkout
 //   - giftcard code should be specified in the "giftcode" argument
-//   - use "*" as giftcard code to 'neglect' all giftcard discounts
-func APINeglectGiftCard(context api.InterfaceApplicationContext) (interface{}, error) {
+//   - use "*" as giftcard code to 'remove' all giftcard discounts
+func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("giftcode")
 	if giftCardID == "" {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e2bad33a-36e7-41d4-aea7-8fe1b97eb31c", "No giftcard code found on the request.")
 	}
 
 	if giftCardID == "*" {
 		context.GetSession().Set(ConstSessionKeyAppliedGiftCardCodes, make([]string, 0))
-		return "ok", nil
+		return "Remove successful", nil
 	}
 
 	appliedCoupons := utils.InterfaceToStringArray(context.GetSession().Get(ConstSessionKeyAppliedGiftCardCodes))
@@ -145,5 +157,5 @@ func APINeglectGiftCard(context api.InterfaceApplicationContext) (interface{}, e
 		context.GetSession().Set(ConstSessionKeyAppliedGiftCardCodes, newAppliedCoupons)
 	}
 
-	return "ok", nil
+	return "Remove successful", nil
 }

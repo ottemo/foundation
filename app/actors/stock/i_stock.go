@@ -143,6 +143,7 @@ func (it *DefaultStock) RemoveProductQty(productID string, options map[string]in
 // SetProductQty updates stock qty for a product-options pair to be exact given value
 //   - use UpdateProductQty in all cases you can as it is more safer option
 func (it *DefaultStock) SetProductQty(productID string, options map[string]interface{}, qty int) error {
+
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
 	if err != nil {

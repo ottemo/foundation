@@ -2,6 +2,7 @@ package coupon
 
 import (
 	"encoding/csv"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,8 +18,10 @@ import (
 func setupAPI() error {
 
 	service := api.GetRestService()
+
+	// cart endpoints
 	service.POST("cart/coupons", Apply)
-	service.DELETE("cart/coupons/:code", Revert)
+	service.DELETE("cart/coupons/:code", Remove)
 
 	// Admin Only
 	service.GET("coupons", api.IsAdmin(List))
@@ -199,6 +202,21 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		validStart := isValidStart(discountCoupon["since"])
 		validEnd := isValidEnd(discountCoupon["until"])
 
+		// check if subtotal is more then required by the discount
+		currentCheckout, err := checkout.GetCurrentCheckout(context, true)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		limits := utils.InterfaceToMap(discountCoupon["limits"])
+		minimumCartAmount := utils.InterfaceToFloat64(limits["minimum_cart_amount"])
+
+		if minimumCartAmount > currentCheckout.GetSubtotal() {
+
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "023c3e22-aff2-40eb-b75c-60834f49b951", "minium purchase amount of $"+fmt.Sprintf("%.2f", minimumCartAmount)+" not met.")
+		}
+
 		// to be applicable, the coupon should satisfy following conditions:
 		//   [applyTimes] should be -1 or >0 and [workSince] >= currentTime <= [workUntil] if set
 		if (applyTimes == -1 || applyTimes > 0) && validStart && validEnd {
@@ -235,13 +253,13 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2934505-06e9-4250-bb98-c22e4918799e", "Coupon code, "+strings.ToUpper(couponCode)+", is not a valid coupon code.")
 	}
 
-	return "Coupon Applied", nil
+	return "Coupon applied", nil
 }
 
-// Revert will remove the coupon code and its value from the current checkout
+// Remove will remove the coupon code and its value from the current checkout
 //   * "coupon" key refers to the coupon code
 //   * use a "*" as the coupon code to revert all discounts
-func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
+func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	couponCode := context.GetRequestArgument("code")
 
@@ -289,7 +307,7 @@ func Revert(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
-	return "Revert Successful", nil
+	return "Removed successful", nil
 }
 
 // DownloadCSV returns a csv file with the current coupons and their configuration
@@ -337,10 +355,16 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 //   NOTE: the csv file should be provided in a "file" field when sent as a multipart form
 func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	csvFile := context.GetRequestFile("file")
-	if csvFile == nil {
+	csvFileName := context.GetRequestArgument("file")
+	if csvFileName == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3398f40a-726b-48ad-9f29-9dd390b7e952", "A file name must be specified.")
+	}
+
+	csvFile := context.GetRequestFile(csvFileName)
+	if csvFile == nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b0cf271-ce1c-43ae-8f18-261120972bd0", "A file must be specified.")
 	}
 
 	csvReader := csv.NewReader(csvFile)
