@@ -185,6 +185,13 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 // APIDeleteToken deletes credit card token by provided token_id
 func APIDeleteToken(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	visitorModel, err := visitor.GetCurrentVisitor(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	} else if visitorModel == nil {
+		return "You are not logged in, please log in.", nil
+	}
+
 	tokenID := utils.InterfaceToString(context.GetRequestArgument("tokenID"))
 	if tokenID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "babd0a3a-5372-405f-9464-16184cd27ea0", "token_id was not specified")
@@ -197,6 +204,14 @@ func APIDeleteToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 	visitorCardModel.Delete()
+
+	// unset default token for visitor
+	card := visitorModel.GetToken()
+
+	if card.GetID() == tokenID {
+		visitorModel.Set("token_id", nil)
+		visitorModel.Save()
+	}
 
 	return "ok", nil
 }
