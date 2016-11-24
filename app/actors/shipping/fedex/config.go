@@ -222,6 +222,22 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAllowCountries,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "multi_select",
+			Options:     env.ConstCountries,
+			Label:       "Allow countries",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "ba621a64-5ab2-4f65-8953-1165e4a401ac", "Unable to obtain configuration for FedEx")
 		return env.ErrorDispatch(err)

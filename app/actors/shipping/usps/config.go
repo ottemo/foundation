@@ -157,6 +157,22 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAllowCountries,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "multi_select",
+			Options:     env.ConstCountries,
+			Label:       "Allow countries",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "91775c4b-521a-49f3-90bf-c377f266b62e", "Unable to obtain configuration for USPS")
 		return env.ErrorDispatch(err)

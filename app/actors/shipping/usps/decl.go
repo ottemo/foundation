@@ -25,6 +25,7 @@ const (
 	ConstConfigPathDefaultDimensions = "shipping.usps.default_dimensions"
 	ConstConfigPathDefaultWeight     = "shipping.usps.default_weight"
 	ConstConfigPathAllowedMethods    = "shipping.usps.allowed_methods"
+	ConstConfigPathAllowCountries    = "shipping.usps.allow_countries"
 	ConstConfigPathDebugLog          = "shipping.usps.debug_log"
 
 	ConstErrorModule = "shipping/usps"

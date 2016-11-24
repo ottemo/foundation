@@ -70,6 +70,7 @@ const (
 	ConstConfigPathDefaultWeight  = "shipping.fedex.default_weight"
 	ConstConfigPathAllowedMethods = "shipping.fedex.allowed_methods"
 	ConstConfigPathPackaging      = "shipping.fedex.packaging"
+	ConstConfigPathAllowCountries      = "shipping.fedex.allow_countries"
 	ConstConfigPathDropoff        = "shipping.fedex.dropoff"
 
 	ConstConfigPathDebugLog = "shipping.fedex.debug_log"
