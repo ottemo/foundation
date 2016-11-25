@@ -71,7 +71,11 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	//if isCreateToken {
 	// NOTE: `orderInstance = nil` when creating a token
 
-
+	action := paymentInfo[checkout.ConstPaymentActionTypeKey]
+	isCreateToken := utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken
+	if isCreateToken {
+		return nil, nil
+	}
 	// 1. Get our customer token
 	extra := utils.InterfaceToMap(paymentInfo["extra"])
 	visitorID := utils.InterfaceToString(extra["visitor_id"])
@@ -97,16 +101,6 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 		profileId = profileNewId
 
-		//	// 2. We don't have a stripe id on file, make a new customer
-		//	c, err := customer.New(&stripe.CustomerParams{
-		//		Email: utils.InterfaceToString(extra["email"]),
-		//		// TODO: coupons?
-		//	})
-		//	if err != nil {
-		//		return nil, env.ErrorDispatch(err)
-		//	}
-		//
-		//	stripeCID = c.ID
 	}
 
 	if profileId != "0"  && profileId != "" {
@@ -133,8 +127,6 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 			ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
 		}
 
-		fmt.Println(profileId + "\n\n")
-
 		newPaymentID, success := AuthorizeCIM.CreateCustomerBillingProfile(profileId, credit_card, address)
 		if success {
 			fmt.Println("New Credit Card was added, Billing ID: ", newPaymentID)
@@ -145,6 +137,8 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		fmt.Println("Waiting for 10 seconds to allow Authorize.net to keep up")
 		time.Sleep(10000 * time.Millisecond)
 
+		paymentId := newPaymentID
+
 		item := AuthorizeCIM.LineItem{
 			ItemID: "S0897",
 			Name: "New Product",
@@ -154,53 +148,39 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		}
 		amount := "14.43"
 
-		paymentId := newPaymentID
-
-		if paymentId != "0" {
-
-			response, approved, success := AuthorizeCIM.CreateTransaction(profileId, paymentId, item, amount)
-			// outputs transaction response, approved status (true/false), and success status (true/false)
-
-			var tranxID string
-			if success {
-				tranxID = response["transId"].(string)
-				if approved {
-					fmt.Println("Transaction was approved! " + tranxID + "\n")
-				} else {
-					fmt.Println("Transaction was denied! " + tranxID + "\n")
-				}
+		response, approved, success := AuthorizeCIM.CreateTransaction(profileId, paymentId, item, amount)
+		// outputs transaction response, approved status (true/false), and success status (true/false)
+		var tranxID string
+		if success {
+			tranxID = response["transId"].(string)
+			if approved {
+				fmt.Println("Transaction was approved! " + tranxID + "\n")
 			} else {
-				fmt.Println("Transaction has failed! \n")
+				fmt.Println("Transaction was denied! " + tranxID + "\n")
 			}
-
-			fmt.Println(response)
-
-
-			//ca, err := card.New(cp)
-			//// env.LogEvent(env.LogFields{"api_response": ca, "err": err}, "card")
-			//if err != nil {
-			//	return nil, env.ErrorDispatch(err)
-			//}
-
-			// This response looks like our normal authorize response
-			// but this map is translated into other keys to store a token
-			result := map[string]interface{}{
-				"transactionID":      response["transId"].(string), // token_id
-				"creditCardLastFour": response["accountNumber"].(string), // number
-				"creditCardType":     response["accountType"].(string), // type
-				"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
-				"customerID":         profileId, // customer_id
-			}
-
-			fmt.Println(result)
-
-			return result, nil
+		} else {
+			fmt.Println("Transaction has failed! \n")
 		}
+
+		fmt.Println(response)
+
+		// This response looks like our normal authorize response
+		// but this map is translated into other keys to store a token
+		result := map[string]interface{}{
+			"transactionID":      response["transId"].(string), // token_id
+			"creditCardLastFour": response["accountNumber"].(string), // number
+			"creditCardType":     response["accountType"].(string), // type
+			"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
+			"customerID":         profileId, // customer_id
+		}
+
+		fmt.Println(result)
+
+		return result, nil
 	}
-	//}
-
-	//billingFirstName := orderInstance.GetBillingAddress().GetFirstName()
-
+	//
+	////billingFirstName := orderInstance.GetBillingAddress().GetFirstName()
+	//
 	return nil, nil
 	//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed753163-d708-4884-aae8-3aa1dc9bf9f4", "Not implemented")
 
