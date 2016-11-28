@@ -165,6 +165,10 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 
 	// token detailed information was specified
 	case "token":
+		if value == nil {
+			break
+		}
+
 		switch typedValue := value.(type) {
 
 		// we have already have structure
