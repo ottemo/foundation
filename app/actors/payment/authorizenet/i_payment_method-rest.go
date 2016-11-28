@@ -35,7 +35,7 @@ func (it *RestAPI) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool
 
 // GetType returns type of payment method
 func (it *RestAPI) GetType() string {
-	return checkout.ConstPaymentTypePostCC
+	return checkout.ConstPaymentTypeCreditCard
 }
 
 // IsAllowed checks for method applicability
@@ -76,6 +76,13 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	if isCreateToken {
 		return nil, nil
 	}
+
+
+	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	if utils.InterfaceToBool(ccInfo["save"]) != true {
+		return it.AuthorizeWithoutSave(orderInstance, paymentInfo)
+	}
+
 	// 1. Get our customer token
 	extra := utils.InterfaceToMap(paymentInfo["extra"])
 	visitorID := utils.InterfaceToString(extra["visitor_id"])
@@ -105,22 +112,20 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	if profileId != "0"  && profileId != "" {
 		// 3. Create a card
-		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-		ccInfo["billing_name"] = extra["billing_name"]
 		ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 		if ccCVC == "" {
 			return nil, env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
 		}
 
 		address := AuthorizeCIM.Address{
-			FirstName: "Test",
-			LastName: "User",
-			Address: "1234 Road St",
-			City: "City Name",
-			State:" California",
-			Zip: "93063",
-			Country: "USA",
-			PhoneNumber: "5555555555",
+			FirstName: orderInstance.GetBillingAddress().GetFirstName(),
+			LastName: orderInstance.GetBillingAddress().GetLastName(),
+			Address: orderInstance.GetBillingAddress().GetAddress(),
+			City: orderInstance.GetBillingAddress().GetCity(),
+			State: orderInstance.GetBillingAddress().GetState(),
+			Zip: orderInstance.GetBillingAddress().GetZipCode(),
+			Country: orderInstance.GetBillingAddress().GetCountry(),
+			PhoneNumber:  orderInstance.GetBillingAddress().GetPhone(),
 		}
 		credit_card := AuthorizeCIM.CreditCard{
 			CardNumber: utils.InterfaceToString(ccInfo["number"]),
@@ -139,14 +144,17 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 		paymentId := newPaymentID
 
+		grandTotal := orderInstance.GetGrandTotal()
+		amount := fmt.Sprintf("%.2f", grandTotal)
+
 		item := AuthorizeCIM.LineItem{
-			ItemID: "S0897",
-			Name: "New Product",
-			Description: "brand new",
+			ItemID: orderInstance.GetID(),
+			Name: "Order #" + orderInstance.GetID(),
+			Description: "",
 			Quantity: "1",
-			UnitPrice: "14.43",
+			UnitPrice: amount,
 		}
-		amount := "14.43"
+
 
 		response, approved, success := AuthorizeCIM.CreateTransaction(profileId, paymentId, item, amount)
 		// outputs transaction response, approved status (true/false), and success status (true/false)
@@ -183,6 +191,56 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	//
 	return nil, nil
 	//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed753163-d708-4884-aae8-3aa1dc9bf9f4", "Not implemented")
+
+}
+
+func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
+	if ccCVC == "" {
+		err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		return nil, err
+	}
+
+	grandTotal := orderInstance.GetGrandTotal()
+	amount := fmt.Sprintf("%.2f", grandTotal)
+
+	credit_card := AuthorizeCIM.CreditCardCVV{
+		CardNumber: utils.InterfaceToString(ccInfo["number"]),
+		ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
+		CardCode: ccCVC,
+	}
+
+	response, approved, success := AuthorizeCIM.AuthorizeCard(credit_card, amount)
+	// outputs transaction response, approved status (true/false), and success status (true/false)
+
+	var tranxID string
+	if success {
+		tranxID = response["transId"].(string)
+		if approved {
+			fmt.Println("Transaction was approved! " + tranxID + "\n")
+		} else {
+			fmt.Println("Transaction was denied! " + tranxID + "\n")
+		}
+	} else {
+		fmt.Println("Transaction has failed! \n")
+	}
+
+	fmt.Println(response)
+
+	// This response looks like our normal authorize response
+	// but this map is translated into other keys to store a token
+	result := map[string]interface{}{
+		"transactionID":      response["transId"].(string), // token_id
+		"creditCardLastFour": response["accountNumber"].(string), // number
+		"creditCardType":     response["accountType"].(string), // type
+		"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
+		"customerID":         0, // customer_id
+	}
+
+	fmt.Println(result)
+
+	return result, nil
 
 }
 
