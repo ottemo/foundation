@@ -108,6 +108,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		"expiration_date": cardInfoMap["creditCardExp"],
 		"holder":          utils.InterfaceToString(requestData["holder"]),
 		"token_id":        cardInfoMap["transactionID"],
+		"customer_id":     cardInfoMap["customerID"],
 		"token_updated":   time.Now(),
 	}
 
