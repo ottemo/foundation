@@ -50,8 +50,6 @@ func (it *RestAPI) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 // Authorize makes payment method authorize operation
 func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
-	fmt.Println("Authorize \n\n\n\n")
-
 	var apiLoginId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiApiLoginId))
 	if apiLoginId == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
@@ -77,14 +75,19 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 	}
 
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-	if utils.InterfaceToBool(ccInfo["save"]) != true {
+
+	profileId := ""
+	paymentId := ""
+	creditCard, creditCardOk := paymentInfo["cc"].(visitor.InterfaceVisitorCard);
+
+	if  creditCardOk && creditCard != nil {
+		profileId = creditCard.GetCustomerID()
+		paymentId = creditCard.GetToken()
+	}
+	if utils.InterfaceToBool(ccInfo["save"]) != true && profileId == "" && paymentId == "" {
 		return it.AuthorizeWithoutSave(orderInstance, paymentInfo)
 	}
 
-	// 1. Get our customer token
-	visitorID := utils.InterfaceToString(orderInstance.Get("visitor_id"))
-
-	profileId := getAuthorizenetCustomerToken(visitorID, it.GetCode())
 	if profileId == "" {
 
 		extra := utils.InterfaceToMap(paymentInfo["extra"])
@@ -123,13 +126,10 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 
 	}
-
-	if profileId != "0"  && profileId != "" {
+fmt.Println(profileId)
+fmt.Println(paymentId)
+	if profileId != "0"  && profileId != "" && paymentId == "" {
 		// 3. Create a card
-		ccCVC := utils.InterfaceToString(ccInfo["cvc"])
-		if ccCVC == "" {
-			return nil, env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
-		}
 
 		address := AuthorizeCIM.Address{
 			FirstName: orderInstance.GetBillingAddress().GetFirstName(),
@@ -156,8 +156,10 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		fmt.Println("Waiting for 10 seconds to allow Authorize.net to keep up")
 		time.Sleep(10000 * time.Millisecond)
 
-		paymentId := newPaymentID
+		paymentId = newPaymentID
+	}
 
+	if paymentId != "" && profileId != "" {
 		grandTotal := orderInstance.GetGrandTotal()
 		amount := fmt.Sprintf("%.2f", grandTotal)
 
@@ -186,16 +188,19 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		// This response looks like our normal authorize response
 		// but this map is translated into other keys to store a token
 		result := map[string]interface{}{
-			"transactionID":      response["transId"].(string), // token_id
+			"transactionID":      response["transId"].(string), // transactionID
 			"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
 			"creditCardType":     response["accountType"].(string), // type
 			"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
 			"customerID":         profileId, // customer_id
+			"tokenID":         paymentId, // token_id
 		}
 
-		_, err := it.SaveToken(orderInstance, result)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
+		if !creditCardOk {
+			_, err := it.SaveToken(orderInstance, result)
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
 		}
 
 		return result, nil
@@ -209,7 +214,7 @@ func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paym
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
 	ccCVC := utils.InterfaceToString(ccInfo["cvc"])
 	if ccCVC == "" {
-		err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		err := env.ErrorNew(ConstErrorModule, 1, "fdcb2ecd-a31d-4fa7-a4e8-df51e10a5332", "CVC field was left empty")
 		return nil, err
 	}
 
@@ -257,7 +262,7 @@ func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo 
 	visitorID := utils.InterfaceToString(orderInstance.Get("visitor_id"))
 	fmt.Println(visitorID)
 	if visitorID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		return nil, env.ErrorNew(ConstErrorModule, 1, "d43b4347-7560-4432-a9b3-b6941693f77f", "CVC field was left empty")
 	}
 
 	authorizeCardResult := utils.InterfaceToMap(creditCardInfo)
@@ -272,37 +277,30 @@ func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	// override credit card info with provided from payment info
-	creditCardInfo["token_id"] = authorizeCardResult["transactionID"]
-	creditCardInfo["payment"] = it.GetCode()
-	creditCardInfo["customer_id"] = authorizeCardResult["customerID"]
-	creditCardInfo["type"] = authorizeCardResult["creditCardType"]
-	creditCardInfo["number"] = authorizeCardResult["creditCardLastFour"]
-	creditCardInfo["expiration_date"] = authorizeCardResult["creditCardExp"] // mmyy
-	creditCardInfo["token_updated"] = time.Now()
-	creditCardInfo["created_at"] = time.Now()
-	fmt.Println(creditCardInfo)
-	// filling new instance with request provided data
-	for attribute, value := range creditCardInfo {
-		err := visitorCardModel.Set(attribute, value)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	// create credit card map with info
+	tokenRecord := map[string]interface{}{
+		"visitor_id":      visitorID,
+		"payment":         it.GetCode(),
+		"type":            authorizeCardResult["creditCardType"],
+		"number":          authorizeCardResult["creditCardLastFour"],
+		"expiration_date": authorizeCardResult["creditCardExp"],
+		"holder":          utils.InterfaceToString(authorizeCardResult["holder"]),
+		"token_id":        authorizeCardResult["tokenID"],
+		"customer_id":     authorizeCardResult["customerID"],
+		"token_updated":   time.Now(),
+		"created_at":      time.Now(),
 	}
 
-	// setting credit card owner to current visitor (for sure)
-	visitorCardModel.Set("visitor_id", visitorID)
-
-	fmt.Println(visitorCardModel.ToHashMap())
-
-	// save card info if checkbox is checked on frontend
-	if utils.InterfaceToBool(creditCardInfo["save"]) {
-		err = visitorCardModel.Save()
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	err = visitorCardModel.FromHashMap(tokenRecord)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
-	fmt.Println(visitorCardModel.ToHashMap())
+
+	err = visitorCardModel.Save()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	return visitorCardModel, nil
 }
 
