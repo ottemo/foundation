@@ -3,6 +3,7 @@ package fedex
 import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models"
 )
 
 // setupConfig setups package configuration values for a system
@@ -228,7 +229,7 @@ func setupConfig() error {
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "multi_select",
-			Options:     env.ConstCountries,
+			Options:     utils.EncodeToJSONString(models.ConstCountriesList),
 			Label:       "Allow countries",
 			Description: "",
 			Image:       "",
