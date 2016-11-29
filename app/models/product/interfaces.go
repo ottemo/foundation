@@ -14,8 +14,8 @@ const (
 	ConstErrorModule = "product"
 	ConstErrorLevel  = env.ConstErrorLevelModel
 
-	// simple products for option key name
 	ConstOptionProductIDs = "_ids"
+	ConstOptionImageName  = "image_name"
 )
 
 // InterfaceProduct represents interface to access business layer implementation of product object
