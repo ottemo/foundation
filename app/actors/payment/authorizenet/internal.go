@@ -11,7 +11,7 @@ import (
 // - the customer token is sensitive data because you can make a charge with it alone
 // - if you are going to make a charge against a card that is attached to a customer though,
 //   you must attach the customer id
-func getAuthorizenetCustomerToken(vid string) string {
+func getAuthorizenetCustomerToken(vid string, paymentType string) string {
 	const customerTokenPrefix = "cus"
 
 	if vid == "" {
@@ -21,6 +21,7 @@ func getAuthorizenetCustomerToken(vid string) string {
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
 	model.ListFilterAdd("visitor_id", "=", vid)
+	model.ListFilterAdd("payment", "=", paymentType)
 
 	// 3rd party customer identifier, used by stripe
 	err := model.ListAddExtraAttribute("customer_id")
