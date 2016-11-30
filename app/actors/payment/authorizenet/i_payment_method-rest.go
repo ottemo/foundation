@@ -109,43 +109,43 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		response, approved, success := AuthorizeCIM.CreateTransaction(profileId, paymentId, item, amount)
 		// outputs transaction response, approved status (true/false), and success status (true/false)
 		var orderTransactionID string
-		if success {
-			orderTransactionID = response["transId"].(string)
-			status := "denied"
-			if approved {
-				status = "approved"
-			}
-
-			env.Log("authorizenet.log", env.ConstLogPrefixInfo, "NEW TRANSACTION ("+status+"): "+
-				"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
-				"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
-				"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
-				"TRANSACTIONID - "+orderTransactionID)
-
-
-			// This response looks like our normal authorize response
-			// but this map is translated into other keys to store a token
-			result := map[string]interface{}{
-				"transactionID":      response["transId"].(string), // transactionID
-				"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
-				"creditCardType":     response["accountType"].(string), // type
-				"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
-				"customerID":         profileId, // customer_id
-				"tokenID":            paymentId, // token_id
-			}
-
-			if !creditCardOk {
-				_, err := it.SaveToken(orderInstance, result)
-				if err != nil {
-					return nil, env.ErrorDispatch(err)
-				}
-			}
-
-			return result, nil
-		} else {
-			env.Log("paypal.log", env.ConstLogPrefixInfo, "Transaction has failed: "+fmt.Sprint(response))
+		if !success {
+			env.Log("authorizenet.log", env.ConstLogPrefixInfo, "Transaction has failed: "+fmt.Sprint(response))
 			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da966f67-666f-412c-a381-a080edd915d0", checkout.ConstPaymentErrorTechnical)
 		}
+
+		orderTransactionID = response["transId"].(string)
+		status := "denied"
+		if approved {
+			status = "approved"
+		}
+
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "NEW TRANSACTION ("+status+"): "+
+			"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+			"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
+			"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
+			"TRANSACTIONID - "+orderTransactionID)
+
+
+		// This response looks like our normal authorize response
+		// but this map is translated into other keys to store a token
+		result := map[string]interface{}{
+			"transactionID":      response["transId"].(string), // transactionID
+			"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
+			"creditCardType":     response["accountType"].(string), // type
+			"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
+			"customerID":         profileId, // customer_id
+			"tokenID":            paymentId, // token_id
+		}
+
+		if !creditCardOk {
+			_, err := it.SaveToken(orderInstance, result)
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+		}
+
+		return result, nil
 	}
 
 	return nil, nil
@@ -172,16 +172,21 @@ func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paym
 	// outputs transaction response, approved status (true/false), and success status (true/false)
 
 	var orderTransactionID string
-	if success {
-		orderTransactionID = response["transId"].(string)
-		if approved {
-			fmt.Println("Transaction was approved! " + orderTransactionID + "\n")
-		} else {
-			fmt.Println("Transaction was denied! " + orderTransactionID + "\n")
-		}
-	} else {
-		fmt.Println("Transaction has failed! \n")
+	if !success {
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "Transaction has failed: "+fmt.Sprint(response))
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da966f67-666f-412c-a381-a080edd915d0", checkout.ConstPaymentErrorTechnical)
 	}
+
+	status := "denied"
+	if approved {
+		status = "approved"
+	}
+
+	env.Log("authorizenet.log", env.ConstLogPrefixInfo, "NEW TRANSACTION ("+status+"): "+
+		"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+		"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
+		"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
+		"TRANSACTIONID - "+orderTransactionID)
 
 	// This response looks like our normal authorize response
 	// but this map is translated into other keys to store a token
