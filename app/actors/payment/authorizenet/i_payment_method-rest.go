@@ -57,9 +57,9 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		return nil, nil
 	}
 
-	isConnect := it.ConnectToAuthorize()
-	if (isConnect) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "870cf127-c558-4872-b134-d40d3ea16a27", "")
+	_, err := it.ConnectToAuthorize()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
@@ -276,6 +276,14 @@ func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paym
 			"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
 			"Billing ID - "+paymentID)
 	} else {
+		messages, _ := response["messages"].(map[string]interface{})
+		if messages != nil {
+			// Array
+			messageArray, _ := messages["message"].([]interface{})
+			// Hash
+			text := (messageArray[0].(map[string]interface{}))["text"]
+			return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5609f3bf-bad6-4e93-8d1e-bf525ddf17f9", text)
+		}
 		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "There was an issue inserting a credit card into the user account")
 	}
 
@@ -338,15 +346,15 @@ func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo 
 }
 
 
-func (it *RestAPI) ConnectToAuthorize() bool {
+func (it *RestAPI) ConnectToAuthorize() (bool, error) {
 	var apiLoginId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiApiLoginId))
 	if apiLoginId == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "api login id was not specified")
+		return false, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "api login id was not specified")
 	}
 
 	var transactionKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiTransactionKey))
 	if transactionKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "35de21dd-3f07-4ec2-9630-a15fa07d00a5", "transaction key was not specified")
+		return false, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "35de21dd-3f07-4ec2-9630-a15fa07d00a5", "transaction key was not specified")
 	}
 
 	var mode = ""
@@ -359,10 +367,10 @@ func (it *RestAPI) ConnectToAuthorize() bool {
 
 	connected := AuthorizeCIM.TestConnection()
 	if !connected {
-		return false
+		return false, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4faf7f78-cda7-464f-9a9e-459806907069", "cannot connect to Authorize.Net")
 	}
 
-	return true
+	return true, nil
 }
 
 // Capture makes payment method capture operation
