@@ -103,7 +103,7 @@ const (
 	</html>`
 
 	// Authorize.Net (REST Api)
-	ConstPaymentAuthorizeNetRestApiCode = "authorizenet_restApi"
+	ConstPaymentAuthorizeNetRestApiCode = "authorizenet_rest"
 	ConstPaymentAuthorizeNetRestApiName = "Authorize.Net"
 
 	ConstConfigPathAuthorizeNetRestApiGroup = "payment.authorizeNetRestApi"
