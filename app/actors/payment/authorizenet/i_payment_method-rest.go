@@ -50,28 +50,16 @@ func (it *RestAPI) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 // Authorize makes payment method authorize operation
 func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
-	var apiLoginId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiApiLoginId))
-	if apiLoginId == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
-	}
-
-	var transactionKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiTransactionKey))
-	if transactionKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
-	}
-
-	// @todo check if test mode
-	AuthorizeCIM.SetAPIInfo(apiLoginId, transactionKey, "test")
-
-	connected := AuthorizeCIM.TestConnection()
-	if !connected {
-		fmt.Println("There was an issue connecting to Authorize.net")
-	}
 
 	action := paymentInfo[checkout.ConstPaymentActionTypeKey]
 	isCreateToken := utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken
 	if isCreateToken {
 		return nil, nil
+	}
+
+	isConnect := it.ConnectToAuthorize()
+	if (isConnect) {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "870cf127-c558-4872-b134-d40d3ea16a27", "")
 	}
 
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
@@ -90,72 +78,19 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 	if profileId == "" {
 
-		extra := utils.InterfaceToMap(paymentInfo["extra"])
-		userEmail := utils.InterfaceToString(extra["email"])
-		billingName := utils.InterfaceToString(extra["billing_name"])
-
-		customerInfo := AuthorizeCIM.AuthUser{
-			"0",
-			userEmail,
-			billingName,
+		newProfileId, err := it.CreateProfile(orderInstance, paymentInfo)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
-
-		profileNewId, response, success := AuthorizeCIM.CreateCustomerProfile(customerInfo)
-
-		if success {
-			profileId = profileNewId
-
-			fmt.Println("New Customer Profile ID: ", profileId + "\n")
-		} else {
-			fmt.Println("There was an issue creating the Customer Profile \n")
-			fmt.Println(response)
-			fmt.Println(utils.InterfaceToString(response))
-			messages, _ := response["messages"].(map[string]interface{})
-			if messages != nil {
-				// Array
-				messageArray, _ := messages["message"].([]interface{})
-				// Hash
-				text := (messageArray[0].(map[string]interface{}))["text"]
-
-
-				re := regexp.MustCompile("[0-9]+")
-				profileId = re.FindString(text.(string))
-			}
-
-		}
-
-
+		profileId = newProfileId
 	}
-fmt.Println(profileId)
-fmt.Println(paymentId)
-	if profileId != "0"  && profileId != "" && paymentId == "" {
+
+	if profileId != "" && paymentId == "" {
 		// 3. Create a card
-
-		address := AuthorizeCIM.Address{
-			FirstName: orderInstance.GetBillingAddress().GetFirstName(),
-			LastName: orderInstance.GetBillingAddress().GetLastName(),
-			Address: orderInstance.GetBillingAddress().GetAddress(),
-			City: orderInstance.GetBillingAddress().GetCity(),
-			State: orderInstance.GetBillingAddress().GetState(),
-			Zip: orderInstance.GetBillingAddress().GetZipCode(),
-			Country: orderInstance.GetBillingAddress().GetCountry(),
-			PhoneNumber:  orderInstance.GetBillingAddress().GetPhone(),
+		newPaymentID, err := it.CreatePaymentProfile(orderInstance, paymentInfo, profileId)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
 		}
-		credit_card := AuthorizeCIM.CreditCard{
-			CardNumber: utils.InterfaceToString(ccInfo["number"]),
-			ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
-		}
-
-		newPaymentID, success := AuthorizeCIM.CreateCustomerBillingProfile(profileId, credit_card, address)
-		if success {
-			fmt.Println("New Credit Card was added, Billing ID: ", newPaymentID)
-		} else {
-			fmt.Println("There was an issue inserting a credit card into the user account")
-		}
-
-		fmt.Println("Waiting for 10 seconds to allow Authorize.net to keep up")
-		time.Sleep(10000 * time.Millisecond)
-
 		paymentId = newPaymentID
 	}
 
@@ -173,41 +108,47 @@ fmt.Println(paymentId)
 
 		response, approved, success := AuthorizeCIM.CreateTransaction(profileId, paymentId, item, amount)
 		// outputs transaction response, approved status (true/false), and success status (true/false)
-		var tranxID string
+		var orderTransactionID string
 		if success {
-			tranxID = response["transId"].(string)
+			orderTransactionID = response["transId"].(string)
+			status := "denied"
 			if approved {
-				fmt.Println("Transaction was approved! " + tranxID + "\n")
-			} else {
-				fmt.Println("Transaction was denied! " + tranxID + "\n")
+				status = "approved"
 			}
+
+			env.Log("authorizenet.log", env.ConstLogPrefixInfo, "NEW TRANSACTION ("+status+"): "+
+				"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+				"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
+				"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
+				"TRANSACTIONID - "+orderTransactionID)
+
+
+			// This response looks like our normal authorize response
+			// but this map is translated into other keys to store a token
+			result := map[string]interface{}{
+				"transactionID":      response["transId"].(string), // transactionID
+				"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
+				"creditCardType":     response["accountType"].(string), // type
+				"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
+				"customerID":         profileId, // customer_id
+				"tokenID":            paymentId, // token_id
+			}
+
+			if !creditCardOk {
+				_, err := it.SaveToken(orderInstance, result)
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
+			}
+
+			return result, nil
 		} else {
-			fmt.Println("Transaction has failed! \n")
+			env.Log("paypal.log", env.ConstLogPrefixInfo, "Transaction has failed: "+fmt.Sprint(response))
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da966f67-666f-412c-a381-a080edd915d0", checkout.ConstPaymentErrorTechnical)
 		}
-
-		// This response looks like our normal authorize response
-		// but this map is translated into other keys to store a token
-		result := map[string]interface{}{
-			"transactionID":      response["transId"].(string), // transactionID
-			"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
-			"creditCardType":     response["accountType"].(string), // type
-			"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
-			"customerID":         profileId, // customer_id
-			"tokenID":         paymentId, // token_id
-		}
-
-		if !creditCardOk {
-			_, err := it.SaveToken(orderInstance, result)
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-		}
-
-		return result, nil
 	}
 
 	return nil, nil
-
 }
 
 func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
@@ -230,13 +171,13 @@ func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paym
 	response, approved, success := AuthorizeCIM.AuthorizeCard(credit_card, amount)
 	// outputs transaction response, approved status (true/false), and success status (true/false)
 
-	var tranxID string
+	var orderTransactionID string
 	if success {
-		tranxID = response["transId"].(string)
+		orderTransactionID = response["transId"].(string)
 		if approved {
-			fmt.Println("Transaction was approved! " + tranxID + "\n")
+			fmt.Println("Transaction was approved! " + orderTransactionID + "\n")
 		} else {
-			fmt.Println("Transaction was denied! " + tranxID + "\n")
+			fmt.Println("Transaction was denied! " + orderTransactionID + "\n")
 		}
 	} else {
 		fmt.Println("Transaction has failed! \n")
@@ -256,11 +197,98 @@ func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paym
 
 }
 
+func (it *RestAPI) CreateProfile(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (string, error) {
+	profileId := ""
+	extra := utils.InterfaceToMap(paymentInfo["extra"])
+	userEmail := utils.InterfaceToString(extra["email"])
+	billingName := utils.InterfaceToString(extra["billing_name"])
+
+	customerInfo := AuthorizeCIM.AuthUser{
+		"0",
+		userEmail,
+		billingName,
+	}
+
+	newProfileId, response, success := AuthorizeCIM.CreateCustomerProfile(customerInfo)
+
+	if success {
+		profileId = newProfileId
+
+		fmt.Println("New Customer Profile ID: ", profileId + "\n")
+
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Customer Profile: "+
+			"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+			"BILLNAME - "+billingName+", "+
+			"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
+			"Profile ID - "+profileId)
+	} else {
+		messages, _ := response["messages"].(map[string]interface{})
+		if messages != nil {
+			// Array
+			messageArray, _ := messages["message"].([]interface{})
+			// Hash
+			text := (messageArray[0].(map[string]interface{}))["text"]
+
+			re := regexp.MustCompile("[0-9]+")
+			profileId = re.FindString(text.(string))
+		}
+
+	}
+
+	if profileId == "" || profileId == "0" {
+		return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "221aaa5a-a87e-4dc3-a1a9-a8cfee975f48", "profileId can't be empty")
+	}
+
+	return profileId, nil
+}
+
+
+func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}, profileId string) (string, error) {
+	paymentID := ""
+	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	address := AuthorizeCIM.Address{
+		FirstName: orderInstance.GetBillingAddress().GetFirstName(),
+		LastName: orderInstance.GetBillingAddress().GetLastName(),
+		Address: orderInstance.GetBillingAddress().GetAddress(),
+		City: orderInstance.GetBillingAddress().GetCity(),
+		State: orderInstance.GetBillingAddress().GetState(),
+		Zip: orderInstance.GetBillingAddress().GetZipCode(),
+		Country: orderInstance.GetBillingAddress().GetCountry(),
+		PhoneNumber:  orderInstance.GetBillingAddress().GetPhone(),
+	}
+	credit_card := AuthorizeCIM.CreditCard{
+		CardNumber: utils.InterfaceToString(ccInfo["number"]),
+		ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
+	}
+
+	newPaymentID, success := AuthorizeCIM.CreateCustomerBillingProfile(profileId, credit_card, address)
+	if success {
+		paymentID = newPaymentID
+
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Credit Card was added: "+
+			"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
+			"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
+			"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
+			"Billing ID - "+paymentID)
+	} else {
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "There was an issue inserting a credit card into the user account")
+	}
+
+
+	if paymentID == "" || paymentID == "0" {
+		return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5609f3bf-bad6-4e93-8d1e-bf525ddf17f9", "paymentID can't be empty")
+	}
+
+	// Waiting for 10 seconds to allow Authorize.net to keep up
+	time.Sleep(10000 * time.Millisecond)
+
+	return paymentID, nil
+}
+
 func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo map[string]interface{}) (visitor.InterfaceVisitorCard, error) {
 
-	fmt.Println("\n\n\n\n\n\nSaveToken \n\n\n\n\n\n\n")
 	visitorID := utils.InterfaceToString(orderInstance.Get("visitor_id"))
-	fmt.Println(visitorID)
+
 	if visitorID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, 1, "d43b4347-7560-4432-a9b3-b6941693f77f", "CVC field was left empty")
 	}
@@ -269,7 +297,7 @@ func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo 
 	if !utils.KeysInMapAndNotBlank(authorizeCardResult, "transactionID", "creditCardLastFour") {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "transaction can't be obtained")
 	}
-	fmt.Println(authorizeCardResult)
+
 	// create visitor card and fill required fields
 	//---------------------------------
 	visitorCardModel, err := visitor.GetVisitorCardModel()
@@ -304,17 +332,45 @@ func (it *RestAPI) SaveToken(orderInstance order.InterfaceOrder, creditCardInfo 
 	return visitorCardModel, nil
 }
 
+
+func (it *RestAPI) ConnectToAuthorize() bool {
+	var apiLoginId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiApiLoginId))
+	if apiLoginId == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "api login id was not specified")
+	}
+
+	var transactionKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiTransactionKey))
+	if transactionKey == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "35de21dd-3f07-4ec2-9630-a15fa07d00a5", "transaction key was not specified")
+	}
+
+	var mode = ""
+	var isTestMode = utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAuthorizeNetRestApiTest))
+	if isTestMode {
+		mode = "test"
+	}
+
+	AuthorizeCIM.SetAPIInfo(apiLoginId, transactionKey, mode)
+
+	connected := AuthorizeCIM.TestConnection()
+	if !connected {
+		return false
+	}
+
+	return true
+}
+
 // Capture makes payment method capture operation
 func (it *RestAPI) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed753163-d708-4884-aae8-3aa1dc9bf9f4", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ebbac9ac-94e3-48f7-ae8a-8a562ee09907", "Not implemented")
 }
 
 // Refund will return funds on the given order :: Not Implemented Yet
 func (it *RestAPI) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc9b523-4e53-4ff5-9d49-1dfdadf3fb44", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "baaf0cac-2924-4340-a9a1-cc3e407326d3", "Not implemented")
 }
 
 // Void will mark the order and capture as void
 func (it *RestAPI) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d682f87e-4d51-473b-a00d-191d28e807f5", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb391185-161d-4e0f-8d08-470dda867fed", "Not implemented")
 }
