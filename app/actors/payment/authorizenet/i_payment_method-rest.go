@@ -219,8 +219,6 @@ func (it *RestAPI) CreateProfile(orderInstance order.InterfaceOrder, paymentInfo
 	if success {
 		profileId = newProfileId
 
-		fmt.Println("New Customer Profile ID: ", profileId + "\n")
-
 		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Customer Profile: "+
 			"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
 			"BILLNAME - "+billingName+", "+
@@ -266,7 +264,7 @@ func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paym
 		ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
 	}
 
-	newPaymentID, success := AuthorizeCIM.CreateCustomerBillingProfile(profileId, credit_card, address)
+	newPaymentID, response, success := AuthorizeCIM.CreateCustomerBillingProfile(profileId, credit_card, address)
 	if success {
 		paymentID = newPaymentID
 
@@ -282,7 +280,7 @@ func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paym
 			messageArray, _ := messages["message"].([]interface{})
 			// Hash
 			text := (messageArray[0].(map[string]interface{}))["text"]
-			return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5609f3bf-bad6-4e93-8d1e-bf525ddf17f9", text)
+			return "", env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5609f3bf-bad6-4e93-8d1e-bf525ddf17f9", text.(string))
 		}
 		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "There was an issue inserting a credit card into the user account")
 	}
