@@ -114,7 +114,6 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		var err error
 		cardID := creditCard.GetToken()
 		stripeCID := creditCard.GetCustomerID()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 
 		if cardID == "" || stripeCID == "" {
 			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "02128bc6-83d6-4c12-ae90-900a94adb3ad", "looks like we want to charge a token, but we don't have the fields we need")
