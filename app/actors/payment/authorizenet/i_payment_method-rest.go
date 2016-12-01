@@ -262,7 +262,7 @@ func (it *RestAPI) CreateProfile(paymentInfo map[string]interface{}) (string, er
 }
 
 
-func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}, profileId string) (string, map[string]interface{}, error) {
+func (it *RestAPI) CreatePaymentProfile(paymentInfo map[string]interface{}, profileId string) (string, map[string]interface{}, error) {
 	paymentID := ""
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
 	extra := utils.InterfaceToMap(paymentInfo["extra"])
