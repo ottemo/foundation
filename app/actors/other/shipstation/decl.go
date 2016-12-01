@@ -49,8 +49,9 @@ type ShippingAddress struct {
 }
 
 type OrderItem struct {
-	Sku       string `xml:"SKU"`
-	Name      string
-	Quantity  int
-	UnitPrice float64
+	Sku        string `xml:"SKU"`
+	Name       string
+	Quantity   int
+	UnitPrice  float64
+	Adjustment bool
 }
