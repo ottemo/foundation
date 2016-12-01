@@ -11,7 +11,6 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"fmt"
 )
 
 // GetCode will return the Stripe payment method code
@@ -115,7 +114,6 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		var err error
 		cardID := creditCard.GetToken()
 		stripeCID := creditCard.GetCustomerID()
-		fmt.Println(creditCard);
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 
 		if cardID == "" || stripeCID == "" {
