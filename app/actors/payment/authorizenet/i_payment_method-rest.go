@@ -65,7 +65,7 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 		if profileId == "" {
 
-			newProfileId, err := it.CreateProfile(orderInstance, paymentInfo)
+			newProfileId, err := it.CreateProfile(paymentInfo)
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
@@ -74,7 +74,7 @@ func (it *RestAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 
 		if profileId != "" {
 			// 3. Create a card
-			newPaymentID, _, err := it.CreatePaymentProfile(orderInstance, paymentInfo, profileId)
+			newPaymentID, _, err := it.CreatePaymentProfile(paymentInfo, profileId)
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
@@ -220,7 +220,7 @@ func (it *RestAPI) AuthorizeWithoutSave(orderInstance order.InterfaceOrder, paym
 
 }
 
-func (it *RestAPI) CreateProfile(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (string, error) {
+func (it *RestAPI) CreateProfile(paymentInfo map[string]interface{}) (string, error) {
 	profileId := ""
 	extra := utils.InterfaceToMap(paymentInfo["extra"])
 	userEmail := utils.InterfaceToString(extra["email"])
@@ -237,13 +237,9 @@ func (it *RestAPI) CreateProfile(orderInstance order.InterfaceOrder, paymentInfo
 	if success {
 		profileId = newProfileId
 
-		if orderInstance != nil {
-			env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Customer Profile: " +
-				"Visitor ID - " + utils.InterfaceToString(orderInstance.Get("visitor_id")) + ", " +
-				"BILLNAME - " + billingName + ", " +
-				"Order ID - " + utils.InterfaceToString(orderInstance.GetID()) + ", " +
-				"Profile ID - " + profileId)
-		}
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Customer Profile: " +
+			"BILLNAME - " + billingName + ", " +
+			"Profile ID - " + profileId)
 	} else {
 		messages, _ := response["messages"].(map[string]interface{})
 		if messages != nil {
@@ -269,30 +265,19 @@ func (it *RestAPI) CreateProfile(orderInstance order.InterfaceOrder, paymentInfo
 func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}, profileId string) (string, map[string]interface{}, error) {
 	paymentID := ""
 	ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-	var address AuthorizeCIM.Address
-	if orderInstance != nil {
-		address = AuthorizeCIM.Address{
-			FirstName: orderInstance.GetBillingAddress().GetFirstName(),
-			LastName: orderInstance.GetBillingAddress().GetLastName(),
-			Address: orderInstance.GetBillingAddress().GetAddress(),
-			City: orderInstance.GetBillingAddress().GetCity(),
-			State: orderInstance.GetBillingAddress().GetState(),
-			Zip: orderInstance.GetBillingAddress().GetZipCode(),
-			Country: orderInstance.GetBillingAddress().GetCountry(),
-			PhoneNumber:  orderInstance.GetBillingAddress().GetPhone(),
-		}
-	} else {
-		address = AuthorizeCIM.Address{
-			FirstName: "",
-			LastName: "",
-			Address: "",
-			City: "",
-			State: "",
-			Zip: "",
-			Country: "",
-			PhoneNumber:  "",
-		}
+	extra := utils.InterfaceToMap(paymentInfo["extra"])
+	billingName := utils.InterfaceToString(extra["billing_name"])
+	address := AuthorizeCIM.Address{
+		FirstName: billingName,
+		LastName: "",
+		Address: "",
+		City: "",
+		State: "",
+		Zip: "",
+		Country: "",
+		PhoneNumber:  "",
 	}
+
 	credit_card := AuthorizeCIM.CreditCard{
 		CardNumber: utils.InterfaceToString(ccInfo["number"]),
 		ExpirationDate: utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]),
@@ -303,13 +288,9 @@ func (it *RestAPI) CreatePaymentProfile(orderInstance order.InterfaceOrder, paym
 	if success {
 		paymentID = newPaymentID
 
-		if orderInstance != nil {
-			env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Credit Card was added: "+
-				"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
-				"LASTNAME - "+orderInstance.GetBillingAddress().GetLastName()+", "+
-				"Order ID - "+utils.InterfaceToString(orderInstance.GetID())+", "+
-				"Billing ID - "+paymentID)
-		}
+		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Credit Card was added: "+
+			"BILLNAME - "+billingName+", "+
+			"Billing ID - "+paymentID)
 
 	} else {
 		messages, _ := response["messages"].(map[string]interface{})
