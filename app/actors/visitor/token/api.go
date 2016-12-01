@@ -9,7 +9,6 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -123,7 +122,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	fmt.Println(visitorCardModel.ToHashMap())
+	
 	return visitorCardModel.ToHashMap(), nil
 }
 
