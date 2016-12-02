@@ -232,7 +232,7 @@ func setupConfig() error {
 		}
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiGroup,
+			Path:        ConstConfigPathAuthorizeNetRestAPIGroup,
 			Value:       nil,
 			Type:        env.ConstConfigTypeGroup,
 			Editor:      "",
@@ -247,7 +247,7 @@ func setupConfig() error {
 		}
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiEnabled,
+			Path:        ConstConfigPathAuthorizeNetRestAPIEnabled,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
@@ -262,7 +262,7 @@ func setupConfig() error {
 		}
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiTitle,
+			Path:        ConstConfigPathAuthorizeNetRestAPITitle,
 			Value:       "Credit Card (Authorize.net)",
 			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
@@ -279,7 +279,7 @@ func setupConfig() error {
 		})
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiTest,
+			Path:        ConstConfigPathAuthorizeNetRestAPITest,
 			Value:       false,
 			Type:        env.ConstConfigTypeBoolean,
 			Editor:      "boolean",
@@ -294,7 +294,7 @@ func setupConfig() error {
 		}
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiApiLoginId,
+			Path:        ConstConfigPathAuthorizeNetRestAPIAPILoginID,
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",
@@ -309,7 +309,7 @@ func setupConfig() error {
 		}
 
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAuthorizeNetRestApiTransactionKey,
+			Path:        ConstConfigPathAuthorizeNetRestAPITransactionKey,
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,
 			Editor:      "line_text",

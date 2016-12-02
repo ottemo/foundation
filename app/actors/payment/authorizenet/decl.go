@@ -103,17 +103,17 @@ const (
 	</html>`
 
 	// Authorize.Net (REST Api)
-	ConstPaymentAuthorizeNetRestApiCode = "authorizenet_rest"
-	ConstPaymentAuthorizeNetRestApiName = "Authorize.Net"
+	ConstPaymentAuthorizeNetRestAPICode = "authorizenet_rest"
+	ConstPaymentAuthorizeNetRestAPIName = "Authorize.Net"
 
-	ConstConfigPathAuthorizeNetRestApiGroup = "payment.authorizeNetRestApi"
+	ConstConfigPathAuthorizeNetRestAPIGroup = "payment.authorizeNetRestApi"
 
-	ConstConfigPathAuthorizeNetRestApiEnabled   = "payment.authorizeNetRestApi.enabled"
-	ConstConfigPathAuthorizeNetRestApiTitle     = "payment.authorizeNetRestApi.title"
+	ConstConfigPathAuthorizeNetRestAPIEnabled = "payment.authorizeNetRestApi.enabled"
+	ConstConfigPathAuthorizeNetRestAPITitle   = "payment.authorizeNetRestApi.title"
 
-	ConstConfigPathAuthorizeNetRestApiApiLoginId   = "payment.authorizeNetRestApi.apiLoginId"
-	ConstConfigPathAuthorizeNetRestApiTransactionKey   = "payment.authorizeNetRestApi.transactionKey"
-	ConstConfigPathAuthorizeNetRestApiTest = "payment.authorizeNetRestApi.test"
+	ConstConfigPathAuthorizeNetRestAPIAPILoginID     = "payment.authorizeNetRestApi.apiLoginId"
+	ConstConfigPathAuthorizeNetRestAPITransactionKey = "payment.authorizeNetRestApi.transactionKey"
+	ConstConfigPathAuthorizeNetRestAPITest           = "payment.authorizeNetRestApi.test"
 )
 
 // DirectPostMethod is a implementer of InterfacePaymentMethod for a Authorize.Net Direct Post method
