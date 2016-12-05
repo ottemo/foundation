@@ -1,6 +1,8 @@
 package braintree
 
 import (
+	//"github.com/lionelbarrow/braintree-go"
+
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
+	"github.com/lionelbarrow/braintree-go"
 )
 
 // GetCode returns payment method code for use in business logic
@@ -42,52 +45,77 @@ func (it *BraintreePaymentMethod) IsTokenable(checkoutInstance checkout.Interfac
 
 // TODO Authorize makes payment method authorize operation
 func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	gateway := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit-fake"
-	formValues := map[string]string{}
-	token := "TODO generate token"
 
-	htmlText := "<form id='braintree-form' method='post' action='" + gateway + "'>"
-	for key, value := range formValues {
-		htmlText += "<input type='hidden' name='" + key + "' value='" + value + "' />"
+	bt := braintree.New(
+		braintree.Sandbox,
+		"ddxtcwf5n3hvtz3g",
+		"cfj6fzzrkc898mm6",
+		"24d8738ee7bc4331bbc3bac79f2a54c2",
+	)
+
+	token, err := bt.ClientToken().Generate();
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
-	htmlText += "<div id='payment-form'></div>"
-	htmlText += "<input type='submit' value='Submit' />"
-	htmlText += "</form>"
+	////gateway := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit-fake"
+	//formValues := map[string]string{
+	//	"CC": "4111 1111 1111 1111",
+	//}
 
-	//htmlText += "<script src='https://js.braintreegateway.com/js/braintree-2.30.0.min.js'></script>"
-	//htmlText += "<script>var script = document.createElement( 'script' );</script>"
-	//htmlText += "<script>script.src = 'https://js.braintreegateway.com/js/braintree-2.30.0.min.js';</script>"
-	//htmlText += "<script>$('#payment-form').append( script );</script>"
-	htmlText += "<script> // " + token + "\n"
-	//htmlText += "var brainformSubmitStage = 1; // " + token + "\n"
-	//htmlText += "$( '#braintree-form' ).submit(function( event ) {"
-	//htmlText += 	"	if (brainformSubmitStage == 1) {" +
-	//		"		console.log( 'Handler for .submit() called. Preventing.' );event.preventDefault();" +
-	//		"		brainformSubmitStage = 2;" +
-	//		"	}"
-	//htmlText += "		elseif (brainformSubmitStage == 2) {" +
-	//		"		brainformSubmitStage = 3;" +
-	//		"		console.log('request for nonse');" +
-	//		"	}"
-	//htmlText += "		elseif (brainformSubmitStage == 3) {" +
-	//		"		console.log('NONSE should be here');" +
-	//		"	}"
-	//htmlText += "});"
-	//htmlText += "$.getScript('https://js.braintreegateway.com/js/braintree-2.30.0.min.js', function(){"
-	//htmlText += "	console.log('Token: "+token+"');"
-	//htmlText += "	braintree.setup('"+token+"', 'dropin', {container: 'payment-form'});"
-	//htmlText += "});"
-	htmlText += "</script>"
-	//htmlText += "<script>braintree.setup('"+token+"', 'dropin', {container: 'payment-form'});</script>"
+	htmlText := `
+	<script>
+	$.getScript('https://js.braintreegateway.com/web/3.6.0/js/client.min.js', function(response, status){
+		console.log('Status: ', status);
+
+		window.braintree.client.create({
+			authorization: '`+token+`'
+			},function (createErr, clientInstance) {
+				var data = {
+					creditCard: {
+						number: '4111 1111 1111 1111',
+						cvv: '111',
+						expirationDate: '11/25'
+					}
+      				};
+
+				clientInstance.request({
+    					endpoint: 'payment_methods/credit_cards',
+    					method: 'post',
+    					data: data
+  				}, function (requestErr, response) {
+					if (requestErr) { throw new Error(requestErr); }
+
+					console.log('Got nonce:', response.creditCards[0].nonce);
+					console.log('Response:', response);
+
+					var form = document.createElement('form');
+
+					form.method = "POST";
+    					form.action = "`+utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "/braintree/submit"+`";
+    					form.id = "braintreeForm";
+
+					var element1 = document.createElement("input");
+					element1.name = "nonce";
+					element1.value = response.creditCards[0].nonce;
+					form.appendChild(element1);
+
+					document.body.appendChild(form);
+
+					$('#braintreeForm').submit();
+    					//form.submit();
+				});
+			}
+		);
+
+		console.log('Client');
+	});
+	</script>
+	`
 
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "FORM: "+htmlText+"\n")
 
-	//env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "NEW TRANSACTION: "+
-	//	"Visitor ID - "+utils.InterfaceToString(orderInstance.Get("visitor_id"))+", "+
-	//	"Order ID - "+utils.InterfaceToString(orderInstance.GetID()))
-
-	return api.StructRestRedirect{Result: htmlText, Location: utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit"}, nil
+	return api.StructRestRedirect{Result: htmlText, Location: utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "/checkout/submit"}, nil
 }
 
 // Capture makes payment method capture operation
