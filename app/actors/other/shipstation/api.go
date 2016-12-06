@@ -2,6 +2,7 @@ package shipstation
 
 import (
 	"encoding/base64"
+	"math"
 	"strings"
 	"time"
 
@@ -181,12 +182,12 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
 				var oiItemDiscountedPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
 
-				if oiItemPrice != oiItemDiscountedPrice {
+				if math.Abs(utils.RoundPrice(oiItemPrice - oiItemDiscountedPrice)) != 0 {
 					orderItem := OrderItem{
 						Sku:        "",
 						Name:       "Discount on " + utils.InterfaceToString(oiItem["name"]),
 						Quantity:   oiItemQty,
-						UnitPrice:  oiItemDiscountedPrice - utils.InterfaceToFloat64(oiItem["price"]), // TODO: FORMAT?
+						UnitPrice:  utils.RoundPrice(oiItemDiscountedPrice - utils.InterfaceToFloat64(oiItem["price"])),
 						Adjustment: true,
 					}
 					orderDetails.Items = append(orderDetails.Items, orderItem)
@@ -201,12 +202,12 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 		var calculatedGrandTotal = calculatedSubtotal + calculatedDiscounts + orderDetails.ShippingAmount + orderDetails.TaxAmount
 		var orderDiscount = oItem.GetGrandTotal() - calculatedGrandTotal
 
-		if orderDiscount != 0 {
+		if math.Abs(utils.RoundPrice(orderDiscount)) != 0 {
 			orderItem := OrderItem{
 				Sku:        "",
 				Name:       "Discount on Order",
 				Quantity:   1,
-				UnitPrice:  orderDiscount, // TODO: FORMAT?
+				UnitPrice:  utils.RoundPrice(orderDiscount), // TODO: FORMAT?
 				Adjustment: true,
 			}
 			orderDetails.Items = append(orderDetails.Items, orderItem)
