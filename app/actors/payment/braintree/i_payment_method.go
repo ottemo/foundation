@@ -11,6 +11,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
 	"github.com/lionelbarrow/braintree-go"
+	"fmt"
 )
 
 // GetCode returns payment method code for use in business logic
@@ -46,6 +47,11 @@ func (it *BraintreePaymentMethod) IsTokenable(checkoutInstance checkout.Interfac
 // TODO Authorize makes payment method authorize operation
 func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
+	fmt.Println("orderInstance: ", orderInstance)
+	fmt.Println("orderInstance: ", utils.InterfaceToString(orderInstance))
+	fmt.Println("paymentInfo: ", paymentInfo)
+	fmt.Println("paymentInfo: ", utils.InterfaceToString(paymentInfo))
+
 	bt := braintree.New(
 		braintree.Sandbox,
 		"ddxtcwf5n3hvtz3g",
@@ -53,15 +59,85 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 		"24d8738ee7bc4331bbc3bac79f2a54c2",
 	)
 
-	token, err := bt.ClientToken().Generate();
+	query := new(braintree.SearchQuery)
+	f := query.AddTextField("email")
+	extra := utils.InterfaceToMap(paymentInfo["extra"])
+	f.Is = utils.InterfaceToString(extra["email"])
+	searchResult, err := bt.Customer().Search(query)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	var customerPtr *braintree.Customer
+	if len(searchResult.Customers) > 0 {
+		customerPtr = searchResult.Customers[0]
+		fmt.Println("\n Found Customer: ", *customerPtr, "\n")
+		fmt.Println("\n Found Customer: ", utils.InterfaceToString(*customerPtr), "\n")
+	} else {
+		//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "87b2f6a4-ee02-4142-9ff9-239e564f5b37", "could not search for a customer")
+		customerPtr, err = bt.Customer().Create(&braintree.Customer{
+			Email: utils.InterfaceToString(extra["email"]),
+		})
+		if err != nil {
+			fmt.Println("Customer creation error")
+			return nil, env.ErrorDispatch(err)
+		}
+		fmt.Println("\n New Customer: ", *customerPtr, "\n")
+		fmt.Println("\n New Customer: ", utils.InterfaceToString(*customerPtr), "\n")
+	}
+
+	//// Check if we are just supposed to create a Customer (aka a token)
+	//action := paymentInfo[checkout.ConstPaymentActionTypeKey]
+	//isCreateToken := utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken
+	//if isCreateToken {
+	//	extra := utils.InterfaceToMap(paymentInfo["extra"])
+	//	visitorEmail := utils.InterfaceToString(extra["email"])
+	//
+	//	cust, err := bt.Customer().Find(&braintree.Customer{})
+	//	if err != nil {
+	//		fmt.Println("Customer creation error")
+	//		return nil, env.ErrorDispatch(err)
+	//	}
+	//}
+	//
+	//cust, err := bt.Customer().Create(&braintree.Customer{})
+	//if err != nil {
+	//	fmt.Println("Customer creation error")
+	//	return nil, env.ErrorDispatch(err)
+	//}
+	//
+	////extra := utils.InterfaceToMap(paymentInfo["extra"])
+	////visitorID := utils.InterfaceToString(extra["visitor_id"])
+	//ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
+	//card, err := bt.CreditCard().Create(&braintree.CreditCard{
+	//	CustomerId: 	cust.Id,
+	//	Number:         utils.InterfaceToString(ccInfo["number"]),
+	//	ExpirationDate: utils.InterfaceToString(ccInfo["expire_month"])+"/"+utils.InterfaceToString(ccInfo["expire_year"]),
+	//	CVV:            utils.InterfaceToString(ccInfo["cvc"]),
+	//	Options: &braintree.CreditCardOptions{
+	//		VerifyCard: true,
+	//	},
+	//})
+	//if err != nil {
+	//	fmt.Println("VERIFICATION ERROR for CARD: ", card)
+	//	return nil, env.ErrorDispatch(err)
+	//}
+
+	token, err := bt.ClientToken().GenerateWithCustomer((*customerPtr).Id);
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	////gateway := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit-fake"
-	//formValues := map[string]string{
-	//	"CC": "4111 1111 1111 1111",
+	//token, err := bt.ClientToken().Generate();
+	//if err != nil {
+	//	return nil, env.ErrorDispatch(err)
 	//}
+
+	//gateway := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit-fake"
+	formValues := map[string]string{
+		"x_amount": fmt.Sprintf("%.2f", orderInstance.GetGrandTotal()),
+		"x_session":          utils.InterfaceToString(paymentInfo["sessionID"]),
+		"x_customer_id": (*customerPtr).Id,
+	}
 
 	htmlText := `
 	<script>
@@ -71,11 +147,16 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 		window.braintree.client.create({
 			authorization: '`+token+`'
 			},function (createErr, clientInstance) {
+				if (createErr) { throw new Error(createErr); }
+
 				var data = {
 					creditCard: {
-						number: '4111 1111 1111 1111',
+						number: '$CC_NUM',
+						expirationDate: '$CC_MONTH/$CC_YEAR',
 						cvv: '111',
-						expirationDate: '11/25'
+			        		options: {
+        						validate: true
+      						}
 					}
       				};
 
@@ -84,7 +165,10 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
     					method: 'post',
     					data: data
   				}, function (requestErr, response) {
-					if (requestErr) { throw new Error(requestErr); }
+					console.debug("requestErr: ", requestErr);
+					if (requestErr) {
+						throw new Error(requestErr);
+					}
 
 					console.log('Got nonce:', response.creditCards[0].nonce);
 					console.log('Response:', response);
@@ -95,10 +179,23 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
     					form.action = "`+utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "/braintree/submit"+`";
     					form.id = "braintreeForm";
 
-					var element1 = document.createElement("input");
-					element1.name = "nonce";
-					element1.value = response.creditCards[0].nonce;
-					form.appendChild(element1);
+					var elementNonce = document.createElement("input");
+					elementNonce.name = "nonce";
+					elementNonce.value = response.creditCards[0].nonce;
+					form.appendChild(elementNonce);
+					`
+
+	for key, value := range formValues {
+		var elementName = `element`+key;
+		htmlText += `
+		var `+elementName+` = document.createElement('input');
+		`+elementName+`.name = '`+key+`';
+		`+elementName+`.value = '`+value+`';
+		form.appendChild(`+elementName+`);
+		`
+	}
+
+	htmlText += `
 
 					document.body.appendChild(form);
 
