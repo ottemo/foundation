@@ -39,6 +39,26 @@ func APISubmit(context api.InterfaceApplicationContext) (interface{}, error) {
 		"24d8738ee7bc4331bbc3bac79f2a54c2",
 	)
 
+	// Find or create card
+	//var cc = &braintree.CreditCard{
+	//	Number:          "4111111111111111",
+	//	//Number:          "4000111111111115",
+	//	//Number:		 "3566002020360505",
+	//	//Number:		 "3566002020360505",
+	//	PaymentMethodNonce: utils.InterfaceToString(requestData["nonce"]),
+	//	ExpirationMonth: "05",
+	//	ExpirationYear:  "25",
+	//	Options: &braintree.CreditCardOptions{
+	//		VerifyCard: true,
+	//		//FailOnDuplicatePaymentMethod: true,
+	//	},
+	//}
+
+	//fmt.Println("\ncc: ", cc, "\n\n", utils.InterfaceToString(cc))
+
+	//bt.CreditCard().Find(token)
+
+
 	var decimal = braintree.NewDecimal(100, 2)
 	err = decimal.UnmarshalText([]byte(utils.InterfaceToString(requestData["x_amount"])))
 	if err != nil {
@@ -54,19 +74,19 @@ func APISubmit(context api.InterfaceApplicationContext) (interface{}, error) {
 			SubmitForSettlement: true,
 			StoreInVault: true,
 		},
-		CreditCard: &braintree.CreditCard{
-			Number:          "4111111111111111",
-			//Number:          "4000111111111115",
-			//Number:		 "3566002020360505",
-			//Number:		 "3566002020360505",
-			CVV:             "123",
-			ExpirationMonth: "05",
-			ExpirationYear:  "25",
-			Options: &braintree.CreditCardOptions{
-				VerifyCard: true,
-				//FailOnDuplicatePaymentMethod: true,
-			},
-		},
+		//CreditCard: &braintree.CreditCard{
+		//	//Number:          "4111111111111111",
+		//	//Number:          "4000111111111115",
+		//	//Number:		 "3566002020360505",
+		//	//Number:		 "3566002020360505",
+		//	//CVV:             "123",
+		//	//ExpirationMonth: "05",
+		//	//ExpirationYear:  "25",
+		//	Options: &braintree.CreditCardOptions{
+		//		VerifyCard: true,
+		//		//FailOnDuplicatePaymentMethod: true,
+		//	},
+		//},
 
 		//CreditCard: &braintree.CreditCard{
 		//	Number: "4111111111111111",
@@ -79,13 +99,30 @@ func APISubmit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	tr, err = bt.Transaction().Settle(tr.Id)
-	if err != nil {
-		fmt.Println("TRANSACTION not SETTLED")
-		return nil, env.ErrorDispatch(err)
-	}
+	//tr, err = bt.Transaction().Settle(tr.Id)
+	//if err != nil {
+	//	fmt.Println("TRANSACTION not SETTLED")
+	//	return nil, env.ErrorDispatch(err)
+	//}
 
 	fmt.Println("TRANSACTION STATUS: ", tr.Status)
+
+	//------------------------------------------
+	// Here we have CC token
+	// Here we have Customer + ID token
+	//------------------------------------------
+
+	//var visitorCreditCard visitor.InterfaceVisitorCard
+	//if visitorCreditCard != nil && visitorCreditCard.GetID() != "" {
+	//	//orderPaymentInfo["creditCardID"] = visitorCreditCard.GetID()
+	//
+	//	visitorCreditCard.Set("token_id", orderTransactionID)
+	//	visitorCreditCard.Set("token_updated", time.Now())
+	//	visitorCreditCard.Save()
+	//}
+
+
+	//return nil, env.ErrorDispatch(*new(error))
 
 	session, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]), false)
 	if session == nil {
@@ -119,9 +156,10 @@ func APISubmit(context api.InterfaceApplicationContext) (interface{}, error) {
 		env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION APPROVED: "+
 			"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
 			"OrderID - "+checkoutOrder.GetID()+", "+
-			"Card  - "+utils.InterfaceToString(requestData["x_card_type"])+" "+utils.InterfaceToString(requestData["x_account_number"])+", "+
+			"Card  - "+utils.InterfaceToString(requestData["cardType"])+" "+utils.InterfaceToString(requestData["lastTwo"])+", "+
 			"Total - "+utils.InterfaceToString(requestData["x_amount"])+", "+
-			"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
+			"Transaction ID - "+tr.CreditCard.Token)
+			//"Transaction ID - "+utils.InterfaceToString(requestData["x_trans_id"]))
 
 		return api.StructRestRedirect{Result: orderMap, Location: redirectURL, DoRedirect: true}, err
 	}

@@ -52,6 +52,26 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 	fmt.Println("paymentInfo: ", paymentInfo)
 	fmt.Println("paymentInfo: ", utils.InterfaceToString(paymentInfo))
 
+	//var transactionID string
+	//var visitorCreditCard visitor.InterfaceVisitorCard
+
+	// try to obtain visitor token info
+	//if cc, present := paymentInfo["cc"]; present {
+	//	if creditCard, ok := cc.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
+	//		transactionID = creditCard.GetToken()
+	//		visitorCreditCard = creditCard
+	//	}
+	//}
+	//
+	//// id presense in credit card means it was saved so we can update token for it
+	//if visitorCreditCard != nil && visitorCreditCard.GetID() != "" {
+	//	//orderPaymentInfo["creditCardID"] = visitorCreditCard.GetID()
+	//
+	//	visitorCreditCard.Set("token_id", orderTransactionID)
+	//	visitorCreditCard.Set("token_updated", time.Now())
+	//	visitorCreditCard.Save()
+	//}
+
 	bt := braintree.New(
 		braintree.Sandbox,
 		"ddxtcwf5n3hvtz3g",
@@ -59,31 +79,31 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 		"24d8738ee7bc4331bbc3bac79f2a54c2",
 	)
 
-	query := new(braintree.SearchQuery)
-	f := query.AddTextField("email")
-	extra := utils.InterfaceToMap(paymentInfo["extra"])
-	f.Is = utils.InterfaceToString(extra["email"])
-	searchResult, err := bt.Customer().Search(query)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	var customerPtr *braintree.Customer
-	if len(searchResult.Customers) > 0 {
-		customerPtr = searchResult.Customers[0]
-		fmt.Println("\n Found Customer: ", *customerPtr, "\n")
-		fmt.Println("\n Found Customer: ", utils.InterfaceToString(*customerPtr), "\n")
-	} else {
-		//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "87b2f6a4-ee02-4142-9ff9-239e564f5b37", "could not search for a customer")
-		customerPtr, err = bt.Customer().Create(&braintree.Customer{
-			Email: utils.InterfaceToString(extra["email"]),
-		})
-		if err != nil {
-			fmt.Println("Customer creation error")
-			return nil, env.ErrorDispatch(err)
-		}
-		fmt.Println("\n New Customer: ", *customerPtr, "\n")
-		fmt.Println("\n New Customer: ", utils.InterfaceToString(*customerPtr), "\n")
-	}
+	//query := new(braintree.SearchQuery)
+	//f := query.AddTextField("email")
+	//extra := utils.InterfaceToMap(paymentInfo["extra"])
+	//f.Is = utils.InterfaceToString(extra["email"])
+	//searchResult, err := bt.Customer().Search(query)
+	//if err != nil {
+	//	return nil, env.ErrorDispatch(err)
+	//}
+	//var customerPtr *braintree.Customer
+	//if len(searchResult.Customers) > 0 {
+	//	customerPtr = searchResult.Customers[0]
+	//	fmt.Println("\n Found Customer: ", *customerPtr, "\n")
+	//	fmt.Println("\n Found Customer: ", utils.InterfaceToString(*customerPtr), "\n")
+	//} else {
+	//	//return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "87b2f6a4-ee02-4142-9ff9-239e564f5b37", "could not search for a customer")
+	//	customerPtr, err = bt.Customer().Create(&braintree.Customer{
+	//		Email: utils.InterfaceToString(extra["email"]),
+	//	})
+	//	if err != nil {
+	//		fmt.Println("Customer creation error")
+	//		return nil, env.ErrorDispatch(err)
+	//	}
+	//	fmt.Println("\n New Customer: ", *customerPtr, "\n")
+	//	fmt.Println("\n New Customer: ", utils.InterfaceToString(*customerPtr), "\n")
+	//}
 
 	//// Check if we are just supposed to create a Customer (aka a token)
 	//action := paymentInfo[checkout.ConstPaymentActionTypeKey]
@@ -122,21 +142,21 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 	//	return nil, env.ErrorDispatch(err)
 	//}
 
-	token, err := bt.ClientToken().GenerateWithCustomer((*customerPtr).Id);
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	//token, err := bt.ClientToken().Generate();
+	//token, err := bt.ClientToken().GenerateWithCustomer((*customerPtr).Id);
 	//if err != nil {
 	//	return nil, env.ErrorDispatch(err)
 	//}
+
+	token, err := bt.ClientToken().Generate();
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	//gateway := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "checkout/submit-fake"
 	formValues := map[string]string{
 		"x_amount": fmt.Sprintf("%.2f", orderInstance.GetGrandTotal()),
 		"x_session":          utils.InterfaceToString(paymentInfo["sessionID"]),
-		"x_customer_id": (*customerPtr).Id,
+		//"x_customer_id": (*customerPtr).Id,
 	}
 
 	htmlText := `
@@ -153,7 +173,6 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 					creditCard: {
 						number: '$CC_NUM',
 						expirationDate: '$CC_MONTH/$CC_YEAR',
-						cvv: '111',
 			        		options: {
         						validate: true
       						}
@@ -183,6 +202,16 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 					elementNonce.name = "nonce";
 					elementNonce.value = response.creditCards[0].nonce;
 					form.appendChild(elementNonce);
+
+					var elementCardType = document.createElement("input");
+					elementCardType.name = "cardType";
+					elementCardType.value = response.creditCards[0].details.cardType;
+					form.appendChild(elementCardType);
+
+					var elementLastTwo = document.createElement("input");
+					elementLastTwo.name = "lastTwo";
+					elementLastTwo.value = response.creditCards[0].details.lastTwo;
+					form.appendChild(elementLastTwo);
 					`
 
 	for key, value := range formValues {

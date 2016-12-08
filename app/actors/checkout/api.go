@@ -10,6 +10,7 @@ import (
 	"github.com/ottemo/foundation/app/actors/payment/zeropay"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"fmt"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -518,11 +519,122 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+	fmt.Println("\n--- APISubmitCheckout currentCheckout", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
+
+/*
+{
+    "BillingAddress": {
+        "_id": "58482fba0770b0a7ca9f2438",
+        "address_line1": "Address-1",
+        "address_line2": "Address-2",
+        "city": "City",
+        "company": "Company",
+        "country": "US",
+        "first_name": "First",
+        "last_name": "Last",
+        "phone": "1234-567-8900",
+        "state": "AL",
+        "visitor_id": "582ad1aee1e189d4c7e6e94e",
+        "zip_code": "10005"
+    },
+    "CartID": "58482dd73c0dfe88fbb04970",
+    "Info": {
+        "calculation": {
+            "0": {
+                "GT": 60,
+                "SP": 0,
+                "SPA": 45,
+                "ST": 15
+            },
+            "1": {
+                "GT": 60,
+                "SPA": 45,
+                "ST": 15
+            }
+        },
+        "cc": {
+            "cvc": "111",
+            "expire_month": "12",
+            "expire_year": "2025",
+            "number": "4111111111111111"
+        },
+        "method": "paypal_payflow",
+        "price_adjustments": [
+            {
+                "Amount": 15,
+                "Code": "ST",
+                "IsPercent": false,
+                "Labels": [
+                    "ST"
+                ],
+                "Name": "ST",
+                "PerItem": {
+                    "1": 15
+                },
+                "Priority": 1
+            },
+            {
+                "Amount": 45,
+                "Code": "saleprice_discount",
+                "IsPercent": false,
+                "Labels": [
+                    "SPA"
+                ],
+                "Name": "SalePriceDiscount",
+                "PerItem": {
+                    "1": 45
+                },
+                "Priority": 1.1
+            },
+            {
+                "Amount": 0,
+                "Code": "default",
+                "IsPercent": false,
+                "Labels": [
+                    "SP"
+                ],
+                "Name": "Flat Rate",
+                "PerItem": null,
+                "Priority": 2
+            }
+        ]
+    },
+    "OrderID": "",
+    "PaymentMethodCode": "paypal_payflow",
+    "SessionID": "rIv1QDD9IBa1N12cZ1Ukue7D3zIgAXja",
+    "ShippingAddress": {
+        "_id": "58482fba0770b0a7ca9f2438",
+        "address_line1": "Address-1",
+        "address_line2": "Address-2",
+        "city": "City",
+        "company": "Company",
+        "country": "US",
+        "first_name": "First",
+        "last_name": "Last",
+        "phone": "1234-567-8900",
+        "state": "AL",
+        "visitor_id": "582ad1aee1e189d4c7e6e94e",
+        "zip_code": "10005"
+    },
+    "ShippingMethodCode": "flat_rate",
+    "ShippingRate": {
+        "Code": "default",
+        "Name": "Flat Rate",
+        "Price": 0
+    },
+    "VisitorID": "582ad1aee1e189d4c7e6e94e"
+}
+*/
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+	fmt.Println("\n--- APISubmitCheckout requestData", requestData, "\n", utils.InterfaceToString(requestData))
+
+/*
+{}
+*/
 
 	// Handle custom information set in case of one request submit
 	if customInfo := utils.GetFirstMapValue(requestData, "custom_info"); customInfo != nil {
