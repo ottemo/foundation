@@ -49,6 +49,7 @@ func getStripeCustomerToken(vid string) string {
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
 	model.ListFilterAdd("visitor_id", "=", vid)
+	model.ListFilterAdd("payment", "=", ConstPaymentCode)
 
 	// 3rd party customer identifier, used by stripe
 	err := model.ListAddExtraAttribute("customer_id")

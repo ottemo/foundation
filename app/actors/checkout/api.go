@@ -189,10 +189,14 @@ func APISetCheckoutInfo(context api.InterfaceApplicationContext) (interface{}, e
 		return nil, env.ErrorDispatch(err)
 	}
 
+	fmt.Println("\nAPISetCheckoutInfo currentCheckout: ", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
+
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+
+	fmt.Println("\nAPISetCheckoutInfo requestData: ", requestData, "\n", utils.InterfaceToString(requestData))
 
 	for key, value := range requestData {
 		err := currentCheckout.SetInfo(key, value)
@@ -200,6 +204,8 @@ func APISetCheckoutInfo(context api.InterfaceApplicationContext) (interface{}, e
 			return nil, env.ErrorDispatch(err)
 		}
 	}
+
+	fmt.Println("\nAPISetCheckoutInfo currentCheckout.SetInfo: ", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
 
 	// updating session
 	checkout.SetCurrentCheckout(context, currentCheckout)
@@ -329,6 +335,92 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 		return nil, env.ErrorDispatch(err)
 	}
 
+	fmt.Println("APISetPaymentMethod currentCheckout: ", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
+
+	/*
+{
+    "BillingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "CartID": "5829b005716502632c7b290e",
+    "Info": {
+        "calculation": {
+            "0": {
+                "GT": 145,
+                "SP": 5,
+                "ST": 140
+            },
+            "1": {
+                "GT": 140,
+                "ST": 140
+            }
+        },
+        "price_adjustments": [
+            {
+                "Amount": 140,
+                "Code": "ST",
+                "IsPercent": false,
+                "Labels": [
+                    "ST"
+                ],
+                "Name": "ST",
+                "PerItem": {
+                    "1": 140
+                },
+                "Priority": 1
+            },
+            {
+                "Amount": 5,
+                "Code": "default",
+                "IsPercent": false,
+                "Labels": [
+                    "SP"
+                ],
+                "Name": "Flat Rate",
+                "PerItem": null,
+                "Priority": 2
+            }
+        ]
+    },
+    "OrderID": "",
+    "PaymentMethodCode": "",
+    "SessionID": "KFN8bZQ1DoQMnbahA1qNRcj0E2QeGiXe",
+    "ShippingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "ShippingMethodCode": "flat_rate",
+    "ShippingRate": {
+        "Code": "default",
+        "Name": "Flat Rate",
+        "Price": 5
+    },
+    "VisitorID": "57f5423e81bc4d4deb297ac2"
+}
+
+	*/
+
 	// looking for payment method
 	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
 		if paymentMethod.GetCode() == context.GetRequestArgument("method") {
@@ -339,12 +431,181 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 				if err != nil {
 					return nil, env.ErrorDispatch(err)
 				}
+				fmt.Println("APISetPaymentMethod currentCheckout.SetPaymentMethod: ", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
+
+				/*
+{
+    "BillingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "CartID": "5829b005716502632c7b290e",
+    "Info": {
+        "calculation": {
+            "0": {
+                "GT": 145,
+                "SP": 5,
+                "ST": 140
+            },
+            "1": {
+                "GT": 140,
+                "ST": 140
+            }
+        },
+        "price_adjustments": [
+            {
+                "Amount": 140,
+                "Code": "ST",
+                "IsPercent": false,
+                "Labels": [
+                    "ST"
+                ],
+                "Name": "ST",
+                "PerItem": {
+                    "1": 140
+                },
+                "Priority": 1
+            },
+            {
+                "Amount": 5,
+                "Code": "default",
+                "IsPercent": false,
+                "Labels": [
+                    "SP"
+                ],
+                "Name": "Flat Rate",
+                "PerItem": null,
+                "Priority": 2
+            }
+        ]
+    },
+    "OrderID": "",
+    "PaymentMethodCode": "stripe",
+    "SessionID": "KFN8bZQ1DoQMnbahA1qNRcj0E2QeGiXe",
+    "ShippingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "ShippingMethodCode": "flat_rate",
+    "ShippingRate": {
+        "Code": "default",
+        "Name": "Flat Rate",
+        "Price": 5
+    },
+    "VisitorID": "57f5423e81bc4d4deb297ac2"
+}
+*/
 
 				// checking for additional info
 				contentValues, _ := api.GetRequestContentAsMap(context)
 				for key, value := range contentValues {
 					currentCheckout.SetInfo(key, value)
 				}
+				fmt.Println("APISetPaymentMethod currentCheckout.SetInfo: ", currentCheckout, "\n", utils.InterfaceToString(currentCheckout))
+
+				/*
+{
+    "BillingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "CartID": "5829b005716502632c7b290e",
+    "Info": {
+        "calculation": {
+            "0": {
+                "GT": 145,
+                "SP": 5,
+                "ST": 140
+            },
+            "1": {
+                "GT": 140,
+                "ST": 140
+            }
+        },
+        "method": "stripe",
+        "price_adjustments": [
+            {
+                "Amount": 140,
+                "Code": "ST",
+                "IsPercent": false,
+                "Labels": [
+                    "ST"
+                ],
+                "Name": "ST",
+                "PerItem": {
+                    "1": 140
+                },
+                "Priority": 1
+            },
+            {
+                "Amount": 5,
+                "Code": "default",
+                "IsPercent": false,
+                "Labels": [
+                    "SP"
+                ],
+                "Name": "Flat Rate",
+                "PerItem": null,
+                "Priority": 2
+            }
+        ]
+    },
+    "OrderID": "",
+    "PaymentMethodCode": "stripe",
+    "SessionID": "KFN8bZQ1DoQMnbahA1qNRcj0E2QeGiXe",
+    "ShippingAddress": {
+        "_id": "5849522f08d5f6894b3f6653",
+        "address_line1": "SAddress-1",
+        "address_line2": "SAddress-2",
+        "city": "SCity",
+        "company": "SCompany",
+        "country": "US",
+        "first_name": "SFirst",
+        "last_name": "SLast",
+        "phone": "1234567890",
+        "state": "AL",
+        "visitor_id": "57f5423e81bc4d4deb297ac2",
+        "zip_code": "10005"
+    },
+    "ShippingMethodCode": "flat_rate",
+    "ShippingRate": {
+        "Code": "default",
+        "Name": "Flat Rate",
+        "Price": 5
+    },
+    "VisitorID": "57f5423e81bc4d4deb297ac2"
+}
+*/
 
 				// visitor event for setting payment method
 				eventData := map[string]interface{}{"session": context.GetSession(), "paymentMethod": paymentMethod, "checkout": currentCheckout}
