@@ -10,6 +10,7 @@ import (
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"fmt"
 )
 
 // SendOrderConfirmationEmail sends an order confirmation email
@@ -30,6 +31,8 @@ func (it *DefaultCheckout) SendOrderConfirmationEmail() error {
 
 // CheckoutSuccess will save the order and clear the shopping in the session.
 func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, session api.InterfaceSession) error {
+	fmt.Println("DefaultCheckout) CheckoutSuccess")
+
 	var err error
 
 	// making sure order was specified
@@ -75,5 +78,6 @@ func (it *DefaultCheckout) CheckoutSuccess(checkoutOrder order.InterfaceOrder, s
 		env.ErrorDispatch(err)
 	}
 
+	fmt.Println("DefaultCheckout) CheckoutSuccess DONE")
 	return nil
 }

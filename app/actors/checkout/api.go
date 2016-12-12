@@ -721,10 +721,13 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 		},
 	}
 	// contains creditCardLastFour, creditCardType, responseMessage, responseResult, transactionID, creditCardExp
+	fmt.Println("--- checkoutObtainToken Authorize")
 	paymentResult, err := paymentMethod.Authorize(nil, paymentInfo)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+
+	fmt.Println("--- checkoutObtainToken", utils.InterfaceToString(paymentResult))
 
 	authorizeCardResult := utils.InterfaceToMap(paymentResult)
 	if !utils.KeysInMapAndNotBlank(authorizeCardResult, "transactionID", "creditCardLastFour") {
@@ -761,6 +764,7 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	visitorCardModel.Set("visitor_id", currentVisitorID)
 
 	// save card info if checkbox is checked on frontend
+	fmt.Println("--- checkoutObtainToken save? ", utils.InterfaceToString(creditCardInfo["save"]))
 	if utils.InterfaceToBool(creditCardInfo["save"]) {
 		err = visitorCardModel.Save()
 		if err != nil {
@@ -1026,6 +1030,7 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 			specifiedCreditCard = nil
 		}
 	}
+	fmt.Println("--- specifiedCreditCard", utils.InterfaceToString(specifiedCreditCard))
 
 	// Add handle for credit card post action in one request, it would bind credit card object to a cc key in checkout info
 	if specifiedCreditCard != nil {
@@ -1033,12 +1038,22 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
 			// in  this case raw cc will be set to checkout info and used by payment method
+			fmt.Println("--- in  this case raw cc will be set to checkout info and used by payment method")
 			currentCheckout.SetInfo("cc", specifiedCreditCard)
 			env.ErrorDispatch(err)
 		} else {
+			fmt.Println("--- !!! in  this case raw cc will be set to checkout info and used by payment method")
 			currentCheckout.SetInfo("cc", creditCard)
 		}
 	}
 
-	return currentCheckout.Submit()
+	fmt.Println("\n--- APISubmitCheckout call currentCheckout.Submit()\n")
+	submitResult, err := currentCheckout.Submit()
+	if err != nil {
+		fmt.Println("\n--- APISubmitCheckout ERROR:", err, "\n")
+		return nil, env.ErrorDispatch(err)
+	}
+	fmt.Println("\n--- APISubmitCheckout submitResult:", utils.InterfaceToString(submitResult), "\n")
+
+	return submitResult, nil
 }

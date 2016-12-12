@@ -35,7 +35,8 @@ func (it *BraintreePaymentMethod) GetName() string {
 
 // GetType returns type of payment method according to "github.com/ottemo/foundation/app/models/checkout"
 func (it *BraintreePaymentMethod) GetType() string {
-	return checkout.ConstPaymentTypePostCC // TODO decide this, other or new type
+	//return checkout.ConstPaymentTypePostCC // TODO decide this, other or new type
+	return checkout.ConstPaymentTypeCreditCard
 }
 
 // IsAllowed checks for payment method applicability
@@ -254,7 +255,7 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 	//var ch *stripe.Charge
 	var tr *braintree.Transaction
 	ccInfo := paymentInfo["cc"]
-	ccInfoMap := utils.InterfaceToMap(ccInfo)
+	//ccInfoMap := utils.InterfaceToMap(ccInfo)
 
 	// Token Charge
 	// - we have a Customer, and a Card
@@ -262,7 +263,7 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 	// - must reference Customer
 	// - email is stored on the Customer
 	if creditCard, ok := ccInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
-		fmt.Println("\n--- creditCard, ok")
+		fmt.Println("\n--- creditCard, ok: ", utils.InterfaceToString(creditCard), "\n")
 		var err error
 		cardID := creditCard.GetToken()
 		stripeCID := creditCard.GetCustomerID()
@@ -278,32 +279,43 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 		//	Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
 		//	Customer: stripeCID,                                   // Mandatory
 		//}
-		ccCVC := utils.InterfaceToString(ccInfoMap["cvc"])
-		if ccCVC == "" {
-			fmt.Println("ccCVC == ''")
-			err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		//ccCVC := utils.InterfaceToString(ccInfoMap["cvc"])
+		//if ccCVC == "" {
+		//	fmt.Println("ccCVC == ''")
+		//	err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
+		//	return nil, env.ErrorDispatch(err)
+		//}
+
+		cc, err := bt.CreditCard().Find(cardID)
+		if err != nil {
+			fmt.Println("\n--- Can not find cc.")
 			return nil, env.ErrorDispatch(err)
 		}
+		fmt.Println("\n--- found creditCard, ok: ", utils.InterfaceToString(cc), "\n")
+
+		//cc := &braintree.CreditCard{
+		//	//Number:         utils.InterfaceToString(ccInfoMap["number"]),
+		//	//ExpirationYear:utils.InterfaceToString(ccInfoMap["expire_year"]),
+		//	//ExpirationMonth: utils.InterfaceToString(ccInfoMap["expire_month"]),
+		//	//CVV:            ccCVC,
+		//	//ExpirationYear:  "25",
+		//	//CustomerId:stripeCID,
+		//	Token:cardID,
+		//	Options: &braintree.CreditCardOptions{
+		//		VerifyCard: true,
+		//		//FailOnDuplicatePaymentMethod: true,
+		//	},
+		//}
 
 		tx := &braintree.Transaction{
-			//Type: "sale",
+			Type: "sale",
 			//Amount: uint64(orderInstance.GetGrandTotal() * 100),
 			Amount: braintree.NewDecimal(int64(orderInstance.GetGrandTotal() * 100), 2),
 			//CustomerID: utils.InterfaceToString(requestData["x_customer_id"]),
 			//PaymentMethodNonce: utils.InterfaceToString(requestData["nonce"]),
 			CustomerID:stripeCID,
-			CreditCard: &braintree.CreditCard{
-				Number:         utils.InterfaceToString(ccInfoMap["number"]),
-				ExpirationYear:utils.InterfaceToString(ccInfoMap["expire_year"]),
-				ExpirationMonth: utils.InterfaceToString(ccInfoMap["expire_month"]),
-				CVV:            ccCVC,
-				//ExpirationYear:  "25",
-				CustomerId:stripeCID,
-				Options: &braintree.CreditCardOptions{
-					VerifyCard: true,
-					//FailOnDuplicatePaymentMethod: true,
-				},
-			},
+			//CreditCard: cc,
+			PaymentMethodToken:cardID,
 
 			Options: &braintree.TransactionOptions{
 				SubmitForSettlement: true,
@@ -311,6 +323,7 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 			},
 		}
 		//chParams.SetSource(cardID)
+		fmt.Println("\n--- tx: ", tx, "\n\n", utils.InterfaceToString(tx))
 
 		//ch, err = charge.New(&chParams)
 		tr, err = bt.Transaction().Create(tx)
@@ -355,10 +368,12 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 
 	// Assemble the response
 	orderPaymentInfo := map[string]interface{}{
-		"transactionID":     tr.Id,
-		"creditCardNumbers": tr.CreditCard.Last4,
+		"transactionID":     tr.CreditCard.Token,
+		"creditCardLastFour": tr.CreditCard.Last4,
 		"creditCardExp":     formatCardExp(*tr.CreditCard),
 		"creditCardType":    tr.CreditCard.CardType,
+		"customerID":        tr.Customer.Id,
+
 	}
 	fmt.Println("\n--- orderPaymentInfo: ", orderPaymentInfo, "\n\n", utils.InterfaceToString(orderPaymentInfo))
 
@@ -493,7 +508,7 @@ func formatCardExp(c braintree.CreditCard) string {
 	// append the last two year digits
 	y := utils.InterfaceToString(c.ExpirationYear)
 	if len(y) == 4 {
-		exp = exp + y[:2]
+		exp = exp + y[2:]
 	} else {
 		err := env.ErrorNew(ConstErrorModule, 1, "0a17b25a-4155-487a-82ad-dfb4b654eba8", "unexpected year length coming back from stripe "+y)
 		env.ErrorDispatch(err)
