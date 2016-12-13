@@ -8,7 +8,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"github.com/andelf/go-curl"
-	"fmt"
 )
 
 // checkoutSuccessHandler handles the checkout success event to begin the subscription process if an order meets the
@@ -118,6 +117,8 @@ func Subscribe(email string) (interface{}, error) {
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Content-type: application/json"})
 	easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
 	easy.Setopt(curl.OPT_POST, 1)
+	// add curl log
+	//easy.Setopt(curl.OPT_VERBOSE, true)
 
 	responseBody := ""
 	easy.Setopt(curl.OPT_WRITEFUNCTION, func(buf []byte, userdata interface{}) bool {
