@@ -87,5 +87,19 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathEmmaSKU,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Trigger SKU (comma seperated list of SKUs)",
+		Description: "Enter the SKU you want to use as a trigger",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

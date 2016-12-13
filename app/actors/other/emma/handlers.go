@@ -8,6 +8,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"github.com/andelf/go-curl"
+	"fmt"
 )
 
 // checkoutSuccessHandler handles the checkout success event to begin the subscription process if an order meets the
@@ -82,7 +83,7 @@ func containsItem(checkoutOrder order.InterfaceOrder, triggerList string) bool {
 }
 
 // Subscribe a user to a Emma
-func Subscribe(email string) (map[string]interface{}, error) {
+func Subscribe(email string) (interface{}, error) {
 
 	//If emma is not enabled, ignore this request and do nothing
 	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled)); !enabled {

@@ -1,9 +1,6 @@
 package emma
 
 import (
-	"net/http"
-	"github.com/andelf/go-curl"
-
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
