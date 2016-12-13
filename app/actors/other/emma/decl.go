@@ -12,6 +12,7 @@ const (
 	ConstConfigPathEmmaPublicAPIKey    = "general.emma.public_api_key"
 	ConstConfigPathEmmaPrivateAPIKey   = "general.emma.private_api_key"
 	ConstConfigPathEmmaAccountID       = "general.emma.account_id"
+	ConstConfigPathEmmaSKU             = "general.emma.trigger_sku"
 
 	ConstEmmaApiUrl = "https://api.e2ma.net/"
 )
