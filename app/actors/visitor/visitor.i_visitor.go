@@ -69,6 +69,17 @@ func (it *DefaultVisitor) SetBillingAddress(address visitor.InterfaceVisitorAddr
 	return nil
 }
 
+// GetToken returns the default card for the Visitor
+func (it *DefaultVisitor) GetToken() visitor.InterfaceVisitorCard {
+	return it.Token
+}
+
+// SetToken updates the default card for the Visitor
+func (it *DefaultVisitor) SetToken(token visitor.InterfaceVisitorCard) error {
+	it.Token = token
+	return nil
+}
+
 // IsAdmin returns true if the visitor is an Admin (have admin rights)
 func (it *DefaultVisitor) IsAdmin() bool {
 	return it.Admin

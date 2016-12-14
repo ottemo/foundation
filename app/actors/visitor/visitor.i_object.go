@@ -31,10 +31,17 @@ func (it *DefaultVisitor) Get(attribute string) interface{} {
 			return it.ShippingAddress.GetID()
 		}
 		return nil
+	case "token_id":
+		if it.Token != nil {
+			return it.Token.GetID()
+		}
+		return nil
 	case "billing_address":
 		return it.BillingAddress
 	case "shipping_address":
 		return it.ShippingAddress
+	case "token":
+		return it.Token
 	case "validate":
 		return it.VerificationKey
 	case "facebook_id":
@@ -138,6 +145,58 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "efa9cd9c-2d9a-4637-ac59-b4856d2e623e", "Unable to set the Address due to an unknown error.")
 		}
 
+	// only token id was specified - trying to load it
+	case "token_id":
+		value := utils.InterfaceToString(value)
+
+		var card visitor.InterfaceVisitorCard
+		var err error
+
+		if value != "" {
+			card, err = visitor.LoadVisitorCardByID(value)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+		}
+
+		if card == nil || card.GetID() != "" {
+			it.Token = card
+		}
+
+	// token detailed information was specified
+	case "token":
+		if value == nil {
+			break
+		}
+
+		switch typedValue := value.(type) {
+
+		// we have already have structure
+		case visitor.InterfaceVisitorCard:
+			it.Token = typedValue
+
+		// we have sub-map, supposedly InterfaceVisitorAddress capable
+		case map[string]interface{}:
+			var card visitor.InterfaceVisitorCard
+			var err error
+
+			if len(typedValue) != 0 {
+				card, err = visitor.GetVisitorCardModel()
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+
+				err = card.FromHashMap(typedValue)
+				if err != nil {
+					return env.ErrorDispatch(err)
+				}
+			}
+
+			it.Token = card
+		default:
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0030cbd2-dda5-4109-9cd5-f37f2492d58a", "Unable to set the Token due to an unknown error.")
+		}
+
 	default:
 		err := it.ModelCustomAttributes.Set(attribute, value)
 		if err != nil {
@@ -176,6 +235,7 @@ func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
 	result["billing_address"] = nil
 	result["shipping_address"] = nil
+	result["token"] = nil
 
 	//result["billing_address_id"] = it.BillingAddressID
 	//result["shipping_address_id"] = it.ShippingAddressID
@@ -186,6 +246,10 @@ func (it *DefaultVisitor) ToHashMap() map[string]interface{} {
 
 	if it.ShippingAddress != nil {
 		result["shipping_address"] = it.ShippingAddress.ToHashMap()
+	}
+
+	if it.Token != nil {
+		result["token"] = it.Token.ToHashMap()
 	}
 
 	return result
@@ -285,6 +349,19 @@ func (it *DefaultVisitor) GetAttributesInfo() []models.StructAttributeInfo {
 			Group:      "General",
 			Editors:    "model_selector",
 			Options:    "model:VisitorAddress",
+			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      visitor.ConstModelNameVisitor,
+			Collection: ConstCollectionNameVisitor,
+			Attribute:  "token_id",
+			Type:       db.ConstTypeID,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Token",
+			Group:      "General",
+			Editors:    "model_selector",
+			Options:    "model:VisitorToken",
 			Default:    "",
 		},
 		models.StructAttributeInfo{

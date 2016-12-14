@@ -3,6 +3,7 @@ package fedex
 import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models"
 )
 
 // setupConfig setups package configuration values for a system
@@ -222,6 +223,22 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAllowCountries,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "multi_select",
+			Options:     utils.EncodeToJSONString(models.ConstCountriesList),
+			Label:       "Allow countries",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "ba621a64-5ab2-4f65-8953-1165e4a401ac", "Unable to obtain configuration for FedEx")
 		return env.ErrorDispatch(err)

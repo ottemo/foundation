@@ -25,7 +25,19 @@ func (it *FedEx) GetCode() string {
 
 // IsAllowed checks for method applicability
 func (it *FedEx) IsAllowed(checkout checkout.InterfaceCheckout) bool {
-	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
+	if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled)) == false {
+		return false
+
+	}
+
+	if shippingAddress := checkout.GetShippingAddress(); shippingAddress != nil  {
+		for _, countryCode := range utils.InterfaceToArray(env.ConfigGetValue(ConstConfigPathAllowCountries)) {
+			if shippingAddress.GetCountry() == countryCode {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GetRates returns rates allowed by shipping method for a given checkout
