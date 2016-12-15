@@ -2,7 +2,6 @@ package shipstation
 
 import (
 	"encoding/base64"
-	"math"
 	"strings"
 	"time"
 
@@ -182,7 +181,7 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
 				var oiItemDiscountedPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
 
-				if math.Abs(utils.RoundPrice(oiItemPrice-oiItemDiscountedPrice)) != 0 {
+				if utils.RoundPrice(oiItemPrice-oiItemDiscountedPrice) != 0 {
 					orderItem := OrderItem{
 						Sku:        "",
 						Name:       "Discount on " + utils.InterfaceToString(oiItem["name"]),
@@ -202,12 +201,12 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 		var calculatedGrandTotal = calculatedSubtotal + calculatedDiscounts + orderDetails.ShippingAmount + orderDetails.TaxAmount
 		var orderDiscount = oItem.GetGrandTotal() - calculatedGrandTotal
 
-		if math.Abs(utils.RoundPrice(orderDiscount)) != 0 {
+		if utils.RoundPrice(orderDiscount) != 0 {
 			orderItem := OrderItem{
 				Sku:        "",
 				Name:       "Discount on Order",
 				Quantity:   1,
-				UnitPrice:  utils.RoundPrice(orderDiscount), // TODO: FORMAT?
+				UnitPrice:  utils.RoundPrice(orderDiscount),
 				Adjustment: true,
 			}
 			orderDetails.Items = append(orderDetails.Items, orderItem)
