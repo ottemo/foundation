@@ -50,6 +50,35 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:   ConstConfigPathBraintreePaypalEnabled,
+		Label:  "Enabled Paypal",
+		Type:   env.ConstConfigTypeBoolean,
+		Editor: "boolean",
+	}, func(value interface{}) (interface{}, error) {
+		return utils.InterfaceToBool(value), nil
+	})
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:   ConstConfigPathPaypalName,
+		Label:  "Name in checkout",
+		Value:  ConstPaypalPaymentInternalName,
+		Type:   env.ConstConfigTypeVarchar,
+		Editor: "line_text",
+	}, func(value interface{}) (interface{}, error) {
+		if utils.CheckIsBlank(value) {
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1bde8c7e-4b16-4f9d-9808-a7d520dcbc60", "can't be blank")
+			return nil, env.ErrorDispatch(err)
+		}
+		return value, nil
+	})
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	//err = config.RegisterItem(env.StructConfigItem{
 	//	Path:        ConstConfigPathAPIKey,
 	//	Label:       "API Key",

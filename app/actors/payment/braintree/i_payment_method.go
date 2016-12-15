@@ -334,7 +334,7 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 		fmt.Println("\n--- tr: ", tr, "\n\n", utils.InterfaceToString(tr))
 
 	} else {
-		fmt.Println("Regular Charge STOP")
+		//fmt.Println("Regular Charge STOP")
 		//return nil, env.ErrorDispatch(*new(error))
 		//// Regular Charge
 		//// - don't create a customer, or store a token
@@ -364,7 +364,7 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 			Number:         utils.InterfaceToString(ccInfo["number"]),
 			ExpirationYear:utils.InterfaceToString(ccInfo["expire_year"]),
 			ExpirationMonth: utils.InterfaceToString(ccInfo["expire_month"]),
-			//CVV:            ccCVC,
+			CVV:            ccCVC,
 			//Options: &braintree.CreditCardOptions{
 			//	VerifyCard: true,
 			//},
@@ -411,11 +411,11 @@ func (it *BraintreePaymentMethod) Authorize(orderInstance order.InterfaceOrder, 
 
 	// Assemble the response
 	fmt.Println("\n--- Assemble the response\n")
-	fmt.Println("\n--- --- tr.CreditCard.Token\n", tr.CreditCard.Token)
-	fmt.Println("\n--- --- tr.CreditCard.Last4\n", tr.CreditCard.Last4)
-	fmt.Println("\n--- --- *tr.CreditCard\n", *tr.CreditCard)
-	fmt.Println("\n--- --- tr.CreditCard.CardType\n", tr.CreditCard.CardType)
-	fmt.Println("\n--- --- tr.Customer.Id\n", tr.Customer.Id)
+	//fmt.Println("\n--- --- tr.CreditCard.Token\n", tr.CreditCard.Token)
+	//fmt.Println("\n--- --- tr.CreditCard.Last4\n", tr.CreditCard.Last4)
+	//fmt.Println("\n--- --- *tr.CreditCard\n", *tr.CreditCard)
+	//fmt.Println("\n--- --- tr.CreditCard.CardType\n", tr.CreditCard.CardType)
+	//fmt.Println("\n--- --- tr.Customer.Id\n", tr.Customer.Id)
 	orderPaymentInfo := map[string]interface{}{
 		"transactionID":     tr.CreditCard.Token,
 		"creditCardLastFour": tr.CreditCard.Last4,
