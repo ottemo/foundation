@@ -738,6 +738,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	for _, cartItem := range cartItems {
 		orderItem, err := checkoutOrder.AddItem(cartItem.GetProductID(), cartItem.GetQty(), cartItem.GetOptions())
+		orderItem.Set("idx", cartItem.GetIdx())
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
