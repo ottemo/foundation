@@ -182,7 +182,7 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
 				var oiItemDiscountedPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
 
-				if math.Abs(utils.RoundPrice(oiItemPrice - oiItemDiscountedPrice)) != 0 {
+				if math.Abs(utils.RoundPrice(oiItemPrice-oiItemDiscountedPrice)) != 0 {
 					orderItem := OrderItem{
 						Sku:        "",
 						Name:       "Discount on " + utils.InterfaceToString(oiItem["name"]),

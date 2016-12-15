@@ -246,16 +246,16 @@ func (it *DefaultOrder) SetStatus(newStatus string) error {
 	it.Status = newStatus
 
 	// if order new status is "new" or "declined" - returning items to stock, otherwise taking them from
-	if newStatus == order.ConstOrderStatusDeclined || newStatus == order.ConstOrderStatusNew {
+	if newStatus == order.ConstOrderStatusDeclined || newStatus == order.ConstOrderStatusNew || newStatus == order.ConstOrderStatusCancelled {
 
-		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusDeclined && oldStatus != "" {
+		if oldStatus != order.ConstOrderStatusNew && oldStatus != order.ConstOrderStatusDeclined && oldStatus != order.ConstOrderStatusCancelled && oldStatus != "" {
 			err = it.Rollback()
 		}
 
 	} else {
 
 		// taking items from stock
-		if oldStatus == order.ConstOrderStatusDeclined || oldStatus == order.ConstOrderStatusNew || oldStatus == "" {
+		if oldStatus == order.ConstOrderStatusDeclined || oldStatus == order.ConstOrderStatusCancelled || oldStatus == order.ConstOrderStatusNew || oldStatus == "" {
 			err = it.Proceed()
 		}
 	}
@@ -315,7 +315,6 @@ func (it *DefaultOrder) Proceed() error {
 // Rollback returns order items to stock, modifieds the order status to declined
 // if status was not set yet, then saves order
 func (it *DefaultOrder) Rollback() error {
-
 	if it.Status == "" {
 		it.Status = order.ConstOrderStatusDeclined
 	}
@@ -326,20 +325,18 @@ func (it *DefaultOrder) Rollback() error {
 		for _, orderItem := range it.GetItems() {
 			options := orderItem.GetOptions()
 
+			currProductOptions := make(map[string]interface{})
 			for optionName, optionValue := range options {
 				if optionValue, ok := optionValue.(map[string]interface{}); ok {
 					if value, present := optionValue["value"]; present {
-						options := map[string]interface{}{optionName: value}
-
-						err := stockManager.UpdateProductQty(orderItem.GetProductID(), options, orderItem.GetQty())
-						if err != nil {
-							return env.ErrorDispatch(err)
-						}
-
+						currProductOptions[optionName] = value
 					}
 				}
 			}
-
+			err := stockManager.UpdateProductQty(orderItem.GetProductID(), currProductOptions, orderItem.GetQty())
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
 		}
 	}
 
