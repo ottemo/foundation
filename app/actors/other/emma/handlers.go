@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/andelf/go-curl"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-	"github.com/andelf/go-curl"
 )
 
 // checkoutSuccessHandler handles the checkout success event to begin the subscription process if an order meets the
@@ -47,7 +47,6 @@ func processOrder(checkoutOrder order.InterfaceOrder) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea659e2a-d52d-4d7d-8b94-17283f3c2d3d", "Emma Trigger SKU list may not be empty.")
 	}
 
-
 	// inspect for sku
 	if orderHasSKU := containsItem(checkoutOrder, triggerSKU); orderHasSKU {
 
@@ -61,7 +60,6 @@ func processOrder(checkoutOrder order.InterfaceOrder) error {
 
 	return nil
 }
-
 
 // containsItem will inspect an order for a sku in the trigger list
 func containsItem(checkoutOrder order.InterfaceOrder, triggerList string) bool {
@@ -112,7 +110,7 @@ func subscribe(email string) (interface{}, error) {
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
 	easy.Setopt(curl.OPT_URL, url)
-	easy.Setopt(curl.OPT_USERPWD, publicApiKey + ":" + privateApiKey)
+	easy.Setopt(curl.OPT_USERPWD, publicApiKey+":"+privateApiKey)
 	easy.Setopt(curl.OPT_POSTFIELDS, postDataJson)
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Content-type: application/json"})
 	easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
@@ -130,8 +128,8 @@ func subscribe(email string) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	var result = "Error occurred";
-	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE);
+	var result = "Error occurred"
+	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 		// require response code of 200
@@ -151,4 +149,3 @@ func subscribe(email string) (interface{}, error) {
 
 	return result, nil
 }
-

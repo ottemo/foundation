@@ -6,7 +6,6 @@ import (
 	"github.com/ottemo/foundation/utils"
 )
 
-
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
 
@@ -35,7 +34,7 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	if !utils.ValidEmailAddress(email) {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, " + email + ", is not in valid format.")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, "+email+", is not in valid format.")
 	}
 
 	result, err := subscribe(email)
@@ -45,4 +44,3 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	return result, nil
 }
-
