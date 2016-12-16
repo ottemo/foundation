@@ -9,6 +9,9 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"strings"
+	"fmt"
+	"errors"
 )
 
 // GetCode returns payment method code for use in business logic
@@ -68,9 +71,34 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		if customerID == "" {
 			// 2. We don't have a braintree client id on file, make a new customer
-			customerPtr, err := braintreeInstance.Customer().Create(&braintree.Customer{
-				Email: utils.InterfaceToString(extra["email"]), // TODO: add more info (is it required)
-			})
+
+			var customerParamsPtr *braintree.Customer
+
+			if visitorID == "" {
+				var nameParts = strings.SplitN(utils.InterfaceToString(extra["billing_name"]) + " ", " ", 2)
+				var firstName = strings.TrimSpace(nameParts[0])
+				var lastName = strings.TrimSpace(nameParts[1])
+
+				customerParamsPtr = &braintree.Customer{
+					FirstName: firstName,
+					LastName:  lastName,
+					Email:     utils.InterfaceToString(extra["email"]),
+				}
+			} else {
+				visitorData, err := visitor.LoadVisitorByID(visitorID)
+				fmt.Println("--- VisitorData:", utils.InterfaceToString(visitorData))
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
+
+				customerParamsPtr = &braintree.Customer{
+					FirstName: visitorData.GetFirstName(),
+					LastName:  visitorData.GetLastName(),
+					Email:     visitorData.GetEmail(),
+				}
+			}
+
+			customerPtr, err := braintreeInstance.Customer().Create(customerParamsPtr)
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
 			}
@@ -79,8 +107,6 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 		}
 
 		// 3. Create a card
-		creditCardMap["billing_name"] = extra["billing_name"]
-
 		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
 		if creditCardCVC == "" {
 			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "bd0a78bf-065a-462b-92c7-d5a1529797c4", "CVC field was left empty"))
@@ -114,7 +140,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		return tokenCreationResult, nil
 	}
-
+	return nil, env.ErrorDispatch(errors.New("DEBUG NO TRANSACTION"))
 	// Charging
 	var transaction *braintree.Transaction
 
