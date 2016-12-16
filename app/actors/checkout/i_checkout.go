@@ -601,7 +601,6 @@ func (it *DefaultCheckout) IsSubscription() bool {
 
 // Submit creates the order with provided information
 func (it *DefaultCheckout) Submit() (interface{}, error) {
-	fmt.Println("--- DefaultCheckout) Submit")
 
 	if it.GetBillingAddress() == nil {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "080db3c0-dbb5-4398-b1f1-4c3fefef79b4", "Billing address is not set")
@@ -778,14 +777,11 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		"billing_name": checkoutOrder.GetBillingAddress().GetFirstName() + " " + checkoutOrder.GetBillingAddress().GetLastName(),
 	}
 
-	fmt.Println("--- DefaultCheckout) Submit Authorize")
 	result, err := paymentMethod.Authorize(checkoutOrder, paymentDetails)
 	if err != nil {
-		fmt.Println("--- DefaultCheckout) Submit Authorize FAIL")
 		checkoutOrder.SetStatus(order.ConstOrderStatusNew)
 		return nil, env.ErrorDispatch(err)
 	}
-	fmt.Println("--- DefaultCheckout) Submit Authorize OK")
 
 	// Payment method require to return as a result:
 	// redirect (with completing of checkout after payment processing)
@@ -803,7 +799,6 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 // SubmitFinish finishes processing of submit (required for payment methods to finish with this call?)
 func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (interface{}, error) {
-	fmt.Println("--- DefaultCheckout) SubmitFinish")
 
 	checkoutOrder := it.GetOrder()
 	if checkoutOrder == nil {
@@ -858,7 +853,6 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 	if previousOrderStatus == order.ConstOrderStatusProcessed || previousOrderStatus == order.ConstOrderStatusCancelled {
 		return result, nil
 	}
-	fmt.Println("--- DefaultCheckout) call CheckoutSuccess")
 
 	return result, it.CheckoutSuccess(checkoutOrder, it.GetSession())
 }

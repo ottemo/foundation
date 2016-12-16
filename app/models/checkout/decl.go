@@ -37,7 +37,6 @@ const (
 	ConstPaymentTypeRemote     = "remote"
 	ConstPaymentTypePost       = "post"
 	ConstPaymentTypePostCC     = "post_cc"
-	ConstPaymentTypeScript     = "script"
 
 	ConstPaymentErrorDeclined  = "Payment declined"
 	ConstPaymentErrorTechnical = "Technical error"
