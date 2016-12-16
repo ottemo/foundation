@@ -1,6 +1,8 @@
 package braintree
 
 import (
+	"strings"
+
 	"github.com/lionelbarrow/braintree-go"
 
 	"github.com/ottemo/foundation/env"
@@ -9,9 +11,6 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
-	"strings"
-	"fmt"
-	"errors"
 )
 
 // GetCode returns payment method code for use in business logic
@@ -75,7 +74,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 			var customerParamsPtr *braintree.Customer
 
 			if visitorID == "" {
-				var nameParts = strings.SplitN(utils.InterfaceToString(extra["billing_name"]) + " ", " ", 2)
+				var nameParts = strings.SplitN(utils.InterfaceToString(extra["billing_name"])+" ", " ", 2)
 				var firstName = strings.TrimSpace(nameParts[0])
 				var lastName = strings.TrimSpace(nameParts[1])
 
@@ -86,7 +85,6 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 				}
 			} else {
 				visitorData, err := visitor.LoadVisitorByID(visitorID)
-				fmt.Println("--- VisitorData:", utils.InterfaceToString(visitorData))
 				if err != nil {
 					return nil, env.ErrorDispatch(err)
 				}
@@ -140,7 +138,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		return tokenCreationResult, nil
 	}
-	return nil, env.ErrorDispatch(errors.New("DEBUG NO TRANSACTION"))
+
 	// Charging
 	var transaction *braintree.Transaction
 
@@ -168,11 +166,16 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 			Amount:             braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
 			CustomerID:         customerID,
 			PaymentMethodToken: cardToken,
+			OrderId:            orderInstance.GetID(),
+
 			Options: &braintree.TransactionOptions{
 				SubmitForSettlement: true,
 				StoreInVault:        true,
 			},
 		}
+
+		transactionParams.BillingAddress = newBraintreeAddress(orderInstance.GetBillingAddress())
+		transactionParams.ShippingAddress = newBraintreeAddress(orderInstance.GetShippingAddress())
 
 		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
@@ -184,12 +187,6 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 		// - don't create a customer, or store a token
 		// - email is stored on the charge's meta hashmap // TODO: clarify comment
 		var err error
-
-		// Must attach either `customer` or `source` to charge // TODO: clarify comment
-		// source can be either a `token` or `cardParams`
-		if billingAddress := orderInstance.GetBillingAddress(); billingAddress != nil {
-			creditCardMap["billing_name"] = billingAddress.GetFirstName() + " " + billingAddress.GetLastName()
-		}
 
 		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
 		if creditCardCVC == "" {
@@ -207,10 +204,14 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 			Type:       "sale",
 			Amount:     braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
 			CreditCard: creditCardParams,
+			OrderId:    orderInstance.GetID(),
 			Options: &braintree.TransactionOptions{
 				SubmitForSettlement: true,
 			},
 		}
+
+		transactionParams.BillingAddress = newBraintreeAddress(orderInstance.GetBillingAddress())
+		transactionParams.ShippingAddress = newBraintreeAddress(orderInstance.GetShippingAddress())
 
 		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {

@@ -57,3 +57,18 @@ func formatCardExpirationDate(card braintree.CreditCard) string {
 
 	return expirationDate
 }
+
+func newBraintreeAddress(visitorAddress visitor.InterfaceVisitorAddress) *braintree.Address {
+	return &braintree.Address{
+		FirstName:       visitorAddress.GetFirstName(),
+		LastName:        visitorAddress.GetLastName(),
+		Company:         visitorAddress.GetCompany(),
+		StreetAddress:   visitorAddress.GetAddressLine1(),
+		ExtendedAddress: visitorAddress.GetAddressLine2(),
+
+		CountryCodeAlpha2: visitorAddress.GetCountry(),
+		Locality:          visitorAddress.GetCity(),
+		Region:            visitorAddress.GetState(),
+		PostalCode:        visitorAddress.GetZipCode(),
+	}
+}
