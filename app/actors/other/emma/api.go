@@ -1,7 +1,6 @@
 package emma
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/andelf/go-curl"
@@ -47,8 +46,8 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, "+email+", is not in valid format.")
 	}
 
-	groupIDs := utils.InterfaceToInt(requestData["group_ids"])
-	if groupIDs != 0 {
+	groupIDs := utils.InterfaceToArray(requestData["group_ids"])
+	if len(groupIDs) <= 0 {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3ff0b69b-98a8-41f9-99ac-24e52e273d15", "groupId was not specified")
 	}
 
@@ -69,12 +68,8 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	var url = ConstEmmaApiUrl + accountID + "/members/add"
 
-	postData := map[string]interface{}{
-		"email":     email,
-		"group_ids": [2303143]}
-	fmt.Println("postdata: %v", postData)
+	postData := map[string]interface{}{"email": email, "group_ids": groupIDs}
 	postDataJSON := utils.EncodeToJSONString(postData)
-	fmt.Println("JSON postdata: %v", postDataJSON)
 
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
