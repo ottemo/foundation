@@ -1,14 +1,15 @@
 package emma
 
 import (
+	"fmt"
 	"net/http"
+
 	"github.com/andelf/go-curl"
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 )
-
 
 // setupAPI setups package related API endpoint routines
 func setupAPI() error {
@@ -43,34 +44,43 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	if !utils.ValidEmailAddress(email) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, " + email + ", is not in valid format.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, "+email+", is not in valid format.")
 	}
 
-	var accountId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
-	if accountId == "" {
+	groupIDs := utils.InterfaceToInt(requestData["group_ids"])
+	if groupIDs != 0 {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3ff0b69b-98a8-41f9-99ac-24e52e273d15", "groupId was not specified")
+	}
+
+	var accountID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
+	if accountID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 	}
 
-	var publicApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
-	if publicApiKey == "" {
+	var publicAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
+	if publicAPIKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1b5c42f5-d856-48c5-98a2-fd8b5929703c", "public api key was not specified")
 	}
 
-	var privateApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
-	if privateApiKey == "" {
+	var privateAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
+	if privateAPIKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
 
-	var url = ConstEmmaApiUrl + accountId + "/members/add"
+	var url = ConstEmmaApiUrl + accountID + "/members/add"
 
-	postData := map[string]interface{}{"email": email}
-	postDataJson := utils.EncodeToJSONString(postData)
+	postData := map[string]interface{}{
+		"email":     email,
+		"group_ids": [2303143]}
+	fmt.Println("postdata: %v", postData)
+	postDataJSON := utils.EncodeToJSONString(postData)
+	fmt.Println("JSON postdata: %v", postDataJSON)
 
 	easy := curl.EasyInit()
 	defer easy.Cleanup()
 	easy.Setopt(curl.OPT_URL, url)
-	easy.Setopt(curl.OPT_USERPWD, publicApiKey + ":" + privateApiKey)
-	easy.Setopt(curl.OPT_POSTFIELDS, postDataJson)
+	easy.Setopt(curl.OPT_USERPWD, publicAPIKey+":"+privateAPIKey)
+	easy.Setopt(curl.OPT_POSTFIELDS, postDataJSON)
 	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Content-type: application/json"})
 	easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
 	easy.Setopt(curl.OPT_POST, 1)
@@ -85,11 +95,11 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	var result = "Error occurred";
-	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE);
+	var result = "Error occurred"
+	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
-	// require response code of 200
+		// require response code of 200
 	} else if responseCode == http.StatusOK {
 		jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
 		if err != nil {
@@ -106,4 +116,3 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	return result, nil
 }
-
