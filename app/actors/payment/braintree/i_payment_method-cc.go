@@ -1,20 +1,13 @@
 package braintree
 
 import (
-	//"github.com/lionelbarrow/braintree-go"
+	"github.com/lionelbarrow/braintree-go"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
-	//"github.com/ottemo/foundation/api"
-	//"github.com/ottemo/foundation/app"
-	"fmt"
-	"github.com/lionelbarrow/braintree-go"
-	//"github.com/stripe/stripe-go/customer"
-	//"github.com/stripe/stripe-go/card"
-	//"github.com/stripe/stripe-go/charge"
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
@@ -53,8 +46,6 @@ func (it *braintreeCCMethod) IsTokenable(checkoutInstance checkout.InterfaceChec
 //  - otherwise create transaction
 func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
-	// paymentResult
-
 	braintreeInstance := braintree.New(
 		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathEnvironment)),
 		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathMerchantID)),
@@ -64,6 +55,8 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 	action := paymentInfo[checkout.ConstPaymentActionTypeKey]
 	isCreateToken := utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken
+	creditCardInfo := paymentInfo["cc"]
+	creditCardMap := utils.InterfaceToMap(creditCardInfo)
 
 	if isCreateToken {
 		// NOTE: `orderInstance = nil` when creating a token
@@ -71,9 +64,9 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 		// 1. Get our customer token
 		extra := utils.InterfaceToMap(paymentInfo["extra"])
 		visitorID := utils.InterfaceToString(extra["visitor_id"])
-		braintreeClientID := getBraintreeCustomerToken(visitorID)
+		customerID := getBraintreeCustomerToken(visitorID)
 
-		if braintreeClientID == "" {
+		if customerID == "" {
 			// 2. We don't have a braintree client id on file, make a new customer
 			customerPtr, err := braintreeInstance.Customer().Create(&braintree.Customer{
 				Email: utils.InterfaceToString(extra["email"]), // TODO: add more info (is it required)
@@ -82,226 +75,131 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 				return nil, env.ErrorDispatch(err)
 			}
 
-			braintreeClientID = customerPtr.Id
+			customerID = customerPtr.Id
 		}
 
 		// 3. Create a card
-		creditCardInfo := utils.InterfaceToMap(paymentInfo["cc"])
-		creditCardInfo["billing_name"] = extra["billing_name"]
+		creditCardMap["billing_name"] = extra["billing_name"]
 
-		creditCardCVC := utils.InterfaceToString(creditCardInfo["cvc"])
+		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
 		if creditCardCVC == "" {
 			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "bd0a78bf-065a-462b-92c7-d5a1529797c4", "CVC field was left empty"))
 		}
 
-		newCreditCard := &braintree.CreditCard{
-			CustomerId:      braintreeClientID,
-			Number:          utils.InterfaceToString(creditCardInfo["number"]),
-			ExpirationYear:  utils.InterfaceToString(creditCardInfo["expire_year"]),
-			ExpirationMonth: utils.InterfaceToString(creditCardInfo["expire_month"]),
+		creditCardParams := &braintree.CreditCard{
+			CustomerId:      customerID,
+			Number:          utils.InterfaceToString(creditCardMap["number"]),
+			ExpirationYear:  utils.InterfaceToString(creditCardMap["expire_year"]),
+			ExpirationMonth: utils.InterfaceToString(creditCardMap["expire_month"]),
 			CVV:             creditCardCVC,
 			Options: &braintree.CreditCardOptions{
 				VerifyCard: true,
 			},
 		}
 
-		ca, err := braintreeInstance.CreditCard().Create(newCreditCard)
-		// env.LogEvent(env.LogFields{"api_response": ca, "err": err}, "card")
+		createdCreditCard, err := braintreeInstance.CreditCard().Create(creditCardParams)
 		if err != nil {
-			fmt.Println("\nERROR bt.CreditCard().Create(cp)\n", err, "\n")
 			return nil, env.ErrorDispatch(err)
 		}
-
-		fmt.Println("\n--- ca: ", ca, "\n\n", utils.InterfaceToString(ca))
 
 		// This response looks like our normal authorize response
 		// but this map is translated into other keys to store a token
 		tokenCreationResult := map[string]interface{}{
-			"transactionID":      ca.Token,                      // token_id
-			"creditCardLastFour": ca.Last4,                      // number
-			"creditCardType":     ca.CardType,                   // type
-			"creditCardExp":      formatCardExpirationDate(*ca), // expiration_date
-			"customerID":         ca.CustomerId,                 // customer_id
+			"transactionID":      createdCreditCard.Token,                      // token_id
+			"creditCardLastFour": createdCreditCard.Last4,                      // number
+			"creditCardType":     createdCreditCard.CardType,                   // type
+			"creditCardExp":      formatCardExpirationDate(*createdCreditCard), // expiration_date
+			"customerID":         createdCreditCard.CustomerId,                 // customer_id
 		}
-
-		fmt.Println("\n--- result: ", tokenCreationResult, "\n\n", utils.InterfaceToString(tokenCreationResult))
 
 		return tokenCreationResult, nil
 	}
 
-	// Charging: https://stripe.com/docs/api/go#create_charge
-	//var ch *stripe.Charge
-	var tr *braintree.Transaction
-	ccInfo := paymentInfo["cc"]
-	//ccInfoMap := utils.InterfaceToMap(ccInfo)
+	// Charging
+	var transaction *braintree.Transaction
 
 	// Token Charge
 	// - we have a Customer, and a Card
-	// - create a Charge with the Card as the Source
+	// - create a Transaction using Card token
 	// - must reference Customer
 	// - email is stored on the Customer
-	if creditCard, ok := ccInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
-		fmt.Println("\n--- creditCard, ok: ", utils.InterfaceToString(creditCard), "\n")
+	if creditCard, ok := creditCardInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
 		var err error
-		cardID := creditCard.GetToken()
-		stripeCID := creditCard.GetCustomerID()
+		cardToken := creditCard.GetToken()
+		customerID := creditCard.GetCustomerID()
 
-		if cardID == "" || stripeCID == "" {
-			fmt.Println("cardID == '' || stripeCID == ''")
-			err := env.ErrorNew(constErrorModule, env.ConstErrorLevelStartStop, "02128bc6-83d6-4c12-ae90-900a94adb3ad", "looks like we want to charge a token, but we don't have the fields we need")
+		if cardToken == "" || customerID == "" {
+			err := env.ErrorNew(constErrorModule, constErrorLevel, "6b43e527-9bc7-48f7-8cdd-320ceb6d77e6", "looks like we want to charge a token, but we don't have the fields we need")
 			return nil, env.ErrorDispatch(err)
 		}
 
-		//chParams := stripe.ChargeParams{
-		//	Currency: "usd",
-		//	Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
-		//	Customer: stripeCID,                                   // Mandatory
-		//}
-		//ccCVC := utils.InterfaceToString(ccInfoMap["cvc"])
-		//if ccCVC == "" {
-		//	fmt.Println("ccCVC == ''")
-		//	err := env.ErrorNew(ConstErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
-		//	return nil, env.ErrorDispatch(err)
-		//}
-
-		cc, err := braintreeInstance.CreditCard().Find(cardID)
-		if err != nil {
-			fmt.Println("\n--- Can not find cc.")
+		if _, err := braintreeInstance.CreditCard().Find(cardToken); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		fmt.Println("\n--- found creditCard, ok: ", utils.InterfaceToString(cc), "\n")
 
-		//cc := &braintree.CreditCard{
-		//	//Number:         utils.InterfaceToString(ccInfoMap["number"]),
-		//	//ExpirationYear:utils.InterfaceToString(ccInfoMap["expire_year"]),
-		//	//ExpirationMonth: utils.InterfaceToString(ccInfoMap["expire_month"]),
-		//	//CVV:            ccCVC,
-		//	//ExpirationYear:  "25",
-		//	//CustomerId:stripeCID,
-		//	Token:cardID,
-		//	Options: &braintree.CreditCardOptions{
-		//		VerifyCard: true,
-		//		//FailOnDuplicatePaymentMethod: true,
-		//	},
-		//}
-
-		tx := &braintree.Transaction{
-			Type: "sale",
-			//Amount: uint64(orderInstance.GetGrandTotal() * 100),
-			Amount: braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
-			//CustomerID: utils.InterfaceToString(requestData["x_customer_id"]),
-			//PaymentMethodNonce: utils.InterfaceToString(requestData["nonce"]),
-			CustomerID: stripeCID,
-			//CreditCard: cc,
-			PaymentMethodToken: cardID,
-
+		transactionParams := &braintree.Transaction{
+			Type:               "sale",
+			Amount:             braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
+			CustomerID:         customerID,
+			PaymentMethodToken: cardToken,
 			Options: &braintree.TransactionOptions{
 				SubmitForSettlement: true,
 				StoreInVault:        true,
 			},
 		}
-		//chParams.SetSource(cardID)
-		fmt.Println("\n--- tx: ", tx, "\n\n", utils.InterfaceToString(tx))
 
-		//ch, err = charge.New(&chParams)
-		tr, err = braintreeInstance.Transaction().Create(tx)
+		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		fmt.Println("\n--- tr: ", tr, "\n\n", utils.InterfaceToString(tr))
-
 	} else {
-		//fmt.Println("Regular Charge STOP")
-		//return nil, env.ErrorDispatch(*new(error))
-		//// Regular Charge
-		//// - don't create a customer, or store a token
-		//// - email is stored on the charge's meta hashmap
+		// Regular Charge
+		// - don't create a customer, or store a token
+		// - email is stored on the charge's meta hashmap // TODO: clarify comment
 		var err error
-		//chargeParams := stripe.ChargeParams{
-		//	Currency: "usd",
-		//	Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
-		//}
 
-		//// Must attach either `customer` or `source` to charge
-		//// source can be either a `token` or `cardParams`
-		ccInfo := utils.InterfaceToMap(paymentInfo["cc"])
-		//
-		if ba := orderInstance.GetBillingAddress(); ba != nil {
-			ccInfo["billing_name"] = ba.GetFirstName() + " " + ba.GetLastName()
-		}
-		//
-		ccCVC := utils.InterfaceToString(ccInfo["cvc"])
-		if ccCVC == "" {
-			err := env.ErrorNew(constErrorModule, 1, "15edae76-1d3e-4e7a-a474-75ffb61d26cb", "CVC field was left empty")
-			return nil, env.ErrorDispatch(err)
+		// Must attach either `customer` or `source` to charge // TODO: clarify comment
+		// source can be either a `token` or `cardParams`
+		if billingAddress := orderInstance.GetBillingAddress(); billingAddress != nil {
+			creditCardMap["billing_name"] = billingAddress.GetFirstName() + " " + billingAddress.GetLastName()
 		}
 
-		cp := &braintree.CreditCard{
-			//CustomerId: 	stripeCID,
-			Number:          utils.InterfaceToString(ccInfo["number"]),
-			ExpirationYear:  utils.InterfaceToString(ccInfo["expire_year"]),
-			ExpirationMonth: utils.InterfaceToString(ccInfo["expire_month"]),
-			CVV:             ccCVC,
-			//Options: &braintree.CreditCardOptions{
-			//	VerifyCard: true,
-			//},
+		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
+		if creditCardCVC == "" {
+			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "7d4c3aca-8c51-4eec-aa7c-bd860944697d", "CVC field was left empty"))
 		}
-		fmt.Println("\n--- cp: ", cp, "\n\n", utils.InterfaceToString(cp))
-		//chargeParams.SetSource(cp)
 
-		tx := &braintree.Transaction{
-			Type: "sale",
-			//Amount: uint64(orderInstance.GetGrandTotal() * 100),
-			Amount: braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
-			//CustomerID: utils.InterfaceToString(requestData["x_customer_id"]),
-			//PaymentMethodNonce: utils.InterfaceToString(requestData["nonce"]),
-			//CustomerID:stripeCID,
-			//Customer:&braintree.Customer{
-			//	Email:	utils.InterfaceToString(orderInstance.Get("customer_email")),
-			//},
-			CreditCard: cp,
-			//PaymentMethodToken:cardID,
+		creditCardParams := &braintree.CreditCard{
+			Number:          utils.InterfaceToString(creditCardMap["number"]),
+			ExpirationYear:  utils.InterfaceToString(creditCardMap["expire_year"]),
+			ExpirationMonth: utils.InterfaceToString(creditCardMap["expire_month"]),
+			CVV:             creditCardCVC,
+		}
 
+		transactionParams := &braintree.Transaction{
+			Type:       "sale",
+			Amount:     braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
+			CreditCard: creditCardParams,
 			Options: &braintree.TransactionOptions{
 				SubmitForSettlement: true,
-				//StoreInVault: true,
 			},
 		}
 
-		//chargeParams.AddMeta("email", utils.InterfaceToString(orderInstance.Get("customer_email")))
-		//
-		//
-		//ch, err = charge.New(&chargeParams)
-		//if err != nil {
-		//	return nil, env.ErrorDispatch(err)
-		//}
-		fmt.Println("\n--- tx: ", tx, "\n\n", utils.InterfaceToString(tx))
-
-		//ch, err = charge.New(&chParams)
-		tr, err = braintreeInstance.Transaction().Create(tx)
+		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-
-		fmt.Println("\n--- tr: ", tr, "\n\n", utils.InterfaceToString(tr))
 	}
 
 	// Assemble the response
-	fmt.Println("\n--- Assemble the response\n")
-	//fmt.Println("\n--- --- tr.CreditCard.Token\n", tr.CreditCard.Token)
-	//fmt.Println("\n--- --- tr.CreditCard.Last4\n", tr.CreditCard.Last4)
-	//fmt.Println("\n--- --- *tr.CreditCard\n", *tr.CreditCard)
-	//fmt.Println("\n--- --- tr.CreditCard.CardType\n", tr.CreditCard.CardType)
-	//fmt.Println("\n--- --- tr.Customer.Id\n", tr.Customer.Id)
 	paymentResult := map[string]interface{}{
-		"transactionID":      tr.CreditCard.Token,
-		"creditCardLastFour": tr.CreditCard.Last4,
-		"creditCardExp":      formatCardExpirationDate(*tr.CreditCard),
-		"creditCardType":     tr.CreditCard.CardType,
-		"customerID":         tr.Customer.Id,
+		"transactionID":      transaction.CreditCard.Token,
+		"creditCardLastFour": transaction.CreditCard.Last4,
+		"creditCardExp":      formatCardExpirationDate(*transaction.CreditCard),
+		"creditCardType":     transaction.CreditCard.CardType,
+		"customerID":         transaction.Customer.Id,
 	}
-	fmt.Println("\n--- orderPaymentInfo: ", paymentResult, "\n\n", utils.InterfaceToString(paymentResult))
 
 	return paymentResult, nil
 }
