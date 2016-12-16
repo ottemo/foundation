@@ -73,8 +73,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Public Key",
-		Description: "Environment public key",
+		Label:       "PRIVATE Key",
+		Description: "Environment PRIVATE key",
 		Image:       "",
 	}, nil)
 	if err != nil {

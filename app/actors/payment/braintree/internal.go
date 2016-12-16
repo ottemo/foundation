@@ -1,10 +1,12 @@
 package braintree
 
 import (
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/app/models/visitor"
-	"github.com/ottemo/foundation/utils"
 	"github.com/lionelbarrow/braintree-go"
+
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 func getBraintreeCustomerToken(visitorID string) string {
@@ -50,7 +52,7 @@ func formatCardExpirationDate(card braintree.CreditCard) string {
 	if len(year) == 4 {
 		expirationDate = expirationDate + year[2:]
 	} else {
-		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "950aea13-16e8-4d20-9ad0-f5cee26c03c2", "unexpected year length coming back from braintree "+ year))
+		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "950aea13-16e8-4d20-9ad0-f5cee26c03c2", "unexpected year length coming back from braintree "+year))
 	}
 
 	return expirationDate

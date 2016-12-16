@@ -14,30 +14,32 @@ const (
 	// Because of multiple payment modules supported by Braintree constant names and values are divided into
 	// General - overall values
 	// Method  - specific per method values
+	//
+	// Note: group name is prefix of elements grouped in frontend
 
 	// --------------------------------------
 	// General
 
-	constGeneralConfigPathGroup = "payment.braintree"
-	constGeneralConfigPathEnvironment = "payment.braintree.environment"
-	constGeneralConfigPathMerchantID = "payment.braintree.merchantID"
-	constGeneralConfigPathPublicKey = "payment.braintree.publicKey"
-	constGeneralConfigPathPrivateKey = "payment.braintree.privateKey"
+	constGeneralConfigPathGroup       = "payment.braintreeGeneral"
+	constGeneralConfigPathEnvironment = "payment.braintreeGeneral.environment"
+	constGeneralConfigPathMerchantID  = "payment.braintreeGeneral.merchantID"
+	constGeneralConfigPathPublicKey   = "payment.braintreeGeneral.publicKey"
+	constGeneralConfigPathPrivateKey  = "payment.braintreeGeneral.privateKey"
 
-	constEnvironmentSandbox    = braintree.Sandbox
-	constEnvironmentProduction = braintree.Production
+	constEnvironmentSandbox    = string(braintree.Sandbox)
+	constEnvironmentProduction = string(braintree.Production)
 
 	constErrorModule = "payment/braintree"
 	constErrorLevel  = env.ConstErrorLevelActor
 
-	constLogStorage  = "braintree.log"
+	constLogStorage = "braintree.log"
 
 	// --------------------------------------
 	// Credit Card Method
 
-	constCCMethodConfigPathGroup   = "payment.braintree.cc"
-	constCCMethodConfigPathEnabled = "payment.braintree.cc.enabled"
-	constCCMethodConfigPathName    = "payment.braintree.cc.name" // User customized name of the payment method
+	constCCMethodConfigPathGroup   = "payment.braintreeCC"
+	constCCMethodConfigPathEnabled = "payment.braintreeCC.enabled"
+	constCCMethodConfigPathName    = "payment.braintreeCC.name" // User customized name of the payment method
 
 	constCCMethodCode         = "braintreeCC"           // Method code used in business logic
 	constCCMethodInternalName = "Braintree Credit Card" // Human readable name of payment method

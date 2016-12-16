@@ -47,7 +47,7 @@ func (it *braintreeCCMethod) IsTokenable(checkoutInstance checkout.InterfaceChec
 func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
 	braintreeInstance := braintree.New(
-		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathEnvironment)),
+		braintree.Environment(utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathEnvironment))),
 		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathMerchantID)),
 		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathPublicKey)),
 		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathPrivateKey)),
