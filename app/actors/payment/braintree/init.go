@@ -8,8 +8,7 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	checkout.RegisterPaymentMethod(new(BraintreePaymentMethod))
-	checkout.RegisterPaymentMethod(new(BraintreePaypalPaymentMethod))
+	checkout.RegisterPaymentMethod(new(braintreeCCMethod))
 	api.RegisterOnRestServiceStart(setupAPI)
 	env.RegisterOnConfigStart(setupConfig)
 }

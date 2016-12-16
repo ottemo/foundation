@@ -8,13 +8,15 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "07fe3f67-d1d5-43e7-ace4-ce123c7f820d", "can't obtain config")
-		return env.ErrorDispatch(err)
+		return env.ErrorNew(constErrorModule, env.ConstErrorLevelStartStop, "f9aac1c6-781b-410f-916b-4c884c19bdfb", "can't obtain config")
 	}
 
+	// --------------------------------------
+	// General
+
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:  ConstConfigPathGroup,
-		Label: "Braintree",
+		Path:  constGeneralConfigPathGroup,
+		Label: "Braintree General",
 		Type:  env.ConstConfigTypeGroup,
 	}, nil)
 	if err != nil {
@@ -22,7 +24,77 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:   ConstConfigPathEnabled,
+		Path:   constGeneralConfigPathEnvironment,
+		Value:  constEnvironmentSandbox,
+		Type:   env.ConstConfigTypeVarchar,
+		Editor: "select",
+		Options: map[string]string{
+			constEnvironmentSandbox:    "Sandbox",
+			constEnvironmentProduction: "Production"},
+		Label:       "Environment",
+		Description: "Change Braintree environment according to the workflow mode",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        constGeneralConfigPathMerchantID,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Merchant ID",
+		Description: "Environment merchant ID",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        constGeneralConfigPathPublicKey,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Public Key",
+		Description: "Environment public key",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        constGeneralConfigPathPrivateKey,
+		Value:       "",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Public Key",
+		Description: "Environment public key",
+		Image:       "",
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// --------------------------------------
+	// Credit Card
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:  constCCMethodConfigPathGroup,
+		Label: "Braintree Credit Card",
+		Type:  env.ConstConfigTypeGroup,
+	}, nil)
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:   constCCMethodConfigPathEnabled,
 		Label:  "Enabled",
 		Type:   env.ConstConfigTypeBoolean,
 		Editor: "boolean",
@@ -34,78 +106,20 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:   ConstConfigPathName,
+		Path:   constCCMethodConfigPathName,
 		Label:  "Name in checkout",
-		Value:  ConstPaymentInternalName,
+		Value:  constCCMethodInternalName,
 		Type:   env.ConstConfigTypeVarchar,
 		Editor: "line_text",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1bde8c7e-4b16-4f9d-9808-a7d520dcbc60", "can't be blank")
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(constErrorModule, env.ConstErrorLevelStartStop, "cc1f027c-6337-497e-a158-7d5842d50eae", "can't be blank")
 		}
 		return value, nil
 	})
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:   ConstConfigPathBraintreePaypalEnabled,
-		Label:  "Enabled Paypal",
-		Type:   env.ConstConfigTypeBoolean,
-		Editor: "boolean",
-	}, func(value interface{}) (interface{}, error) {
-		return utils.InterfaceToBool(value), nil
-	})
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:   ConstConfigPathPaypalName,
-		Label:  "Name in checkout",
-		Value:  ConstPaypalPaymentInternalName,
-		Type:   env.ConstConfigTypeVarchar,
-		Editor: "line_text",
-	}, func(value interface{}) (interface{}, error) {
-		if utils.CheckIsBlank(value) {
-			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "1bde8c7e-4b16-4f9d-9808-a7d520dcbc60", "can't be blank")
-			return nil, env.ErrorDispatch(err)
-		}
-		return value, nil
-	})
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	//err = config.RegisterItem(env.StructConfigItem{
-	//	Path:        ConstConfigPathAPIKey,
-	//	Label:       "API Key",
-	//	Value:       "",
-	//	Type:        env.ConstConfigTypeVarchar,
-	//	Editor:      "line_text",
-	//	Description: "Your API Key will be located in your Stripe Dashboard.",
-	//}, nil)
-	//if err != nil {
-	//	return env.ErrorDispatch(err)
-	//}
 
 	return nil
 }
-
-//// ConfigIsEnabled is a flag to enable/disable this payment module
-//func (it Payment) ConfigIsEnabled() bool {
-//	return utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEnabled))
-//}
-//
-//// ConfigAPIKey is a method that returns the API Key from the db
-//func (it Payment) ConfigAPIKey() string {
-//	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathAPIKey))
-//}
-//
-//// ConfigNameInCheckout is a method that returns the payment method name to be used in checkout
-//func (it Payment) ConfigNameInCheckout() string {
-//	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
-//}
-

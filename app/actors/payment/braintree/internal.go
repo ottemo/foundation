@@ -2,24 +2,24 @@ package braintree
 
 import (
 	"github.com/ottemo/foundation/env"
-	//"strings"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/utils"
+	"github.com/lionelbarrow/braintree-go"
 )
 
-func getBraintreeCustomerToken(vid string) string {
-	//const customerTokenPrefix = "cus"
+func getBraintreeCustomerToken(visitorID string) string {
+	var absendToken = ""
 
-	if vid == "" {
-		env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "2ecfa3ec-7cfc-4783-9060-8467ca63beae", "empty vid passed to look up customer token"))
-		return ""
+	if visitorID == "" {
+		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "0f6c678f-66a3-470e-8a80-5cc2ff619058", "empty visitor ID passed to look up customer token"))
+		return absendToken
 	}
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
-	model.ListFilterAdd("visitor_id", "=", vid)
-	model.ListFilterAdd("payment", "=", ConstPaymentCode)
+	model.ListFilterAdd("visitor_id", "=", visitorID)
+	model.ListFilterAdd("payment", "=", constCCMethodCode)
 
-	// 3rd party customer identifier, used by stripe
+	// 3rd party customer identifier, used by braintree
 	err := model.ListAddExtraAttribute("customer_id")
 	if err != nil {
 		env.ErrorDispatch(err)
@@ -30,15 +30,28 @@ func getBraintreeCustomerToken(vid string) string {
 		env.ErrorDispatch(err)
 	}
 
-	for _, t := range tokens {
-		ts := utils.InterfaceToString(t.Extra["customer_id"])
-
-		// Double check that this field is filled out
-		//if strings.HasPrefix(ts, customerTokenPrefix) {
-			return ts
-		//}
+	for _, token := range tokens {
+		return utils.InterfaceToString(token.Extra["customer_id"])
 	}
 
-	return ""
+	return absendToken
 }
 
+func formatCardExpirationDate(card braintree.CreditCard) string {
+	var expirationDate = utils.InterfaceToString(card.ExpirationMonth)
+
+	// pad with a zero
+	if len(card.ExpirationMonth) < 2 {
+		expirationDate = "0" + expirationDate
+	}
+
+	// append the last two year digits
+	year := utils.InterfaceToString(card.ExpirationYear)
+	if len(year) == 4 {
+		expirationDate = expirationDate + year[2:]
+	} else {
+		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "950aea13-16e8-4d20-9ad0-f5cee26c03c2", "unexpected year length coming back from braintree "+ year))
+	}
+
+	return expirationDate
+}

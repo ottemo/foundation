@@ -1,38 +1,48 @@
-// Package braintree is a "braintreepayments" implementation of payment method interface declared in
+// Package braintree is a "braintree payments" implementation of payment method interface declared in
 // "github.com/ottemo/foundation/app/models/checkout" package
 package braintree
 
-import "github.com/ottemo/foundation/env"
+import (
+	"github.com/lionelbarrow/braintree-go"
+
+	"github.com/ottemo/foundation/env"
+)
 
 // Package global constants
 const (
-	// Payment method code used in business logic
-	ConstPaymentCode = "braintree"
-	ConstPaypalPaymentCode = "braintreePaypal"
+	// --------------------------------------
+	// Because of multiple payment modules supported by Braintree constant names and values are divided into
+	// General - overall values
+	// Method  - specific per method values
 
-	// Human readable name of payment method
-	ConstPaymentInternalName = "Braintree"
-	ConstPaypalPaymentInternalName = "Braintree Paypal"
+	// --------------------------------------
+	// General
 
-	// Config attribute for User customized name of the payment method
-	ConstConfigPathName = "payment.braintree.name"
-	ConstConfigPathPaypalName = "payment.braintree.paypal.name"
+	constGeneralConfigPathGroup = "payment.braintree"
+	constGeneralConfigPathEnvironment = "payment.braintree.environment"
+	constGeneralConfigPathMerchantID = "payment.braintree.merchantID"
+	constGeneralConfigPathPublicKey = "payment.braintree.publicKey"
+	constGeneralConfigPathPrivateKey = "payment.braintree.privateKey"
 
-	ConstConfigPathGroup   = "payment.braintree"
-	ConstConfigPathEnabled = "payment.braintree.enabled"
-	ConstConfigPathBraintreeEnabled = "payment.braintree.enabled"
-	ConstConfigPathBraintreePaypalEnabled = "payment.braintree.paypal.enabled"
+	constEnvironmentSandbox    = braintree.Sandbox
+	constEnvironmentProduction = braintree.Production
 
-	ConstErrorModule = "payment/braintree"
+	constErrorModule = "payment/braintree"
+	constErrorLevel  = env.ConstErrorLevelActor
 
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	constLogStorage  = "braintree.log"
 
-	ConstLogStorage = "braintree.log"
+	// --------------------------------------
+	// Credit Card Method
+
+	constCCMethodConfigPathGroup   = "payment.braintree.cc"
+	constCCMethodConfigPathEnabled = "payment.braintree.cc.enabled"
+	constCCMethodConfigPathName    = "payment.braintree.cc.name" // User customized name of the payment method
+
+	constCCMethodCode         = "braintreeCC"           // Method code used in business logic
+	constCCMethodInternalName = "Braintree Credit Card" // Human readable name of payment method
+
 )
 
-// Braintree is a implementer of InterfacePaymentMethod for a "braintreepayments" payment method
-type BraintreePaymentMethod struct{}
-
-type BraintreePaypalPaymentMethod struct{}
-
-
+// braintreeCCMethod is a implementer of InterfacePaymentMethod for a Credit Card payment method
+type braintreeCCMethod struct{}
