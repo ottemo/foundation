@@ -185,7 +185,6 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 	} else {
 		// Regular Charge
 		// - don't create a customer, or store a token
-		// - email is stored on the charge's meta hashmap // TODO: clarify comment
 		var err error
 
 		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
