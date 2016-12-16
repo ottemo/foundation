@@ -22,7 +22,6 @@ func setupAPI() error {
 // - email should be specified in "email" argument
 func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, error) {
 
-
 	// check request context
 	//---------------------
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -32,13 +31,14 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	email := utils.InterfaceToString(requestData["email"])
 	if email == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email was not specified")
 	}
 
 	if !utils.ValidEmailAddress(email) {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, " + email + ", is not in valid format.")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, " + email + ", is not in valid format.")
 	}
-	result, err := Subscribe(email)
+
+	result, err := subscribe(email)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}

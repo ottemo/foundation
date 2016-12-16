@@ -14,7 +14,7 @@ import (
 // requirements
 func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool {
 
-	//If mailchimp is not enabled, ignore this handler and do nothing
+	//If emma is not enabled, ignore this handler and do nothing
 	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled)); !enabled {
 		return true
 	}
@@ -44,7 +44,7 @@ func processOrder(checkoutOrder order.InterfaceOrder) error {
 
 	// load the trigger SKUs
 	if triggerSKU = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaSKU)); triggerSKU == "" {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8c7217c-b509-11e5-aa09-28cfe917b6c7", "Mailchimp Trigger SKU list may not be empty.")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea659e2a-d52d-4d7d-8b94-17283f3c2d3d", "Emma Trigger SKU list may not be empty.")
 	}
 
 
@@ -54,7 +54,7 @@ func processOrder(checkoutOrder order.InterfaceOrder) error {
 		email := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 
 		// subscribe to specified list
-		if _, err := Subscribe(email); err != nil {
+		if _, err := subscribe(email); err != nil {
 			return env.ErrorDispatch(err)
 		}
 	}
@@ -82,26 +82,26 @@ func containsItem(checkoutOrder order.InterfaceOrder, triggerList string) bool {
 }
 
 // Subscribe a user to a Emma
-func Subscribe(email string) (interface{}, error) {
+func subscribe(email string) (interface{}, error) {
 
 	//If emma is not enabled, ignore this request and do nothing
 	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled)); !enabled {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b3548446-1453-4862-a649-393fc0aafda1", "emma does not active")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3548446-1453-4862-a649-393fc0aafda1", "emma does not active")
 	}
 
 	var accountId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
 	if accountId == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 	}
 
 	var publicApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
 	if publicApiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1b5c42f5-d856-48c5-98a2-fd8b5929703c", "public api key was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1b5c42f5-d856-48c5-98a2-fd8b5929703c", "public api key was not specified")
 	}
 
 	var privateApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
 	if privateApiKey == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
 
 	var url = ConstEmmaApiUrl + accountId + "/members/add"

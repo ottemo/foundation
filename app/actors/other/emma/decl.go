@@ -5,7 +5,7 @@ import "github.com/ottemo/foundation/env"
 // Package constants for Emma module
 const (
 	ConstErrorModule = "emma"
-	ConstErrorLevel  = env.ConstErrorLevelActor
+	ConstErrorLevel  = env.ConstErrorLevelAPI
 
 	ConstConfigPathEmma                = "general.emma"
 	ConstConfigPathEmmaEnabled         = "general.emma.enabled"
