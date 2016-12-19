@@ -7,12 +7,13 @@ const (
 	ConstErrorModule = "emma"
 	ConstErrorLevel  = env.ConstErrorLevelAPI
 
-	ConstConfigPathEmma              = "general.emma"
-	ConstConfigPathEmmaEnabled       = "general.emma.enabled"
-	ConstConfigPathEmmaPublicAPIKey  = "general.emma.public_api_key"
-	ConstConfigPathEmmaPrivateAPIKey = "general.emma.private_api_key"
-	ConstConfigPathEmmaAccountID     = "general.emma.account_id"
-	ConstConfigPathEmmaSKU           = "general.emma.trigger_sku"
+	ConstConfigPathEmma                = "general.emma"
+	ConstConfigPathEmmaEnabled         = "general.emma.enabled"
+	ConstConfigPathEmmaPublicAPIKey    = "general.emma.public_api_key"
+	ConstConfigPathEmmaPrivateAPIKey   = "general.emma.private_api_key"
+	ConstConfigPathEmmaAccountID       = "general.emma.account_id"
+	ConstConfigPathEmmaSKU             = "general.emma.trigger_sku"
+	ConstConfigPathEmmaDefaultGroupIds = "general.emma.default_group_ids"
 
 	ConstEmmaApiUrl = "https://api.e2ma.net/"
 )

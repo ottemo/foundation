@@ -101,5 +101,19 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathEmmaDefaultGroupIds,
+		Value:       nil,
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Default Group Ids",
+		Description: "Comma seperated list of Group Ids",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

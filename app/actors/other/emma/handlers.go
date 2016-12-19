@@ -1,10 +1,11 @@
 package emma
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
-	"github.com/andelf/go-curl"
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
@@ -102,48 +103,54 @@ func subscribe(email string) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
 
+	var defaultGroupIds = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaDefaultGroupIds))
+	defaultGroupIdsList := strings.Split(defaultGroupIds, ",")
+
 	var url = ConstEmmaApiUrl + accountId + "/members/add"
 
-	postData := map[string]interface{}{"email": email}
+	postData := map[string]interface{}{"email": email, "group_ids": defaultGroupIdsList}
 	postDataJson := utils.EncodeToJSONString(postData)
 
-	easy := curl.EasyInit()
-	defer easy.Cleanup()
-	easy.Setopt(curl.OPT_URL, url)
-	easy.Setopt(curl.OPT_USERPWD, publicApiKey+":"+privateApiKey)
-	easy.Setopt(curl.OPT_POSTFIELDS, postDataJson)
-	easy.Setopt(curl.OPT_HTTPHEADER, []string{"Content-type: application/json"})
-	easy.Setopt(curl.OPT_SSL_VERIFYPEER, false)
-	easy.Setopt(curl.OPT_POST, 1)
-	// add curl log
-	//easy.Setopt(curl.OPT_VERBOSE, true)
+	buf := bytes.NewBuffer([]byte(postDataJson))
+	request, err := http.NewRequest("POST", url, buf)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
-	responseBody := ""
-	easy.Setopt(curl.OPT_WRITEFUNCTION, func(buf []byte, userdata interface{}) bool {
-		responseBody += string(buf)
-		return true
-	})
+	request.Header.Set("Content-Type", "application/json")
+	request.SetBasicAuth(publicApiKey, privateApiKey)
 
-	if err := easy.Perform(); err != nil {
+	client := &http.Client{}
+	response, err := client.Do(request)
+	// require http response code of 200 or error out
+	if response.StatusCode != http.StatusOK {
+
+		var status string
+		if response == nil {
+			status = "nil"
+		} else {
+			status = response.Status
+		}
+
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cad8ad77-dd4c-440c-ada2-1e315b706175", "Unable to subscribe visitor to Emma list, response code returned was "+status)
+	}
+	defer response.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
+	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
 	var result = "Error occurred"
-	responseCode, err := easy.Getinfo(curl.INFO_RESPONSE_CODE)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-		// require response code of 200
-	} else if responseCode == http.StatusOK {
-		jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
-
-		if isAdded, isset := jsonResponse["added"]; isset {
-			result = "E-mail was added successfully"
-			if isAdded == false {
-				result = "E-mail already added"
-			}
+	if isAdded, isset := jsonResponse["added"]; isset {
+		result = "E-mail was added successfully"
+		if isAdded == false {
+			result = "E-mail already added"
 		}
 	}
 
