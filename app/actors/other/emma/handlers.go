@@ -102,13 +102,16 @@ func subscribe(email string) (interface{}, error) {
 	if privateApiKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
+	var url = ConstEmmaApiUrl + accountId + "/members/add"
 
 	var defaultGroupIds = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaDefaultGroupIds))
 	defaultGroupIdsList := strings.Split(defaultGroupIds, ",")
 
-	var url = ConstEmmaApiUrl + accountId + "/members/add"
+	postData := map[string]interface{}{"email": email}
+	if defaultGroupIds != "" {
+		postData["group_ids"] = defaultGroupIdsList
+	}
 
-	postData := map[string]interface{}{"email": email, "group_ids": defaultGroupIdsList}
 	postDataJson := utils.EncodeToJSONString(postData)
 
 	buf := bytes.NewBuffer([]byte(postDataJson))
