@@ -30,15 +30,18 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 
 	email := utils.InterfaceToString(requestData["email"])
 	if email == "" {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email was not specified")
 	}
 
 	if !utils.ValidEmailAddress(email) {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b54b0917-acc0-469f-925e-8f85a1feac7b", "The email address, "+email+", is not in valid format.")
 	}
 
 	result, err := subscribe(email)
 	if err != nil {
+		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
 
