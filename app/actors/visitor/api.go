@@ -58,7 +58,6 @@ func setupAPI() error {
 	return nil
 }
 
-
 // APIGetGuestsList returns list of guests GROUP(ed) BY customer_email
 func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, error) {
 
@@ -88,9 +87,9 @@ func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, err
 
 		// GROUP BY customer_email
 		if !utils.IsInListStr(email, uniqEmails) && name != "" {
-			item := map[string]interface{} {
+			item := map[string]interface{}{
 				"customer_email": email,
-				"customer_name": name,
+				"customer_name":  name,
 			}
 
 			uniqEmails = append(uniqEmails, email)
@@ -107,14 +106,13 @@ func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, err
 		to = count
 	}
 
-	result := map[string]interface{} {
+	result := map[string]interface{}{
 		"guests": guests[from:to],
-		"count": count,
+		"count":  count,
 	}
 
 	return result, nil
 }
-
 
 // APICreateVisitor creates a new visitor
 //   - visitor attributes should be specified in content
@@ -185,6 +183,7 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	if err := api.ValidateAdminRights(context); err != nil {
+		// Visitor. Not admin.
 		if visitor.GetCurrentVisitorID(context) != visitorID {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -202,8 +201,9 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "Please enter current password and try again.")
 			}
 		}
-		// When admin user change password from storefront we will validate it
 	} else if oldPass, present := requestData["old_password"]; present {
+		// Admin
+		// When admin user change password from storefront we will validate it
 		if ok := visitorModel.CheckPassword(utils.InterfaceToString(oldPass)); !ok {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "Password entered does not match stored password.")
 		}
@@ -214,6 +214,39 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 	//-----------------
 
 	for attribute, value := range requestData {
+		if attribute == "email" {
+			visitorEmail := strings.ToLower(utils.InterfaceToString(value))
+
+			if !utils.ValidEmailAddress(visitorEmail) {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10dce5f7-ff43-41b5-b05f-48731fe22115", "The email address specified is not in a valid format, "+visitorEmail+".")
+			}
+
+			visitorCollectionModel, err := visitor.GetVisitorCollectionModel()
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+
+			err = visitorCollectionModel.ListFilterAdd("email", "=", visitorEmail)
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+
+			visitorItems, err := visitorCollectionModel.List()
+			if err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+
+			if len(visitorItems) > 0 {
+				if len(visitorItems) > 1 {
+					// Do not say to visitor that email is in use - security reason
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b9f147cd-ab4f-489a-81de-34d568331fc1", "Wrong email. Please, ask site administrator.")
+				} else if visitorID != visitorItems[0].ID { // we have only one record
+					// Do not say to visitor that email is in use - security reason
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "65ab4441-ce5e-47fb-b21b-9bf8a94ee075", "Wrong email. Please, ask site administrator.")
+				} // else Ok: visitor with visitorID is the owner of email
+			} // else it's ok - no visitor with this email found
+		}
+
 		if err := visitorModel.Set(attribute, value); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}

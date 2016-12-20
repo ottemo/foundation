@@ -38,8 +38,12 @@ type InterfaceVisitor interface {
 	GetShippingAddress() InterfaceVisitorAddress
 	GetBillingAddress() InterfaceVisitorAddress
 
+	GetToken() InterfaceVisitorCard
+
 	SetShippingAddress(address InterfaceVisitorAddress) error
 	SetBillingAddress(address InterfaceVisitorAddress) error
+
+	SetToken(token InterfaceVisitorCard) error
 
 	SetPassword(passwd string) error
 	CheckPassword(passwd string) bool

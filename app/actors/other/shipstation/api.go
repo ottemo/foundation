@@ -153,11 +153,8 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 		Country:    oShipAddress.GetCountry(),
 	}
 
-	// Shipstation knows nothing about discounts, so prices per item should be corrected by applying discounts
-	// First: apply per item discount
-	// Second: apply order discount proportionally
-	// calculatedTotal is total, calculated by applying per item discounts
-	var calculatedTotal float64
+	var calculatedDiscounts float64
+	var calculatedSubtotal float64
 
 	// Order Items
 	for _, oiItem := range allOrderItems {
@@ -166,48 +163,53 @@ func buildItem(oItem order.InterfaceOrder, allOrderItems []map[string]interface{
 			continue
 		}
 
+		var oiItemPrice = utils.InterfaceToFloat64(oiItem["price"])
+		var oiItemQty = utils.InterfaceToInt(oiItem["qty"])
+
 		orderItem := OrderItem{
 			Sku:       utils.InterfaceToString(oiItem["sku"]),
 			Name:      utils.InterfaceToString(oiItem["name"]),
-			Quantity:  utils.InterfaceToInt(oiItem["qty"]),
-			UnitPrice: utils.InterfaceToFloat64(oiItem["price"]), // TODO: FORMAT?
+			Quantity:  oiItemQty,
+			UnitPrice: oiItemPrice, // TODO: FORMAT?
 		}
+		orderDetails.Items = append(orderDetails.Items, orderItem)
+		calculatedSubtotal += utils.InterfaceToFloat64(oiItemQty) * oiItemPrice
 
 		if calculation != nil {
 			var oiItemIdx = utils.InterfaceToString(oiItem["idx"])
 			if oiItemCalculation := calculation[oiItemIdx]; oiItemCalculation != nil {
 				var oiItemCalculationMap = utils.InterfaceToMap(oiItemCalculation)
-				var oiItemPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
-				orderItem.UnitPrice = utils.RoundPrice(oiItemPrice)
+				var oiItemDiscountedPrice = utils.InterfaceToFloat64(oiItemCalculationMap[checkout.ConstLabelGrandTotal]) / utils.InterfaceToFloat64(orderItem.Quantity)
+
+				if utils.RoundPrice(oiItemPrice-oiItemDiscountedPrice) != 0 {
+					orderItem := OrderItem{
+						Sku:        "",
+						Name:       "Discount on " + utils.InterfaceToString(oiItem["name"]),
+						Quantity:   oiItemQty,
+						UnitPrice:  utils.RoundPrice(oiItemDiscountedPrice - utils.InterfaceToFloat64(oiItem["price"])),
+						Adjustment: true,
+					}
+					orderDetails.Items = append(orderDetails.Items, orderItem)
+					calculatedDiscounts += (oiItemDiscountedPrice - utils.InterfaceToFloat64(oiItem["price"])) * utils.InterfaceToFloat64(oiItemQty)
+				}
 			}
 		}
-
-		calculatedTotal += orderItem.UnitPrice * utils.InterfaceToFloat64(orderItem.Quantity)
-		orderDetails.Items = append(orderDetails.Items, orderItem)
 	}
 
-	// apply order discounts to item prices
+	// apply whole order discount
 	if calculation != nil {
-		// calculate order discount
-		var additionalDiscount = calculatedTotal - (orderDetails.OrderTotal - orderDetails.ShippingAmount - orderDetails.TaxAmount)
-		// calculate percentage of discount
-		var additionalDiscountPercent = additionalDiscount / (additionalDiscount + orderDetails.OrderTotal)
+		var calculatedGrandTotal = calculatedSubtotal + calculatedDiscounts + orderDetails.ShippingAmount + orderDetails.TaxAmount
+		var orderDiscount = oItem.GetGrandTotal() - calculatedGrandTotal
 
-		// store discount reminder to fill last item
-		var discountRemainder = additionalDiscount
-		for i, orderItem := range orderDetails.Items {
-			var itemDiscount float64
-			if i < len(orderDetails.Items)-1 {
-				// calculate price adjustment based on percentage
-				itemDiscount = utils.RoundPrice(orderItem.UnitPrice * additionalDiscountPercent)
-			} else {
-				// set price adjustment for full discount reminder for last item
-				itemDiscount = utils.RoundPrice(discountRemainder / utils.InterfaceToFloat64(orderItem.Quantity))
+		if utils.RoundPrice(orderDiscount) != 0 {
+			orderItem := OrderItem{
+				Sku:        "",
+				Name:       "Discount on Order",
+				Quantity:   1,
+				UnitPrice:  utils.RoundPrice(orderDiscount),
+				Adjustment: true,
 			}
-			discountRemainder -= itemDiscount * utils.InterfaceToFloat64(orderItem.Quantity)
-			orderItem.UnitPrice = utils.RoundPrice(orderItem.UnitPrice - itemDiscount)
-
-			orderDetails.Items[i] = orderItem
+			orderDetails.Items = append(orderDetails.Items, orderItem)
 		}
 	}
 
