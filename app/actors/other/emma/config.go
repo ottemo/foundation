@@ -93,8 +93,8 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Trigger SKU (comma seperated list of SKUs)",
-		Description: "Enter the SKU you want to use as a trigger",
+		Label:       "Trigger SKUs for Drip Campaign (comma seperated list of SKUs)",
+		Description: "Enter the SKU/s you want to use as a trigger",
 	}, nil)
 
 	if err != nil {
