@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"sort"
 
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // LoadByID loads one record from DB by record _id
@@ -233,17 +234,10 @@ func (it *DBCollection) ListColumns() map[string]string {
 		}
 	}
 
-	// updating cached attribute types information
+	// recreating cached attribute types information
+	// no need to check if cache exists - it will be rewritten anyway
 	attributeTypesMutex.Lock()
-	_, present := attributeTypes[it.Name]
-	attributeTypesMutex.Unlock()
-	if !present {
-		attributeTypesMutex.Lock()
-		attributeTypes[it.Name] = make(map[string]string)
-		attributeTypesMutex.Unlock()
-	}
-
-	attributeTypesMutex.Lock()
+	attributeTypes[it.Name] = make(map[string]string)
 	for attributeName, attributeType := range result {
 		attributeTypes[it.Name][attributeName] = attributeType
 	}
