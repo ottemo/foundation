@@ -1,13 +1,13 @@
 package giftcard
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
-
-	"strings"
-	"time"
 )
 
 // orderProceedHandler is fired during order creation to check the cart for
@@ -193,9 +193,9 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 			giftCardSplitedSKU := strings.Split(giftCardSku, giftCardSkuElement)
 			giftCardSplitedSKU = strings.Split(giftCardSplitedSKU[len(giftCardSplitedSKU)-1], "-")
 
-			// reed recipient options
+			// read recipient options
 			productOptions := cartItem.GetOptions()
-			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "Recipient Email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
+			if recipientEmailOption := utils.GetFirstMapValue(productOptions, "recipient_email", "Email", "recipient_mailbox"); recipientEmailOption != nil {
 
 				recipientEmailOption := utils.InterfaceToMap(recipientEmailOption)
 				emailValue, present := recipientEmailOption["value"]
@@ -208,7 +208,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				}
 			}
 
-			if recipientNameOption := utils.GetFirstMapValue(productOptions, "Recipient", "Recipient Name", "Name", "name"); recipientNameOption != nil {
+			if recipientNameOption := utils.GetFirstMapValue(productOptions, "recipient_name", "Recipient Name", "Name", "name"); recipientNameOption != nil {
 
 				recipientNameOption := utils.InterfaceToMap(recipientNameOption)
 				nameValue, present := recipientNameOption["value"]
