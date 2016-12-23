@@ -1,14 +1,15 @@
 package ini
 
 import (
+	"io"
 	"os"
 	"sort"
 	"strings"
 
+	goini "github.com/vaughan0/go-ini"
+
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
-
-	goini "github.com/vaughan0/go-ini"
 )
 
 // init makes package self-initialization routine
@@ -30,13 +31,48 @@ func (it *DefaultIniConfig) appEndEvent() error {
 
 	// checking that we have to store ini file
 	if len(it.keysToStore) > 0 || it.storeAll {
-		// opening ini file
-		iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-		defer iniFile.Close()
 
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
+		// Backup ini file.
+		// Implemented by function to be sure all file operations are finished.
+		// Do not copy empty file. Stop on error and ignore it.
+		func() error {
+			// check source content exists
+			srcFileInfo, err := os.Stat(it.iniFilePath)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+			if srcFileInfo.Size() <= 0 {
+				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "35c6aaf5-119c-42e7-8c11-bf0650279398", "file size incorrect")
+			}
+
+			// open source file for reading
+			srcFile, err := os.Open(it.iniFilePath)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+			defer srcFile.Close()
+
+			// create target file
+			tgtFile, err := os.Create(it.iniFilePath + ConstBackupFileSuffix)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+			defer tgtFile.Close()
+
+			// copy content
+			_, err = io.Copy(tgtFile, srcFile)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// make data persistent as soon as possible
+			err = tgtFile.Sync()
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			return nil
+		}()
 
 		// making alphabetically sorted section names
 		sortedSections := make([]string, 0, len(it.iniFileValues))
@@ -45,16 +81,15 @@ func (it *DefaultIniConfig) appEndEvent() error {
 		}
 		sort.Strings(sortedSections)
 
+		var output = ""
+
 		// loop over alphabetically sorted section names
 		for _, sectionName := range sortedSections {
 			sectionValues := it.iniFileValues[sectionName]
 
 			// section creation, global section have no header, instead of others
 			if sectionName != "" {
-				_, err := iniFile.WriteString("\n[" + sectionName + "]\n")
-				if err != nil {
-					return env.ErrorDispatch(err)
-				}
+				output += "\n[" + sectionName + "]\n"
 			}
 
 			var storingValueNames []string
@@ -78,11 +113,30 @@ func (it *DefaultIniConfig) appEndEvent() error {
 			// loop over alphabetically sorted section values
 			for _, key := range storingValueNames {
 				if value, present := sectionValues[key]; present {
-					_, err := iniFile.WriteString(key + "=" + value + "\n")
-					if err != nil {
-						env.ErrorDispatch(err)
-					}
+					output += key + "=" + value + "\n"
 				}
+			}
+		}
+
+		if len(output) > 0 {
+			// opening ini file
+			iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+			defer iniFile.Close()
+
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// write whole file content by one operation
+			_, err = iniFile.WriteString(output)
+			if err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// make data persistent as soon as possible
+			err = iniFile.Sync()
+			if err != nil {
+				return env.ErrorDispatch(err)
 			}
 		}
 	}
