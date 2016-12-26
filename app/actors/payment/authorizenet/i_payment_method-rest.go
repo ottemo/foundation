@@ -6,7 +6,7 @@ import (
 	"strings"
 	"regexp"
 
-	"github.com/hunterlong/authorizecim"
+	"github.com/AVATOR/AuthorizeCIM"
 
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
