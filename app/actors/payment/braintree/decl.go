@@ -21,13 +21,13 @@ const (
 	// General
 
 	constGeneralConfigPathGroup       = "payment.braintreeGeneral"
-	constGeneralConfigPathEnvironment = "payment.braintreeGeneral.environment"
-	constGeneralConfigPathMerchantID  = "payment.braintreeGeneral.merchantID"
-	constGeneralConfigPathPublicKey   = "payment.braintreeGeneral.publicKey"
-	constGeneralConfigPathPrivateKey  = "payment.braintreeGeneral.privateKey"
+	ConstGeneralConfigPathEnvironment = "payment.braintreeGeneral.environment"
+	ConstGeneralConfigPathMerchantID  = "payment.braintreeGeneral.merchantID"
+	ConstGeneralConfigPathPublicKey   = "payment.braintreeGeneral.publicKey"
+	ConstGeneralConfigPathPrivateKey  = "payment.braintreeGeneral.privateKey"
 
-	constEnvironmentSandbox    = string(braintree.Sandbox)
-	constEnvironmentProduction = string(braintree.Production)
+	ConstEnvironmentSandbox    = string(braintree.Sandbox)
+	ConstEnvironmentProduction = string(braintree.Production)
 
 	constErrorModule = "payment/braintree"
 	constErrorLevel  = env.ConstErrorLevelActor
@@ -46,5 +46,5 @@ const (
 
 )
 
-// braintreeCCMethod is a implementer of InterfacePaymentMethod for a Credit Card payment method
-type braintreeCCMethod struct{}
+// CreditCardMethod is a implementer of InterfacePaymentMethod for a Credit Card payment method
+type CreditCardMethod struct{}

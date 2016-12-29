@@ -14,45 +14,45 @@ import (
 )
 
 // GetCode returns payment method code for use in business logic
-func (it *braintreeCCMethod) GetCode() string {
+func (it *CreditCardMethod) GetCode() string {
 	return constCCMethodCode
 }
 
 // GetInternalName returns the human readable name of the payment method
-func (it *braintreeCCMethod) GetInternalName() string {
+func (it *CreditCardMethod) GetInternalName() string {
 	return constCCMethodInternalName
 }
 
 // GetName returns the user customized name of the payment method
-func (it *braintreeCCMethod) GetName() string {
+func (it *CreditCardMethod) GetName() string {
 	return utils.InterfaceToString(env.ConfigGetValue(constCCMethodConfigPathName))
 }
 
 // GetType returns type of payment method according to "github.com/ottemo/foundation/app/models/checkout"
-func (it *braintreeCCMethod) GetType() string {
+func (it *CreditCardMethod) GetType() string {
 	return checkout.ConstPaymentTypeCreditCard
 }
 
 // IsAllowed checks for payment method applicability
-func (it *braintreeCCMethod) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
+func (it *CreditCardMethod) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
 	return utils.InterfaceToBool(env.ConfigGetValue(constCCMethodConfigPathEnabled))
 }
 
 // IsTokenable returns possibility to save token for this payment method
-func (it *braintreeCCMethod) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
+func (it *CreditCardMethod) IsTokenable(checkoutInstance checkout.InterfaceCheckout) bool {
 	return (true)
 }
 
 // Authorize makes payment method authorize operations
 //  - just create token if set in paymentInfo
 //  - otherwise create transaction
-func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 
 	braintreeInstance := braintree.New(
-		braintree.Environment(utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathEnvironment))),
-		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathMerchantID)),
-		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathPublicKey)),
-		utils.InterfaceToString(env.ConfigGetValue(constGeneralConfigPathPrivateKey)),
+		braintree.Environment(utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathEnvironment))),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathMerchantID)),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPublicKey)),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPrivateKey)),
 	)
 
 	action := paymentInfo[checkout.ConstPaymentActionTypeKey]
@@ -123,7 +123,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		createdCreditCard, err := braintreeInstance.CreditCard().Create(creditCardParams)
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "Braintree error: unable to create credit card: "+err.Error()))
 		}
 
 		// This response looks like our normal authorize response
@@ -153,12 +153,11 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 		customerID := creditCard.GetCustomerID()
 
 		if cardToken == "" || customerID == "" {
-			err := env.ErrorNew(constErrorModule, constErrorLevel, "6b43e527-9bc7-48f7-8cdd-320ceb6d77e6", "looks like we want to charge a token, but we don't have the fields we need")
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "6b43e527-9bc7-48f7-8cdd-320ceb6d77e6", "looks like we want to charge a token, but we don't have the fields we need: token and customer id")
 		}
 
 		if _, err := braintreeInstance.CreditCard().Find(cardToken); err != nil {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "bb3748d9-67f6-4c1f-b2da-d1e7a6f0e519", "Braintree error: unable to find credit card: "+err.Error()))
 		}
 
 		transactionParams := &braintree.Transaction{
@@ -179,7 +178,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "e742d069-f9b8-4809-b27b-35712d82daf2", "Braintree error: unable to create transaction: "+err.Error()))
 		}
 
 	} else {
@@ -214,7 +213,7 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "Braintree error: unable to create transaction: "+err.Error()))
 		}
 	}
 
@@ -232,18 +231,18 @@ func (it *braintreeCCMethod) Authorize(orderInstance order.InterfaceOrder, payme
 
 // Capture makes payment method capture operation
 // - at time of implementation this method is not used anywhere
-func (it *braintreeCCMethod) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+func (it *CreditCardMethod) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "772bc737-f025-4c81-a85a-c10efb67e1b3", " Capture method not implemented")
 }
 
 // Refund will return funds on the given order
 // - at time of implementation this method is not used anywhere
-func (it *braintreeCCMethod) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+func (it *CreditCardMethod) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "26febf8b-7e26-44d4-bfb4-e9b29126fe5a", "Refund method not implemented")
 }
 
 // Void will mark the order and capture as void
 // - at time of implementation this method is not used anywhere
-func (it *braintreeCCMethod) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
+func (it *CreditCardMethod) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "561e0cc8-3bee-4ec4-bf80-585fa566abd4", "Void method not implemented")
 }

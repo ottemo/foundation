@@ -24,13 +24,13 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:   constGeneralConfigPathEnvironment,
-		Value:  constEnvironmentSandbox,
+		Path:   ConstGeneralConfigPathEnvironment,
+		Value:  ConstEnvironmentSandbox,
 		Type:   env.ConstConfigTypeVarchar,
 		Editor: "select",
 		Options: map[string]string{
-			constEnvironmentSandbox:    "Sandbox",
-			constEnvironmentProduction: "Production"},
+			ConstEnvironmentSandbox:    "Sandbox",
+			ConstEnvironmentProduction: "Production"},
 		Label:       "Environment",
 		Description: "Change Braintree environment according to the workflow mode",
 		Image:       "",
@@ -40,7 +40,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        constGeneralConfigPathMerchantID,
+		Path:        ConstGeneralConfigPathMerchantID,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -54,7 +54,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        constGeneralConfigPathPublicKey,
+		Path:        ConstGeneralConfigPathPublicKey,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
@@ -68,7 +68,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        constGeneralConfigPathPrivateKey,
+		Path:        ConstGeneralConfigPathPrivateKey,
 		Value:       "",
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
