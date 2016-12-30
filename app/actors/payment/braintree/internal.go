@@ -1,15 +1,13 @@
 package braintree
 
 import (
-	"github.com/lionelbarrow/braintree-go"
-
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/visitor"
 )
 
-func getBraintreeCustomerToken(visitorID string) string {
+func getTokenByVisitorID(visitorID string) string {
 	var absendToken = ""
 
 	if visitorID == "" {
@@ -39,40 +37,3 @@ func getBraintreeCustomerToken(visitorID string) string {
 
 	return absendToken
 }
-
-func formatBraintreeCardExpirationDate(card braintree.CreditCard) string {
-	var expirationDate = utils.InterfaceToString(card.ExpirationMonth)
-
-	// pad with a zero
-	if len(card.ExpirationMonth) < 2 {
-		expirationDate = "0" + expirationDate
-	}
-
-	// append the last two year digits
-	year := utils.InterfaceToString(card.ExpirationYear)
-	if len(year) == 4 {
-		expirationDate = expirationDate + year[2:]
-	} else {
-		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "950aea13-16e8-4d20-9ad0-f5cee26c03c2", "unexpected year length coming back from braintree "+year))
-	}
-
-	return expirationDate
-}
-
-func braintreeAddressFromVisitorAddress(visitorAddress visitor.InterfaceVisitorAddress) *braintree.Address {
-	return &braintree.Address{
-		FirstName:       visitorAddress.GetFirstName(),
-		LastName:        visitorAddress.GetLastName(),
-		Company:         visitorAddress.GetCompany(),
-		StreetAddress:   visitorAddress.GetAddressLine1(),
-		ExtendedAddress: visitorAddress.GetAddressLine2(),
-
-		CountryCodeAlpha2: visitorAddress.GetCountry(),
-		Locality:          visitorAddress.GetCity(),
-		Region:            visitorAddress.GetState(),
-		PostalCode:        visitorAddress.GetZipCode(),
-	}
-}
-
-//func (it *braintree.CreditCard) populateTokenCreationResult() {
-//}

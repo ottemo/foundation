@@ -67,7 +67,7 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 		// 1. Get our customer token
 		extra := utils.InterfaceToMap(paymentInfo["extra"])
 		visitorID := utils.InterfaceToString(extra["visitor_id"])
-		customerID := getBraintreeCustomerToken(visitorID)
+		customerID := getTokenByVisitorID(visitorID)
 
 		if customerID == "" {
 			// TODO: separate func
@@ -126,28 +126,17 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 			},
 		}
 
-		createdCreditCard, err := braintreeInstance.CreditCard().Create(creditCardParams)
+		createdCreditCardPtr, err := braintreeInstance.CreditCard().Create(creditCardParams)
 		if err != nil {
 			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "Braintree error: unable to create credit card: "+err.Error())
 		}
 
-		// This response looks like our normal authorize response
-		// but this map is translated into other keys to store a token
-		// TODO: separate function to create token...
-		tokenCreationResult := map[string]interface{}{
-			"transactionID":      createdCreditCard.Token,                      // token_id
-			"creditCardLastFour": createdCreditCard.Last4,                      // number
-			"creditCardType":     createdCreditCard.CardType,                   // type
-			"creditCardExp":      formatBraintreeCardExpirationDate(*createdCreditCard), // expiration_date
-			"customerID":         createdCreditCard.CustomerId,                 // customer_id
-		}
-
-		return tokenCreationResult, nil
+		return braintreeCardToAuthorizeResult(*createdCreditCardPtr, (*createdCreditCardPtr).CustomerId)
 	}
 
 	// TODO: separate function to charge customer as this action is a post- authorization action.
 	// Charging
-	var transaction *braintree.Transaction
+	var transactionPtr *braintree.Transaction
 
 	// Token Charge
 	// - we have a Customer, and a Card
@@ -183,7 +172,7 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 		transactionParams.BillingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetBillingAddress())
 		transactionParams.ShippingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetShippingAddress())
 
-		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
+		transactionPtr, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
 			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "e742d069-f9b8-4809-b27b-35712d82daf2", "Braintree error: unable to create transaction: "+err.Error())
 		}
@@ -220,22 +209,13 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 		transactionParams.BillingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetBillingAddress())
 		transactionParams.ShippingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetShippingAddress())
 
-		transaction, err = braintreeInstance.Transaction().Create(transactionParams)
+		transactionPtr, err = braintreeInstance.Transaction().Create(transactionParams)
 		if err != nil {
 			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "Braintree error: unable to create transaction: "+err.Error())
 		}
 	}
 
-	// Assemble the response
-	paymentResult := map[string]interface{}{
-		"transactionID":      transaction.CreditCard.Token,
-		"creditCardLastFour": transaction.CreditCard.Last4,
-		"creditCardExp":      formatBraintreeCardExpirationDate(*transaction.CreditCard),
-		"creditCardType":     transaction.CreditCard.CardType,
-		"customerID":         transaction.Customer.Id,
-	}
-
-	return paymentResult, nil
+	return braintreeCardToAuthorizeResult(*transactionPtr.CreditCard, transactionPtr.Customer.Id)
 }
 
 // Capture makes payment method capture operation
