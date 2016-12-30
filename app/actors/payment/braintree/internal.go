@@ -22,6 +22,7 @@ func getBraintreeCustomerToken(visitorID string) string {
 	model.ListFilterAdd("payment", "=", constCCMethodCode)
 
 	// 3rd party customer identifier, used by braintree
+	// TODO: separate function to add 3rd party identifier
 	err := model.ListAddExtraAttribute("customer_id")
 	if err != nil {
 		env.ErrorDispatch(err)
@@ -39,7 +40,7 @@ func getBraintreeCustomerToken(visitorID string) string {
 	return absendToken
 }
 
-func formatCardExpirationDate(card braintree.CreditCard) string {
+func formatBraintreeCardExpirationDate(card braintree.CreditCard) string {
 	var expirationDate = utils.InterfaceToString(card.ExpirationMonth)
 
 	// pad with a zero
@@ -58,7 +59,7 @@ func formatCardExpirationDate(card braintree.CreditCard) string {
 	return expirationDate
 }
 
-func newBraintreeAddress(visitorAddress visitor.InterfaceVisitorAddress) *braintree.Address {
+func braintreeAddressFromVisitorAddress(visitorAddress visitor.InterfaceVisitorAddress) *braintree.Address {
 	return &braintree.Address{
 		FirstName:       visitorAddress.GetFirstName(),
 		LastName:        visitorAddress.GetLastName(),
@@ -72,3 +73,6 @@ func newBraintreeAddress(visitorAddress visitor.InterfaceVisitorAddress) *braint
 		PostalCode:        visitorAddress.GetZipCode(),
 	}
 }
+
+//func (it *braintree.CreditCard) populateTokenCreationResult() {
+//}
