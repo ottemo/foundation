@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/category"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/category"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -315,9 +316,10 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 	models.ApplyFilters(context, productsCollection.GetDBCollection())
 
-	// not allowing to see disabled products if not admin
+	// not allowing to see disabled and hidden products if not admin
 	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+		productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true)
+		productsCollection.GetDBCollection().AddGroupFilter("visitor", "visible", "=", true)
 	}
 
 	// checking for a "count" request
@@ -339,9 +341,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 	for _, productModel := range productsCollection.ListProducts() {
 		productInfo := productModel.ToHashMap()
 
-		defaultImage := utils.InterfaceToString(productInfo["default_image"])
-
-		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage, defaultImage)
+		productInfo["image"], err = mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage)
 		if err != nil {
 			env.ErrorDispatch(err)
 		}

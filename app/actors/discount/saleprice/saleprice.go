@@ -114,9 +114,19 @@ func (it *DefaultSalePrice) ToHashMap() map[string]interface{} {
 
 	result["_id"] = it.GetID()
 	result["amount"] = it.GetAmount()
-	result["end_datetime"] = it.GetEndDatetime()
 	result["product_id"] = it.GetProductID()
-	result["start_datetime"] = it.GetStartDatetime()
+
+	if it.GetEndDatetime().IsZero() {
+		result["end_datetime"] = nil
+	} else {
+		result["end_datetime"] = it.GetEndDatetime()
+	}
+
+	if it.GetStartDatetime().IsZero() {
+		result["start_datetime"] = nil
+	} else {
+		result["start_datetime"] = it.GetStartDatetime()
+	}
 
 	return result
 }
@@ -225,7 +235,7 @@ func (it *DefaultSalePrice) Save() error {
 	}
 
 	// Check start date before end date
-	if !it.GetStartDatetime().Before(it.GetEndDatetime()) {
+	if !it.GetEndDatetime().IsZero() && !it.GetStartDatetime().Before(it.GetEndDatetime()) {
 		return newErrorHelper("Start Datetime should be before End Datetime.", "668c3bd4-1a10-417a-aa68-2ec13e559a11")
 	}
 

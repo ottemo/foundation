@@ -53,9 +53,15 @@ func CheckModelImplements(modelName string, neededInterfaces []string) (models.I
 
 // ArgsGetAsNamed collects arguments into map, unnamed arguments will go as position index
 func ArgsGetAsNamed(args []string, includeIndexes bool) map[string]string {
+	return ArgsGetAsNamedBySeparators(args, includeIndexes, '=',':')
+}
+
+// ArgsGetAsNamedBySeparators collects arguments into map, unnamed arguments will go as position index
+// - separators could be defined as argument
+func ArgsGetAsNamedBySeparators(args []string, includeIndexes bool, separators ...rune) map[string]string {
 	result := make(map[string]string)
 	for idx, arg := range args {
-		splited := utils.SplitQuotedStringBy(arg, '=', ':')
+		splited := utils.SplitQuotedStringBy(arg, separators...)
 		if len(splited) > 1 {
 			key := splited[0]
 			key = strings.Trim(strings.TrimSpace(key), "\"'`")
@@ -555,17 +561,22 @@ func (it *ImportCmdAlias) Process(itemData map[string]interface{}, input interfa
 
 // Init is a MEDIA command initialization routines
 func (it *ImportCmdMedia) Init(args []string, exchange map[string]interface{}) error {
+	const SKIP_ERRORS_ARG = "--skipErrors"
 
-	if len(args) > 1 {
+	if len(args) > 1 && args[1] != SKIP_ERRORS_ARG{
 		it.mediaField = args[1]
 	}
 
-	if len(args) > 2 {
+	if len(args) > 2 && args[2] != SKIP_ERRORS_ARG {
 		it.mediaType = args[2]
 	}
 
-	if len(args) > 3 {
+	if len(args) > 3 && args[3] != SKIP_ERRORS_ARG {
 		it.mediaName = args[3]
+	}
+
+	if args[len(args)-1] == SKIP_ERRORS_ARG {
+		it.skipErrors = true
 	}
 
 	if it.mediaField == "" {
@@ -607,11 +618,11 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 
 		prevMediaName := ""
 
-		// adding found media value(s)
-		for mediaIdx, mediaValue := range mediaArray {
+		var storeMediaFunc = func(srcMediaValue string, srcPrevMediaName string, srcMediaIdx int) (tgtPrevMediaName string, err error) {
+			var tgtMediaValue = srcMediaValue
+			tgtPrevMediaName = srcPrevMediaName
 
 			mediaContents := []byte{}
-			var err error
 
 			// looking for media type
 			mediaType := it.mediaType
@@ -626,25 +637,26 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 			}
 
 			// checking value type
-			if strings.HasPrefix(mediaValue, "http") { // we have http(s) link
+			if strings.HasPrefix(tgtMediaValue, "http") {
+				// we have http(s) link
 				transport := &http.Transport{
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 				}
 				client := &http.Client{Transport: transport}
-				req, err := http.NewRequest("GET", mediaValue, nil)
+				req, err := http.NewRequest("GET", tgtMediaValue, nil)
 				if err != nil {
-					return input, env.ErrorDispatch(err)
+					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
 				// send close header to terminate socket as soon as request finishes
 				req.Close = true
 
 				response, err := client.Do(req)
 				if err != nil {
-					return input, env.ErrorDispatch(err)
+					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
 
 				if response.StatusCode != 200 {
-					return input, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image "+mediaValue+" (Status: "+response.Status+")")
+					return srcPrevMediaName, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image " + srcMediaValue + " (Status: " + response.Status + ")")
 				}
 
 				// updating media type if wasn't set
@@ -662,19 +674,20 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 				// receiving media contents
 				mediaContents, err = ioutil.ReadAll(response.Body)
 				if err != nil {
-					return input, env.ErrorDispatch(err)
+					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
-			} else { // we have regular file
+			} else {
+				// we have regular file
 
 				// updating media name if wasn't set
 				if mediaName == "" {
-					mediaName = path.Base(mediaValue)
+					mediaName = path.Base(tgtMediaValue)
 				}
 
 				// receiving media contents
-				mediaContents, err = ioutil.ReadFile(mediaValue)
+				mediaContents, err = ioutil.ReadFile(tgtMediaValue)
 				if err != nil {
-					return input, env.ErrorDispatch(err)
+					return srcPrevMediaName, env.ErrorDispatch(err)
 				}
 			}
 
@@ -711,16 +724,27 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 			}
 
 			// so, if media name is static and we have array we want images to not be replaced
-			if prevMediaName == mediaName {
-				mediaName = strconv.Itoa(mediaIdx) + "_" + mediaName
+			if tgtPrevMediaName == mediaName {
+				mediaName = strconv.Itoa(srcMediaIdx) + "_" + mediaName
 			} else {
-				prevMediaName = mediaName
+				tgtPrevMediaName = mediaName
 			}
 
 			// finally adding media to object
 			err = inputAsMedia.AddMedia(mediaType, mediaName, mediaContents)
 			if err != nil {
-				return input, env.ErrorDispatch(err)
+				return srcPrevMediaName, env.ErrorDispatch(err)
+			}
+
+			return tgtPrevMediaName, nil
+		}
+
+		// adding found media value(s)
+		for mediaIdx, mediaValue := range mediaArray {
+			var err error
+			prevMediaName, err = storeMediaFunc(mediaValue, prevMediaName, mediaIdx)
+			if err != nil && !it.skipErrors {
+				return input, err
 			}
 		}
 	}
@@ -739,7 +763,7 @@ func (it *ImportCmdAttributeAdd) Init(args []string, exchange map[string]interfa
 
 	attributeName := ""
 
-	namedArgs := ArgsGetAsNamed(args, true)
+	namedArgs := ArgsGetAsNamedBySeparators(args, true, '=')
 	for _, checkingKey := range []string{"attribute", "attr", "2"} {
 		if argValue, present := namedArgs[checkingKey]; present {
 			attributeName = argValue

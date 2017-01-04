@@ -36,8 +36,6 @@ func setupDB() error {
 			if err := fillApprovedField(); err != nil {
 				return env.ErrorDispatch(err)
 			}
-		} else {
-			env.Log(ConstErrorModule, env.ConstLogPrefixInfo, "'approved' value need no update.")
 		}
 	} else {
 		return env.ErrorDispatch(err)
