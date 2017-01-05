@@ -146,35 +146,149 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	productOptions := it.GetOptions()
 
 	// storing start price for a case of percentage price modifier
-	startPrice := it.GetPrice()
+	var startPrice = it.GetPrice()
+
+	var selectedProductIDs []string
+	var storedImageName string
+	var foundOptions []string
+	for itemOptionName := range options {
+		// get product option (color, size, etc)
+		productOption, ok := productOptions[itemOptionName]
+		if !ok {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b7d5166-f687-4c65-b109-5c2cee27e3f5", "unknown option '"+itemOptionName+"'")
+		}
+
+		productOptionHashMap, ok := productOption.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check receiver have options (color:{options:...})
+		optionOptions, ok := productOptionHashMap["options"]
+		if !ok {
+			continue
+		}
+
+		optionOptionsHashMap, ok := optionOptions.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check single value (color:{options:{red:{...}}})
+		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
+		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
+		if !present {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "11b4cf1b-2324-4ed1-b592-32bd66b751e4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
+		}
+
+		optionOptionsItemHashMap, ok := optionOptionsItem.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// check option product IDs (color:{options:{red:{product_ids:"1,2,3", ...}}})
+		productIDsHashMap, present := optionOptionsItemHashMap[product.ConstOptionProductIDs]
+		if !present {
+			continue
+		}
+		foundOptions = append(foundOptions, itemOptionName)
+
+		if newImageName, present := optionOptionsItemHashMap[product.ConstOptionImageName]; present {
+			storedImageName = utils.InterfaceToString(newImageName)
+		}
+
+		// filter selected product ids by current option product ids
+		productIDs := utils.InterfaceToStringArray(productIDsHashMap)
+		if len(selectedProductIDs) == 0 {
+			// initialization
+			selectedProductIDs = productIDs
+		} else {
+			// filtering
+			var newProductIDs []string
+			for _, productID := range productIDs {
+				if utils.IsInArray(productID, selectedProductIDs) {
+					newProductIDs = append(newProductIDs, productID)
+				}
+			}
+			selectedProductIDs = newProductIDs
+		}
+
+		// cleaning option values were not used by customer
+		for optionOptionsItemName := range optionOptionsHashMap {
+			if optionOptionsItemName != itemOptionValue {
+				delete(optionOptionsHashMap, optionOptionsItemName)
+			}
+		}
+	}
+
+	var optionsWithoutSimpleIds = make(map[string]interface{})
+	var isSimpleProductUsed = false
+
+	// if options with simple product ids found
+	if len(foundOptions) > 0 {
+		if len(selectedProductIDs) < 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ae359d4-36b8-4182-bb12-c302938b28ad", "no product specified for selected options")
+		} else if len(selectedProductIDs) > 1 {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6e356239-5d7e-42a8-8392-b97c80e56fda", "more than one product specified for selected options")
+		} else {
+			var storedOptions = it.GetOptions();
+			var storedID = it.GetID()
+
+			if len(storedImageName) == 0 {
+				storedImageName = it.GetDefaultImage()
+			}
+
+			// replace configurable product with simple product
+			if err := it.Load(selectedProductIDs[0]); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			// use configurable ID and options
+			if err := it.SetID(storedID); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			if err := it.Set("options", storedOptions); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			if err := it.Set("default_image", storedImageName); err != nil {
+				return env.ErrorDispatch(err)
+			}
+
+			isSimpleProductUsed = true
+		}
+	}
+
+	// filter already processed options
+	for optionName, optionValue := range options {
+		if !utils.IsInArray(optionName, foundOptions) {
+			optionsWithoutSimpleIds[optionName] = optionValue
+		}
+	}
 
 	// sorting applicable product attributes according to "order" field
 	// optionsApplyOrder := make([]string, 0)
 	var optionsApplyOrder []string
 
-	for itemOptionName := range options {
+	for itemOptionName := range optionsWithoutSimpleIds {
+		// options already filtered by product options
+		productOption := productOptions[itemOptionName].(map[string]interface{})
 
-		// looking only for options that customer set for item
-		if productOption, present := productOptions[itemOptionName]; present {
-			if productOption, ok := productOption.(map[string]interface{}); ok {
-
-				orderValue := int(^uint(0) >> 1) // default order - max integer
-				if optionValue, present := productOption["order"]; present {
-					orderValue = utils.InterfaceToInt(optionValue)
-				}
-
-				// encoding key order to string "000000000000001 [attribute name]"
-				// for future sort as string (16 digits - max for js integer)
-				key := fmt.Sprintf("%.16d %s", orderValue, itemOptionName)
-				optionsApplyOrder = append(optionsApplyOrder, key)
-			}
+		orderValue := int(^uint(0) >> 1) // default order - max integer
+		if optionValue, present := productOption["order"]; present {
+			orderValue = utils.InterfaceToInt(optionValue)
 		}
+
+		// encoding key order to string "000000000000001 [attribute name]"
+		// for future sort as string (16 digits - max for js integer)
+		key := fmt.Sprintf("%.16d %s", orderValue, itemOptionName)
+		optionsApplyOrder = append(optionsApplyOrder, key)
 	}
 	sort.Strings(optionsApplyOrder)
 
 	// function to modify orderItem according to option values
 	applyOptionModifiers := func(optionToApply map[string]interface{}) {
-
 		// price modifier
 		if optionValue, present := optionToApply["price"]; present {
 			if stringValue, ok := optionValue.(string); ok {
@@ -227,64 +341,57 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	}
 
 	// loop over item applied option in right order
-	for _, itemOptionName := range optionsApplyOrder {
-		// decoding key order after sort
-		itemOptionName := itemOptionName[strings.Index(itemOptionName, " ")+1:]
+	for _, itemOptionNameKey := range optionsApplyOrder {
+		itemOptionName := itemOptionNameKey[strings.Index(itemOptionNameKey, " ")+1:]
 		itemOptionValue := options[itemOptionName]
 
-		if productOption, present := productOptions[itemOptionName]; present {
-			if productOptions, ok := productOption.(map[string]interface{}); ok {
+		// options already filtered by product options
+		// get product option (color, size, etc)
+		productOptions := productOptions[itemOptionName].(map[string]interface{})
 
-				// product option itself can contain price, sku modifiers
-				applyOptionModifiers(productOptions)
+		// product option itself can contain price, sku modifiers
+		if !isSimpleProductUsed {
+			applyOptionModifiers(productOptions)
+		}
 
-				// if product option value have predefined option values, then checking their modifiers
-				if productOptionValues, present := productOptions["options"]; present {
-					if productOptionValues, ok := productOptionValues.(map[string]interface{}); ok {
+		// if product option value have predefined option values, then checking their modifiers
+		if productOptionValues, present := productOptions["options"]; present {
+			if productOptionValues, ok := productOptionValues.(map[string]interface{}); ok {
 
-						// option user set can be single on multi-value
-						// making it uniform
-						// itemOptionValueSet := make([]string, 0)
-						var itemOptionValueSet []string
-						switch typedOptionValue := itemOptionValue.(type) {
-						case string:
-							itemOptionValueSet = append(itemOptionValueSet, typedOptionValue)
-						case []string:
-							itemOptionValueSet = typedOptionValue
-						case []interface{}:
-							for _, value := range typedOptionValue {
-								if value, ok := value.(string); ok {
-									itemOptionValueSet = append(itemOptionValueSet, value)
-								}
-							}
-						default:
-							return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d02be30-ca5e-46e4-94c7-2f01782f30b2", "unexpected option value for "+itemOptionName+" option")
+				// option user set can be single on multi-value
+				// making it uniform
+				// itemOptionValueSet := make([]string, 0)
+				var itemOptionValueSet []string
+				switch typedOptionValue := itemOptionValue.(type) {
+				case string:
+					itemOptionValueSet = append(itemOptionValueSet, typedOptionValue)
+				case []string:
+					itemOptionValueSet = typedOptionValue
+				case []interface{}:
+					for _, value := range typedOptionValue {
+						if value, ok := value.(string); ok {
+							itemOptionValueSet = append(itemOptionValueSet, value)
 						}
+					}
+				default:
+					return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d02be30-ca5e-46e4-94c7-2f01782f30b2", "unexpected option value for "+itemOptionName+" option")
+				}
 
-						// loop through option values customer set for product
-						for _, itemOptionValue := range itemOptionValueSet {
+				// loop through option values customer set for product
+				if !isSimpleProductUsed {
+					for _, itemOptionValue := range itemOptionValueSet {
+						var productOptionValue = productOptionValues[itemOptionValue].(map[string]interface{})
+						applyOptionModifiers(productOptionValue)
+					}
+				}
 
-							if productOptionValue, present := productOptionValues[itemOptionValue]; present {
-								if productOptionValue, ok := productOptionValue.(map[string]interface{}); ok {
-									applyOptionModifiers(productOptionValue)
-								}
-							} else {
-								return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f2baf8a-af91-44f3-8364-b42099959ec4", "invalid '"+itemOptionName+"' option value: '"+itemOptionValue)
-							}
-
-						}
-
-						// cleaning option values were not used by customer
-						for productOptionValueName := range productOptionValues {
-							if !utils.IsInArray(productOptionValueName, itemOptionValueSet) {
-								delete(productOptionValues, productOptionValueName)
-							}
-						}
+				// cleaning option values were not used by customer
+				for productOptionValueName := range productOptionValues {
+					if !utils.IsInArray(productOptionValueName, itemOptionValueSet) {
+						delete(productOptionValues, productOptionValueName)
 					}
 				}
 			}
-		} else {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96246e83-fb80-4781-b671-2d3d75a65e56", "unknown option '"+itemOptionName+"'")
 		}
 	}
 
@@ -350,6 +457,8 @@ func (it *DefaultProduct) Get(attribute string) interface{} {
 		return it.GetOptions()
 	case "related_pids":
 		return it.GetRelatedProductIds()
+	case "visible":
+		return it.Visible
 	}
 
 	return it.customAttributes.Get(attribute)
@@ -387,6 +496,8 @@ func (it *DefaultProduct) Set(attribute string, value interface{}) error {
 		it.Weight = utils.InterfaceToFloat64(value)
 	case "options":
 		it.Options = utils.InterfaceToMap(value)
+	case "visible":
+		it.Visible = utils.InterfaceToBool(value)
 	case "related_pids":
 		it.RelatedProductIds = make([]string, 0)
 
@@ -480,6 +591,8 @@ func (it *DefaultProduct) ToHashMap() map[string]interface{} {
 	result["weight"] = it.Weight
 
 	result["options"] = it.GetOptions()
+
+	result["visible"] = it.Visible
 
 	result["related_pids"] = it.Get("related_pids")
 
@@ -635,9 +748,22 @@ func (it *DefaultProduct) GetAttributesInfo() []models.StructAttributeInfo {
 			IsStatic:   true,
 			Label:      "Related Products",
 			Group:      "General",
-			Editors:    "product_selector",
+			Editors:    "products_selector",
 			Options:    "",
 			Default:    "",
+		},
+		models.StructAttributeInfo{
+			Model:      product.ConstModelNameProduct,
+			Collection: ConstCollectionNameProduct,
+			Attribute:  "visible",
+			Type:       db.ConstTypeBoolean,
+			IsRequired: false,
+			IsStatic:   true,
+			Label:      "Visible",
+			Group:      "General",
+			Editors:    "boolean",
+			Options:    "",
+			Default:    "true",
 		},
 	}
 

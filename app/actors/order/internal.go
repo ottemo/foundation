@@ -112,14 +112,14 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 		return env.ErrorDispatch(err)
 	}
 
-	orderID := utils.InterfaceToString(it.Get("_id"))
+	orderIncrementID := utils.InterfaceToString(it.Get("increment_id"))
 
 	storeName := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreName))
 	if storeName == "" {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "81e24346-786e-4528-a3d6-85fc514917cc", "store name is not set in config")
 	}
 
-	subject := "Your " + storeName + " Order, #" + orderID
+	subject := "Your " + storeName + " Order, #" + orderIncrementID
 
 	// sending the email notification
 	emailAddress := utils.InterfaceToString(visitor["email"])

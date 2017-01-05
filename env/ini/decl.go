@@ -16,8 +16,9 @@ const (
 	ConstEnvironmentIniFile    = "OTTEMO_INI"
 	ConstEnvironmentIniSection = "OTTEMO_MODE"
 
-	ConstTestSectionName = "test"
-	ConstDefaultIniFile  = "ottemo.ini"
+	ConstTestSectionName  = "test"
+	ConstDefaultIniFile   = "ottemo.ini"
+	ConstBackupFileSuffix = ".bak"
 
 	ConstErrorModule = "env/ini"
 	ConstErrorLevel  = env.ConstErrorLevelService
