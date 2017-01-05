@@ -1,8 +1,6 @@
 package braintree
 
 import (
-	"strings"
-
 	"github.com/lionelbarrow/braintree-go"
 
 	"github.com/ottemo/foundation/env"
@@ -46,172 +44,43 @@ func (it *CreditCardMethod) IsTokenable(checkoutInstance checkout.InterfaceCheck
 // Authorize makes payment method authorize operations
 //  - just create token if set in paymentInfo
 //  - otherwise create transaction
+//  - `orderInstance = nil` when creating a token
 func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-
-	braintreeInstance := braintree.New(
-		braintree.Environment(utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathEnvironment))),
-		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathMerchantID)),
-		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPublicKey)),
-		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPrivateKey)),
-	)
-
-	// TODO: check errors
-	action := paymentInfo[checkout.ConstPaymentActionTypeKey]
-	isCreateToken := utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken
-	creditCardInfo := paymentInfo["cc"]
-	creditCardMap := utils.InterfaceToMap(creditCardInfo)
-
-	if isCreateToken { // TODO: separate func
-		// NOTE: `orderInstance = nil` when creating a token
-
-		// 1. Get our customer token
-		extra := utils.InterfaceToMap(paymentInfo["extra"])
-		visitorID := utils.InterfaceToString(extra["visitor_id"])
-		customerID := getTokenByVisitorID(visitorID)
-
-		if customerID == "" {
-			// TODO: separate func
-			// 2. We don't have a braintree client id on file, make a new customer
-
-			var customerParamsPtr *braintree.Customer
-
-			if visitorID == "" {
-				// TODO: separate func
-				var nameParts = strings.SplitN(utils.InterfaceToString(extra["billing_name"])+" ", " ", 2)
-				var firstName = strings.TrimSpace(nameParts[0])
-				var lastName = strings.TrimSpace(nameParts[1])
-
-				customerParamsPtr = &braintree.Customer{
-					FirstName: firstName,
-					LastName:  lastName,
-					Email:     utils.InterfaceToString(extra["email"]),
-				}
-			} else {
-				// TODO: separate func
-				visitorData, err := visitor.LoadVisitorByID(visitorID)
-				if err != nil {
-					return nil, env.ErrorNew(constErrorModule, constErrorLevel, "09ec64dd-d5c7-4179-aad3-a019c0cd857f", "internal error: unable to load visitor by ID.")
-				}
-
-				customerParamsPtr = &braintree.Customer{
-					FirstName: visitorData.GetFirstName(),
-					LastName:  visitorData.GetLastName(),
-					Email:     visitorData.GetEmail(),
-				}
-			}
-
-			customerPtr, err := braintreeInstance.Customer().Create(customerParamsPtr)
-			if err != nil {
-				return nil, env.ErrorNew(constErrorModule, constErrorLevel, "09ec64dd-d5c7-4179-aad3-a019c0cd857f", "Braintree error: unable to create customer: "+err.Error())
-			}
-
-			customerID = customerPtr.Id
-		}
-
-		// TODO: separate function to create card
-		// 3. Create a card
-		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
-		if creditCardCVC == "" {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "bd0a78bf-065a-462b-92c7-d5a1529797c4", "CVC field was left empty")
-		}
-
-		creditCardParams := &braintree.CreditCard{
-			CustomerId:      customerID,
-			Number:          utils.InterfaceToString(creditCardMap["number"]),
-			ExpirationYear:  utils.InterfaceToString(creditCardMap["expire_year"]),
-			ExpirationMonth: utils.InterfaceToString(creditCardMap["expire_month"]),
-			CVV:             creditCardCVC,
-			Options: &braintree.CreditCardOptions{
-				VerifyCard: true,
-			},
-		}
-
-		createdCreditCardPtr, err := braintreeInstance.CreditCard().Create(creditCardParams)
-		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "Braintree error: unable to create credit card: "+err.Error())
-		}
-
-		return braintreeCardToAuthorizeResult(*createdCreditCardPtr, (*createdCreditCardPtr).CustomerId)
+	action, _ := paymentInfo[checkout.ConstPaymentActionTypeKey]
+	creditCardInfo, present := paymentInfo["cc"]
+	if !present {
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "0e18570c-e35d-404f-a408-6c9fb4ecfabc", "credit card information has not been set")
 	}
 
-	// TODO: separate function to charge customer as this action is a post- authorization action.
-	// Charging
+	creditCardInfoMap := utils.InterfaceToMap(creditCardInfo)
+
+	if utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken {
+		visitorInfo, present := paymentInfo["extra"]
+		if !present {
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "297dfae9-e7c2-41b1-bc54-4f9924d19ae1", "visitor information has not been set")
+		}
+
+		creditCardPtr, err := braintreeRegisterCardForVisitor(utils.InterfaceToMap(visitorInfo), creditCardInfoMap)
+		if err != nil {
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "unable to create credit card: "+err.Error())
+		}
+
+		return braintreeCardToAuthorizeResult(*creditCardPtr, (*creditCardPtr).CustomerId)
+	}
+
 	var transactionPtr *braintree.Transaction
 
-	// Token Charge
-	// - we have a Customer, and a Card
-	// - create a Transaction using Card token
-	// - must reference Customer
-	// - email is stored on the Customer
 	if creditCard, ok := creditCardInfo.(visitor.InterfaceVisitorCard); ok && creditCard != nil {
 		var err error
-		cardToken := creditCard.GetToken()
-		customerID := creditCard.GetCustomerID()
-
-		if cardToken == "" || customerID == "" {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "6b43e527-9bc7-48f7-8cdd-320ceb6d77e6", "looks like we want to charge a token, but we don't have the fields we need: token and customer id")
-		}
-
-		if _, err := braintreeInstance.CreditCard().Find(cardToken); err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "bb3748d9-67f6-4c1f-b2da-d1e7a6f0e519", "Braintree error: unable to find credit card: "+err.Error())
-		}
-
-		transactionParams := &braintree.Transaction{
-			Type:               "sale",
-			Amount:             braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
-			CustomerID:         customerID,
-			PaymentMethodToken: cardToken,
-			OrderId:            orderInstance.GetID(),
-
-			Options: &braintree.TransactionOptions{
-				SubmitForSettlement: true,
-				StoreInVault:        true,
-			},
-		}
-
-		transactionParams.BillingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetBillingAddress())
-		transactionParams.ShippingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetShippingAddress())
-
-		transactionPtr, err = braintreeInstance.Transaction().Create(transactionParams)
+		transactionPtr, err = chargeRegisteredVisitor(orderInstance, creditCard)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "e742d069-f9b8-4809-b27b-35712d82daf2", "Braintree error: unable to create transaction: "+err.Error())
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "f7f75a44-1b59-41e7-92fd-d75371f46575", "unable to charge registered visitor: "+err.Error())
 		}
-
 	} else {
-		// TODO: separate function to charge anonymous visitor
-		// Regular Charge
-		// - don't create a customer, or store a token
 		var err error
-
-		creditCardCVC := utils.InterfaceToString(creditCardMap["cvc"])
-		if creditCardCVC == "" {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "7d4c3aca-8c51-4eec-aa7c-bd860944697d", "CVC field was left empty")
-		}
-
-		creditCardParams := &braintree.CreditCard{
-			Number:          utils.InterfaceToString(creditCardMap["number"]),
-			ExpirationYear:  utils.InterfaceToString(creditCardMap["expire_year"]),
-			ExpirationMonth: utils.InterfaceToString(creditCardMap["expire_month"]),
-			CVV:             creditCardCVC,
-		}
-
-		// TODO: separate function to handle transaction params
-		transactionParams := &braintree.Transaction{
-			Type:       "sale",
-			Amount:     braintree.NewDecimal(int64(orderInstance.GetGrandTotal()*100), 2),
-			CreditCard: creditCardParams,
-			OrderId:    orderInstance.GetID(),
-			Options: &braintree.TransactionOptions{
-				SubmitForSettlement: true,
-			},
-		}
-
-		transactionParams.BillingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetBillingAddress())
-		transactionParams.ShippingAddress = braintreeAddressFromVisitorAddress(orderInstance.GetShippingAddress())
-
-		transactionPtr, err = braintreeInstance.Transaction().Create(transactionParams)
+		transactionPtr, err = chargeGuestVisitor(orderInstance, creditCardInfoMap)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "Braintree error: unable to create transaction: "+err.Error())
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "unable to charge guest visitor: "+err.Error())
 		}
 	}
 
