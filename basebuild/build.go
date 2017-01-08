@@ -31,6 +31,7 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/xdomain"      // XDomain support module
 
 	_ "github.com/ottemo/foundation/app/actors/payment/authorizenet" // Authorize.Net payment method
+	_ "github.com/ottemo/foundation/app/actors/payment/braintree"    // Braintree payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/checkmo"      // "Check Money Order" payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/paypal"       // PayPal payment method
 	_ "github.com/ottemo/foundation/app/actors/payment/stripe"       // Stripe payment method
