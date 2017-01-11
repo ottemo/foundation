@@ -159,6 +159,11 @@ func braintreeCreateCustomer(visitorInfo map[string]interface{}) (*braintree.Cus
 		customerParamsPtr = paramsPtr
 	}
 
+	braintreeInstance, err := getBraintreeInstance()
+	if err != nil {
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "71055f8d-2236-4c5c-891b-8b41c26e77a2", "internal error: unable to initialize braintree: "+err.Error())
+	}
+
 	return braintreeInstance.Customer().Create(customerParamsPtr)
 }
 
@@ -188,6 +193,11 @@ func braintreeCreateCard(creditCardMap map[string]interface{}, customerID string
 	creditCardParams.CustomerId = customerID
 	creditCardParams.Options = &braintree.CreditCardOptions{
 		VerifyCard: true,
+	}
+
+	braintreeInstance, err := getBraintreeInstance()
+	if err != nil {
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "150f6b8c-2fb3-41de-bc1d-d5534e3f2e19", "internal error: unable to initialize braintree: "+err.Error())
 	}
 
 	return braintreeInstance.CreditCard().Create(creditCardParams)
@@ -246,6 +256,11 @@ func chargeGuestVisitor(orderInstance order.InterfaceOrder, creditCardInfoMap ma
 
 	transactionParams.CreditCard = creditCardParams
 
+	braintreeInstance, err := getBraintreeInstance()
+	if err != nil {
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "2cd29ffd-38ab-49eb-ad18-7fc9a948ce06", "internal error: unable to initialize braintree: "+err.Error())
+	}
+
 	return braintreeInstance.Transaction().Create(transactionParams)
 }
 
@@ -257,6 +272,11 @@ func chargeRegisteredVisitor(orderInstance order.InterfaceOrder, creditCard visi
 
 	if cardToken == "" || customerID == "" {
 		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "6b43e527-9bc7-48f7-8cdd-320ceb6d77e6", "invalid token or customer id")
+	}
+
+	braintreeInstance, err := getBraintreeInstance()
+	if err != nil {
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "06a80ccb-82e2-42e9-89bf-7e8ee2936728", "internal error: unable to initialize braintree: "+err.Error())
 	}
 
 	if _, err := braintreeInstance.CreditCard().Find(cardToken); err != nil {
@@ -272,4 +292,26 @@ func chargeRegisteredVisitor(orderInstance order.InterfaceOrder, creditCard visi
 	transactionParams.Options.StoreInVault = true
 
 	return braintreeInstance.Transaction().Create(transactionParams)
+}
+
+func getBraintreeInstance() (*braintree.Braintree, error) {
+	var environmentValue = utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathEnvironment))
+
+	// braintree package could panic
+	if environmentValue != string(braintree.Development) &&
+		environmentValue != string(braintree.Sandbox) &&
+		environmentValue != string(braintree.Production) {
+
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "1e2b4af6-0256-4324-97a5-c451957119d4", "internal error: invalid braintree environment ["+environmentValue+"]")
+	}
+
+	// we do not check other config values because they points that something configured incorrectly
+	var braintreeInstance = braintree.New(
+		braintree.Environment(environmentValue),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathMerchantID)),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPublicKey)),
+		utils.InterfaceToString(env.ConfigGetValue(ConstGeneralConfigPathPrivateKey)),
+	)
+
+	return braintreeInstance, nil
 }

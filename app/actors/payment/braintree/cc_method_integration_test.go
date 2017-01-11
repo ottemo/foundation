@@ -23,7 +23,7 @@ func TestPaymentMethodCcGuestTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	initConfig(t)
+	initConfigWithSandboxData(t)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
 	var orderInstance = &order.DefaultOrder{
@@ -72,7 +72,7 @@ func TestPaymentMethodCcGuestTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	initConfig(t)
+	initConfigWithSandboxData(t)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
 
@@ -165,7 +165,7 @@ func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	initConfig(t)
+	initConfigWithSandboxData(t)
 
 	var visitorData = map[string]interface{}{
 		"id": "fake_visitor_id",
@@ -269,18 +269,71 @@ func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 	}
 }
 
-func initConfig(t *testing.T) {
+// TestPaymentMethodCcConfigurationReload checks if package reloads configuration
+func TestPaymentMethodCcConfigurationReload(t *testing.T) {
+	// start app
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+	}
+
+	initConfig(t, "", "", "", "")
+
+	var paymentMethod = &braintree.CreditCardMethod{}
+	var orderInstance = &order.DefaultOrder{
+		GrandTotal: 100,
+	}
+
+	var paymentInfo = map[string]interface{}{
+		"cc": map[string]interface{}{
+			"number":       "378282246310005",
+			"cvc":          "0005",
+			"expire_year":  "2025",
+			"expire_month": "05",
+		},
+	}
+
+	_, err = paymentMethod.Authorize(orderInstance, paymentInfo)
+	if err == nil {
+		t.Error("libriry should not work with empty environment.")
+	}
+
+	initConfig(t, "invalid", "", "", "")
+	_, err = paymentMethod.Authorize(orderInstance, paymentInfo)
+	if err == nil {
+		t.Error("libriry should not work with invalid environment.")
+	}
+
+	initConfig(t, braintree.ConstEnvironmentSandbox, "vgysg32p79zh9vwr", "", "")
+	_, err = paymentMethod.Authorize(orderInstance, paymentInfo)
+	if err == nil {
+		t.Error("libriry should not work with invalid credentials.")
+	}
+
+	initConfigWithSandboxData(t)
+
+	_, err = paymentMethod.Authorize(orderInstance, paymentInfo)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func initConfigWithSandboxData(t *testing.T) {
+	initConfig(t, braintree.ConstEnvironmentSandbox, "vgysg32p79zh9vwr", "pgzz3pvzy8gwhc7s", "2a7363cc16ae440b67e2d5621c70baea")
+}
+
+func initConfig(t *testing.T, environment, merchantID, publikKey, privateKey string) {
 	var config = env.GetConfig()
-	if err := config.SetValue(braintree.ConstGeneralConfigPathEnvironment, braintree.ConstEnvironmentSandbox); err != nil {
+	if err := config.SetValue(braintree.ConstGeneralConfigPathEnvironment, environment); err != nil {
 		t.Error(err)
 	}
-	if err := config.SetValue(braintree.ConstGeneralConfigPathMerchantID, "vgysg32p79zh9vwr"); err != nil {
+	if err := config.SetValue(braintree.ConstGeneralConfigPathMerchantID, merchantID); err != nil {
 		t.Error(err)
 	}
-	if err := config.SetValue(braintree.ConstGeneralConfigPathPublicKey, "pgzz3pvzy8gwhc7s"); err != nil {
+	if err := config.SetValue(braintree.ConstGeneralConfigPathPublicKey, publikKey); err != nil {
 		t.Error(err)
 	}
-	if err := config.SetValue(braintree.ConstGeneralConfigPathPrivateKey, "2a7363cc16ae440b67e2d5621c70baea"); err != nil {
+	if err := config.SetValue(braintree.ConstGeneralConfigPathPrivateKey, privateKey); err != nil {
 		t.Error(err)
 	}
 }
