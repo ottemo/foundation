@@ -1,9 +1,6 @@
 package emma
 
 import (
-	"bytes"
-	"io/ioutil"
-	"net/http"
 	"strings"
 
 	"github.com/ottemo/foundation/app/models/order"
@@ -54,7 +51,7 @@ func processOrder(checkoutOrder order.InterfaceOrder) error {
 		email := utils.InterfaceToString(checkoutOrder.Get("customer_email"))
 
 		// subscribe to specified list
-		if _, err := subscribe(email); err != nil {
+		if _, err := subscribeToDefaultGroups(email); err != nil {
 			return env.ErrorDispatch(err)
 		}
 	}
@@ -80,82 +77,71 @@ func containsItem(checkoutOrder order.InterfaceOrder, triggerList string) bool {
 	return false
 }
 
-// Subscribe a user to a Emma
-func subscribe(email string) (interface{}, error) {
+// Subscribe a user to a Emma by default Emma group IDs
+func subscribeToDefaultGroups(email string) (interface{}, error) {
 
-	//If emma is not enabled, ignore this request and do nothing
-	if enabled := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled)); !enabled {
+	// get default configured group IDs
+	var defaultGroupIds = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaDefaultGroupIds))
+
+	return subscribe(email, defaultGroupIds)
+}
+
+// Subscribe a user to a Emma by specifying Emma group IDs
+func subscribe(email string, commaSeparatedGroupIDs string) (interface{}, error) {
+
+	// Compose credentials
+	// If emma is not enabled, ignore this request and do nothing
+	var enabled = utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathEmmaEnabled))
+	if !enabled {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3548446-1453-4862-a649-393fc0aafda1", "emma does not active")
 	}
 
-	var accountId = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
-	if accountId == "" {
+	var emmaCredentialsPtr, err = composeEmmaCredentials()
+	if err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "53ef2f7b-5fd2-46c1-a012-ce666296c6e2", "internal error: invalid Emma credentials: "+err.Error())
+	}
+
+	// Compose subscription params
+	var srcGroupIDsList = strings.Split(commaSeparatedGroupIDs, ",")
+	var groupIDsList []string
+	for _, groupID := range srcGroupIDsList {
+		groupID = strings.TrimSpace(groupID)
+		if len(groupID) > 0 {
+			groupIDsList = append(groupIDsList, groupID)
+		}
+	}
+
+	var emmaSubscribeInfo = emmaSubscribeInfoType{
+		GroupIDsList: groupIDsList,
+		Email:        email,
+	}
+
+	return emmaService.subscribe(*emmaCredentialsPtr, emmaSubscribeInfo)
+}
+
+// composeEmmaCredentials returns emmaCredentialsType filled out with configured values
+// This function declared as variable to support future testing substitution
+var composeEmmaCredentials = func() (*emmaCredentialsType, error) {
+	var accountID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
+	if accountID == "" {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
 	}
 
-	var publicApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
-	if publicApiKey == "" {
+	var publicAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))
+	if publicAPIKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1b5c42f5-d856-48c5-98a2-fd8b5929703c", "public api key was not specified")
 	}
 
-	var privateApiKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
-	if privateApiKey == "" {
+	var privateAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPrivateAPIKey))
+	if privateAPIKey == "" {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e0282f80-43b4-418e-a99b-60805e74c75d", "private api key was not specified")
 	}
-	var url = ConstEmmaApiUrl + accountId + "/members/add"
 
-	var defaultGroupIds = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaDefaultGroupIds))
-	defaultGroupIdsList := strings.Split(defaultGroupIds, ",")
-
-	postData := map[string]interface{}{"email": email}
-	if defaultGroupIds != "" {
-		postData["group_ids"] = defaultGroupIdsList
+	var emmaCredentialsPtr = &emmaCredentialsType{
+		AccountID:     accountID,
+		PublicAPIKey:  publicAPIKey,
+		PrivateAPIKey: privateAPIKey,
 	}
 
-	postDataJson := utils.EncodeToJSONString(postData)
-
-	buf := bytes.NewBuffer([]byte(postDataJson))
-	request, err := http.NewRequest("POST", url, buf)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-	request.SetBasicAuth(publicApiKey, privateApiKey)
-
-	client := &http.Client{}
-	response, err := client.Do(request)
-	// require http response code of 200 or error out
-	if response.StatusCode != http.StatusOK {
-
-		var status string
-		if response == nil {
-			status = "nil"
-		} else {
-			status = response.Status
-		}
-
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cad8ad77-dd4c-440c-ada2-1e315b706175", "Unable to subscribe visitor to Emma list, response code returned was "+status)
-	}
-	defer response.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	jsonResponse, err := utils.DecodeJSONToStringKeyMap(responseBody)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-
-	var result = "Error occurred"
-	if isAdded, isset := jsonResponse["added"]; isset {
-		result = "E-mail was added successfully"
-		if isAdded == false {
-			result = "E-mail already added"
-		}
-	}
-
-	return result, nil
+	return emmaCredentialsPtr, nil
 }
