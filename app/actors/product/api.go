@@ -341,7 +341,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled products if not admin
-	if api.ValidateAdminRights(context) != nil && productModel.GetEnabled() == false {
+	if api.ValidateAdminRights(context) != nil && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153673ac-1008-40b5-ada9-2286ad3f02b0", "product not available")
 	}
 
