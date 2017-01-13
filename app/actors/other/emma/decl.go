@@ -14,6 +14,12 @@ const (
 	ConstConfigPathEmmaAccountID       = "general.emma.account_id"
 	ConstConfigPathEmmaSKU             = "general.emma.trigger_sku"
 	ConstConfigPathEmmaDefaultGroupIds = "general.emma.default_group_ids"
-
-	ConstEmmaApiUrl = "https://api.e2ma.net/"
 )
+
+var (
+	emmaService emmaServiceType
+)
+
+type emmaCredentialsGetter interface {
+	get() (emmaCredentialsType, error)
+}
