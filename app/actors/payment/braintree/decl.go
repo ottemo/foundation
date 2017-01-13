@@ -48,5 +48,3 @@ const (
 
 // CreditCardMethod is a implementer of InterfacePaymentMethod for a Credit Card payment method
 type CreditCardMethod struct{}
-
-var braintreeInstance *braintree.Braintree
