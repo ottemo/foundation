@@ -119,5 +119,5 @@ const (
 // DirectPostMethod is a implementer of InterfacePaymentMethod for a Authorize.Net Direct Post method
 type DirectPostMethod struct{}
 
-// RestAPI is a implementer of InterfacePaymentMethod for a Authorize.Net REST API method
-type RestAPI struct{}
+// RestMethod is a implementer of InterfacePaymentMethod for a Authorize.Net REST API method
+type RestMethod struct{}
