@@ -64,9 +64,16 @@ func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, er
 //   - csv file should be provided in "file" field
 func APIUploadTaxCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	csvFile := context.GetRequestFile("file")
+	csvFileName := context.GetRequestArgument("file")
+	if csvFileName == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6995fa26-f738-4408-99a3-515c519f7a0f", "A file name must be specified.")
+	}
+
+	csvFile := context.GetRequestFile(csvFileName)
 	if csvFile == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "033b69a0-d33d-4bfe-b670-b469d3e86f90", "file unspecified")
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c0f00a48-17fc-4ed9-b7e8-f38cc097316c", "A file must be specified.")
 	}
 
 	csvReader := csv.NewReader(csvFile)
