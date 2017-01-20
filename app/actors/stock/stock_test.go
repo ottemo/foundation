@@ -19,15 +19,7 @@ func TestStock(t *testing.T) {
 		return
 	}
 
-	if config := env.GetConfig(); config != nil {
-		if config.GetValue("general.stock.enabled") != true {
-			err := env.GetConfig().SetValue("general.stock.enabled", true)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-		}
-	}
+	initConfig(t)
 
 	productData, err := utils.DecodeJSONToStringKeyMap(`{
 		"sku": "test",
@@ -122,15 +114,7 @@ func TestDecrementingStock(t *testing.T) {
 		return
 	}
 
-	if config := env.GetConfig(); config != nil {
-		if config.GetValue("general.stock.enabled") != true {
-			err := env.GetConfig().SetValue("general.stock.enabled", true)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-		}
-	}
+	initConfig(t)
 
 	productData, err := utils.DecodeJSONToStringKeyMap(`{
 		"sku": "test2",
@@ -285,4 +269,155 @@ func TestDecrementingStock(t *testing.T) {
 		return
 	}
 
+}
+
+// TestCountAfterSetInventory checks if duplicates have not been generated
+func TestCountAfterSetInventory(t *testing.T) {
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	initConfig(t)
+
+	productData, err := utils.DecodeJSONToStringKeyMap(`{
+		"sku": "test 3",
+		"name": "Test Product 3",
+		"short_description": "something short 3",
+		"description": "something long 3",
+		"default_image": "",
+		"price": 3,
+		"weight": 3,
+		"qty": 30,
+		"inventory": [
+			{"options": {"color": "black"}, "qty": 1 },
+			{"options": {"color": "blue"},  "qty": 5 },
+			{"options": {"color": "green"}, "qty": 2 },
+			{"options": {"size":  "s"},     "qty": 5 },
+			{"options": {"size":  "l"},     "qty": 1 },
+			{"options": {"size":  "xl"},    "qty": 5 },
+			{"options": {"size":  12},      "qty": 12 },
+			{"options": {"color": "black", "size":  "xl"},    "qty": 10 }
+		]
+	}`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var testTable = []map[string]interface{}{
+		{
+			"data": `[
+				{"options": {"color": "black"}, "qty": 3 },
+				{"options": {"color": "black", "size":  "xl"},    "qty": 13 }
+			]`,
+			"testCount": 2,
+		},
+		{
+			"data": `[
+				{"options": {"size":  "12"},      "qty": 12 }
+			]`,
+			"testCount": 1,
+		},
+	}
+
+	for testIdx, testItem := range testTable {
+		productModel, err := product.GetProductModel()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = productModel.FromHashMap(productData)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		newInventory, err := utils.DecodeJSONToArray(testItem["data"])
+		if err != nil {
+			t.Error("Test error:", err)
+		}
+
+		err = productModel.Set("inventory", newInventory)
+		if err != nil {
+			t.Error("Test error:", err)
+		}
+
+		var inventory = productModel.Get("inventory")
+
+		if len(utils.InterfaceToArray(inventory)) != testItem["testCount"] {
+			t.Error("Test:", testIdx, ". Incorrect number of options:", len(utils.InterfaceToArray(inventory)), ", should be ", testItem["testCount"])
+		}
+	}
+}
+
+// TestDuplicatesForSetInventory checks if new inventory contains no duplicates
+func TestDuplicatesForSetInventory(t *testing.T) {
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	initConfig(t)
+
+	productData, err := utils.DecodeJSONToStringKeyMap(`{
+		"sku": "test 4",
+		"name": "Test Product 4",
+		"short_description": "something short 4",
+		"description": "something long 4",
+		"default_image": "",
+		"price": 4,
+		"weight": 4,
+		"qty": 40,
+		"inventory": [
+		]
+	}`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var testData = `[
+		{"options": {"color": "black"}, "qty": 3 },
+		{"options": {"color": "black"}, "qty": 4 }
+	]`
+
+	productModel, err := product.GetProductModel()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = productModel.FromHashMap(productData)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	newInventory, err := utils.DecodeJSONToArray(testData)
+	if err != nil {
+		t.Error("Test error:", err)
+		return
+	}
+
+	err = productModel.Set("inventory", newInventory)
+	if err == nil {
+		t.Error("Should be error, because new data contains duplicates.")
+		return
+	}
+}
+
+// initConfig initializes configuration for tests
+func initConfig(t *testing.T) {
+	if config := env.GetConfig(); config != nil {
+		if config.GetValue("general.stock.enabled") != true {
+			err := env.GetConfig().SetValue("general.stock.enabled", true)
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	}
 }
