@@ -230,6 +230,99 @@ func setupConfig() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPIGroup,
+			Value:       nil,
+			Type:        env.ConstConfigTypeGroup,
+			Editor:      "",
+			Options:     nil,
+			Label:       "Authorize.Net",
+			Description: "see https://developer.authorize.net/api/reference/index.html",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPIEnabled,
+			Value:       false,
+			Type:        env.ConstConfigTypeBoolean,
+			Editor:      "boolean",
+			Options:     nil,
+			Label:       "Enabled",
+			Description: "enables/disables payment method in checkout",
+			Image:       "",
+		}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPITitle,
+			Value:       "Credit Card (Authorize.net)",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
+			Options:     nil,
+			Label:       "Title",
+			Description: "payment method name in checkout",
+			Image:       "",
+		}, func(value interface{}) (interface{}, error) {
+			if utils.CheckIsBlank(value) {
+				err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fa8db6c3-d2f6-4a93-bd3f-9b942a4b8574", "can't be blank")
+				return nil, env.ErrorDispatch(err)
+			}
+			return value, nil
+		})
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPITest,
+			Value:       false,
+			Type:        env.ConstConfigTypeBoolean,
+			Editor:      "boolean",
+			Options:     nil,
+			Label:       "Test Mode",
+			Description: "specifies test mode for payment method",
+			Image:       "",
+		}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPIAPILoginID,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
+			Options:     nil,
+			Label:       "API Login ID",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathAuthorizeNetRestAPITransactionKey,
+			Value:       "",
+			Type:        env.ConstConfigTypeVarchar,
+			Editor:      "line_text",
+			Options:     nil,
+			Label:       "Transaction Key",
+			Description: "",
+			Image:       "",
+		}, nil)
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "25367d9b-18e6-4304-99c7-4df2eae5521c", "Unable to obtain configuration for AuthorizeNet")
 		return env.ErrorDispatch(err)

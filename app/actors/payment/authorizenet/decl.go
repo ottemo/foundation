@@ -16,6 +16,7 @@ const (
 
 	ConstLogStorage = "authorizenet.log"
 
+	// Authorize.Net (Direct Post)
 	ConstPaymentCodeDPM = "authorizeNetDPM"
 	ConstPaymentNameDPM = "Authorize.Net (Direct Post)"
 
@@ -100,7 +101,23 @@ const (
 			 }, 1000);
 		 </script>
 	</html>`
+
+	// Authorize.Net (REST Api)
+	ConstPaymentAuthorizeNetRestAPICode = "authorizenet_rest"
+	ConstPaymentAuthorizeNetRestAPIName = "Authorize.Net"
+
+	ConstConfigPathAuthorizeNetRestAPIGroup = "payment.authorizeNetRestApi"
+
+	ConstConfigPathAuthorizeNetRestAPIEnabled = "payment.authorizeNetRestApi.enabled"
+	ConstConfigPathAuthorizeNetRestAPITitle   = "payment.authorizeNetRestApi.title"
+
+	ConstConfigPathAuthorizeNetRestAPIAPILoginID     = "payment.authorizeNetRestApi.apiLoginId"
+	ConstConfigPathAuthorizeNetRestAPITransactionKey = "payment.authorizeNetRestApi.transactionKey"
+	ConstConfigPathAuthorizeNetRestAPITest           = "payment.authorizeNetRestApi.test"
 )
 
 // DirectPostMethod is a implementer of InterfacePaymentMethod for a Authorize.Net Direct Post method
 type DirectPostMethod struct{}
+
+// RestMethod is a implementer of InterfacePaymentMethod for a Authorize.Net REST API method
+type RestMethod struct{}

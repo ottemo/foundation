@@ -117,11 +117,12 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
+
 	err = visitorCardModel.Save()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-
+	
 	return visitorCardModel.ToHashMap(), nil
 }
 
