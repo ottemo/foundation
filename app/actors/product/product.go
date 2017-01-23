@@ -174,6 +174,10 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 			continue
 		}
 
+		if productOptionHashMap["type"] == "multi_select" {
+			continue
+		}
+
 		// check single value (color:{options:{red:{...}}})
 		itemOptionValue := utils.InterfaceToString(options[itemOptionName])
 		optionOptionsItem, present := optionOptionsHashMap[itemOptionValue]
