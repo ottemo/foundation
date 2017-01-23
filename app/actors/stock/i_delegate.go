@@ -41,7 +41,12 @@ func (it *StockDelegate) Set(attribute string, value interface{}) error {
 		it.Qty = utils.InterfaceToInt(value)
 
 	case "inventory":
+		if haveInventoryOptionsDuplicates(value) {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c222525f-02f1-4bf0-bca5-204362c2d92d", "new inventory contains duplicates")
+		}
+
 		inventory := utils.InterfaceToArray(value)
+		it.Inventory = []map[string]interface{}{}
 		for _, options := range inventory {
 			it.Inventory = append(it.Inventory, utils.InterfaceToMap(options))
 		}

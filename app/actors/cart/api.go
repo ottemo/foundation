@@ -24,7 +24,6 @@ func setupAPI() error {
 
 // APICartInfo returns get cart related information
 func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
-
 	currentCart, err := cart.GetCurrentCart(context, false)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)

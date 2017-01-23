@@ -704,6 +704,10 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	customInfo["calculation"] = it.Info["calculation"]
 	checkoutOrder.Set("custom_info", customInfo)
 
+	if notes := utils.InterfaceToArray(it.GetInfo("order_notes")); len(notes) > 0 {
+		checkoutOrder.Set("notes", notes)
+	}
+
 	if !paymentMethod.IsAllowed(it) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a5490ee-daa3-42b4-a84a-dade12d103e8", "Payment method not allowed")
 	}

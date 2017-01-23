@@ -1,19 +1,23 @@
 package product
 
 import (
+	"bytes"
+	"image"
+	"image/jpeg"
 	"io/ioutil"
 	"mime"
 	"strings"
 	"time"
 
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/media"
+	"github.com/ottemo/foundation/utils"
+
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/subscription"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/media"
-	"github.com/ottemo/foundation/utils"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -45,6 +49,7 @@ func setupAPI() error {
 
 	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
 	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
+	service.PUT("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRenameMediaForProduct))
 
 	// TODO: remove after patching
 	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
@@ -336,7 +341,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled products if not admin
-	if api.ValidateAdminRights(context) != nil && productModel.GetEnabled() == false {
+	if api.ValidateAdminRights(context) != nil && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153673ac-1008-40b5-ada9-2286ad3f02b0", "product not available")
 	}
 
@@ -642,6 +647,82 @@ func APIRemoveMediaForProduct(context api.InterfaceApplicationContext) (interfac
 	return "ok", nil
 }
 
+// APIRenameMediaForProduct renames media file for a specified product
+//   - product id, media type and media name should be specified in "productID", "mediaType" and "mediaName" arguments
+//   - new media name should be provided in "newMediaName" field
+func APIRenameMediaForProduct(context api.InterfaceApplicationContext) (interface{}, error) {
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check request context
+	//---------------------
+	productID := context.GetRequestArgument("productID")
+	if productID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2dc543fb-0fa9-4900-93f1-56031fa68dc1", "product id was not specified")
+	}
+
+	mediaType := context.GetRequestArgument("mediaType")
+	if mediaType == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "91ea7d50-8577-4b9b-ae04-3b5022d189c9", "media type was not specified")
+	}
+
+	mediaName := context.GetRequestArgument("mediaName")
+	if mediaName == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "379426c8-b1c1-44ee-b2e0-e0704e6f6e0f", "media name was not specified")
+	}
+
+	newMediaName, present := requestData["newMediaName"]
+	if !present {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8205e4f3-0805-42cd-a6c3-b8c6d139d52a", "new media name was not specified")
+	}
+
+	// add media operation
+	//--------------------
+	productModel, err := product.GetProductModelAndSetID(productID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// load media
+	fileContents, err := productModel.GetMedia(mediaType, mediaName)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// remove media
+	err = productModel.RemoveMedia(mediaType, mediaName)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// check image format
+	decodedImage, imageFormat, err := image.Decode(bytes.NewReader(fileContents))
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	// convert image format if not default
+	if imageFormat != ConstSwatchImageDefaultFormat {
+		buffer := bytes.NewBuffer(nil)
+		err = jpeg.Encode(buffer, decodedImage, nil)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+		fileContents = buffer.Bytes()
+	}
+
+	mediaName = utils.InterfaceToString(newMediaName) + "_" + utils.InterfaceToString(time.Now().Unix()) + "." + ConstSwatchImageDefaultExtention
+
+	err = productModel.AddMedia(mediaType, mediaName, fileContents)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	return "ok", nil
+}
+
 // APIGetMedia returns media contents for a product (file assigned to a product)
 //   - product id, media type and media name must be specified in "productID", "mediaType" and "mediaName" arguments
 //   - on success case not a JSON data returns, but media file
@@ -691,9 +772,10 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	// filters handle
 	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
 
-	// exclude disabled products for visitors, but not Admins
+	// exclude disabled and hidden products for visitors, but not Admins
 	if err := api.ValidateAdminRights(context); err != nil {
 		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+		productCollectionModel.GetDBCollection().AddFilter("visible", "=", true)
 	}
 
 	// check "count" request

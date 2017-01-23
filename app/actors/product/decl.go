@@ -16,6 +16,9 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstProductMediaTypeImage = "image"
+
+	ConstSwatchImageDefaultFormat    = "jpeg"
+	ConstSwatchImageDefaultExtention = "jpeg"
 )
 
 // DefaultProduct is a default implementer of InterfaceProduct
@@ -39,6 +42,8 @@ type DefaultProduct struct {
 	Options map[string]interface{}
 
 	RelatedProductIds []string
+
+	Visible bool
 
 	// appliedOptions tracks options were applied to current instance
 	appliedOptions map[string]interface{}
