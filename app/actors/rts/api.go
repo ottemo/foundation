@@ -43,10 +43,7 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 
 	requestData, _ := api.GetRequestContentAsMap(context)
 	path := utils.InterfaceToString(requestData["path"])
-	fmt.Println(requestData)
-	fmt.Println(path)
 	var checkoutPath = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCheckoutPath))
-	fmt.Println(checkoutPath)
 	if checkoutPath != "" && path == checkoutPath {
 		// record rts event for  checkout
 		currentCheckout, err := checkout.GetCurrentCheckout(context, false)
@@ -54,10 +51,8 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 			return nil, env.ErrorDispatch(err)
 		}
 
-		fmt.Println(currentCheckout)
 		eventData = map[string]interface{}{"session": context.GetSession(), "checkout": currentCheckout}
 		env.Event("api.checkout.visit", eventData)
-		fmt.Println(eventData)
 	}
 
 	return nil, nil
