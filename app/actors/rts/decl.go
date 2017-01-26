@@ -26,6 +26,8 @@ const (
 
 	ConstErrorModule = "rts"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+
+	ConstConfigPathCheckoutPath = "general.app.checkout_path"
 )
 
 // Package global variables
