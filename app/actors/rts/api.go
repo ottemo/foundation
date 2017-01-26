@@ -41,7 +41,10 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
 	env.Event("api.rts.visit", eventData)
 
-	requestData, _ := api.GetRequestContentAsMap(context)
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 	path := utils.InterfaceToString(requestData["path"])
 	var checkoutPath = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCheckoutPath))
 	if checkoutPath != "" && path == checkoutPath {
