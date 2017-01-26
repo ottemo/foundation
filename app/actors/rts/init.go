@@ -10,10 +10,21 @@ import (
 // init makes package self-initialization routine before app start
 func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
-	db.RegisterOnDatabaseStart(setupDB)
+
+	db.RegisterOnDatabaseStart(onDatabaseStart)
+}
+
+func onDatabaseStart() error {
+	if err := setupDB(); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Because of async db start, these functions should wait DB connection
 	app.OnAppStart(initListners)
 	app.OnAppStart(initSalesHistory)
 	app.OnAppStart(initStatistic)
+
+	return nil
 }
 
 // DB preparations for current model implementation

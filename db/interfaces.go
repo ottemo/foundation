@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"time"
 )
 
 // Package global constants
@@ -25,6 +26,7 @@ const (
 // InterfaceDBEngine represents interface to access database engine
 type InterfaceDBEngine interface {
 	GetName() string
+	IsConnected() bool
 
 	CreateCollection(Name string) error
 	GetCollection(Name string) (InterfaceDBCollection, error)
@@ -70,4 +72,21 @@ type InterfaceDBCollection interface {
 
 	AddColumn(columnName string, columnType string, indexed bool) error
 	RemoveColumn(columnName string) error
+}
+
+// InterfaceDBConnector interface to connect to database and keep connection alive
+type InterfaceDBConnector interface {
+	GetConnectionParams() interface{}
+	Connect(connectionParams interface{}) error
+	AfterConnect(connectionParams interface{}) error
+
+	Ping() error
+	GetValidationInterval() time.Duration
+	Reconnect(connectionParams interface{}) error
+
+	IsConnected() bool
+	SetConnected(connected bool)
+
+	GetEngineName() string
+	LogConnection(message string)
 }

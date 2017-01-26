@@ -31,14 +31,26 @@ func init() {
 	}
 
 	models.RegisterModel("Cart", instance)
-	db.RegisterOnDatabaseStart(instance.setupDB)
 
 	api.RegisterOnRestServiceStart(setupAPI)
 	env.RegisterOnConfigStart(setupConfig)
 
+	db.RegisterOnDatabaseStart(onDatabaseStart)
+}
+
+func onDatabaseStart() error {
+	instance := new(DefaultCart)
+
+	if err := instance.setupDB(); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Because of async db start, these functions should wait DB connection
 	app.OnAppStart(setupEventListeners)
 	app.OnAppStart(cleanupGuestCarts)
 	app.OnAppStart(scheduleAbandonCartEmails)
+
+	return nil
 }
 
 // setupEventListeners registers model related event listeners within system
