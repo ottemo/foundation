@@ -6,6 +6,8 @@ import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"time"
+	"strings"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -20,6 +22,8 @@ func setupAPI() error {
 	// cart endpoints
 	service.POST("cart/giftcards/:giftcode", Apply)
 	service.DELETE("cart/giftcards/:giftcode", Remove)
+
+	service.POST("giftcard/", createFromAdmin)
 
 	return nil
 }
@@ -159,3 +163,97 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	return "Remove successful", nil
 }
+
+
+func createFromAdmin(context api.InterfaceApplicationContext) (interface{}, error) {
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	if err != nil {
+		env.ErrorDispatch(err)
+		return false
+	}
+
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "name", "recipient_mailbox", "sku") {
+		context.SetResponseStatusBadRequest()
+		// todo
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email or group_ids have not been specified")
+	}
+
+	currentTime := time.Now()
+	deliveryDate := utils.InterfaceToTime(requestData["delivery_date"])
+	giftCardAmount := utils.InterfaceToFloat64(requestData["amount"])
+	customMessage := utils.InterfaceToString(requestData["message"])
+	recipientName := utils.InterfaceToString(requestData["name"])
+	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
+	giftCardSku := utils.InterfaceToString(requestData["sku"])
+
+	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
+	if giftCardUniqueCode == "" {
+		// generate unique code by unix nano time
+		giftCardUniqueCode = utils.InterfaceToString(time.Now().UnixNano())
+	}
+
+	// todo check if code Unique
+
+	// collect necessary info to variables
+	// get a customer and his mail to set him as addressee
+	visitorID := visitor.GetCurrentVisitorID(context)
+	if visitorID == "" {
+		context.SetResponseStatusBadRequest()
+		// todo
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
+	}
+
+	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
+
+	if strings.Contains(giftCardSku, giftCardSkuElement) == false {
+		// todo
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
+	}
+
+
+	giftCard := make(map[string]interface{})
+
+	giftCard["code"] = giftCardUniqueCode
+	giftCard["sku"] = giftCardSku
+
+	giftCard["amount"] = giftCardAmount
+
+	giftCard["visitor_id"] = visitorID
+
+	giftCard["status"] = ConstGiftCardStatusNew
+	giftCard["orders_used"] = make(map[string]float64)
+
+	giftCard["name"] = recipientName
+	giftCard["message"] = customMessage
+
+	giftCard["recipient_mailbox"] = recipientEmail
+	giftCard["delivery_date"] = deliveryDate
+
+	giftCardID, err := giftCardCollection.Save(giftCard)
+	if err != nil {
+		env.ErrorDispatch(err)
+		return false
+	}
+
+	//if deliveryDate.Truncate(time.Hour).Before(currentTime) {
+	//	giftCardsToSendImmediately = append(giftCardsToSendImmediately, giftCardID)
+	//}
+	//
+	//// run SendTask task to send immediately if delivery_date is today's date
+	//if len(giftCardsToSendImmediately) > 0 {
+	//	params := map[string]interface{}{
+	//		"giftCards":          giftCardsToSendImmediately,
+	//		"ignoreDeliveryDate": true,
+	//	}
+	//
+	//	go SendTask(params)
+	//}
+
+	return true
+}
+
