@@ -5,6 +5,7 @@ import (
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
+	"github.com/ottemo/foundation/media/fsmedia"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -27,13 +28,14 @@ func onAppStart() error {
 }
 
 // mediaTemplateDirective - for adding image to pages
-//   use {{media "mediaName" .}} to fetch image URL
+//   - use {{media "mediaName" .}} to fetch image URL
+//   - Currently this method supports only images, but it is not used anywhere
 func mediaTemplateDirective(args ...interface{}) (string, error) {
 	mediaName := ""
 	if len(args) > 0 {
 		mediaName = utils.InterfaceToString(args[0])
 	}
-	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, ConstStorageType)
+	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, fsmedia.ConstMediaTypeImage)
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}

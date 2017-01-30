@@ -13,7 +13,6 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstStorageModel  = "cms"
-	ConstStorageType   = "image"
 	ConstStorageObject = "media"
 )
 
