@@ -34,10 +34,12 @@ func setupAPI() error {
 }
 
 // APIListMedia returns list of media files from media
-//  - by default media type is image
+//  - if mediaType is empty - all types will be used
+//  - if mediaType is explicit value - only this value will be used
+//  - if mediaType is list of types separated by comma - only these types will be shown
 func APIListMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	var mediaType = correctMediaType(context.GetRequestArgument("mediaType"))
+	var mediaType = context.GetRequestArgument("mediaType")
 
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {

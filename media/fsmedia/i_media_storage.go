@@ -248,6 +248,7 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 }
 
 // ListMediaDetail returns the list with media details of given type media entities for a given model object
+// mediaType could be empty, single value or list of values separated by comma
 func (it *FilesystemMediaStorage) ListMediaDetail(model string, objID string, mediaType string) ([]map[string]interface{}, error) {
 	var result []map[string]interface{}
 
@@ -263,25 +264,52 @@ func (it *FilesystemMediaStorage) ListMediaDetail(model string, objID string, me
 		return result, env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("model", "=", model)
-	dbCollection.AddFilter("object", "=", objID)
-	dbCollection.AddFilter("type", "=", mediaType)
+	if err := dbCollection.AddFilter("model", "=", model); err != nil {
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bdbc95b5-78ff-4d08-9945-c760fe0c8b02", "Internal error: unable to filter by model ["+model+"].")
+	}
+
+	if err := dbCollection.AddFilter("object", "=", objID); err != nil {
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f2a1b585-cd90-4efb-a12b-387fb09f4377", "Internal error: unable to filter by object ["+objID+"].")
+	}
+
+	var pathes = map[string]string{}
+
+	if len(mediaType) > 0 {
+		var mediaTypeValue = strings.Trim(mediaType, ",")
+		var mediaTypeOptions = strings.Split(mediaTypeValue, ",")
+		if err := dbCollection.AddFilter("type", "in", mediaTypeOptions); err != nil {
+			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d2031dbe-1f10-489b-ba95-ab5b64cf0a98",
+				"Internal error: unable to filter by type ["+utils.InterfaceToString(mediaTypeOptions)+"].")
+		}
+
+		for _, mediaTypeOption := range mediaTypeOptions {
+			path, _ := it.GetMediaPath(model, objID, mediaTypeOption)
+			pathes[mediaTypeOption] = mediaBasePath + "/" + path
+		}
+	}
 
 	records, err := dbCollection.Load()
 	if err != nil {
 		return result, env.ErrorDispatch(err)
 	}
 
-	path, _ := it.GetMediaPath(model, objID, mediaType)
-	path = mediaBasePath + "/" + path
-
 	for _, record := range records {
 		name := utils.InterfaceToString(record["media"])
+		recordType := utils.InterfaceToString(record["type"])
+
+		path, present := pathes[recordType]
+		if !present {
+			path, _ = it.GetMediaPath(model, objID, recordType)
+			path = mediaBasePath + "/" + path
+			pathes[recordType] = path
+		}
+
 		mediaObject := map[string]interface{}{
 			"id":         record["_id"],
 			"name":       name,
 			"url":        path + name,
 			"created_at": record["created_at"],
+			"type":       recordType,
 		}
 
 		result = append(result, mediaObject)
