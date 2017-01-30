@@ -5,7 +5,6 @@ import (
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
-	"github.com/ottemo/foundation/media/fsmedia"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -35,7 +34,7 @@ func mediaTemplateDirective(args ...interface{}) (string, error) {
 	if len(args) > 0 {
 		mediaName = utils.InterfaceToString(args[0])
 	}
-	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, fsmedia.ConstMediaTypeImage)
+	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, media.ConstMediaTypeImage)
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}

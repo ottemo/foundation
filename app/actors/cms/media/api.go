@@ -9,7 +9,6 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
-	"github.com/ottemo/foundation/media/fsmedia"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -79,7 +78,7 @@ func APIAddMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 		// Handle image name, adding unique values to name
 		var mediaName = strings.TrimSpace(fileName)
-		var mediaType = fsmedia.ConstMediaTypeImage
+		var mediaType = media.ConstMediaTypeImage
 
 		switch fileContentType {
 		case "image/gif", "image/png", "image/jpeg":
@@ -89,7 +88,7 @@ func APIAddMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 			}
 		case "application/pdf":
 			{
-				mediaType = fsmedia.ConstMediaTypeDocument
+				mediaType = media.ConstMediaTypeDocument
 			}
 		}
 

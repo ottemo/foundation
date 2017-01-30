@@ -7,11 +7,11 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-
 	"time"
 
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
 )
 
@@ -56,7 +56,7 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 	}
 
 	// we have image associated media, so making special treatment
-	if mediaType == ConstMediaTypeImage {
+	if mediaType == media.ConstMediaTypeImage {
 
 		// checking that image is png or jpeg, making it jpeg if not
 		decodedImage, imageFormat, err := image.Decode(bytes.NewReader(mediaData))
@@ -186,7 +186,7 @@ func (it *FilesystemMediaStorage) Remove(model string, objID string, mediaType s
 			if path, err := it.GetMediaPath(model, objID, mediaType); err == nil {
 
 				// looking for object image sizes to remove
-				if mediaType == ConstMediaTypeImage {
+				if mediaType == media.ConstMediaTypeImage {
 					for imageSize := range it.imageSizes {
 						mediaFilePath := mediaFolder + path + it.GetResizedMediaName(mediaName, imageSize)
 						os.Remove(mediaFilePath)
@@ -234,7 +234,7 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 
 	// checking that obj
 	// ect have all image sizes
-	if resizeImagesOnFly && mediaType == ConstMediaTypeImage {
+	if resizeImagesOnFly && mediaType == media.ConstMediaTypeImage {
 		// ResizeMediaImage will check necessity of resize by it self
 		for _, mediaName := range result {
 			for imageSize := range it.imageSizes {
@@ -376,7 +376,7 @@ func (it *FilesystemMediaStorage) ResizeAllMediaImages() error {
 		return env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("type", "=", ConstMediaTypeImage)
+	dbCollection.AddFilter("type", "=", media.ConstMediaTypeImage)
 
 	records, err := dbCollection.Load()
 	if err != nil {
