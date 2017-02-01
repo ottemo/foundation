@@ -27,13 +27,14 @@ func onAppStart() error {
 }
 
 // mediaTemplateDirective - for adding image to pages
-//   use {{media "mediaName" .}} to fetch image URL
+//   - use {{media "mediaName" .}} to fetch image URL
+//   - Currently this method supports only images, but it is not used anywhere
 func mediaTemplateDirective(args ...interface{}) (string, error) {
 	mediaName := ""
 	if len(args) > 0 {
 		mediaName = utils.InterfaceToString(args[0])
 	}
-	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, ConstStorageType)
+	imagePath, err := mediaStorage.GetMediaPath(ConstStorageModel, ConstStorageObject, media.ConstMediaTypeImage)
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}
