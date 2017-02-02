@@ -6,6 +6,7 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
@@ -29,6 +30,7 @@ func setupAPI() error {
 
 	service.GET("rts/conversion", APIGetConversion)
 	service.GET("rts/bestsellers", APIGetBestsellers)
+	service.GET("rts/gift-cards", APIGetGiftCards)
 	// service.GET("rts/referrers", APIGetReferrers)
 
 	return nil
@@ -555,3 +557,43 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 
 // 	return result, nil
 // }
+
+// APIGetGiftCards returns information about gift cards
+func APIGetGiftCards(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	giftCardCollection, err := db.GetCollection(giftcard.ConstCollectionNameGiftCard)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	collectionRecords, err := giftCardCollection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	var giftCards []map[string]interface{}
+	var total = 0.0
+	var count = 0
+
+	// get gift cards information
+	for _, item := range collectionRecords {
+		amount := utils.InterfaceToFloat64(item["amount"])
+		giftCardItem := map[string]interface{}{
+			"code":   utils.InterfaceToString(item["code"]),
+			"name":   utils.InterfaceToString(item["name"]),
+			"amount": amount,
+			"date":   "",
+		}
+		total = total + amount
+		count = count + 1
+		giftCards = append(giftCards, giftCardItem)
+	}
+
+	results := map[string]interface{}{
+		"gift-cards": giftCards,
+		"total":      total,
+		"count":      count,
+	}
+
+	return results, nil
+}
