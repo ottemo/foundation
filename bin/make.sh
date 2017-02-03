@@ -71,4 +71,4 @@ CMD="go get $TAGS $OTTEMOPKG"
 eval $CMD
 
 CMD="go build -a $TAGS $LDFLAGS $OTTEMOPKG"
-eval $CMD
+eval CGO_ENABLED=0 GOOS=linux $CMD

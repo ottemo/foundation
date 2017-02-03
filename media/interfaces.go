@@ -8,6 +8,10 @@ import (
 const (
 	ConstErrorModule = "media"
 	ConstErrorLevel  = env.ConstErrorLevelService
+
+	ConstMediaTypeImage    = "image"
+	ConstMediaTypeLink     = "link"
+	ConstMediaTypeDocument = "document"
 )
 
 // InterfaceMediaStorage is an interface to access media storage service

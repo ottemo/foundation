@@ -19,10 +19,6 @@ const (
 
 	ConstConfigPathMediaBaseURL = "general.app.media_base_url"
 
-	ConstMediaTypeImage    = "image"
-	ConstMediaTypeLink     = "link"
-	ConstMediaTypeDocument = "document"
-
 	ConstErrorModule = "media/fsmedia"
 	ConstErrorLevel  = env.ConstErrorLevelService
 )

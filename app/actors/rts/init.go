@@ -10,6 +10,7 @@ import (
 // init makes package self-initialization routine before app start
 func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
+	env.RegisterOnConfigStart(setupConfig)
 	db.RegisterOnDatabaseStart(setupDB)
 	app.OnAppStart(initListners)
 	app.OnAppStart(initSalesHistory)

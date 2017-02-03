@@ -107,7 +107,7 @@ func setupConfig() error {
 		Type:        env.ConstConfigTypeVarchar,
 		Editor:      "line_text",
 		Options:     nil,
-		Label:       "Default Group Ids",
+		Label:       "Drip Campaign Group ID",
 		Description: "Comma seperated list of Group Ids",
 	}, nil)
 

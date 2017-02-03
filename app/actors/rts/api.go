@@ -6,6 +6,7 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -39,6 +40,23 @@ func APIRegisterVisit(context api.InterfaceApplicationContext) (interface{}, err
 	// In headers; Referrer=http://karigran.com/shop/cleaning-products
 	eventData := map[string]interface{}{"session": context.GetSession(), "context": context}
 	env.Event("api.rts.visit", eventData)
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+	path := utils.InterfaceToString(requestData["path"])
+	var checkoutPath = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathCheckoutPath))
+	if checkoutPath != "" && path == checkoutPath {
+		// record rts event for  checkout
+		currentCheckout, err := checkout.GetCurrentCheckout(context, false)
+		if err != nil {
+			return nil, env.ErrorDispatch(err)
+		}
+
+		eventData = map[string]interface{}{"session": context.GetSession(), "checkout": currentCheckout}
+		env.Event("api.checkout.visit", eventData)
+	}
 
 	return nil, nil
 }
