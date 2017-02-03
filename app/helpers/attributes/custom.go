@@ -1,10 +1,11 @@
 package attributes
 
 import (
-	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
 )
 
 // CustomAttributes initializes helper instance before usage
@@ -282,6 +283,22 @@ func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttri
 
 	customAttributes[newAttribute.Attribute] = newAttribute
 
+	// Release lock to update records with default value.
+	// Here mutex is still locked.
+	modelCustomAttributesMutex.Unlock()
+
+	// Populate default value.
+	err = populateDefaultValue(newAttribute)
+
+	// Regain lock. Unlock is still deferred.
+	modelCustomAttributesMutex.Lock()
+
+	if err != nil {
+		customAttributesCollection.DeleteByID(newCustomAttributeID)
+
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fb47e17b-152f-4afb-9254-74ff1e0aa320", "Unable to populate new attribute's default value: "+err.Error())
+	}
+
 	return env.ErrorDispatch(err)
 }
 
@@ -343,4 +360,63 @@ func (it *ModelCustomAttributes) FromHashMap(input map[string]interface{}) error
 // ToHashMap fills object attributes from map[string]interface{}
 func (it *ModelCustomAttributes) ToHashMap() map[string]interface{} {
 	return it.values
+}
+
+// ----------------------------------------------------------------------------------
+// Helpers
+// ----------------------------------------------------------------------------------
+
+// populateDefaultValue populate db records for preset attribute with default value
+func populateDefaultValue(attributeInfo models.StructAttributeInfo) error {
+
+	// check if model implements required interfaces
+	attrModel, err := models.GetModel(attributeInfo.Model)
+	if err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2896ab3c-983d-44c1-8a54-8a2413c65600", "Unable to get '"+attributeInfo.Model+"' model: "+err.Error())
+	}
+
+	if _, ok := attrModel.(models.InterfaceObject); !ok {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f1f38c27-d864-4025-8936-bfa755b3dcc4", "Model '"+attributeInfo.Model+"' does not implement Object: "+err.Error())
+	}
+	if _, ok := attrModel.(models.InterfaceStorable); !ok {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd5d2ebc-91fe-4a2d-a401-51794cf07022", "Model '"+attributeInfo.Model+"' does not implement Storable: "+err.Error())
+	}
+
+	// load data from collection
+	modelCollection, err := db.GetCollection(attributeInfo.Collection)
+	if err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "962987f8-ccdc-473b-80de-617f9e61c235", "Unable to get '"+attributeInfo.Collection+"' collection: "+err.Error())
+	}
+
+	dbRecords, err := modelCollection.Load()
+	if err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8777df19-d2ef-496c-959f-f7c86ea48939", "Unable to load '"+attributeInfo.Collection+"' collection data: "+err.Error())
+	}
+
+	// update records
+	for _, dbRecordData := range dbRecords {
+		attrModel, err := models.GetModel(attributeInfo.Model)
+		if err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eefdb38a-0150-456d-b2a8-a10f1112d52b", "Unable to get '"+attributeInfo.Model+"' model: "+err.Error())
+		}
+
+		// type already checked
+		modelObject := attrModel.(models.InterfaceObject)
+		if err = modelObject.FromHashMap(dbRecordData); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "79119ca5-703d-4dd9-b142-247ea499c1c4", "Unable to populate '"+attributeInfo.Model+"' model: "+err.Error())
+		}
+
+		err = modelObject.Set(attributeInfo.Attribute, attributeInfo.Default)
+		if err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c2c34a88-1409-4d01-b477-d1fe9449d664", "Unable to set value '"+attributeInfo.Default+"' for '"+attributeInfo.Attribute+"' in collection '"+attributeInfo.Collection+"': "+err.Error())
+		}
+
+		// type already checked
+		err = modelObject.(models.InterfaceStorable).Save()
+		if err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51d6730d-0ff9-4a5a-bc83-8f0038d8c893", "Unable to save model '"+attributeInfo.Model+"': "+err.Error())
+		}
+	}
+
+	return nil
 }
