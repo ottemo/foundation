@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/bshuster-repo/logrus-logstash-hook"
 	"github.com/ottemo/foundation/env"
+	"fmt"
 )
 
 // init makes package self-initialization routine
@@ -14,7 +15,9 @@ func init() {
 	instance := new(DefaultLogger)
 	var _ env.InterfaceLogger = instance
 
-	env.RegisterLogger(instance)
+	if err := env.RegisterLogger(instance); err != nil {
+		fmt.Println(err.Error())
+	}
 	env.RegisterOnConfigIniStart(startup)
 	env.RegisterOnConfigStart(setupConfig)
 }
