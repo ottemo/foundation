@@ -100,9 +100,13 @@ func (it *DefaultBlogPost) Save() error {
 	// set dates
 	currentTime := time.Now()
 	if it.GetCreatedAt().IsZero() {
-		it.SetCreatedAt(currentTime)
+		if err := it.SetCreatedAt(currentTime); err != nil {
+			return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fbd6b83d-1c91-4d84-bcfe-cf4053453cbd", "unable to set creation date")
+		}
 	}
-	it.SetUpdatedAt(currentTime)
+	if err := it.SetUpdatedAt(currentTime); err != nil {
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3146839c-9c42-4a21-be4a-2d2403714a4d", "unable to set update date")
+	}
 
 	// store model
 	valuesToStore := it.ToHashMap()
@@ -153,34 +157,39 @@ func (it *DefaultBlogPost) Get(attribute string) interface{} {
 
 // Set will apply the given attribute value to the blog post or return an error
 func (it *DefaultBlogPost) Set(attribute string, value interface{}) error {
+	var err error
 	lowerCaseAttribute := strings.ToLower(attribute)
 
 	switch lowerCaseAttribute {
 	case "_id", "id":
-		it.SetID(utils.InterfaceToString(value))
+		err = it.SetID(utils.InterfaceToString(value))
 	case "identifier":
-		it.SetIdentifier(utils.InterfaceToString(value))
+		err = it.SetIdentifier(utils.InterfaceToString(value))
 	case "published":
-		it.SetPublished(utils.InterfaceToBool(value))
+		err = it.SetPublished(utils.InterfaceToBool(value))
 	case "title":
-		it.SetTitle(utils.InterfaceToString(value))
+		err = it.SetTitle(utils.InterfaceToString(value))
 	case "excerpt":
-		it.SetExcerpt(utils.InterfaceToString(value))
+		err = it.SetExcerpt(utils.InterfaceToString(value))
 	case "content":
-		it.SetContent(utils.InterfaceToString(value))
+		err = it.SetContent(utils.InterfaceToString(value))
 	case "tags":
-		it.SetTags(utils.InterfaceToArray(value))
+		err = it.SetTags(utils.InterfaceToArray(value))
 	case "featured_image":
-		it.SetFeaturedImage(utils.InterfaceToString(value))
+		err = it.SetFeaturedImage(utils.InterfaceToString(value))
 	case "created_at":
-		it.SetCreatedAt(utils.InterfaceToTime(value))
+		err = it.SetCreatedAt(utils.InterfaceToTime(value))
 	case "updated_at":
-		it.SetUpdatedAt(utils.InterfaceToTime(value))
+		err = it.SetUpdatedAt(utils.InterfaceToTime(value))
 	default:
 		return env.ErrorNew(
 			ConstErrorModule,
 			ConstErrorLevel,
 			"eb027b8f-118e-4036-a4e3-7b8abdb20ed8", "unknown attribute "+attribute+" for blog post")
+	}
+
+	if err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel,"9d3d9d30-4517-4be6-af09-af817dcd5215", "unable to set '"+attribute+"' value '"+utils.InterfaceToString(value)+"'")
 	}
 
 	return nil
@@ -218,7 +227,7 @@ func (it *DefaultBlogPost) ToHashMap() map[string]interface{} {
 // GetAttributesInfo returns the requested object attributes
 func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 	result := []models.StructAttributeInfo{
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "_id",
@@ -231,7 +240,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "identifier",
@@ -244,7 +253,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "published",
@@ -257,7 +266,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "title",
@@ -270,7 +279,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "tags",
@@ -283,7 +292,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "featured_image",
@@ -296,7 +305,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "content",
@@ -309,7 +318,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "excerpt",
@@ -322,7 +331,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "created_at",
@@ -335,7 +344,7 @@ func (it *DefaultBlogPost) GetAttributesInfo() []models.StructAttributeInfo {
 			Options:    "",
 			Default:    "",
 		},
-		models.StructAttributeInfo{
+		{
 			Model:      post.ConstModelNameBlogPost,
 			Collection: ConstBlogPostCollectionName,
 			Attribute:  "updated_at",

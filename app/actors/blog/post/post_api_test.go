@@ -157,7 +157,9 @@ func TestBlogPostAPI(t *testing.T) {
 
 	// init context
 	context := new(testContext)
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		t.Error(err)
+	}
 
 	numberOfPosts := 15
 	numberOfPublished := 10
