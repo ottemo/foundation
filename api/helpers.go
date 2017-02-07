@@ -77,7 +77,8 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 		sessionID := utils.InterfaceToString(sessionID)
 		sessionInstance, err := currentSessionService.Get(sessionID, true)
 		if err == nil {
-			context.SetResponseSetting(ConstSessionCookieName, sessionInstance.GetID())
+			// ignore non critical error
+			_ = context.SetResponseSetting(ConstSessionCookieName, sessionInstance.GetID())
 			return sessionInstance, nil
 		}
 	}
@@ -85,7 +86,8 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 	// session id not found of was not specified - making new session
 	sessionInstance, err := currentSessionService.New()
 	if err == nil {
-		context.SetResponseSetting(ConstSessionCookieName, sessionInstance.GetID())
+		// ignore non critical error
+		_ = context.SetResponseSetting(ConstSessionCookieName, sessionInstance.GetID())
 	}
 
 	return sessionInstance, err
