@@ -13,6 +13,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/media"
 	"github.com/ottemo/foundation/utils"
+	"io"
 )
 
 // GetName returns the media storage name
@@ -90,7 +91,11 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 			}
 
 			newFile, err := os.Create(mediaFilePath)
-			defer newFile.Close()
+			defer func(c io.Closer){
+				if err := c.Close(); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+			}(newFile)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
@@ -108,9 +113,13 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 
 		// ResizeMediaImage will check necessity of resize by it self
 		for imageSize := range it.imageSizes {
-			it.ResizeMediaImage(model, objID, mediaName, imageSize)
+			if err := it.ResizeMediaImage(model, objID, mediaName, imageSize); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
-		it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+		if err := it.ResizeMediaImage(model, objID, mediaName, it.baseSize); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 	} else {
 
@@ -133,10 +142,18 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 		return env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("model", "=", model)
-	dbCollection.AddFilter("object", "=", objID)
-	dbCollection.AddFilter("type", "=", mediaType)
-	dbCollection.AddFilter("media", "=", mediaName)
+	if err := dbCollection.AddFilter("model", "=", model); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("object", "=", objID); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("type", "=", mediaType); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("media", "=", mediaName); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	count, err := dbCollection.Count()
 	if err != nil {
@@ -189,11 +206,15 @@ func (it *FilesystemMediaStorage) Remove(model string, objID string, mediaType s
 				if mediaType == media.ConstMediaTypeImage {
 					for imageSize := range it.imageSizes {
 						mediaFilePath := mediaFolder + path + it.GetResizedMediaName(mediaName, imageSize)
-						os.Remove(mediaFilePath)
+						if err := os.Remove(mediaFilePath); err != nil {
+							_ = env.ErrorDispatch(err)
+						}
 					}
 				}
 
-				os.Remove(mediaFolder + path + mediaName)
+				if err := os.Remove(mediaFolder + path + mediaName); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 			}
 		}
 	}
@@ -220,9 +241,15 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 		return result, env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("model", "=", model)
-	dbCollection.AddFilter("object", "=", objID)
-	dbCollection.AddFilter("type", "=", mediaType)
+	if err := dbCollection.AddFilter("model", "=", model); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("object", "=", objID); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("type", "=", mediaType); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
 
 	records, err := dbCollection.Load()
 
@@ -238,9 +265,13 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 		// ResizeMediaImage will check necessity of resize by it self
 		for _, mediaName := range result {
 			for imageSize := range it.imageSizes {
-				it.ResizeMediaImage(model, objID, mediaName, imageSize)
+				if err := it.ResizeMediaImage(model, objID, mediaName, imageSize); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 			}
-			it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+			if err := it.ResizeMediaImage(model, objID, mediaName, it.baseSize); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -336,9 +367,15 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 		return result, env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("model", "=", model)
-	dbCollection.AddFilter("object", "=", objID)
-	dbCollection.AddFilter("type", "=", mediaType)
+	if err := dbCollection.AddFilter("model", "=", model); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("object", "=", objID); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddFilter("type", "=", mediaType); err != nil {
+		return result, env.ErrorDispatch(err)
+	}
 
 	records, err := dbCollection.Load()
 	if err != nil {
@@ -350,7 +387,7 @@ func (it *FilesystemMediaStorage) GetAllSizes(model string, objID string, mediaT
 		if mediaName, ok := record["media"].(string); ok {
 			mediaSet, err := it.GetSizes(model, objID, mediaType, mediaName)
 			if err != nil {
-				env.ErrorDispatch(err)
+				return result, env.ErrorDispatch(err)
 			}
 
 			result = append(result, mediaSet)
@@ -379,12 +416,16 @@ func (it *FilesystemMediaStorage) GetSizes(model string, objID string, mediaType
 	for imageSize := range it.imageSizes {
 		mediaSet[imageSize] = path + it.GetResizedMediaName(mediaName, imageSize)
 		if resizeImagesOnFly {
-			it.ResizeMediaImage(model, objID, mediaName, imageSize)
+			if err := it.ResizeMediaImage(model, objID, mediaName, imageSize); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
 	}
 
 	if resizeImagesOnFly {
-		it.ResizeMediaImage(model, objID, mediaName, it.baseSize)
+		if err := it.ResizeMediaImage(model, objID, mediaName, it.baseSize); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 
 	return mediaSet, nil
@@ -404,7 +445,9 @@ func (it *FilesystemMediaStorage) ResizeAllMediaImages() error {
 		return env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddFilter("type", "=", media.ConstMediaTypeImage)
+	if err := dbCollection.AddFilter("type", "=", media.ConstMediaTypeImage); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	records, err := dbCollection.Load()
 	if err != nil {
@@ -432,7 +475,7 @@ func (it *FilesystemMediaStorage) ResizeAllMediaImages() error {
 			}
 			imagesResized++
 		} else {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 
