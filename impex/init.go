@@ -15,17 +15,33 @@ import (
 func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
 
-	RegisterImportCommand("IMPORT", new(ImportCmdImport))
-	RegisterImportCommand("INSERT", new(ImportCmdInsert))
-	RegisterImportCommand("UPDATE", new(ImportCmdUpdate))
-	RegisterImportCommand("DELETE", new(ImportCmdDelete))
+	if err := RegisterImportCommand("IMPORT", new(ImportCmdImport)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := RegisterImportCommand("INSERT", new(ImportCmdInsert)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := RegisterImportCommand("UPDATE", new(ImportCmdUpdate)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := RegisterImportCommand("DELETE", new(ImportCmdDelete)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
-	RegisterImportCommand("STORE", new(ImportCmdStore))
-	RegisterImportCommand("ALIAS", new(ImportCmdAlias))
+	if err := RegisterImportCommand("STORE", new(ImportCmdStore)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := RegisterImportCommand("ALIAS", new(ImportCmdAlias)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
-	RegisterImportCommand("MEDIA", new(ImportCmdMedia))
+	if err := RegisterImportCommand("MEDIA", new(ImportCmdMedia)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
-	RegisterImportCommand("ATTRIBUTE_ADD", new(ImportCmdAttributeAdd))
+	if err := RegisterImportCommand("ATTRIBUTE_ADD", new(ImportCmdAttributeAdd)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	// initializing column conversion functions
 	ConversionFuncs["log"] = func(args ...interface{}) string {

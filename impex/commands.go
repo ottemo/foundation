@@ -332,7 +332,9 @@ func (it *ImportCmdUpdate) Test(itemData map[string]interface{}, input interface
 			}
 
 			if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
-				modelAsObject.Set(attribute, value)
+				if err := modelAsObject.Set(attribute, value); err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
 			}
 		}
 	}
@@ -371,7 +373,9 @@ func (it *ImportCmdUpdate) Process(itemData map[string]interface{}, input interf
 		}
 
 		if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
-			modelAsObject.Set(attribute, value)
+			if err := modelAsObject.Set(attribute, value); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -830,7 +834,7 @@ func (it *ImportCmdAttributeAdd) Process(itemData map[string]interface{}, input 
 	modelAsCustomAttributesInterface := it.model.(models.InterfaceCustomAttributes)
 	err := modelAsCustomAttributesInterface.AddNewAttribute(it.attribute)
 	if err != nil {
-		env.ErrorDispatch(err)
+		return input, env.ErrorDispatch(err)
 	}
 
 	return input, nil

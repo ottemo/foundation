@@ -89,7 +89,9 @@ func restImpexExportModel(context api.InterfaceApplicationContext) (interface{},
 			var attributes []string
 			for _, attribute := range object.GetAttributesInfo() {
 				attributes = append(attributes, attribute.Attribute)
-				collection.ListAddExtraAttribute(attribute.Attribute)
+				if err := collection.ListAddExtraAttribute(attribute.Attribute); err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
 			}
 
 			list, err := collection.List()
@@ -109,12 +111,16 @@ func restImpexExportModel(context api.InterfaceApplicationContext) (interface{},
 
 	exportFilename := strings.ToLower(modelName) + "_export_" + time.Now().Format(time.RFC3339) + ".csv"
 
-	context.SetResponseContentType("text/csv")
-	context.SetResponseSetting("Content-disposition", "attachment;filename="+exportFilename)
+	if err := context.SetResponseContentType("text/csv"); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := context.SetResponseSetting("Content-disposition", "attachment;filename="+exportFilename); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	err := MapToCSV(records, csvWriter)
 	if err != nil {
-		env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return nil, nil
@@ -170,7 +176,7 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
 				importingFile.size = fileSize
-				seeker.Seek(0, 0)
+				_, _ = seeker.Seek(0, 0)
 			}
 		}
 
@@ -179,7 +185,7 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 
 		err := ImportCSVData(commandLine, exchangeDict, csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 
@@ -194,7 +200,9 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 // WEB REST API used to test csv file before import
 func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	context.SetResponseContentType("text/plain")
+	if err := context.SetResponseContentType("text/plain"); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	filesProcessed := 0
 	additionalMessage := ""
@@ -205,7 +213,7 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
 				importingFile.size = fileSize
-				seeker.Seek(0, 0)
+				_, _ = seeker.Seek(0, 0)
 			}
 		}
 
@@ -214,7 +222,7 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 
 		err := ImportCSVScript(csvReader, context.GetResponseWriter(), true)
 		if err != nil && additionalMessage == "" {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 		filesProcessed++
@@ -241,7 +249,7 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
 				importingFile.size = fileSize
-				seeker.Seek(0, 0)
+				_, _ = seeker.Seek(0, 0)
 			}
 		}
 
@@ -250,7 +258,7 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 
 		err := ImportCSVScript(csvReader, nil, false)
 		if err != nil && additionalMessage == "" {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			additionalMessage += "with errors"
 		}
 
