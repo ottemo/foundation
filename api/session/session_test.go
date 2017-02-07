@@ -34,7 +34,9 @@ func TestSessionsConcurrency(t *testing.T) {
 				session.Set(key, utils.InterfaceToInt(session.Get(key))+1)
 			}
 
-			SessionService.GC()
+			if err := SessionService.GC(); err != nil {
+				t.Error(err)
+			}
 
 			sync <- true
 		}()
@@ -48,7 +50,9 @@ func TestSessionsConcurrency(t *testing.T) {
 
 	// closing all the sessions
 	for i := 0; i < sessionsNumber; i++ {
-		sessions[i].Close()
+		if err := sessions[i].Close(); err != nil {
+			t.Error(err)
+		}
 	}
 }
 
