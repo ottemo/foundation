@@ -1,6 +1,9 @@
 package xdomain
 
-import "github.com/ottemo/foundation/api"
+import (
+	"github.com/ottemo/foundation/api"
+	"fmt"
+)
 
 // endpoint configuration for xdomain package
 func setupAPI() error {
@@ -18,12 +21,22 @@ func xdomainHandler(context api.InterfaceApplicationContext) (interface{}, error
 
 	newline := []byte("\n")
 
-	context.SetResponseContentType("text/html")
+	if err := context.SetResponseContentType("text/html"); err != nil {
+		fmt.Println("06a968c4-cd17-43cf-a93e-b7317b53b883", err)
+	}
 
-	responseWriter.Write([]byte("<!DOCTYPE HTML>"))
-	responseWriter.Write(newline)
-	responseWriter.Write([]byte("<script src=\"//cdn.rawgit.com/jpillora/xdomain/0.7.4/dist/xdomain.min.js\" master=\"" + xdomainMasterURL + "\"></script>"))
-	responseWriter.Write(newline)
+	if _, err := responseWriter.Write([]byte("<!DOCTYPE HTML>")); err != nil {
+		fmt.Println("06a968c4-cd17-43cf-a93e-b7317b53b883", err)
+	}
+	if _, err := responseWriter.Write(newline); err != nil {
+		fmt.Println("3968707c-c8e4-4e91-a4ed-f5869619e1bc", err)
+	}
+	if _, err := responseWriter.Write([]byte("<script src=\"//cdn.rawgit.com/jpillora/xdomain/0.7.4/dist/xdomain.min.js\" master=\"" + xdomainMasterURL + "\"></script>")); err != nil {
+		fmt.Println("5b815f17-42a6-42a5-8591-82674f1a86bd", err)
+	}
+	if _, err := responseWriter.Write(newline); err != nil {
+		fmt.Println("a6c11509-a68b-4920-bee2-3a8ab93ea30c", err)
+	}
 
 	return "", nil
 }
