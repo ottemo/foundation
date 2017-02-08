@@ -55,7 +55,7 @@ func ExternalAttributes(instance interface{}) (*ModelExternalAttributes, error) 
 	for delegate, attributes := range perDelegateGroup {
 		delegateInstance, err := delegate.New(instance)
 		if err != nil {
-			env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b30533ac-5991-4779-b621-17c27969203a", "unable to instantiate delegate: "+err.Error())
 		}
 
 		for _, attribute := range attributes {
@@ -155,7 +155,7 @@ func (it *ModelExternalAttributes) ListExternalAttributes() map[string]models.In
 
 	modelName := it.model
 	if modelName == "" {
-		env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
 		return result
 	}
 
