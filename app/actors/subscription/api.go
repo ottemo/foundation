@@ -43,7 +43,9 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 		return nil, env.ErrorDispatch(err)
 	}
 
-	models.ApplyFilters(context, subscriptionCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, subscriptionCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e7f9dbaf-15f0-4f9b-b56c-34a2111c7981", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -51,10 +53,14 @@ func APIListSubscriptions(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// limit parameter handle
-	subscriptionCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := subscriptionCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "98ac65cb-9394-49bf-83c0-1fc4cbba0128", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, subscriptionCollectionModel)
+	if err := models.ApplyExtraAttributes(context, subscriptionCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b46343e6-b707-40fe-a842-680b98456aca", err.Error())
+	}
 
 	return subscriptionCollectionModel.List()
 }
@@ -75,9 +81,15 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 	}
 
 	dbCollection := subscriptionCollectionModel.GetDBCollection()
-	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
-	dbCollection.AddStaticFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed)
-	models.ApplyFilters(context, dbCollection)
+	if err := dbCollection.AddStaticFilter("visitor_id", "=", visitorID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "68d3bbd1-a93f-46d9-8fd2-bd675ebe26c9", err.Error())
+	}
+	if err := dbCollection.AddStaticFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8ee26edd-21cf-4f1c-870b-004714a8899e", err.Error())
+	}
+	if err := models.ApplyFilters(context, dbCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8dc49237-b7f7-42e2-a03a-2df839679340", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -85,7 +97,9 @@ func APIListVisitorSubscriptions(context api.InterfaceApplicationContext) (inter
 	}
 
 	// limit parameter handle
-	dbCollection.SetLimit(models.GetListLimit(context))
+	if err := dbCollection.SetLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b7bcf8a3-340d-428a-b722-64d890f68863", err.Error())
+	}
 
 	subscriptions := subscriptionCollectionModel.ListSubscriptions()
 	var result []map[string]interface{}
@@ -190,7 +204,9 @@ func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}
 func sendCancellationEmail(subscriptionItem subscription.InterfaceSubscription) {
 	email := utils.InterfaceToString(subscriptionItem.GetCustomerEmail())
 	subject, body := getEmailInfo(subscriptionItem)
-	app.SendMail(email, subject, body)
+	if err := app.SendMail(email, subject, body); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b9e13b60-c4b5-4934-8fc9-d0f520323b6b", err.Error())
+	}
 }
 
 func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, string) {
@@ -208,7 +224,7 @@ func getEmailInfo(subscriptionItem subscription.InterfaceSubscription) (string, 
 	body := utils.InterfaceToString(env.ConfigGetValue(subscription.ConstConfigPathSubscriptionCancelEmailTemplate))
 	body, err := utils.TextTemplate(body, templateVariables)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "68461077-353d-4c50-8e62-9447f6a259a6", err.Error())
 	}
 
 	return subject, body
@@ -227,7 +243,9 @@ func APIUpdateSubscriptionInfo(context api.InterfaceApplicationContext) (interfa
 	}
 
 	if subscriptionID != "" {
-		subscriptionCollection.ListFilterAdd("_id", "=", subscriptionID)
+		if err := subscriptionCollection.ListFilterAdd("_id", "=", subscriptionID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a5987106-59f0-4210-9f33-1d20a633dfd5", err.Error())
+		}
 	}
 
 	for _, currentSubscription := range subscriptionCollection.ListSubscriptions() {
@@ -239,7 +257,7 @@ func APIUpdateSubscriptionInfo(context api.InterfaceApplicationContext) (interfa
 			}
 			if err = productModel.ApplyOptions(subscriptionItem.Options); err != nil {
 				// no need to return here as it's possible that some options was already changed
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 			productOptions := make(map[string]interface{})
