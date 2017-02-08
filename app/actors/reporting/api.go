@@ -12,6 +12,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"errors"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -148,13 +149,25 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("customer_name")
-	oModel.ListAddExtraAttribute("customer_email")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("35e5e271-a605-44f3-9bdc-0972cd9e14c8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("customer_name"); err != nil {
+		env.LogError(errors.New("30426172-a9a1-4d8c-978e-944acce18dde : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("customer_email"); err != nil {
+		env.LogError(errors.New("451cf083-dd39-4805-9732-115afd8bd347 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("d6c9dd6d-40ed-4820-9197-fadea124e46c : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("e1298ee1-9a10-47df-8404-908a4d9f4981 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("4afb1a1c-b8c9-42db-9e38-4286cc914190 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -263,12 +276,22 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("payment_method")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("c63e01a1-2e2d-41a0-a8f9-09b55d25fadc : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("payment_method"); err != nil {
+		env.LogError(errors.New("4a53c0a8-67d3-4a1f-97c1-9c2d1f6e625c : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("f7524ade-0983-45a6-9f31-ed11de180680 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("b4206d27-7f73-47de-9e7a-4afe0600886d : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("be1b13f1-db44-47b9-b6a5-a05253b100bf : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -387,12 +410,22 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("shipping_method")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("4ff4ac4c-8048-41e6-89b6-ab65c03ffbde : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("shipping_method"); err != nil {
+		env.LogError(errors.New("8104d737-81a3-4059-8a65-1c5a513930a8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("d98106a4-63f9-4f7d-b854-74c6af6a0a33 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("2e38dab2-dedb-4e91-9538-b9d732c90408 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("eccd9296-fb5c-476b-ba05-efbbbb21a3b1 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -441,12 +474,22 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("billing_address")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("fbcc01df-049c-418b-8a15-f3acb595a26f : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("billing_address"); err != nil {
+		env.LogError(errors.New("8d7c47d2-382e-4269-8633-fd4c7f5254fc : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("26dbf8cd-b884-4d2d-af4d-d0328ec4e24a : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("267ae749-0c75-4845-bc45-799978671084 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("c6c49618-49ab-4bf9-b123-6d2631ab3810 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -540,13 +583,25 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("billing_address")
-	oModel.ListFilterAdd("billing_address.country", "=", "US")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("afee38b6-7744-45d1-a202-fa3e38cebb77 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("billing_address"); err != nil {
+		env.LogError(errors.New("d425730d-3298-44db-8312-686b6a31fa2b : " + err.Error()))
+	}
+	if err := oModel.ListFilterAdd("billing_address.country", "=", "US"); err != nil {
+		env.LogError(errors.New("ca701edb-dad9-41ff-afa5-b8b71e9dbef8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("c2a7884f-30ec-46cf-9453-723fba5c4a72 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("29e271f7-97c4-4be1-a758-4c5360591814 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("8648b2b7-1450-4409-9324-17d7316d023c : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
