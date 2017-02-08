@@ -18,7 +18,9 @@ func init() {
 	instance := new(DBEngine)
 
 	env.RegisterOnConfigIniStart(instance.Startup)
-	db.RegisterDBEngine(instance)
+	if err := db.RegisterDBEngine(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }
 
 // Startup is a database engine startup routines
