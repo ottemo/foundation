@@ -22,7 +22,9 @@ func (it *DefaultVisitorCardCollection) List() ([]models.StructListItem, error) 
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		visitorCardModel.FromHashMap(dbRecordData)
+		if err := visitorCardModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -66,13 +68,17 @@ func (it *DefaultVisitorCardCollection) ListAddExtraAttribute(attribute string) 
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultVisitorCardCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "023f1269-98e9-4d73-ab37-41368ed117f2", "Unable to add filter: " + err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultVisitorCardCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51cb0061-1f1c-4319-88bb-f89b640d2347", "Unable to clear filters: " + err.Error())
+	}
 	return nil
 }
 
