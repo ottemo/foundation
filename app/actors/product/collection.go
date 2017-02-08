@@ -104,13 +104,17 @@ func (it *DefaultProductCollection) ListAddExtraAttribute(attribute string) erro
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultProductCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84234105-3560-447c-bcc8-6ccf238dba9c", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultProductCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffaccc12-e45a-4cd9-a79e-168e89b0d2c1", err.Error())
+	}
 	return nil
 }
 
@@ -166,7 +170,9 @@ func (it *DefaultProductCollection) ListProducts() []product.InterfaceProduct {
 		if err != nil {
 			return result
 		}
-		productModel.FromHashMap(dbRecordData)
+		if err := productModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c67e86dd-d87e-49eb-a421-ba53a0d7157e", err.Error())
+		}
 
 		// load external attributes
 		err = productModel.LoadExternalAttributes()

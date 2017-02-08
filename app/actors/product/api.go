@@ -108,7 +108,9 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 			updatedItems = append(updatedItems, subscriptionItem)
 		}
 
-		currentSubscription.Set("items", updatedItems)
+		if err := currentSubscription.Set("items", updatedItems); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "08046b92-da83-46d3-b379-756e425db506", err.Error())
+		}
 
 		err = currentSubscription.Save()
 		if err != nil {
@@ -745,7 +747,9 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name was not specified")
 	}
 
-	context.SetResponseContentType(mime.TypeByExtension(mediaName))
+	if err := context.SetResponseContentType(mime.TypeByExtension(mediaName)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bde82a1b-e601-40cc-b280-87d2aa767a85", err.Error())
+	}
 
 	// list media operation
 	//---------------------
@@ -770,12 +774,18 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// filters handle
-	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, productCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8cf27a73-51aa-45de-afdf-20417e6bc040", err.Error())
+	}
 
 	// exclude disabled and hidden products for visitors, but not Admins
 	if err := api.ValidateAdminRights(context); err != nil {
-		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
-		productCollectionModel.GetDBCollection().AddFilter("visible", "=", true)
+		if err := productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ac1a628-5157-4dff-9529-bfaa7aecae23", err.Error())
+		}
+		if err := productCollectionModel.GetDBCollection().AddFilter("visible", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "34153a66-09c3-418a-bab3-5683894f9a36", err.Error())
+		}
 	}
 
 	// check "count" request
@@ -784,10 +794,14 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// limit parameter handle
-	productCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := productCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "862bc0b3-684c-4dfd-a145-214a6e00ee29", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, productCollectionModel)
+	if err := models.ApplyExtraAttributes(context, productCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "59eb8751-5e90-49c0-9877-5eaa9ae20a5f", err.Error())
+	}
 
 	listItems, err := productCollectionModel.List()
 	if err != nil {
@@ -859,15 +873,21 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 	relatedPids := utils.InterfaceToArray(productModel.Get("related_pids"))
 
 	productsCollection, _ := product.GetProductCollectionModel()
-	productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids)
+	if err := productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b5b68a51-e025-4a28-881e-7f5882825dc4", err.Error())
+	}
 
 	// if you aren't an admin the product must be enabled
 	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+		if err := productsCollection.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8faddb67-41d0-4a32-9b2c-3c3d3b20bbcf", err.Error())
+		}
 	}
 
 	// add a limit
-	productsCollection.ListLimit(models.GetListLimit(context))
+	if err := productsCollection.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b52c8d72-0e43-4e40-b7e3-d35594d3d54d", err.Error())
+	}
 
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {
@@ -880,7 +900,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 
 		result = append(result, productInfo)
