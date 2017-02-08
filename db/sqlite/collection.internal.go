@@ -195,7 +195,9 @@ func (it *DBCollection) makeUUID(id string) string {
 		timeStamp := strconv.FormatInt(time.Now().Unix(), 16)
 
 		randomBytes := make([]byte, 8)
-		rand.Reader.Read(randomBytes)
+		if _, err := rand.Reader.Read(randomBytes); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		randomHex := make([]byte, 16)
 		hex.Encode(randomHex, randomBytes)
