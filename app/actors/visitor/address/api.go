@@ -195,10 +195,14 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 		return nil, env.ErrorDispatch(err)
 	}
 	dbCollection := visitorAddressCollectionModel.GetDBCollection()
-	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
+	if err := dbCollection.AddStaticFilter("visitor_id", "=", visitorID); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1a6fcea9-b640-4ad5-ad3d-550d55b3d99a", err.Error())
+	}
 
 	// filters handle
-	models.ApplyFilters(context, dbCollection)
+	if err := models.ApplyFilters(context, dbCollection); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9fc25081-ecbb-4ac8-a5b5-b42de55afd07", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument("count") != "" {
@@ -206,10 +210,14 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 	}
 
 	// limit parameter handle
-	visitorAddressCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := visitorAddressCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b7021bca-b95a-4e34-815b-92d70aa98abf", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, visitorAddressCollectionModel)
+	if err := models.ApplyExtraAttributes(context, visitorAddressCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe8a4498-c21d-4492-a6dd-010fcfa52bec", err.Error())
+	}
 
 	return visitorAddressCollectionModel.List()
 }
