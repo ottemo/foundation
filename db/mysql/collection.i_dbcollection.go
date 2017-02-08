@@ -16,12 +16,18 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 	var result map[string]interface{}
 
 	if !ConstUseUUIDids {
-		it.AddFilter("_id", "=", id)
+		if err := it.AddFilter("_id", "=", id); err != nil {
+			return result, env.ErrorDispatch(err)
+		}
 	} else {
 		if idValue, err := strconv.ParseInt(id, 10, 64); err == nil {
-			it.AddFilter("_id", "=", idValue)
+			if err := it.AddFilter("_id", "=", idValue); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		} else {
-			it.AddFilter("_id", "=", id)
+			if err := it.AddFilter("_id", "=", id); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -81,7 +87,9 @@ func (it *DBCollection) Iterate(iteratorFunc func(record map[string]interface{})
 func (it *DBCollection) Distinct(columnName string) ([]interface{}, error) {
 
 	prevResultColumns := it.ResultColumns
-	it.SetResultColumns(columnName)
+	if err := it.SetResultColumns(columnName); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	SQL := "SELECT DISTINCT " + it.getSQLResultColumns() + " FROM `" + it.Name + "`" + it.getSQLFilters() + it.getSQLOrder() + it.Limit
 
@@ -400,7 +408,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 	for ok := rows.Next(); ok == true; ok = rows.Next() {
 		row, err := getRowAsStringMap(rows)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 
 		key := row["column"].(string)

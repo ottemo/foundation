@@ -62,7 +62,9 @@ func connectionQuery(SQL string) (*sql.Rows, error) {
 // closeCursor closes cursor statement routine
 func closeCursor(cursor *sql.Rows) {
 	if cursor != nil {
-		cursor.Close()
+		if err := cursor.Close(); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 }
 
