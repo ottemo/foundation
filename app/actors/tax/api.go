@@ -34,19 +34,27 @@ func APIDownloadTaxCSV(context api.InterfaceApplicationContext) (interface{}, er
 				return nil, env.ErrorDispatch(err)
 			}
 
-			context.SetResponseContentType("text/csv")
-			context.SetResponseSetting("Content-disposition", "attachment;filename=tax_rates.csv")
+			if err := context.SetResponseContentType("text/csv"); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "68abd3a8-349d-4a4a-881d-6b09892d80c7", err.Error())
+			}
+			if err := context.SetResponseSetting("Content-disposition", "attachment;filename=tax_rates.csv"); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5569f985-877b-4a7f-929d-ee2ec3c00e62", err.Error())
+			}
 
-			csvWriter.Write([]string{"Code", "Country", "State", "Zip", "Rate"})
+			if err := csvWriter.Write([]string{"Code", "Country", "State", "Zip", "Rate"}); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "54cfe05e-7dc6-433e-b566-6b8ed3712a68", err.Error())
+			}
 			csvWriter.Flush()
 
 			for _, record := range records {
-				csvWriter.Write([]string{
+				if err := csvWriter.Write([]string{
 					utils.InterfaceToString(record["code"]),
 					utils.InterfaceToString(record["country"]),
 					utils.InterfaceToString(record["state"]),
 					utils.InterfaceToString(record["zip"]),
-					utils.InterfaceToString(record["rate"])})
+					utils.InterfaceToString(record["rate"])}); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2aa78843-c751-47d6-8f13-669455a2ece1", err.Error())
+				}
 
 				csvWriter.Flush()
 			}
@@ -81,9 +89,13 @@ func APIUploadTaxCSV(context api.InterfaceApplicationContext) (interface{}, erro
 
 	if dbEngine := db.GetDBEngine(); dbEngine != nil {
 		if collection, err := dbEngine.GetCollection("Taxes"); err == nil {
-			collection.Delete()
+			if _, err := collection.Delete(); err != nil {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "683e97e0-a35a-4b99-834b-95bc999dcf2a", err.Error())
+			}
 
-			csvReader.Read() //skipping header
+			if _, err := csvReader.Read(); err != nil { //skipping header
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "7a3b3349-504f-4635-8e7d-0ed41dc4c05e", err.Error())
+			}
 			for record, err := csvReader.Read(); err == nil; record, err = csvReader.Read() {
 				if len(record) >= 5 {
 					taxRecord := make(map[string]interface{})
@@ -94,7 +106,9 @@ func APIUploadTaxCSV(context api.InterfaceApplicationContext) (interface{}, erro
 					taxRecord["zip"] = record[3]
 					taxRecord["rate"] = utils.InterfaceToFloat64(record[4])
 
-					collection.Save(taxRecord)
+					if _, err := collection.Save(taxRecord); err != nil {
+						return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "90c64ccd-aae5-465d-a721-409cd4197137", err.Error())
+					}
 				}
 			}
 		} else {
