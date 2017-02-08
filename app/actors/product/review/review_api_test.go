@@ -171,7 +171,9 @@ func TestReviewAPI(t *testing.T) {
 
 	// init context
 	context := new(testContext)
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		t.Error(err)
+	}
 
 	// scenario
 	var visitor1 = createVisitor(t, context, "1")
