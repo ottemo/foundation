@@ -122,7 +122,9 @@ func restConfigRegister(context api.InterfaceApplicationContext) (interface{}, e
 		Image: utils.InterfaceToString(utils.GetFirstMapValue(inputData, "image", "Image")),
 	}
 
-	config.RegisterItem(configItem, nil)
+	if err := config.RegisterItem(configItem, nil); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	return configItem, nil
 }
