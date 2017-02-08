@@ -1,8 +1,9 @@
 package xdomain
 
 import (
-	"github.com/ottemo/foundation/api"
 	"fmt"
+
+	"github.com/ottemo/foundation/api"
 )
 
 // endpoint configuration for xdomain package
