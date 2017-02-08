@@ -87,20 +87,39 @@ func LoadOrderByID(orderID string) (InterfaceOrder, error) {
 
 // GetOrdersCreatedBetween Get the orders `created_at` a certain date range
 func GetOrdersCreatedBetween(startDate time.Time, endDate time.Time) []models.StructListItem {
-	oModel, _ := GetOrderCollectionModel()
-	oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-	oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
-	oModel.ListAddExtraAttribute("created_at") // If you are filtering on created_at you probably want that too
-	foundOrders, _ := oModel.List()            // This is the lite response StructListItem
+	oModel, err := GetOrderCollectionModel()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil { // If you are filtering on created_at you probably want that too
+		_ = env.ErrorDispatch(err)
+	}
+	foundOrders, err := oModel.List()            // This is the lite response StructListItem
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	return foundOrders
 }
 
 // GetFullOrdersUpdatedBetween db query for getting all orders, with expensive details
 func GetFullOrdersUpdatedBetween(startDate time.Time, endDate time.Time) []InterfaceOrder {
-	oModel, _ := GetOrderCollectionModel()
-	oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate)
-	oModel.GetDBCollection().AddFilter("updated_at", "<", endDate)
+	oModel, err := GetOrderCollectionModel()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := oModel.GetDBCollection().AddFilter("updated_at", ">=", startDate); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := oModel.GetDBCollection().AddFilter("updated_at", "<", endDate); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	result := oModel.ListOrders()
 
 	return result
@@ -108,10 +127,18 @@ func GetFullOrdersUpdatedBetween(startDate time.Time, endDate time.Time) []Inter
 
 // GetItemsForOrders Get the relavent order items given a slice of orders
 func GetItemsForOrders(orderIds []string) []map[string]interface{} {
-	oiModel, _ := GetOrderItemCollectionModel()
+	oiModel, err := GetOrderItemCollectionModel()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	oiDB := oiModel.GetDBCollection()
-	oiDB.AddFilter("order_id", "in", orderIds)
-	oiResults, _ := oiDB.Load()
+	if err := oiDB.AddFilter("order_id", "in", orderIds); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	oiResults, err := oiDB.Load()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	return oiResults
 }
