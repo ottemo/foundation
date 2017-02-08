@@ -99,7 +99,7 @@ func createSwatch(context api.InterfaceApplicationContext) (interface{}, error) 
 		// save to media storage operation
 		err = mediaStorage.Save(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType, imageName, fileContent)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			result = append(result, "Image: '"+fileName+"', returned error on save")
 			continue
 		}
