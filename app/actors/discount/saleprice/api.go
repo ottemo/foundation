@@ -34,7 +34,9 @@ func listAllScheduled(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// applying requested filters
-	models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c19d40b6-dc72-4ee1-b851-40cdf3636991", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -42,10 +44,14 @@ func listAllScheduled(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// limit parameter handle
-	salePriceCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := salePriceCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "34a048a7-e6f6-4041-b9af-6c884fd74f09", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, salePriceCollectionModel)
+	if err := models.ApplyExtraAttributes(context, salePriceCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d1cc9dd-d7c4-4190-9fb7-dac7aa69d3fb", err.Error())
+	}
 
 	listItems, err := salePriceCollectionModel.List()
 	if err != nil {
