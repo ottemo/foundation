@@ -322,47 +322,50 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 	if isAdmin {
 		if record["approved"] != context.GetRequestArgument("approved") {
 			ratingValue := utils.InterfaceToInt(record["rating"])
-			var diff = -1
-			if context.GetRequestArgument("approved") == "true" {
-				diff = 1
-			}
 
-			ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
-			if err := ratingCollection.AddFilter("product_id", "=", record["product_id"]); err != nil {
-				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d0a0ee0-3afb-4f0e-8a15-8a095003e510", err.Error())
-			}
-			ratingRecords, err := ratingCollection.Load()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
-			recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
-			var ratingRecord map[string]interface{}
-
-			if len(ratingRecords) > 0 {
-				ratingRecord = ratingRecords[0]
-
-				ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + diff
-			} else {
-				ratingRecord = map[string]interface{}{
-					"product_id": record["product_id"],
-					"stars_1":    0,
-					"stars_2":    0,
-					"stars_3":    0,
-					"stars_4":    0,
-					"stars_5":    0,
+			if 1 <= ratingValue && ratingValue <= 5 {
+				var diff = -1
+				if context.GetRequestArgument("approved") == "true" {
+					diff = 1
 				}
 
-				if diff > 0 {
-					ratingRecord[recordAttribute] = 1
+				ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
 				}
-			}
-			if _, err := ratingCollection.Save(ratingRecord); err != nil {
-				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "956ff15f-681b-415b-9c76-2320df0ebee2", err.Error())
+
+				if err := ratingCollection.AddFilter("product_id", "=", record["product_id"]); err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d0a0ee0-3afb-4f0e-8a15-8a095003e510", err.Error())
+				}
+				ratingRecords, err := ratingCollection.Load()
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
+
+				recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
+				var ratingRecord map[string]interface{}
+
+				if len(ratingRecords) > 0 {
+					ratingRecord = ratingRecords[0]
+
+					ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + diff
+				} else {
+					ratingRecord = map[string]interface{}{
+						"product_id": record["product_id"],
+						"stars_1":    0,
+						"stars_2":    0,
+						"stars_3":    0,
+						"stars_4":    0,
+						"stars_5":    0,
+					}
+
+					if diff > 0 {
+						ratingRecord[recordAttribute] = 1
+					}
+				}
+				if _, err := ratingCollection.Save(ratingRecord); err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "956ff15f-681b-415b-9c76-2320df0ebee2", "unable to save rating record")
+				}
 			}
 		}
 	} else { // not admin
