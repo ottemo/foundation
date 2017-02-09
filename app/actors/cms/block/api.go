@@ -47,7 +47,9 @@ func APIListCMSBlocks(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// applying request filters
-	models.ApplyFilters(context, cmsBlockCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, cmsBlockCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "64d4f10c-680e-43e6-9d52-2d8710607dc2", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -55,10 +57,14 @@ func APIListCMSBlocks(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// limit parameter handle
-	cmsBlockCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := cmsBlockCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0cc02545-ee3f-4816-a67f-adf2a64c267c", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, cmsBlockCollectionModel)
+	if err := models.ApplyExtraAttributes(context, cmsBlockCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "49379308-09cc-4df9-87c4-757ba9a2484a", err.Error())
+	}
 
 	return cmsBlockCollectionModel.List()
 }
@@ -108,11 +114,17 @@ func APICreateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	for attribute, value := range requestData {
-		cmsBlockModel.Set(attribute, value)
+		if err := cmsBlockModel.Set(attribute, value); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c1a265dd-453f-40a7-b8ff-a82a0f1ab066", err.Error())
+		}
 	}
 
-	cmsBlockModel.SetID("")
-	cmsBlockModel.Save()
+	if err := cmsBlockModel.SetID(""); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a06ff37b-9572-4d14-a6ad-b8123dffc996", err.Error())
+	}
+	if err := cmsBlockModel.Save(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d3b8ea22-b012-4f75-85c1-d5905edfd625", err.Error())
+	}
 
 	return cmsBlockModel.ToHashMap(), nil
 }
@@ -141,11 +153,17 @@ func APIUpdateCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	for attribute, value := range requestData {
-		cmsBlockModel.Set(attribute, value)
+		if err := cmsBlockModel.Set(attribute, value); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "01656722-c2e5-41d0-b4b3-78ec33f1235b", err.Error())
+		}
 	}
 
-	cmsBlockModel.SetID(blockID)
-	cmsBlockModel.Save()
+	if err := cmsBlockModel.SetID(blockID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7f360300-9762-4b05-9448-2a95771668e4", err.Error())
+	}
+	if err := cmsBlockModel.Save(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "22785238-740c-49f7-852d-7d9bc498ae31", err.Error())
+	}
 
 	return cmsBlockModel.ToHashMap(), nil
 }
@@ -168,7 +186,9 @@ func APIDeleteCMSBlock(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	cmsBlockModel.Delete()
+	if err := cmsBlockModel.Delete(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe2262d8-d386-4c4a-8edc-5e8388dffd7a", err.Error())
+	}
 
 	return "ok", nil
 }

@@ -35,7 +35,7 @@ func (it *DefaultCMSBlock) LoadByIdentifier(identifier string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("identifier", "=", identifier)
+	err = collection.AddFilter("identifier", "=", identifier)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -50,7 +50,9 @@ func (it *DefaultCMSBlock) LoadByIdentifier(identifier string) error {
 	}
 	record := records[0]
 
-	it.SetID(utils.InterfaceToString(record["_id"]))
+	if err := it.SetID(utils.InterfaceToString(record["_id"])); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "04e8f7bb-a3f1-4320-9e28-669d8f642d53", err.Error())
+	}
 
 	it.Content = utils.InterfaceToString(record["content"])
 	it.Identifier = utils.InterfaceToString(record["identifier"])
