@@ -36,7 +36,9 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 	if session == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "48f70911-836f-41ba-9ed9-b2afcb7ca462", "Wrong session ID")
 	}
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0392c562-d4e6-4d8d-9a3d-a7bf6d1620e4", err.Error())
+	}
 
 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
@@ -133,7 +135,9 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 	if sessionInstance == nil {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ca56bc43-904a-456a-9df5-03299e713c85", "Wrong session ID")
 	}
-	context.SetSession(sessionInstance)
+	if err := context.SetSession(sessionInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bd356b87-de82-4f74-ad82-a373ebe523a1", err.Error())
+	}
 
 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
@@ -157,7 +161,9 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 					return nil, err
 				}
 
-				context.SetResponseContentType("text/plain")
+				if err := context.SetResponseContentType("text/plain"); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f30b62cf-e5d2-4736-a15a-c4a9982ecdc5", err.Error())
+				}
 
 				env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "TRANSACTION APPROVED: "+
 					"VisitorID - "+utils.InterfaceToString(checkoutOrder.Get("visitor_id"))+", "+
