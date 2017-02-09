@@ -197,7 +197,9 @@ func APISetCheckoutInfo(context api.InterfaceApplicationContext) (interface{}, e
 	}
 
 	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
+	if err := checkout.SetCurrentCheckout(context, currentCheckout); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "174cee3e-d82f-42c6-841a-7b26eedde0be", err.Error())
+	}
 
 	return "ok", nil
 }
@@ -248,7 +250,9 @@ func checkoutObtainAddress(data interface{}) (visitor.InterfaceVisitorAddress, e
 
 	// setting address owner to current visitor (for sure)
 	if currentVisitorID != "" {
-		visitorAddressModel.Set("visitor_id", currentVisitorID)
+		if err := visitorAddressModel.Set("visitor_id", currentVisitorID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "103248e6-00ee-463d-b877-24e7cd56bb98", err.Error())
+		}
 	}
 
 	// if address id was specified it means that address was changed, so saving it
@@ -283,11 +287,15 @@ func APISetShippingAddress(context api.InterfaceApplicationContext) (interface{}
 	requestContents, _ := api.GetRequestContentAsMap(context)
 
 	if notes, present := requestContents["notes"]; present {
-		currentCheckout.SetInfo("notes", notes)
+		if err := currentCheckout.SetInfo("notes", notes); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "be9cc966-ad69-4115-b1d3-269ae46f071b", err.Error())
+		}
 	}
 
 	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
+	if err := checkout.SetCurrentCheckout(context, currentCheckout); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "03f68537-5165-4b19-a42e-cf6b03ca81f3", err.Error())
+	}
 
 	return address.ToHashMap(), nil
 }
@@ -310,7 +318,9 @@ func APISetBillingAddress(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// updating session
-	checkout.SetCurrentCheckout(context, currentCheckout)
+	if err := checkout.SetCurrentCheckout(context, currentCheckout); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "674ca503-4035-403d-96ea-3a5a952916cf", err.Error())
+	}
 
 	return address.ToHashMap(), nil
 }
@@ -338,7 +348,9 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 				// checking for additional info
 				contentValues, _ := api.GetRequestContentAsMap(context)
 				for key, value := range contentValues {
-					currentCheckout.SetInfo(key, value)
+					if err := currentCheckout.SetInfo(key, value); err != nil {
+						_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7e5e7fc9-a6f5-41c7-84e0-b029535da7dd", err.Error())
+					}
 				}
 
 				// visitor event for setting payment method
@@ -346,7 +358,9 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 				env.Event("api.checkout.setPayment", eventData)
 
 				// updating session
-				checkout.SetCurrentCheckout(context, currentCheckout)
+				if err := checkout.SetCurrentCheckout(context, currentCheckout); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "15b1fad6-f514-45c5-b7ae-1c97060331dc", err.Error())
+				}
 
 				return "ok", nil
 			}
@@ -387,7 +401,9 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 						}
 
 						// updating session
-						checkout.SetCurrentCheckout(context, currentCheckout)
+						if err := checkout.SetCurrentCheckout(context, currentCheckout); err != nil {
+							_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "59982278-bef4-4abc-ba1b-4cb9a3e300e2", err.Error())
+						}
 
 						return "ok", nil
 					}
@@ -492,7 +508,9 @@ func checkoutObtainToken(currentCheckout checkout.InterfaceCheckout, creditCardI
 	}
 
 	// setting credit card owner to current visitor (for sure)
-	visitorCardModel.Set("visitor_id", currentVisitorID)
+	if err := visitorCardModel.Set("visitor_id", currentVisitorID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "46466d05-75a6-4da3-9e5d-f366868b33ba", err.Error())
+	}
 
 	// save card info if checkbox is checked on frontend
 	if utils.InterfaceToBool(creditCardInfo["save"]) {
@@ -523,11 +541,15 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 	// Handle custom information set in case of one request submit
 	if customInfo := utils.GetFirstMapValue(requestData, "custom_info"); customInfo != nil {
 		for key, value := range utils.InterfaceToMap(customInfo) {
-			currentCheckout.SetInfo(key, value)
+			if err := currentCheckout.SetInfo(key, value); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "190134b1-cc8b-4744-a896-532d39d7fbbf", err.Error())
+			}
 		}
 	}
 
-	currentCheckout.SetInfo("session_id", context.GetSession().GetID())
+	if err := currentCheckout.SetInfo("session_id", context.GetSession().GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6405e87f-8d5c-4fa6-828d-da0e5b77f15a", err.Error())
+	}
 	currentVisitorID := utils.InterfaceToString(context.GetSession().Get(visitor.ConstSessionKeyVisitorID))
 
 	addressInfoToAddress := func(addressInfo interface{}) (visitor.InterfaceVisitorAddress, error) {
@@ -550,7 +572,9 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		currentCheckout.SetShippingAddress(address)
+		if err := currentCheckout.SetShippingAddress(address); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "63009038-bde5-4147-aad2-7586e9d0736c", err.Error())
+		}
 	}
 
 	// checking for specified billing address
@@ -560,7 +584,9 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		currentCheckout.SetBillingAddress(address)
+		if err := currentCheckout.SetBillingAddress(address); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "73a6599a-23f2-4066-ac29-b02ed627f51f", err.Error())
+		}
 	}
 
 	// checking for specified payment method
@@ -620,7 +646,9 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 							if err != nil {
 								return nil, env.ErrorDispatch(err)
 							}
-							currentCheckout.SetShippingRate(shippingRate)
+							if err := currentCheckout.SetShippingRate(shippingRate); err != nil {
+								_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9ac7f59a-3e65-46a2-bbb8-344de50dd8e6", err.Error())
+							}
 							if err != nil {
 								return nil, env.ErrorDispatch(err)
 							}
@@ -656,10 +684,14 @@ func APISubmitCheckout(context api.InterfaceApplicationContext) (interface{}, er
 		creditCard, err := checkoutObtainToken(currentCheckout, utils.InterfaceToMap(specifiedCreditCard))
 		if err != nil {
 			// in  this case raw cc will be set to checkout info and used by payment method
-			currentCheckout.SetInfo("cc", specifiedCreditCard)
-			env.ErrorDispatch(err)
+			if err := currentCheckout.SetInfo("cc", specifiedCreditCard); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c0ba05ec-1300-455a-8858-cf91e4bb615d", err.Error())
+			}
+			_ = env.ErrorDispatch(err)
 		} else {
-			currentCheckout.SetInfo("cc", creditCard)
+			if err := currentCheckout.SetInfo("cc", creditCard); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b36aae8-9e43-45d1-84ec-0dd1f13d3e18", err.Error())
+			}
 		}
 	}
 
