@@ -189,16 +189,18 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
-		return nil, err
+		return nil, env.ErrorDispatch(err)
 	}
 
 	checkoutOrder := currentCheckout.GetOrder()
 
-	checkoutOrder.SetStatus(order.ConstOrderStatusDeclined)
+	if err := checkoutOrder.SetStatus(order.ConstOrderStatusDeclined); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bdcbeb7f-7cf7-4ecc-b99b-779cb721ddf0", "unable to set checkout status: "+err.Error())
+	}
 
 	err = checkoutOrder.Save()
 	if err != nil {
-		return nil, err
+		return nil, env.ErrorDispatch(err)
 	}
 
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "Declined: "+

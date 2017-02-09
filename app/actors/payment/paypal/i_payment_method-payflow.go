@@ -13,6 +13,7 @@ import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"io"
 )
 
 // GetInternalName returns the name of the payment method
@@ -142,7 +143,11 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "718ea4b1-a8cf-4366-976e-3f76bdd15e2f", err.Error())
+		}
+	}(response.Body)
 
 	// reading/decoding response from PayPal
 	//-----------------------------------
@@ -185,9 +190,15 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	if visitorCreditCard != nil && visitorCreditCard.GetID() != "" {
 		orderPaymentInfo["creditCardID"] = visitorCreditCard.GetID()
 
-		visitorCreditCard.Set("token_id", orderTransactionID)
-		visitorCreditCard.Set("token_updated", time.Now())
-		visitorCreditCard.Save()
+		if err := visitorCreditCard.Set("token_id", orderTransactionID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "70c96133-0632-48c6-8e9e-5eaa9af9d1af", err.Error())
+		}
+		if err := visitorCreditCard.Set("token_updated", time.Now()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bc78278c-f54d-4d84-aa20-05d3d5704af9", err.Error())
+		}
+		if err := visitorCreditCard.Save(); err != nil {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "33593b3c-2f9e-4aee-add2-7b1a1cc14507", "Unable to store visitor card: "+err.Error())
+		}
 	}
 
 	return orderPaymentInfo, nil
@@ -239,7 +250,11 @@ func (it *PayFlowAPI) GetAccessToken(originRequestParams string) (string, error)
 		return "", env.ErrorDispatch(err)
 	}
 
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "718ea4b1-a8cf-4366-976e-3f76bdd15e2f", err.Error())
+		}
+	}(response.Body)
 
 	// reading/decoding response from PayPal
 	//-----------------------------------
@@ -346,7 +361,11 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 		return nil, env.ErrorDispatch(err)
 	}
 
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "718ea4b1-a8cf-4366-976e-3f76bdd15e2f", err.Error())
+		}
+	}(response.Body)
 
 	// reading/decoding response from PayPal
 	//-----------------------------------
