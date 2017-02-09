@@ -27,17 +27,19 @@ func setupConfig() error {
 		validateEnabled := func(value interface{}) (interface{}, error) {
 			boolValue := utils.InterfaceToBool(value)
 			if boolValue {
-				if err := product.RegisterStock(new(DefaultStock)); err != nil {
-					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "98dce16f-6cf3-4cc7-931e-f7d822da4a10", err.Error())
-				}
+				if product.GetRegisteredStock() == nil {
+					if err := product.RegisterStock(new(DefaultStock)); err != nil {
+						_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "98dce16f-6cf3-4cc7-931e-f7d822da4a10", err.Error())
+					}
 
-				productModel, err := product.GetProductModel()
-				if err != nil {
-					env.LogError(err)
-				}
+					productModel, err := product.GetProductModel()
+					if err != nil {
+						env.LogError(err)
+					}
 
-				if err = productModel.AddExternalAttributes(stockDelegate); err != nil {
-					env.LogError(err)
+					if err = productModel.AddExternalAttributes(stockDelegate); err != nil {
+						env.LogError(err)
+					}
 				}
 
 			} else {
