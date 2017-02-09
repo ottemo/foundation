@@ -99,7 +99,9 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("code", "=", valueCode)
+	if err := collection.AddFilter("code", "=", valueCode); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "099748a0-4348-4d5c-93ab-4f2859f04f0c", err.Error())
+	}
 	recordsNumber, err := collection.Count()
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
@@ -317,10 +319,17 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 	// preparing csv writer
 	csvWriter := csv.NewWriter(context.GetResponseWriter())
 
-	context.SetResponseContentType("text/csv")
-	context.SetResponseSetting("Content-disposition", "attachment;filename=discount_coupons.csv")
+	if err := context.SetResponseContentType("text/csv"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6a797ba-db60-41fa-a5ef-876f77d7b7a1", err.Error())
+	}
+	if err := context.SetResponseSetting("Content-disposition", "attachment;filename=discount_coupons.csv"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "54f5243c-fd94-4462-b99b-d1d23e0bc401", err.Error())
+	}
 
-	csvWriter.Write([]string{"Code", "Name", "Amount", "Percent", "Times", "Since", "Until", "Limits", "Target"})
+	if err := csvWriter.Write([]string{"Code", "Name", "Amount", "Percent", "Times", "Since", "Until", "Limits", "Target"}); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8dc86f61-f256-4fe3-85a1-3522edd43c12", err.Error())
+	}
+
 	csvWriter.Flush()
 
 	// loading records from DB and writing them in csv format
@@ -331,7 +340,7 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	err = collection.Iterate(func(record map[string]interface{}) bool {
-		csvWriter.Write([]string{
+		err := csvWriter.Write([]string{
 			utils.InterfaceToString(record["code"]),
 			utils.InterfaceToString(record["name"]),
 			utils.InterfaceToString(record["amount"]),
@@ -342,6 +351,9 @@ func DownloadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 			utils.InterfaceToString(record["limits"]),
 			utils.InterfaceToString(record["target"]),
 		})
+		if err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f6db32f-a0c9-4cf0-9c61-e3b9ba679af4", err.Error())
+		}
 
 		csvWriter.Flush()
 
@@ -375,9 +387,13 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
-	collection.Delete()
+	if _, err := collection.Delete(); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "008caf00-e1d8-440f-8682-9299ac9e7d99", err.Error())
+	}
 
-	csvReader.Read() //skipping header
+	if _, err := csvReader.Read(); err != nil { //skipping header
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "43a3cf52-983a-4173-b48d-62af65fef015", err.Error())
+	}
 	for csvRecord, err := csvReader.Read(); err == nil; csvRecord, err = csvReader.Read() {
 		if len(csvRecord) >= 7 {
 			record := make(map[string]interface{})
@@ -403,7 +419,10 @@ func UploadCSV(context api.InterfaceApplicationContext) (interface{}, error) {
 			record["limits"] = utils.InterfaceToMap(csvRecord[7])
 			record["target"] = utils.InterfaceToString(csvRecord[8])
 
-			collection.Save(record)
+			if _, err := collection.Save(record); err != nil {
+				_ = env.ErrorDispatch(err)
+				return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c5307a1b-104c-4fef-ad2c-c5cb118386b5", "Unable to store coupon")
+			}
 		}
 	}
 
@@ -454,7 +473,9 @@ func UpdateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	if codeValue, present := postValues["code"]; present && codeValue != record["code"] {
 		codeValue := utils.InterfaceToString(codeValue)
 
-		collection.AddFilter("code", "=", codeValue)
+		if err := collection.AddFilter("code", "=", codeValue); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1b28bceb-e799-460c-b74f-b5d14511b247", err.Error())
+		}
 		recordsNumber, err := collection.Count()
 		if err != nil {
 			context.SetResponseStatusInternalServerError()
