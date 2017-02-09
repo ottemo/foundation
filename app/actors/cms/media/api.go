@@ -97,7 +97,7 @@ func APIAddMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 		// save to media storage operation
 		err = mediaStorage.Save(ConstStorageModel, ConstStorageObject, mediaType, mediaName, fileContent)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			result = append(result, "Media: '"+fileName+"', returned error on save")
 			continue
 		}
