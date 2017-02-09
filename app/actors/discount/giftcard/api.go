@@ -38,7 +38,9 @@ func GetSingleCode(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("code", "=", giftCardID)
+	if err := collection.AddFilter("code", "=", giftCardID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eba6901e-7340-4a2c-869c-07ed0cb04e54", err.Error())
+	}
 	rows, err := collection.Load()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -70,7 +72,9 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	if api.ValidateAdminRights(context) != nil {
-		collection.AddFilter("visitor_id", "=", visitorID)
+		if err := collection.AddFilter("visitor_id", "=", visitorID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "73868d22-222a-4fbe-8d1c-ac07dd3a810d", err.Error())
+		}
 	}
 
 	dbRecords, err := collection.Load()

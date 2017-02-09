@@ -38,7 +38,9 @@ func (it *Shipping) GetRates(currentCheckout checkout.InterfaceCheckout) []check
 				continue
 			}
 
-			cartProduct.ApplyOptions(cartItem.GetOptions())
+			if err := cartProduct.ApplyOptions(cartItem.GetOptions()); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5786c5de-4ba3-4e3f-981c-58101331a7c6", err.Error())
+			}
 			if !strings.Contains(cartProduct.GetSku(), giftCardSkuElement) {
 				return result
 			}
