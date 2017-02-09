@@ -27,7 +27,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// inspect the order only if not nil
 	if checkoutOrder != nil {
-		go processOrder(checkoutOrder)
+		go func (checkoutOrder order.InterfaceOrder){
+			if err := processOrder(checkoutOrder); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb34fc37-1f59-4873-9753-a318ef9aee15", err.Error())
+			}
+		}(checkoutOrder)
 	}
 
 	return true
