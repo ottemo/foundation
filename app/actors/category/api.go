@@ -61,11 +61,15 @@ func APIListCategories(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// applying requested filters
-	models.ApplyFilters(context, categoryCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, categoryCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7d867be7-731c-4af1-952f-23dd297e56c3", err.Error())
+	}
 
 	// excluding disabled categories for a regular visitor
 	if err := api.ValidateAdminRights(context); err != nil {
-		categoryCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+		if err := categoryCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4c40fe1d-34f3-4b21-8c53-e0a6d074eab0", err.Error())
+		}
 	}
 
 	// checking for a "count" request
@@ -74,10 +78,14 @@ func APIListCategories(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// limit parameter handle
-	categoryCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := categoryCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb982f7a-97b4-45f6-b5ad-84960d60050e", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, categoryCollectionModel)
+	if err := models.ApplyExtraAttributes(context, categoryCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "deeb537f-2a4a-4808-9e59-e827160581f4", err.Error())
+	}
 
 	listItems, err := categoryCollectionModel.List()
 	if err != nil {
@@ -275,11 +283,15 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 
 	result := make(map[string]interface{})
 
-	models.ApplyFilters(context, productsDBCollection)
+	if err := models.ApplyFilters(context, productsDBCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "876d62b2-4d80-455c-8dcd-ac7971197df6", err.Error())
+	}
 
 	// not allowing to see disabled products if not admin
 	if err := api.ValidateAdminRights(context); err != nil {
-		productsDBCollection.AddFilter("enabled", "=", true)
+		if err := productsDBCollection.AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea8e2ba1-c9df-484a-ac53-1b9fa43fcab1", err.Error())
+		}
 	}
 
 	for _, productAttribute := range productAttributesInfo {
@@ -314,12 +326,18 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 	productsCollection := categoryModel.GetProductsCollection()
 
-	models.ApplyFilters(context, productsCollection.GetDBCollection())
+	if err := models.ApplyFilters(context, productsCollection.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee3b2e74-81d4-460d-80ef-e9f973744ecd", err.Error())
+	}
 
 	// not allowing to see disabled and hidden products if not admin
 	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true)
-		productsCollection.GetDBCollection().AddGroupFilter("visitor", "visible", "=", true)
+		if err := productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "00051bb2-83a7-484f-8ad8-51697385afa1", err.Error())
+		}
+		if err := productsCollection.GetDBCollection().AddGroupFilter("visitor", "visible", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b02437f-fceb-492e-a70e-f5cfb10d048d", err.Error())
+		}
 	}
 
 	// checking for a "count" request
@@ -328,7 +346,9 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 	}
 
 	// limit parameter handle
-	productsCollection.ListLimit(models.GetListLimit(context))
+	if err := productsCollection.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d36c2098-5a68-4073-ae4b-a49ca56e9f27", err.Error())
+	}
 
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {
@@ -343,7 +363,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 		productInfo["image"], err = mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 		result = append(result, productInfo)
 	}
@@ -690,7 +710,9 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name was not specified")
 	}
 
-	context.SetResponseContentType(mime.TypeByExtension(mediaName))
+	if err := context.SetResponseContentType(mime.TypeByExtension(mediaName)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d8c7a09-3ee7-489f-899c-d6c32c3f5285", err.Error())
+	}
 
 	// list media operation
 	//---------------------
