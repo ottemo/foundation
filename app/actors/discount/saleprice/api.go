@@ -133,7 +133,7 @@ func updateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	//-------------------------
 	salePriceID := context.GetRequestArgument("id")
 	if salePriceID == "" {
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "fc0e40f9-c51e-46a7-b53b-c480be5bd556")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -175,7 +175,7 @@ func deleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	//-------------------------
 	salePriceID := context.GetRequestArgument("id")
 	if salePriceID == "" {
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "1cb07d89-5447-4de5-b15a-3a8e76f8a818")
 	}
 
 	// operation

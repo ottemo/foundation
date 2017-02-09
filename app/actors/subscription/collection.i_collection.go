@@ -76,7 +76,7 @@ func (it *DefaultSubscriptionCollection) ListFilterAdd(Attribute string, Operato
 // ListFilterReset clears the presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultSubscriptionCollection) ListFilterReset() error {
 	if err := it.listCollection.ClearFilters(); err != nil {
-		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c2d5627-3d4e-4f1e-ba7c-5bf590afad09", err.Error())
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cc11f942-83bf-426f-b62a-b5240449b934", err.Error())
 	}
 	return nil
 }

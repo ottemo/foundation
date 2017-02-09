@@ -260,7 +260,7 @@ func APIGetCategoryAttributes(context api.InterfaceApplicationContext) (interfac
 func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{}, error) {
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "389975e7-611c-4d6c-8b4d-bca450f5f7e7", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3edd349a-269f-4400-8762-d685bb8e3a5b", "category id was not specified")
 	}
 
 	categoryModel, err := category.LoadCategoryByID(categoryID)

@@ -448,7 +448,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 	for _, attribute := range visitorModel.GetAttributesInfo() {
 		if attribute.Attribute == attributeName {
 			if attribute.IsStatic == true {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "Attribute is static, cannot edit static attributes.")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8a4e1d22-cd3f-4da9-a9b0-d6950245b349", "Attribute is static, cannot edit static attributes.")
 			}
 
 			for key, value := range requestData {
@@ -481,7 +481,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "Unable to find specified attribute.")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4137313b-f2ae-4545-923e-eac0324d923f", "Unable to find specified attribute.")
 }
 
 // APIDeleteVisitorAttribute removes existing custom attribute of a visitor model

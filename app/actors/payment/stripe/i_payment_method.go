@@ -158,7 +158,7 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 			return nil, env.ErrorDispatch(err)
 		}
 		if err := chargeParams.SetSource(cp); err != nil {
-			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "329ddd35-8fdc-4681-9a02-06290a405073", err.Error())
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "ed9f2315-7355-4e9f-959e-e2ac1f737e9f", err.Error())
 		}
 
 		ch, err = charge.New(&chargeParams)

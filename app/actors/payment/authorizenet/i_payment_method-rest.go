@@ -347,7 +347,7 @@ func (it *RestMethod) CreatePaymentProfile(paymentInfo map[string]interface{}, p
 	}
 
 	if paymentID == "" || paymentID == "0" {
-		return "", response, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5609f3bf-bad6-4e93-8d1e-bf525ddf17f9", "paymentID can't be empty")
+		return "", response, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fac799a3-d81a-48b4-9a50-258375d9e73b", "paymentID can't be empty")
 	}
 
 	return paymentID, response, nil

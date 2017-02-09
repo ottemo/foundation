@@ -345,7 +345,7 @@ func (it *DefaultSubscription) Validate() error {
 	}
 
 	if len(it.items) == 0 {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "no items in subscription")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "c9110694-12af-4dd3-9730-986ec03539e5", "no items in subscription")
 	}
 
 	return nil

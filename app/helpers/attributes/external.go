@@ -42,7 +42,7 @@ func ExternalAttributes(instance interface{}) (*ModelExternalAttributes, error) 
 	modelName = instanceAsModel.GetModelName()
 
 	if modelName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb94480d-104b-4efb-9d7d-1b7c96e8e81d", "Invalid instance")
 	}
 	newInstance.model = modelName
 	newInstance.delegates = make(map[string]models.InterfaceAttributesDelegate)
@@ -79,7 +79,7 @@ func (it *ModelExternalAttributes) GetInstance() interface{} {
 func (it *ModelExternalAttributes) AddExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
 	modelName := it.model
 	if modelName == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7c863064-12e1-4528-9e01-8d00052d3125", "Invalid instance")
 	}
 
 	if delegate == nil {
@@ -119,7 +119,7 @@ func (it *ModelExternalAttributes) AddExternalAttributes(delegate models.Interfa
 func (it *ModelExternalAttributes) RemoveExternalAttributes(delegate models.InterfaceAttributesDelegate) error {
 	modelName := it.model
 	if modelName == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "40e5008f-2816-42a3-958f-93b212d8c583", "Invalid instance")
 	}
 
 	if delegate == nil {
@@ -155,7 +155,7 @@ func (it *ModelExternalAttributes) ListExternalAttributes() map[string]models.In
 
 	modelName := it.model
 	if modelName == "" {
-		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe42f2db-2d4b-444a-9891-dc4632ad6dff", "Invalid instance")
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1756f8a0-ffbd-42bf-b7a0-23491b7fef75", "Invalid instance")
 		return result
 	}
 

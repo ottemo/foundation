@@ -157,7 +157,7 @@ func braintreeCreateCustomer(visitorInfo map[string]interface{}) (*braintree.Cus
 	} else {
 		paramsPtr, err := braintreeCustomerParamsByVisitorID(visitorID)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "e67e5617-115f-409e-81c1-271bbc3eaa3f", "unable to create customer params: "+err.Error())
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "6d8155c9-969d-4f03-a7c3-e61005e661e1", "unable to create customer params: "+err.Error())
 		}
 
 		customerParamsPtr = paramsPtr

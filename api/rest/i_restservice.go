@@ -296,7 +296,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 						errorMsg = map[string]interface{}{
 							"message": err.Error(),
 							"level":   env.ConstErrorLevelAPI,
-							"code":    "bdbb8627-18e8-4969-a048-c8b482235f39",
+							"code":    "896810b9-9b54-471a-830c-b77b33379adc",
 						}
 					}
 				}

@@ -13,7 +13,7 @@ func init() {
 	instance := new(DefaultTax)
 
 	if err := checkout.RegisterPriceAdjustment(instance); err != nil {
-		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e5f12dd7-70ca-4563-aa51-1bfd913ac797", err.Error())
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "d9d667f4-7e65-489e-aa14-ae3246a899a0", err.Error())
 	}
 
 	db.RegisterOnDatabaseStart(setupDB)

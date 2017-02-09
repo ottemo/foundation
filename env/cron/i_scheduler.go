@@ -63,7 +63,7 @@ func (it *DefaultCronScheduler) ScheduleOnce(cronExpr string, taskName string, p
 
 	task, present := it.tasks[taskName]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee521c4f-b84c-4238-bdac-ce61a37267a3", "unexistent task")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0328a299-35b9-409b-8cee-adcc76cfb536", "unexistent task")
 	}
 
 	schedule := &DefaultCronSchedule{
@@ -93,7 +93,7 @@ func (it *DefaultCronScheduler) ScheduleRepeat(cronExpr string, taskName string,
 
 	task, present := it.tasks[taskName]
 	if !present {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee521c4f-b84c-4238-bdac-ce61a37267a3", "unexistent task")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b52ff56c-9c96-4a69-baf8-72fc1fbb42b3", "unexistent task")
 	}
 
 	schedule := &DefaultCronSchedule{

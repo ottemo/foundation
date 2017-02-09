@@ -69,7 +69,7 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 		}
 		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
-			"165834bd-d8ca-4b1d-8cfa-b8a153288913",
+			"51e91650-8666-48a6-b473-a83ee0c8ec31",
 			"Unexpected value for image size found.")
 		return ConstDefaultImageSize, env.ErrorDispatch(err)
 	}

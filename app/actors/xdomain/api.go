@@ -27,7 +27,7 @@ func xdomainHandler(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	if _, err := responseWriter.Write([]byte("<!DOCTYPE HTML>")); err != nil {
-		fmt.Println("06a968c4-cd17-43cf-a93e-b7317b53b883", err)
+		fmt.Println("c02a9d84-3c24-4998-b060-2bbb92bea6da", err)
 	}
 	if _, err := responseWriter.Write(newline); err != nil {
 		fmt.Println("3968707c-c8e4-4e91-a4ed-f5869619e1bc", err)

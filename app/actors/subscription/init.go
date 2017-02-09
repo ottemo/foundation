@@ -122,7 +122,7 @@ func onAppStart() error {
 	// process order creation every one hour
 	if scheduler := env.GetScheduler(); scheduler != nil {
 		if err := scheduler.RegisterTask(ConstSchedulerTaskName, placeOrders); err != nil {
-			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "10cfb39e-7f3b-44fd-9159-a852cdd86943", err.Error())
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6f4451a3-6f11-404c-86b5-d6dab58bcd44", err.Error())
 		}
 		if _, err := scheduler.ScheduleRepeat(
 			subscription.GetSubscriptionCronExpr(

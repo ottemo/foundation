@@ -96,7 +96,7 @@ func validateSubscriptionPeriod(period int) error {
 		return nil
 	}
 
-	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "29c73d2f-0c85-4906-95b7-4812542e33a1", "Period value '"+utils.InterfaceToString(period)+"' is not allowed for subscription.")
+	return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "3b10f644-19bc-482e-a571-9242f2d72162", "Period value '"+utils.InterfaceToString(period)+"' is not allowed for subscription.")
 }
 
 // validateCheckoutToSubscribe check values related to checkout to be valid from checkout submit (cart not checked)

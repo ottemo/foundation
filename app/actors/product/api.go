@@ -219,7 +219,7 @@ func APIUpdateProductAttribute(context api.InterfaceApplicationContext) (interfa
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "attribute not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8fd0beb8-c69d-444b-8466-db9e46818212", "attribute not found")
 }
 
 // APICreateProductAttribute creates a new custom attribute for a product model

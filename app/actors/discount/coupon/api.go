@@ -245,10 +245,10 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an start time outside valid time constraints.")
 			} else if !validEnd {
 				context.SetResponseStatusInternalServerError()
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", has an end time outside valid time constraints.")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6f286e8a-e649-4535-ae5a-7b792e1f38fe", "Coupon code, "+strings.ToUpper(couponCode)+", has an end time outside valid time constraints.")
 			}
 			context.SetResponseStatusInternalServerError()
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63442858-bd71-4f10-855a-b5975fc2dd16", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3cbc500c-e091-4b61-bc95-d34e3b9422aa", "Coupon code, "+strings.ToUpper(couponCode)+", cannot be applied, exceeded usage limits.")
 		}
 	} else {
 		context.SetResponseStatusBadRequest()

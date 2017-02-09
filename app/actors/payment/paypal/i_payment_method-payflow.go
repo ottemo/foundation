@@ -211,12 +211,12 @@ func (it *PayFlowAPI) Capture(orderInstance order.InterfaceOrder, paymentInfo ma
 
 // Refund makes payment method refund operation
 func (it *PayFlowAPI) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc38587-de12-4bdf-9468-a4cef846afe5", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a22a732-18da-4e03-838c-2dde9f959236", "Not implemented")
 }
 
 // Void makes payment method void operation
 func (it *PayFlowAPI) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc38587-de12-4bdf-9468-a4cef846afe5", "Not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b30038d2-c854-429a-89d7-881fb1e51592", "Not implemented")
 }
 
 // GetAccessToken returns application access token
