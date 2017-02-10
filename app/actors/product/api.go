@@ -800,7 +800,7 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 
 	// extra parameter handle
 	if err := models.ApplyExtraAttributes(context, productCollectionModel); err != nil {
-		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "59eb8751-5e90-49c0-9877-5eaa9ae20a5f", err.Error())
+		_ = env.ErrorDispatch(err)
 	}
 
 	listItems, err := productCollectionModel.List()
