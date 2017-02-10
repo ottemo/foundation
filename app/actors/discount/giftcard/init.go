@@ -49,6 +49,7 @@ func setupDB() error {
 
 	collection.AddColumn("recipient_mailbox", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
 	collection.AddColumn("delivery_date", db.ConstTypeDatetime, true)
+	collection.AddColumn("created_at", db.ConstTypeDatetime, true)
 
 	return nil
 }
