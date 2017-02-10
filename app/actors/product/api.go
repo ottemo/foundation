@@ -39,20 +39,20 @@ func setupAPI() error {
 	service.GET("product/:productID/related", APIListRelatedProducts)
 
 	// Admin Only
-	service.POST("product", api.IsAdmin(APICreateProduct))
-	service.PUT("product/:productID", api.IsAdmin(APIUpdateProduct))
-	service.DELETE("product/:productID", api.IsAdmin(APIDeleteProduct))
+	service.POST("product", api.IsAdminHandler(APICreateProduct))
+	service.PUT("product/:productID", api.IsAdminHandler(APIUpdateProduct))
+	service.DELETE("product/:productID", api.IsAdminHandler(APIDeleteProduct))
 
-	service.POST("products/attribute", api.IsAdmin(APICreateProductAttribute))
-	service.PUT("products/attribute/:attribute", api.IsAdmin(APIUpdateProductAttribute))
-	service.DELETE("products/attribute/:attribute", api.IsAdmin(APIDeleteProductsAttribute))
+	service.POST("products/attribute", api.IsAdminHandler(APICreateProductAttribute))
+	service.PUT("products/attribute/:attribute", api.IsAdminHandler(APIUpdateProductAttribute))
+	service.DELETE("products/attribute/:attribute", api.IsAdminHandler(APIDeleteProductsAttribute))
 
-	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
-	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
-	service.PUT("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRenameMediaForProduct))
+	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIAddMediaForProduct))
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRemoveMediaForProduct))
+	service.PUT("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRenameMediaForProduct))
 
 	// TODO: remove after patching
-	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
+	service.GET("patch/options", api.IsAdminHandler(APIPatchOptions))
 
 	return nil
 }
@@ -343,7 +343,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled products if not admin
-	if api.ValidateAdminRights(context) != nil && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
+	if !api.IsAdminSession(context) && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153673ac-1008-40b5-ada9-2286ad3f02b0", "product not available")
 	}
 
@@ -779,7 +779,7 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// exclude disabled and hidden products for visitors, but not Admins
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ac1a628-5157-4dff-9529-bfaa7aecae23", err.Error())
 		}
@@ -878,7 +878,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 	}
 
 	// if you aren't an admin the product must be enabled
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := productsCollection.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8faddb67-41d0-4a32-9b2c-3c3d3b20bbcf", err.Error())
 		}

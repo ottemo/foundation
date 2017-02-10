@@ -18,10 +18,10 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Administrative
-	service.GET("subscriptions", api.IsAdmin(APIListSubscriptions))
-	service.GET("subscriptions/:id", api.IsAdmin(APIGetSubscription))
+	service.GET("subscriptions", api.IsAdminHandler(APIListSubscriptions))
+	service.GET("subscriptions/:id", api.IsAdminHandler(APIGetSubscription))
 	service.PUT("subscriptions/:id", APIUpdateSubscription)
-	service.GET("update/subscriptions", api.IsAdmin(APIUpdateSubscriptionInfo))
+	service.GET("update/subscriptions", api.IsAdminHandler(APIUpdateSubscriptionInfo))
 
 	// Public
 	service.GET("visit/subscriptions", APIListVisitorSubscriptions)
@@ -180,10 +180,9 @@ func APIUpdateSubscription(context api.InterfaceApplicationContext) (interface{}
 	}
 
 	// validate ownership
-	isAdmin := api.ValidateAdminRights(context) == nil
 	isOwner := subscriptionInstance.GetVisitorID() == visitor.GetCurrentVisitorID(context)
 
-	if !isAdmin && !isOwner {
+	if !api.IsAdminSession(context) && !isOwner {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bae87bfa-0fa2-4256-ab11-2fffa20bfa00", "Subscription ownership could not be verified")
 	}
 

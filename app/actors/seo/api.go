@@ -25,7 +25,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("seo/items", APIListSEOItems)
-	service.GET("seo/attributes", api.IsAdmin(APIListSeoAttributes))
+	service.GET("seo/attributes", api.IsAdminHandler(APIListSeoAttributes))
 
 	service.GET("seo/url", APIGetSEOItem)
 	service.GET("seo/url/:url", APIGetSEOItem)
@@ -35,9 +35,9 @@ func setupAPI() error {
 	service.GET("seo/sitemap/sitemap.xml", APIGetSitemap)
 
 	// Admin Only
-	service.POST("seo/item", api.IsAdmin(APICreateSEOItem))
-	service.PUT("seo/item/:itemID", api.IsAdmin(APIUpdateSEOItem))
-	service.DELETE("seo/item/:itemID", api.IsAdmin(APIDeleteSEOItem))
+	service.POST("seo/item", api.IsAdminHandler(APICreateSEOItem))
+	service.PUT("seo/item/:itemID", api.IsAdminHandler(APIUpdateSEOItem))
+	service.DELETE("seo/item/:itemID", api.IsAdminHandler(APIDeleteSEOItem))
 
 	return nil
 }

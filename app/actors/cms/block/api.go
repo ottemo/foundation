@@ -18,9 +18,9 @@ func setupAPI() error {
 	service.GET("cms/block/:blockID", APIGetCMSBlock)
 
 	// Admin Only
-	service.POST("cms/block", api.IsAdmin(APICreateCMSBlock))
-	service.PUT("cms/block/:blockID", api.IsAdmin(APIUpdateCMSBlock))
-	service.DELETE("cms/block/:blockID", api.IsAdmin(APIDeleteCMSBlock))
+	service.POST("cms/block", api.IsAdminHandler(APICreateCMSBlock))
+	service.PUT("cms/block/:blockID", api.IsAdminHandler(APIUpdateCMSBlock))
+	service.DELETE("cms/block/:blockID", api.IsAdminHandler(APIDeleteCMSBlock))
 
 	return nil
 }

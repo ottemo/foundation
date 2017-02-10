@@ -16,12 +16,12 @@ func setupAPI() error {
 	// Admin Only
 	//-----------
 
-	service.GET("saleprices", api.IsAdmin(listAllScheduled))
+	service.GET("saleprices", api.IsAdminHandler(listAllScheduled))
 
-	service.POST("saleprice", api.IsAdmin(createSalePrice))
-	service.GET("saleprice/:id", api.IsAdmin(priceByID))
-	service.PUT("saleprice/:id", api.IsAdmin(updateByID))
-	service.DELETE("saleprice/:id", api.IsAdmin(deleteByID))
+	service.POST("saleprice", api.IsAdminHandler(createSalePrice))
+	service.GET("saleprice/:id", api.IsAdminHandler(priceByID))
+	service.PUT("saleprice/:id", api.IsAdminHandler(updateByID))
+	service.DELETE("saleprice/:id", api.IsAdminHandler(deleteByID))
 
 	return nil
 }

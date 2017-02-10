@@ -37,15 +37,15 @@ func setupAPI() error {
 	service.GET("category/:categoryID/mediapath/:mediaType", APIGetMediaPath)
 
 	// Admin Only
-	service.POST("category", api.IsAdmin(APICreateCategory))
-	service.PUT("category/:categoryID", api.IsAdmin(APIUpdateCategory))
-	service.DELETE("category/:categoryID", api.IsAdmin(APIDeleteCategory))
+	service.POST("category", api.IsAdminHandler(APICreateCategory))
+	service.PUT("category/:categoryID", api.IsAdminHandler(APIUpdateCategory))
+	service.DELETE("category/:categoryID", api.IsAdminHandler(APIDeleteCategory))
 
-	service.POST("category/:categoryID/product/:productID", api.IsAdmin(APIAddProductToCategory))
-	service.DELETE("category/:categoryID/product/:productID", api.IsAdmin(APIRemoveProductFromCategory))
+	service.POST("category/:categoryID/product/:productID", api.IsAdminHandler(APIAddProductToCategory))
+	service.DELETE("category/:categoryID/product/:productID", api.IsAdminHandler(APIRemoveProductFromCategory))
 
-	service.POST("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForCategory))
-	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForCategory))
+	service.POST("category/:categoryID/media/:mediaType/:mediaName", api.IsAdminHandler(APIAddMediaForCategory))
+	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRemoveMediaForCategory))
 
 	return nil
 }
@@ -66,7 +66,7 @@ func APIListCategories(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// excluding disabled categories for a regular visitor
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := categoryCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4c40fe1d-34f3-4b21-8c53-e0a6d074eab0", err.Error())
 		}
@@ -268,7 +268,7 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8-373a-4247-a81e-fbbe39a7fe74", "category is not available")
 	}
 
@@ -288,7 +288,7 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := productsDBCollection.AddFilter("enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea8e2ba1-c9df-484a-ac53-1b9fa43fcab1", err.Error())
 		}
@@ -320,7 +320,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a6f080d-dfa4-4f8c-8a0c-ec31cbe1cd87", "category is not available")
 	}
 
@@ -331,7 +331,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 	}
 
 	// not allowing to see disabled and hidden products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "00051bb2-83a7-484f-8ad8-51697385afa1", err.Error())
 		}
@@ -449,7 +449,7 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04-f43d-42a4-9482-39a5e7f8ccb7", "category is not available")
 	}
 

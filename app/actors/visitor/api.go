@@ -26,17 +26,17 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Dashboard API
-	service.POST("visitor", api.IsAdmin(APICreateVisitor))
+	service.POST("visitor", api.IsAdminHandler(APICreateVisitor))
 	service.PUT("visitor/:visitorID", APIUpdateVisitor)
-	service.DELETE("visitor/:visitorID", api.IsAdmin(APIDeleteVisitor))
-	service.GET("visitor/:visitorID", api.IsAdmin(APIGetVisitor))
+	service.DELETE("visitor/:visitorID", api.IsAdminHandler(APIDeleteVisitor))
+	service.GET("visitor/:visitorID", api.IsAdminHandler(APIGetVisitor))
 
-	service.GET("visitors", api.IsAdmin(APIListVisitors))
+	service.GET("visitors", api.IsAdminHandler(APIListVisitors))
 	service.GET("visitors/attributes", APIListVisitorAttributes)
-	service.DELETE("visitors/attribute/:attribute", api.IsAdmin(APIDeleteVisitorAttribute))
-	service.PUT("visitors/attribute/:attribute", api.IsAdmin(APIUpdateVisitorAttribute))
-	service.POST("visitors/attribute", api.IsAdmin(APICreateVisitorAttribute))
-	service.GET("visitors/guests", api.IsAdmin(APIGetGuestsList))
+	service.DELETE("visitors/attribute/:attribute", api.IsAdminHandler(APIDeleteVisitorAttribute))
+	service.PUT("visitors/attribute/:attribute", api.IsAdminHandler(APIUpdateVisitorAttribute))
+	service.POST("visitors/attribute", api.IsAdminHandler(APICreateVisitorAttribute))
+	service.GET("visitors/guests", api.IsAdminHandler(APIGetGuestsList))
 
 	// Storefront API
 	service.POST("visitors/register", APIRegisterVisitor)
@@ -190,7 +190,7 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		// Visitor. Not admin.
 		if visitor.GetCurrentVisitorID(context) != visitorID {
 			return nil, env.ErrorDispatch(err)
@@ -635,9 +635,9 @@ func APIInvalidateVisitor(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// checking rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorModel.IsVerified() {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cfb275fd-b3b8-4073-a4eb-455996502e99", "Not verified.")
 		}
 	}
 
@@ -708,15 +708,10 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 func APIGetVisit(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// so if user was logged to app as admin, we want to reflect this
-	isAdmin := false
-	if api.ValidateAdminRights(context) == nil {
-		isAdmin = true
-	}
-
 	sessionValue := context.GetSession().Get(visitor.ConstSessionKeyVisitorID)
 	visitorID, ok := sessionValue.(string)
 	if !ok {
-		if isAdmin {
+		if api.IsAdminSession(context) {
 			return map[string]interface{}{"is_admin": true}, nil
 		}
 		return "No session found, please log in first.", nil
@@ -734,7 +729,7 @@ func APIGetVisit(context api.InterfaceApplicationContext) (interface{}, error) {
 	result["google_id"] = visitorModel.GetGoogleID()
 
 	// overriding DB value if currently logged as admin
-	if isAdmin {
+	if api.IsAdminSession(context) {
 		result["is_admin"] = true
 	}
 

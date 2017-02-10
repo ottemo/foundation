@@ -12,13 +12,13 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Admin Only
-	service.GET("cron/schedule", api.IsAdmin(getSchedule))
-	service.POST("cron/task", api.IsAdmin(createTask))
-	service.GET("cron/task", api.IsAdmin(getTasks))
-	service.GET("cron/task/enable/:taskIndex", api.IsAdmin(enableTask))
-	service.GET("cron/task/disable/:taskIndex", api.IsAdmin(disableTask))
-	service.PUT("cron/task/:taskIndex", api.IsAdmin(updateTask))
-	service.GET("cron/task/run/:taskIndex", api.IsAdmin(runTask))
+	service.GET("cron/schedule", api.IsAdminHandler(getSchedule))
+	service.POST("cron/task", api.IsAdminHandler(createTask))
+	service.GET("cron/task", api.IsAdminHandler(getTasks))
+	service.GET("cron/task/enable/:taskIndex", api.IsAdminHandler(enableTask))
+	service.GET("cron/task/disable/:taskIndex", api.IsAdminHandler(disableTask))
+	service.PUT("cron/task/:taskIndex", api.IsAdminHandler(updateTask))
+	service.GET("cron/task/run/:taskIndex", api.IsAdminHandler(runTask))
 
 	return nil
 }

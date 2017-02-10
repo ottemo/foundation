@@ -24,13 +24,13 @@ func setupAPI() error {
 	service.DELETE("cart/coupons/:code", Remove)
 
 	// Admin Only
-	service.GET("coupons", api.IsAdmin(List))
-	service.POST("coupons", api.IsAdmin(Create))
-	service.GET("csv/coupons", api.IsAdmin(DownloadCSV))
-	service.POST("csv/coupons", api.IsAdmin(UploadCSV))
-	service.GET("coupons/:id", api.IsAdmin(GetByID))
-	service.PUT("coupons/:id", api.IsAdmin(UpdateByID))
-	service.DELETE("coupons/:id", api.IsAdmin(DeleteByID))
+	service.GET("coupons", api.IsAdminHandler(List))
+	service.POST("coupons", api.IsAdminHandler(Create))
+	service.GET("csv/coupons", api.IsAdminHandler(DownloadCSV))
+	service.POST("csv/coupons", api.IsAdminHandler(UploadCSV))
+	service.GET("coupons/:id", api.IsAdminHandler(GetByID))
+	service.PUT("coupons/:id", api.IsAdminHandler(UpdateByID))
+	service.DELETE("coupons/:id", api.IsAdminHandler(DeleteByID))
 
 	return nil
 }

@@ -17,12 +17,12 @@ func setupAPI() error {
 	service.GET("config/value/:path", restConfigGet)
 
 	// Admin Only
-	service.GET("config/item/:path", api.IsAdmin(restConfigInfo))
-	service.GET("config/values", api.IsAdmin(restConfigList))
-	service.GET("config/values/refresh", api.IsAdmin(restConfigReload))
-	service.POST("config/value/:path", api.IsAdmin(restConfigRegister))
-	service.PUT("config/value/:path", api.IsAdmin(restConfigSet))
-	service.DELETE("config/value/:path", api.IsAdmin(restConfigUnRegister))
+	service.GET("config/item/:path", api.IsAdminHandler(restConfigInfo))
+	service.GET("config/values", api.IsAdminHandler(restConfigList))
+	service.GET("config/values/refresh", api.IsAdminHandler(restConfigReload))
+	service.POST("config/value/:path", api.IsAdminHandler(restConfigRegister))
+	service.PUT("config/value/:path", api.IsAdminHandler(restConfigSet))
+	service.DELETE("config/value/:path", api.IsAdminHandler(restConfigUnRegister))
 
 	return nil
 }
@@ -64,8 +64,8 @@ func restConfigGet(context api.InterfaceApplicationContext) (interface{}, error)
 			strings.Contains(itemInfo.Path, "admin") {
 
 			// check rights
-			if err := api.ValidateAdminRights(context); err != nil {
-				return nil, env.ErrorDispatch(err)
+			if !api.IsAdminSession(context) {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c7724469-8acb-41f4-a031-08b016053b58", "Operation not allowed.")
 			}
 		}
 	}

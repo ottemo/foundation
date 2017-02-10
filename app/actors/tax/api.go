@@ -15,8 +15,8 @@ func setupAPI() error {
 
 	service := api.GetRestService()
 
-	service.GET("taxes/csv", api.IsAdmin(APIDownloadTaxCSV))
-	service.POST("taxes/csv", api.IsAdmin(APIUploadTaxCSV))
+	service.GET("taxes/csv", api.IsAdminHandler(APIDownloadTaxCSV))
+	service.POST("taxes/csv", api.IsAdminHandler(APIUploadTaxCSV))
 
 	return nil
 }

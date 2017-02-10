@@ -110,13 +110,11 @@ func GetSessionByID(sessionID string, create bool) (InterfaceSession, error) {
 	return sessionInstance, err
 }
 
-// ValidateAdminRights returns nil if admin rights allowed for current session
+// ValidateAdminRights returns nil if session contains admin rights
 func ValidateAdminRights(context InterfaceApplicationContext) error {
 
-	if value := context.GetSession().Get(ConstSessionKeyAdminRights); value != nil {
-		if value, ok := value.(bool); ok && value {
-			return nil
-		}
+	if IsAdminSession(context) {
+		return nil
 	}
 
 	// it is un-secure as request can be intercepted by malefactor, so use it only if no other way to do auth
@@ -138,7 +136,8 @@ func ValidateAdminRights(context InterfaceApplicationContext) error {
 	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2f3438ba-7fb7-4811-b8a5-7acf36910d3d", "no admin rights")
 }
 
-func IsAdmin(next FuncAPIHandler) FuncAPIHandler {
+// IsAdminHandler returns middleware API Handler that checks admin rights
+func IsAdminHandler(next FuncAPIHandler) FuncAPIHandler {
 	return func(context InterfaceApplicationContext) (interface{}, error) {
 		isAdminErr := ValidateAdminRights(context)
 
@@ -149,6 +148,11 @@ func IsAdmin(next FuncAPIHandler) FuncAPIHandler {
 
 		return next(context)
 	}
+}
+
+// IsAdminSession returns true if session with admin rights
+func IsAdminSession(context InterfaceApplicationContext) bool {
+	return utils.InterfaceToBool(context.GetSession().Get(ConstSessionKeyAdminRights))
 }
 
 // GetRequestContentAsMap tries to represent HTTP request content in map[string]interface{} format

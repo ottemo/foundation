@@ -20,8 +20,8 @@ func setupAPI() error {
 	service.GET("swatch/media/extention", getDefaultExtention)
 
 	// Admin only
-	service.POST("swatch/media", api.IsAdmin(createSwatch))
-	service.DELETE("swatch/media/:mediaName", api.IsAdmin(deleteByName))
+	service.POST("swatch/media", api.IsAdminHandler(createSwatch))
+	service.DELETE("swatch/media/:mediaName", api.IsAdminHandler(deleteByName))
 
 	return nil
 }

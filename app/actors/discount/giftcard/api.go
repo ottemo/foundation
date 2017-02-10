@@ -71,7 +71,7 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
 	}
 
-	if api.ValidateAdminRights(context) != nil {
+	if !api.IsAdminSession(context) {
 		if err := collection.AddFilter("visitor_id", "=", visitorID); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "73868d22-222a-4fbe-8d1c-ac07dd3a810d", err.Error())
 		}

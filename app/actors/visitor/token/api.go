@@ -141,9 +141,9 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorID != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "24566eab-6bb9-4aef-8172-0c8350ae5093", "Operation not allowed.")
 		}
 	}
 

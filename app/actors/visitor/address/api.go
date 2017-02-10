@@ -19,7 +19,7 @@ func setupAPI() error {
 
 	service.GET("visitor/:visitorID/addresses", APIListVisitorAddresses)
 
-	service.GET("visitors/addresses/attributes", api.IsAdmin(APIListVisitorAddressAttributes))
+	service.GET("visitors/addresses/attributes", api.IsAdminHandler(APIListVisitorAddressAttributes))
 	service.DELETE("visitors/address/:addressID", APIDeleteVisitorAddress)
 	service.PUT("visitors/address/:addressID", APIUpdateVisitorAddress)
 	service.GET("visitors/address/:addressID", APIGetVisitorAddress)
@@ -50,9 +50,9 @@ func APICreateVisitorAddress(context api.InterfaceApplicationContext) (interface
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if requestData["visitor_id"] != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "097c84dd-51ec-459d-9bad-075a12732f42", "Operation not allowed.")
 		}
 	}
 
@@ -94,9 +94,9 @@ func APIUpdateVisitorAddress(context api.InterfaceApplicationContext) (interface
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "71fe8c21-c8c7-4175-992c-86f0056e0c4f", "Operation not allowed.")
 		}
 	}
 
@@ -139,9 +139,9 @@ func APIDeleteVisitorAddress(context api.InterfaceApplicationContext) (interface
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "82bb5dcd-860c-4c37-a231-033caf1fd914", "Operation not allowed.")
 		}
 	}
 
@@ -182,9 +182,9 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorID != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "322386f1-ff23-4ab9-9500-8d04c9aa9f4e", "Operation not allowed.")
 		}
 	}
 
@@ -236,9 +236,9 @@ func APIGetVisitorAddress(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorAddressModel.GetVisitorID() != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9de6d4f1-02f6-488e-8a50-88619b34d13c", "Operation not allowed.")
 		}
 	}
 

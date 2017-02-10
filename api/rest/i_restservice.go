@@ -227,10 +227,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		var result interface{}
 		context.MakeContext(func() {
 			if callContext := context.GetContext(); callContext != nil {
-				callContext["is_admin"] = false
-				if api.ValidateAdminRights(applicationContext) == nil {
-					callContext["is_admin"] = true
-				}
+				callContext["is_admin"] = api.IsAdminSession(applicationContext)
 			} else {
 				err = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b94a499-9d71-403e-9f67-06fd90d6250d", "can not get context for API handler")
 			}

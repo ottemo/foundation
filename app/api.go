@@ -124,7 +124,7 @@ func restSendEmail(context api.InterfaceApplicationContext) (interface{}, error)
 func restRightsInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 	result := make(map[string]interface{})
 
-	result["is_admin"] = utils.InterfaceToBool(context.GetSession().Get(api.ConstSessionKeyAdminRights))
+	result["is_admin"] = api.IsAdminSession(context)
 
 	return result, nil
 }

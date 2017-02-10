@@ -20,12 +20,12 @@ func setupAPI() error {
 
 	// Admin only endpoint
 	service := api.GetRestService()
-	service.GET("reporting/product-performance", api.IsAdmin(listProductPerformance))
-	service.GET("reporting/customer-activity", api.IsAdmin(listCustomerActivity))
-	service.GET("reporting/payment-method", api.IsAdmin(listPaymentMethod))
-	service.GET("reporting/shipping-method", api.IsAdmin(listShippingMethod))
-	service.GET("reporting/location-country", api.IsAdmin(listLocationCountry))
-	service.GET("reporting/location-us", api.IsAdmin(listLocationUS))
+	service.GET("reporting/product-performance", api.IsAdminHandler(listProductPerformance))
+	service.GET("reporting/customer-activity", api.IsAdminHandler(listCustomerActivity))
+	service.GET("reporting/payment-method", api.IsAdminHandler(listPaymentMethod))
+	service.GET("reporting/shipping-method", api.IsAdminHandler(listShippingMethod))
+	service.GET("reporting/location-country", api.IsAdminHandler(listLocationCountry))
+	service.GET("reporting/location-us", api.IsAdminHandler(listLocationUS))
 
 	return nil
 }

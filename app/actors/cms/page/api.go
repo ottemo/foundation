@@ -16,9 +16,9 @@ func setupAPI() error {
 	service.GET("cms/page/:pageID", APIGetCMSPage)
 
 	// Admin Only
-	service.POST("cms/page", api.IsAdmin(APICreateCMSPage))
-	service.PUT("cms/page/:pageID", api.IsAdmin(APIUpdateCMSPage))
-	service.DELETE("cms/page/:pageID", api.IsAdmin(APIDeleteCMSPage))
+	service.POST("cms/page", api.IsAdminHandler(APICreateCMSPage))
+	service.PUT("cms/page/:pageID", api.IsAdminHandler(APIUpdateCMSPage))
+	service.DELETE("cms/page/:pageID", api.IsAdminHandler(APIDeleteCMSPage))
 
 	return nil
 }
@@ -49,7 +49,7 @@ func APIListCMSPages(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// excluding disabled pages for a regular visitor
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err := cmsPageCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "348d2715-84a3-43a6-a3d8-dc65a3fc3b88", err.Error())
 		}
@@ -93,7 +93,7 @@ func APIGetCMSPage(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled if not admin
-	if api.ValidateAdminRights(context) != nil && !cmsPage.GetEnabled() {
+	if !api.IsAdminSession(context) && !cmsPage.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fa76f5ac-0cce-4670-9e62-197a600ec0b9", "cms page is not available")
 	}
 

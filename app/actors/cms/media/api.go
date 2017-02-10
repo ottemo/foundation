@@ -23,12 +23,12 @@ func setupAPI() error {
 	service.GET("cms/media", APIListMedia)
 
 	// Admin only
-	service.POST("cms/media", api.IsAdmin(APIAddMedia))
+	service.POST("cms/media", api.IsAdminHandler(APIAddMedia))
 
 	// By default "type" is image
-	service.DELETE("cms/media/:mediaName/:mediaType", api.IsAdmin(APIRemoveMedia))
+	service.DELETE("cms/media/:mediaName/:mediaType", api.IsAdminHandler(APIRemoveMedia))
 	// Deprecated: Method with explicit mediaType should be used
-	service.DELETE("cms/media/:mediaName", api.IsAdmin(APIRemoveMedia))
+	service.DELETE("cms/media/:mediaName", api.IsAdminHandler(APIRemoveMedia))
 
 	return nil
 }

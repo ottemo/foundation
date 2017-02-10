@@ -50,7 +50,7 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		visitorObject, err := visitor.GetCurrentVisitor(context)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
@@ -186,8 +186,8 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 	reviewID := context.GetRequestArgument("reviewID")
 
 	var visitorObject visitor.InterfaceVisitor
-	if err := api.ValidateAdminRights(context); err != nil {
-		visitorObject, err = visitor.GetCurrentVisitor(context)
+	if !api.IsAdminSession(context) {
+		visitorObject, err := visitor.GetCurrentVisitor(context)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -208,9 +208,9 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 
 	if visitorID, present := reviewRecord["visitor_id"]; present {
 		// check rights
-		if err := api.ValidateAdminRights(context); err != nil {
+		if !api.IsAdminSession(context) {
 			if visitorID != visitorObject.GetID() {
-				return nil, env.ErrorDispatch(err)
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b4751e17-309d-4f90-a33a-e986c5f2420a", "Operation not allowed.")
 			}
 		}
 
@@ -285,9 +285,8 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// admin or visitor
-	var isAdmin = (api.ValidateAdminRights(context) == nil)
 	var visitorObject visitor.InterfaceVisitor
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		var err error
 		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
 			return nil, env.ErrorDispatch(err)
@@ -319,7 +318,7 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ba19a94b-088c-4a28-861c-6fe2145f2348", "you not allowed to update review")
 	}
 
-	if isAdmin {
+	if api.IsAdminSession(context) {
 		if record["approved"] != context.GetRequestArgument("approved") {
 			ratingValue := utils.InterfaceToInt(record["rating"])
 
@@ -389,9 +388,8 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 //   - review ID should be specified in "reviewID" argument
 func APIGetReview(context api.InterfaceApplicationContext) (interface{}, error) {
 	// admin or visitor
-	var isAdmin = (api.ValidateAdminRights(context) == nil)
 	var visitorObject visitor.InterfaceVisitor
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		var err error
 		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
 			return nil, env.ErrorDispatch(err)

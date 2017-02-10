@@ -25,17 +25,17 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Admin
-	service.GET("orders/attributes", api.IsAdmin(APIListOrderAttributes))
-	service.GET("orders", api.IsAdmin(APIListOrders))
-	service.POST("orders/exportToCSV", api.IsAdmin(APIExportOrders))
-	service.POST("orders/setStatus", api.IsAdmin(APIChangeOrderStatus))
+	service.GET("orders/attributes", api.IsAdminHandler(APIListOrderAttributes))
+	service.GET("orders", api.IsAdminHandler(APIListOrders))
+	service.POST("orders/exportToCSV", api.IsAdminHandler(APIExportOrders))
+	service.POST("orders/setStatus", api.IsAdminHandler(APIChangeOrderStatus))
 
-	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
-	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
-	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
-	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
-	service.POST("order/:orderID/emailTrackingCode", api.IsAdmin(APIUpdateTrackingInfoAndSendEmail))
+	service.GET("order/:orderID", api.IsAdminHandler(APIGetOrder))
+	service.PUT("order/:orderID", api.IsAdminHandler(APIUpdateOrder))
+	service.DELETE("order/:orderID", api.IsAdminHandler(APIDeleteOrder))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdminHandler(APISendShipStatusEmail))
+	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdminHandler(APISendOrderConfirmationEmail))
+	service.POST("order/:orderID/emailTrackingCode", api.IsAdminHandler(APIUpdateTrackingInfoAndSendEmail))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitorOrders)

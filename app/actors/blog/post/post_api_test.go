@@ -147,9 +147,9 @@ func TestBlogPostAPI(t *testing.T) {
 	// api redeclaration to mimic priveleged calls
 	apiListPosts := post.APIListPosts
 	apiPostByID := post.APIPostByID
-	apiCreateBlogPost := api.IsAdmin(post.APICreateBlogPost)
-	apiUpdateByID := api.IsAdmin(post.APIUpdateByID)
-	apiDeleteByID := api.IsAdmin(post.APIDeleteByID)
+	apiCreateBlogPost := api.IsAdminHandler(post.APICreateBlogPost)
+	apiUpdateByID := api.IsAdminHandler(post.APIUpdateByID)
+	apiDeleteByID := api.IsAdminHandler(post.APIDeleteByID)
 
 	// init session
 	session := new(testSession)
