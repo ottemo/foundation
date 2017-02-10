@@ -135,7 +135,7 @@ func ValidateAdminRights(context InterfaceApplicationContext) error {
 		}
 	}
 
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0bc07b3d-1443-4594-af82-9d15211ed179", "no admin rights")
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2f3438ba-7fb7-4811-b8a5-7acf36910d3d", "no admin rights")
 }
 
 func IsAdmin(next FuncAPIHandler) FuncAPIHandler {

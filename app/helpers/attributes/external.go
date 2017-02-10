@@ -123,7 +123,7 @@ func (it *ModelExternalAttributes) RemoveExternalAttributes(delegate models.Inte
 	}
 
 	if delegate == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "203a7c29-7792-404d-baa0-ec9f56e226d2", "Invalid delegate")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2feb1120-ebf8-49df-8ca7-2693b6cce994", "Invalid delegate")
 	}
 
 	for _, attributeInfo := range delegate.GetAttributesInfo() {

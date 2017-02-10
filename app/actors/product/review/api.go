@@ -107,7 +107,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 	}
 
 	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to add review")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8d84ba12-5f04-4322-8cb5-c520189cad97", "guest visitor is no allowed to add review")
 	}
 
 	productObject, err := product.LoadProductByID(context.GetRequestArgument("productID"))

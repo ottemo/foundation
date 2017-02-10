@@ -66,10 +66,10 @@ func (it *DefaultVisitorAddressCollection) ListAddExtraAttribute(attribute strin
 		if !utils.IsInListStr(attribute, it.listExtraAtributes) {
 			it.listExtraAtributes = append(it.listExtraAtributes, attribute)
 		} else {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e26dc487-2873-4fdd-8dff-b9a1005e08ab", "attribute already in list")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e58839af-a0a2-405e-aab9-ad9eea5768c5", "attribute already in list")
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "393c0a07-9acf-4f66-9b59-8de31be541ce", "not allowed attribute")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "97e1a1a1-5ce1-4137-9223-ab1881917dbc", "not allowed attribute")
 	}
 
 	return nil

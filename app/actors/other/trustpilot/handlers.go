@@ -280,7 +280,7 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
 
 	if response.StatusCode >= 300 {
 		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
-		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4e5d5ea3-7ba2-48ea-8698-c14e9658541e", errMsg)
 		fields := env.LogFields{
 			"jsonString-request": jsonString,
 			"accessToken":        accessToken,

@@ -364,11 +364,11 @@ func APISetPaymentMethod(context api.InterfaceApplicationContext) (interface{}, 
 
 				return "ok", nil
 			}
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bd07849e-8789-4316-924c-9c754efbc348", "payment method not allowed")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "becea4f9-39b6-4710-b96a-e7ff262823dc", "payment method not allowed")
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8384a47-8806-4a54-90fc-cccb5e958b4e", "payment method not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4d39abcd-3724-44fe-818e-c8a99da4d780", "payment method not found")
 }
 
 // APISetShippingMethod assigns shipping method and shipping rate to current checkout
@@ -415,7 +415,7 @@ func APISetShippingMethod(context api.InterfaceApplicationContext) (interface{},
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "279a645c-6a03-44de-95c0-2651a51440fa", "shipping method and/or rate were not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c589e0f9-4e4a-4691-8f43-a045aaff48c2", "shipping method and/or rate were not found")
 }
 
 // checkoutObtainToken is an internal usage function used to create or load credit card for visitor

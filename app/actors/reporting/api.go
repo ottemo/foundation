@@ -138,12 +138,12 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "88b6fe1f-0e2f-4e63-b0a4-2e767c27dfd8", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "fb30b99c-0648-4219-8b9c-933edf9f7ed3", msg)
 		}
 	}
 
@@ -265,12 +265,12 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "5731fd92-b2b1-44e7-8940-395575bca081", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "d771dc9d-de2a-4e84-8d5e-9bd050cc5d2d", msg)
 		}
 	}
 
@@ -399,12 +399,12 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "48beae0f-f6fb-49f0-adff-1d0a2f8b5fff", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "eb050c5e-6ee8-4d09-9869-1813b252d3aa", msg)
 		}
 	}
 
@@ -463,12 +463,12 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "8b9940cc-cc45-4ab8-af92-4f3cff0db5b1", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "dd9fad29-4321-4951-976f-9204890437bd", msg)
 		}
 	}
 
@@ -572,12 +572,12 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "2eb1c70a-3d37-46ab-91b1-9e6124685406", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "bc431db2-77ea-45da-9e61-3ee156ec62b6", msg)
 		}
 	}
 

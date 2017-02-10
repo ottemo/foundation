@@ -17,7 +17,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderProceed, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "Unable to find an order when firing event, order.proceed."))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a9d70cad-0a05-4af1-8d03-947abdc0e25a", "Unable to find an order when firing event, order.proceed."))
 		return false
 	}
 

@@ -306,7 +306,7 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 	//--------------------
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "70334b43-a431-44a3-91a5-ef054ec0e928", "attribute name was not specified")
 	}
 
 	// remove attribute actions
@@ -581,7 +581,7 @@ func APIAddMediaForProduct(context api.InterfaceApplicationContext) (interface{}
 	//-----------------------
 	files := context.GetRequestFiles()
 	if len(files) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "75a2ddaf-b63d-4eed-b16d-4b32778f5fc1", "media file was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce56af17-88b5-4da7-8378-c8ab8fd48e0a", "media file was not specified")
 	}
 
 	var fileContents []byte
@@ -631,7 +631,7 @@ func APIRemoveMediaForProduct(context api.InterfaceApplicationContext) (interfac
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "487390f9-6de7-4380-9f52-c589c5125eb4", "media name was not specified")
 	}
 
 	// list media operation
@@ -744,7 +744,7 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e788ff70-0a0a-4baa-8c87-c45e747107e6", "media name was not specified")
 	}
 
 	if err := context.SetResponseContentType(mime.TypeByExtension(mediaName)); err != nil {

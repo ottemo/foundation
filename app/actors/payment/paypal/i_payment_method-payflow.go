@@ -158,7 +158,7 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 
 	responseValues, err := url.ParseQuery(string(responseBody))
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b18cdcad-8c21-4acf-a2e0-56e0541103de", "payment unexpected response")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0740ac7d-b377-480f-86fb-de3aa782e583", "payment unexpected response")
 	}
 
 	if responseValues.Get("RESPMSG") != "Approved" {
@@ -252,7 +252,7 @@ func (it *PayFlowAPI) GetAccessToken(originRequestParams string) (string, error)
 
 	defer func (c io.ReadCloser){
 		if err := c.Close(); err != nil {
-			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "718ea4b1-a8cf-4366-976e-3f76bdd15e2f", err.Error())
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e3b087e1-1a41-4a35-bb3a-8ad5a49d4a7b", err.Error())
 		}
 	}(response.Body)
 
@@ -363,7 +363,7 @@ func (it *PayFlowAPI) AuthorizeZeroAmount(orderInstance order.InterfaceOrder, pa
 
 	defer func (c io.ReadCloser){
 		if err := c.Close(); err != nil {
-			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "718ea4b1-a8cf-4366-976e-3f76bdd15e2f", err.Error())
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e7d17491-3912-4934-a957-60661c321be5", err.Error())
 		}
 	}(response.Body)
 

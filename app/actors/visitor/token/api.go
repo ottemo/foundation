@@ -89,7 +89,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	cardInfoMap := utils.InterfaceToMap(paymentResult)
 	if !utils.KeysInMapAndNotBlank(cardInfoMap, "transactionID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "A transaction ID was not provided.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a3e57e63-b1f7-4027-9344-14d8e1eca0ea", "A transaction ID was not provided.")
 	}
 
 	// create visitor address operation

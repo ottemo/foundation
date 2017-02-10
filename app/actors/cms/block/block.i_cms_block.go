@@ -46,7 +46,7 @@ func (it *DefaultCMSBlock) LoadByIdentifier(identifier string) error {
 	}
 
 	if len(records) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8890c17e-56cb-4a54-b37c-9ee787e15067", "not found")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4e3f46e8-bfa9-447c-a196-724334b7bf91", "not found")
 	}
 	record := records[0]
 

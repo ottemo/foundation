@@ -149,7 +149,7 @@ func GetCurrentCart(context api.InterfaceApplicationContext, createNew bool) (In
 			return currentCart, nil
 		}
 
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5acb5ee-f689-4dd8-a85f-f2ec47425ba1", "not registered visitor")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e377b85a-8156-450f-9c69-1f2f01b2c2fd", "not registered visitor")
 	}
 
 	return nil, nil

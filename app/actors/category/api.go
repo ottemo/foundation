@@ -540,12 +540,12 @@ func APIGetMediaPath(context api.InterfaceApplicationContext) (interface{}, erro
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6597ff92-f2ee-4233-bcf9-eb73b957fb05", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "091d758d-9c3d-4e4f-8515-0f33a04b0354", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "75c00741-5873-4be1-9fa0-df9d2956d3de", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5571ec1-a56d-4897-aaa8-6b14b466d82e", "media type was not specified")
 	}
 
 	// list media operation
@@ -571,12 +571,12 @@ func APIListMedia(context api.InterfaceApplicationContext) (interface{}, error) 
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "52677450-8a7f-49c9-a472-51d0e80bc7ca", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363bf428-ba51-432e-9b80-7d4a0a11fe18", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8b31a9f-6fac-47b3-89e2-c9b3e589a8f6", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d05160cb-4df5-4917-bdb3-c06767d2483b", "media type was not specified")
 	}
 
 	// list media operation
@@ -603,17 +603,17 @@ func APIAddMediaForCategory(context api.InterfaceApplicationContext) (interface{
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a4696c5d-3276-4272-8d86-8061e57743a5", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "98e86d33-83c3-47c6-986b-11925c4f21ac", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f3ea9a01-412a-4af2-9496-cb58cdb8139d", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9db218b8-b37c-49a7-86d8-04a58d0f4fbc", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23fb7617-f19a-4505-b706-10f7898fd980", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "74cec364-c64d-493a-8848-e8af474eebc0", "media name was not specified")
 	}
 
 	// income file processing
@@ -660,12 +660,12 @@ func APIRemoveMediaForCategory(context api.InterfaceApplicationContext) (interfa
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5f77b7f-6606-4bdd-a113-0a3b26f5759c", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dfde9c02-97bb-4bc6-8874-669392ad32a1", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e81b841f-8253-4b66-ac7d-2cc9a484044c", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "224dd952-7c84-4ae4-882a-b15a002c37e6", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")
@@ -697,12 +697,12 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d33b8a67-359f-4a3e-b626-f58b6c70f09f", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "41d5d10d-9c15-4144-b1e2-ebf47d1911d8", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d081b726-caf4-4694-baaa-7b1801ca9713", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "453e4717-8101-41b4-91c1-172d1b489662", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")

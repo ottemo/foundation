@@ -190,7 +190,7 @@ func (it *FilesystemSessionService) LoadSession(sessionID string) (*DefaultSessi
 func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 	sessionInstance := it.syncGet(sessionID)
 	if sessionInstance == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b04bb3cd-fcaa-4a78-bf8a-ecdeb7dceaf3", "session "+sessionID+" not found")
 	}
 
 	// skipping flush for empty sessions

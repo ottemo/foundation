@@ -70,7 +70,7 @@ func closeCursor(cursor *sql.Rows) {
 
 // formats SQL query error for output to log
 func sqlError(SQL string, err error) error {
-	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "261ce31d-b907-443a-b7dc-e51c7dba6b52", "SQL \""+SQL+"\" error: "+err.Error())
+	return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8c3f2f99-4d08-412b-9dd4-fb6834c44c2b", "SQL \""+SQL+"\" error: "+err.Error())
 }
 
 // returns string that represents value for SQL query
@@ -190,5 +190,5 @@ func GetDBType(ColumnType string) (string, error) {
 		return "NUMERIC", nil
 	}
 
-	return "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bc554af-ad7d-4426-88c4-30f91c1cb151", "Unknown type '"+ColumnType+"'")
+	return "?", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "80757774-5967-4e47-8429-7ca2cbcea72c", "Unknown type '"+ColumnType+"'")
 }

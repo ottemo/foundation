@@ -206,14 +206,14 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 				}
 				delete(requestData, "old_password")
 			} else {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "Please enter current password and try again.")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ba2d5ac-84f6-421e-a7a6-da10c16e85f3", "Please enter current password and try again.")
 			}
 		}
 	} else if oldPass, present := requestData["old_password"]; present {
 		// Admin
 		// When admin user change password from storefront we will validate it
 		if ok := visitorModel.CheckPassword(utils.InterfaceToString(oldPass)); !ok {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "Password entered does not match stored password.")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9c4c53c3-6b8d-4719-8515-7a31df1d08bb", "Password entered does not match stored password.")
 		}
 		delete(requestData, "old_password")
 	}
@@ -437,7 +437,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "Attribute Name was not specified, this is a required field.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7d28bb9-5969-40b8-ae59-9134baa4d8d1", "Attribute Name was not specified, this is a required field.")
 	}
 
 	visitorModel, err := visitor.GetVisitorModel()
@@ -833,7 +833,7 @@ func APILogin(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	ok := visitorModel.CheckPassword(requestPassword)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "The password entered does not match the stored password.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9fd0a895-4b42-4d89-9aa7-9104ba23f96a", "The password entered does not match the stored password.")
 	}
 
 	// api session updates

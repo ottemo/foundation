@@ -34,7 +34,7 @@ func setupDB() error {
 	}
 
 	if err := collection.AddColumn("visitor_id", db.ConstTypeID, true); err != nil { // ottemo vid
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0381c849-0269-470a-9578-370985f1d6bc", "unable to add column: "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "649e7bcc-18ab-49ab-868d-e18c66282980", "unable to add column: "+err.Error())
 	}
 	if err := collection.AddColumn("token_id", db.ConstTypeVarchar, true); err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "064a7877-2b9d-45ad-8217-000cebc6a8e1", "unable to add column: "+err.Error())

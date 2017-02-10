@@ -364,7 +364,7 @@ func (it *RestMethod) SaveToken(orderInstance order.InterfaceOrder, creditCardIn
 
 	authorizeCardResult := utils.InterfaceToMap(creditCardInfo)
 	if !utils.KeysInMapAndNotBlank(authorizeCardResult, "transactionID", "creditCardLastFour") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "transaction can't be obtained")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f1b4fdbe-3b1d-40b0-8d3c-e04c4c823d79", "transaction can't be obtained")
 	}
 
 	// create visitor card and fill required fields

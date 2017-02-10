@@ -592,7 +592,7 @@ func (it *ImportCmdMedia) Init(args []string, exchange map[string]interface{}) e
 
 // Test is a MEDIA command processor for test mode
 func (it *ImportCmdMedia) Test(itemData map[string]interface{}, input interface{}, exchange map[string]interface{}) (interface{}, error) {
-	return input, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c6384ea9-08db-46aa-b49b-cb8ee28598fa", "MEDIA command is not allowed in test mode")
+	return input, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8b8b5147-be2a-4485-bc61-b18c77ad5d70", "MEDIA command is not allowed in test mode")
 }
 
 // Process is a MEDIA command processor

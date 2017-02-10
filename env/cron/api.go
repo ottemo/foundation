@@ -92,7 +92,7 @@ func updateTask(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	reqTaskIndex := context.GetRequestArgument("taskIndex")
 	if reqTaskIndex == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d4ee4c0c-124a-4098-aeef-23d868b0d682", "task index should be specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5e5107eb-69c9-4560-b25b-e2ace5e420f3", "task index should be specified")
 	}
 
 	taskIndex, err := utils.StringToInteger(reqTaskIndex)

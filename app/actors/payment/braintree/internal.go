@@ -191,7 +191,7 @@ func braintreeCreateCardParams(creditCardMap map[string]interface{}) (*braintree
 func braintreeCreateCard(creditCardMap map[string]interface{}, customerID string) (*braintree.CreditCard, error) {
 	creditCardParams, err := braintreeCreateCardParams(creditCardMap)
 	if err != nil {
-		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "d9e6d4a3-c533-428a-9bd6-9978ca7c0c24", "unable to create card params: "+err.Error())
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "46ddda47-867d-4d28-979e-2c43f6f631dd", "unable to create card params: "+err.Error())
 	}
 
 	creditCardParams.CustomerId = customerID

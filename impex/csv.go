@@ -542,7 +542,7 @@ func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvR
 					return env.ErrorDispatch(err)
 				}
 			} else {
-				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "004e9f7b-bb97-4356-bbc2-5e084736983b", "unknown cmd '"+args[0]+"'")
+				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c787e632-bd20-4a9c-94a4-2e4a20a3ed40", "unknown cmd '"+args[0]+"'")
 			}
 		}
 	}

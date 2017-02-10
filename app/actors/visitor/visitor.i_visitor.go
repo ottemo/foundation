@@ -99,7 +99,7 @@ func (it *DefaultVisitor) IsVerified() bool {
 func (it *DefaultVisitor) Invalidate() error {
 
 	if it.GetEmail() == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bef673e9-79c1-42bc-ade0-e870b3da0e2f", "The email address field cannot be blank.")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9310827d-a15a-4abb-b47d-a9c1520c37ba", "The email address field cannot be blank.")
 	}
 
 	data, err := time.Now().MarshalBinary()

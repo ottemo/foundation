@@ -128,7 +128,7 @@ func subscribe(email string, commaSeparatedGroupIDs string) (interface{}, error)
 var composeEmmaCredentials = func() (*emmaCredentialsType, error) {
 	var accountID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
 	if accountID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "888b9572-ddd9-4e5c-905a-a09973095c44", "account id was not specified")
 	}
 
 	var publicAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))

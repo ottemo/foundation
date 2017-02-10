@@ -134,7 +134,7 @@ func (it *FilesystemMediaStorage) Save(model string, objID string, mediaType str
 
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "92bd8bc9-8d04-43a0-9721-7b57aaabac7f", "Can't get database engine")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "58f9574c-94d6-4e31-b8b4-45264db49143", "Can't get database engine")
 	}
 
 	dbCollection, err := dbEngine.GetCollection(ConstMediaDBCollection)
@@ -232,7 +232,7 @@ func (it *FilesystemMediaStorage) ListMedia(model string, objID string, mediaTyp
 	dbEngine := db.GetDBEngine()
 	if dbEngine == nil {
 		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel,
-			"d4c8dd6e-95be-4b8f-b606-5544b633cd7c",
+			"cc51532c-4b17-4a02-b08c-27ad24a99cea",
 			"Unable fo find database engine in order to return the current list of media.")
 	}
 

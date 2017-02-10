@@ -176,7 +176,7 @@ func APIListVisitorAddresses(context api.InterfaceApplicationContext) (interface
 
 		sessionVisitorID := visitor.GetCurrentVisitorID(context)
 		if sessionVisitorID == "" {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ac4c16b-9241-406e-b35a-399813bb6ca5", "No Visitor ID found, unable to retrieve associated addresses.  Please log in first.")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cfc894f8-216c-4d3f-86c1-15425f7f8fcc", "No Visitor ID found, unable to retrieve associated addresses.  Please log in first.")
 		}
 		visitorID = sessionVisitorID
 	}
