@@ -79,6 +79,11 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		collection.AddFilter("visitor_id", "=", visitorID)
 	}
 
+	// checking for a "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return collection.Count()
+	}
+
 	dbRecords, err := collection.Load()
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
