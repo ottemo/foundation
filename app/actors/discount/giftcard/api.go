@@ -20,8 +20,7 @@ func setupAPI() error {
 	service.GET("giftcards", GetList)
 
 	// Admin Only
-	service.GET("giftcard/:giftid/history", GetHistory)
-	//service.GET("giftcard/:giftid/history", api.IsAdmin(GetHistory))
+	service.GET("giftcard/:giftid/history", api.IsAdmin(GetHistory))
 
 	// cart endpoints
 	service.POST("cart/giftcards/:giftcode", Apply)
@@ -189,7 +188,8 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 	return "Remove successful", nil
 }
 
-// todo
+// GetHistory returns a history of gift cards for the admin in the context passed
+//    - giftcard id should be specified in the "giftid" argument
 func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("giftid")
@@ -217,7 +217,6 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	var historyData []map[string]interface{}
 
-
 	for orderId, amount := range utils.InterfaceToMap(row["orders_used"]) {
 		orderData, err := order.LoadOrderByID(orderId)
 		if err != nil {
@@ -230,7 +229,6 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 			"transaction_date": orderData.Get("created_at"),
 		})
 	}
-
 
 	return historyData, nil
 }
