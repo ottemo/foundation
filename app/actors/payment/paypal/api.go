@@ -112,7 +112,7 @@ func CompleteTransaction(orderInstance order.InterfaceOrder, token string, payer
 func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 	requestData := context.GetRequestArguments()
 	if !utils.KeysInMapAndNotBlank(requestData, "token", "PayerID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4b0fcede-8ce7-4f4d-bee4-9cf75a427f59", "token or payerID are not set")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "15c2f1ca-ce41-4292-9bd3-f6232edc27c4", "token or payerID are not set")
 	}
 	sessionID := waitingTokens[requestData["token"]]
 
@@ -122,7 +122,7 @@ func APIReceipt(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(sessionID), false)
 	if sessionInstance == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "04eaf220-5964-4d92-821b-c60e1eb8185e", "Wrong session ID")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cd783513-3454-4e03-bc4c-2efcb67757a0", "Wrong session ID")
 	}
 	err = context.SetSession(sessionInstance)
 	if err != nil {
@@ -189,16 +189,18 @@ func APIDecline(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	currentCheckout, err := checkout.GetCurrentCheckout(context, true)
 	if err != nil {
-		return nil, err
+		return nil, env.ErrorDispatch(err)
 	}
 
 	checkoutOrder := currentCheckout.GetOrder()
 
-	checkoutOrder.SetStatus(order.ConstOrderStatusDeclined)
+	if err := checkoutOrder.SetStatus(order.ConstOrderStatusDeclined); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bdcbeb7f-7cf7-4ecc-b99b-779cb721ddf0", "unable to set checkout status: "+err.Error())
+	}
 
 	err = checkoutOrder.Save()
 	if err != nil {
-		return nil, err
+		return nil, env.ErrorDispatch(err)
 	}
 
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "Declined: "+

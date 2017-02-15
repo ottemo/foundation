@@ -25,7 +25,9 @@ func (it *DefaultCategoryCollection) List() ([]models.StructListItem, error) {
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		categoryModel.FromHashMap(dbItemData)
+		if err := categoryModel.FromHashMap(dbItemData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5702b4e7-dd12-4424-8618-da8ffd186baf", err.Error())
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -89,13 +91,17 @@ func (it *DefaultCategoryCollection) ListAddExtraAttribute(attribute string) err
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultCategoryCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "29c448e4-dcc3-418d-9ab9-6e0af38c9bdc", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultCategoryCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8dc3ed28-42d8-422c-9e2c-ba19486f49eb", err.Error())
+	}
 	return nil
 }
 

@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"io"
 )
 
 const (
@@ -81,7 +82,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	}
 
 	if checkoutOrder != nil && checkoutCart != nil {
-		go SendOrderInfo(checkoutOrder, checkoutCart)
+		go func(checkoutOrder order.InterfaceOrder, checkoutCart cart.InterfaceCart){
+			if err := SendOrderInfo(checkoutOrder, checkoutCart); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c76b0bf2-f439-47f2-a59b-a6e3e4612c33", err.Error())
+			}
+		}(checkoutOrder, checkoutCart)
 	}
 
 	return true
@@ -163,7 +168,9 @@ func SendOrderInfo(checkoutOrder order.InterfaceOrder, currentCart cart.Interfac
 	customInfo[ConstOrderCustomInfoLinkKey] = serviceReviewLink
 	customInfo[ConstOrderCustomInfoSentKey] = false
 
-	checkoutOrder.Set("custom_info", customInfo)
+	if err := checkoutOrder.Set("custom_info", customInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b78c5616-6440-448a-a840-e2151a5de73c", err.Error())
+	}
 
 	err = checkoutOrder.Save()
 	if err != nil {
@@ -203,7 +210,11 @@ func getAccessToken(cred tpCredentials) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "30b05dd7-4319-4df4-bc55-7858d148a84d", err.Error())
+		}
+	}(response.Body)
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
@@ -256,7 +267,11 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
 	if err != nil {
 		return "", env.ErrorDispatch(err)
 	}
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b8c3dcbf-03ff-4f97-afcf-606b5efc4f40", err.Error())
+		}
+	}(response.Body)
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
@@ -265,7 +280,7 @@ func getProductReviewLink(requestData ProductReview, businessID string, accessTo
 
 	if response.StatusCode >= 300 {
 		errMsg := "Non 200 response while trying to get trustpilot review link: StatusCode:" + response.Status
-		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e75b28c7-0da2-475b-8b65-b1a09f1f6926", errMsg)
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4e5d5ea3-7ba2-48ea-8698-c14e9658541e", errMsg)
 		fields := env.LogFields{
 			"jsonString-request": jsonString,
 			"accessToken":        accessToken,
@@ -320,7 +335,11 @@ func getServiceReviewLink(requestData ServiceReview, businessUnitID string, acce
 	if err != nil {
 		return "", err
 	}
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d8d98545-cdbf-4a58-adfb-8280871d79f7", err.Error())
+		}
+	}(response.Body)
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {

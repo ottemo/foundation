@@ -14,7 +14,9 @@ func TestBuildItemReturnsNoAdjustments(t *testing.T) {
 	const orderID = "5846cbbf7720ae713751e355"
 
 	var orderObj = &order.DefaultOrder{}
-	orderObj.SetID(orderID)
+	if err := orderObj.SetID(orderID); err != nil {
+		t.Error(err)
+	}
 	orderObj.TaxAmount = 37.34
 	orderObj.ShippingAmount = 0
 	orderObj.GrandTotal = 426.34

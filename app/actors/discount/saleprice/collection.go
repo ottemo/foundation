@@ -64,7 +64,9 @@ func (it *DefaultSalePriceCollection) List() ([]models.StructListItem, error) {
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		salePriceModel.FromHashMap(dbItemData)
+		if err := salePriceModel.FromHashMap(dbItemData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b6b2d648-28ab-4895-bebb-49310eb74435", err.Error())
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -115,13 +117,17 @@ func (it *DefaultSalePriceCollection) ListAddExtraAttribute(attribute string) er
 
 // ListFilterAdd adds filter to sale price collection
 func (it *DefaultSalePriceCollection) ListFilterAdd(attribute string, operator string, value interface{}) error {
-	it.listCollection.AddFilter(attribute, operator, value.(string))
+	if err := it.listCollection.AddFilter(attribute, operator, value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "60b83d74-7c12-4302-ae75-4f6877524c88", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset resets sale price collection filters
 func (it *DefaultSalePriceCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9695f278-5d3c-4d5d-b657-988aa745a10b", err.Error())
+	}
 	return nil
 }
 
@@ -148,7 +154,9 @@ func (it *DefaultSalePriceCollection) ListSalePrices() []saleprice.InterfaceSale
 		if err != nil {
 			return result
 		}
-		salePriceModel.FromHashMap(recordData)
+		if err := salePriceModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c300b838-0439-4076-b62a-4c5003a6bdc2", err.Error())
+		}
 
 		result = append(result, salePriceModel)
 	}

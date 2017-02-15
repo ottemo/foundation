@@ -50,24 +50,39 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		visitorObject, err := visitor.GetCurrentVisitor(context)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
 		if visitorObject.IsGuest() {
-			collection.AddFilter("review", "!=", "")
-			collection.AddFilter("approved", "=", true)
+			if err := collection.AddFilter("review", "!=", ""); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36b0185e-3eed-4f5d-bc08-91d381b0944e", err.Error())
+			}
+			if err := collection.AddFilter("approved", "=", true); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d441a78d-ec6e-4d70-88df-58112552a9b9", err.Error())
+			}
 		} else {
 			collection.SetupFilterGroup("default", false, "")
 
 			collection.SetupFilterGroup("visible", true, "default")
+			if err := collection.SetupFilterGroup("visible", true, "default"); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8b90261-bce2-4506-8e5c-39146dcb142f", err.Error())
+			}
 
-			collection.SetupFilterGroup("content", false, "visible")
-			collection.AddGroupFilter("content", "review", "!=", "")
-			collection.AddGroupFilter("content", "approved", "=", true)
+			if err := collection.SetupFilterGroup("content", false, "visible"); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "909d45c0-4b43-4025-b5ec-53d1d50167e1", err.Error())
+			}
+			if err := collection.AddGroupFilter("content", "review", "!=", ""); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "10955f8e-c56f-4d88-9f5b-4e66add7cb0a", err.Error())
+			}
+			if err := collection.AddGroupFilter("content", "approved", "=", true); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c3ac19ec-c48b-4d28-a764-c8e05de798dd", err.Error())
+			}
 
-			collection.AddGroupFilter("visible", "visitor_id", "=", visitorObject.GetID())
+			if err := collection.AddGroupFilter("visible", "visitor_id", "=", visitorObject.GetID()); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c463cd3e-f2fb-449a-9c2e-d055342334e9", err.Error())
+			}
 		}
 	}
 
@@ -95,7 +110,7 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 	}
 
 	if visitorObject.IsGuest() {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2e671776-659b-4c1d-8590-a61f00a9d969", "guest visitor is no allowed to add review")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8d84ba12-5f04-4322-8cb5-c520189cad97", "guest visitor is no allowed to add review")
 	}
 
 	productObject, err := product.LoadProductByID(context.GetRequestArgument("productID"))
@@ -118,9 +133,15 @@ func APICreateProductReview(context api.InterfaceApplicationContext) (interface{
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a7d1a3d-aa79-4722-b02b-c030bffb7557", "stars should be value integer beetween 1 and 5")
 		}
 
-		reviewCollection.AddFilter("product_id", "=", productObject.GetID())
-		reviewCollection.AddFilter("visitor_id", "=", visitorObject.GetID())
-		reviewCollection.AddFilter("rating", ">", 0)
+		if err := reviewCollection.AddFilter("product_id", "=", productObject.GetID()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e8b60041-08c3-4483-a747-542305af04bb", err.Error())
+		}
+		if err := reviewCollection.AddFilter("visitor_id", "=", visitorObject.GetID()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a35c80e1-6608-4f43-97fe-788f81adaa50", err.Error())
+		}
+		if err := reviewCollection.AddFilter("rating", ">", 0); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fa514a76-5c9d-42e7-8f77-0a0fc106cbe4", err.Error())
+		}
 
 		records, err := reviewCollection.Count()
 		if err != nil {
@@ -168,8 +189,8 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 	reviewID := context.GetRequestArgument("reviewID")
 
 	var visitorObject visitor.InterfaceVisitor
-	if err := api.ValidateAdminRights(context); err != nil {
-		visitorObject, err = visitor.GetCurrentVisitor(context)
+	if !api.IsAdminSession(context) {
+		visitorObject, err := visitor.GetCurrentVisitor(context)
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -190,9 +211,9 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 
 	if visitorID, present := reviewRecord["visitor_id"]; present {
 		// check rights
-		if err := api.ValidateAdminRights(context); err != nil {
+		if !api.IsAdminSession(context) {
 			if visitorID != visitorObject.GetID() {
-				return nil, env.ErrorDispatch(err)
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b4751e17-309d-4f90-a33a-e986c5f2420a", "Operation not allowed.")
 			}
 		}
 
@@ -206,7 +227,9 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 				return nil, env.ErrorDispatch(err)
 			}
 
-			ratingCollection.AddFilter("product_id", "=", reviewRecord["product_id"])
+			if err := ratingCollection.AddFilter("product_id", "=", reviewRecord["product_id"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "717148ed-bb64-4f70-a324-322ad7b20830", err.Error())
+			}
 			ratingRecords, err := ratingCollection.Load()
 			if err != nil {
 				return nil, env.ErrorDispatch(err)
@@ -219,13 +242,17 @@ func APIDeleteProductReview(context api.InterfaceApplicationContext) (interface{
 
 				recordAttribute := "stars_" + utils.InterfaceToString(reviewRating)
 				ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) - 1
-				ratingCollection.Save(ratingRecord)
+				if _, err := ratingCollection.Save(ratingRecord); err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2a7b8c27-e46b-4a85-9aa8-7b4324529b8a", err.Error())
+				}
 			}
 		}
 
 		// review remove
 		//--------------
-		collection.DeleteByID(reviewID)
+		if err := collection.DeleteByID(reviewID); err != nil {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ca07589f-01da-4a86-add0-b67f0a4157bb", err.Error())
+		}
 	}
 
 	return "ok", nil
@@ -245,7 +272,9 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	ratingCollection.AddFilter("product_id", "=", productObject.GetID())
+	if err := ratingCollection.AddFilter("product_id", "=", productObject.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5da26dc9-f2ad-46be-b6b4-53fd6f4c06a3", err.Error())
+	}
 	ratingRecords, err := ratingCollection.Load()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
@@ -259,9 +288,8 @@ func APIGetProductRating(context api.InterfaceApplicationContext) (interface{}, 
 func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// admin or visitor
-	var isAdmin = (api.ValidateAdminRights(context) == nil)
 	var visitorObject visitor.InterfaceVisitor
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		var err error
 		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
 			return nil, env.ErrorDispatch(err)
@@ -293,47 +321,54 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ba19a94b-088c-4a28-861c-6fe2145f2348", "you not allowed to update review")
 	}
 
-	if isAdmin {
+	if api.IsAdminSession(context) {
 		if record["approved"] != context.GetRequestArgument("approved") {
 			ratingValue := utils.InterfaceToInt(record["rating"])
-			var diff = -1
-			if context.GetRequestArgument("approved") == "true" {
-				diff = 1
-			}
 
-			ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
-			ratingCollection.AddFilter("product_id", "=", record["product_id"])
-			ratingRecords, err := ratingCollection.Load()
-			if err != nil {
-				return nil, env.ErrorDispatch(err)
-			}
-
-			recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
-			var ratingRecord map[string]interface{}
-
-			if len(ratingRecords) > 0 {
-				ratingRecord = ratingRecords[0]
-
-				ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + diff
-			} else {
-				ratingRecord = map[string]interface{}{
-					"product_id": record["product_id"],
-					"stars_1":    0,
-					"stars_2":    0,
-					"stars_3":    0,
-					"stars_4":    0,
-					"stars_5":    0,
+			if 1 <= ratingValue && ratingValue <= 5 {
+				var diff = -1
+				if context.GetRequestArgument("approved") == "true" {
+					diff = 1
 				}
 
-				if diff > 0 {
-					ratingRecord[recordAttribute] = 1
+				ratingCollection, err := db.GetCollection(ConstRatingCollectionName)
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
+
+				if err := ratingCollection.AddFilter("product_id", "=", record["product_id"]); err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6d0a0ee0-3afb-4f0e-8a15-8a095003e510", err.Error())
+				}
+				ratingRecords, err := ratingCollection.Load()
+				if err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
+
+				recordAttribute := "stars_" + utils.InterfaceToString(ratingValue)
+				var ratingRecord map[string]interface{}
+
+				if len(ratingRecords) > 0 {
+					ratingRecord = ratingRecords[0]
+
+					ratingRecord[recordAttribute] = utils.InterfaceToInt(ratingRecord[recordAttribute]) + diff
+				} else {
+					ratingRecord = map[string]interface{}{
+						"product_id": record["product_id"],
+						"stars_1":    0,
+						"stars_2":    0,
+						"stars_3":    0,
+						"stars_4":    0,
+						"stars_5":    0,
+					}
+
+					if diff > 0 {
+						ratingRecord[recordAttribute] = 1
+					}
+				}
+				if _, err := ratingCollection.Save(ratingRecord); err != nil {
+					return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "956ff15f-681b-415b-9c76-2320df0ebee2", "unable to save rating record")
 				}
 			}
-			ratingCollection.Save(ratingRecord)
 		}
 	} else { // not admin
 		record["approved"] = false
@@ -356,9 +391,8 @@ func APIUpdateReview(context api.InterfaceApplicationContext) (interface{}, erro
 //   - review ID should be specified in "reviewID" argument
 func APIGetReview(context api.InterfaceApplicationContext) (interface{}, error) {
 	// admin or visitor
-	var isAdmin = (api.ValidateAdminRights(context) == nil)
 	var visitorObject visitor.InterfaceVisitor
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		var err error
 		if visitorObject, err = visitor.GetCurrentVisitor(context); err != nil {
 			return nil, env.ErrorDispatch(err)

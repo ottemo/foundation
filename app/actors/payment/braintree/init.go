@@ -8,6 +8,8 @@ import (
 
 // init makes package self-initialization routine
 func init() {
-	checkout.RegisterPaymentMethod(new(CreditCardMethod))
+	if err := checkout.RegisterPaymentMethod(new(CreditCardMethod)); err != nil {
+		_ = env.ErrorNew(constErrorModule, constErrorLevel, "194b26f7-3399-4121-80f1-e24305708871", err.Error())
+	}
 	env.RegisterOnConfigStart(setupConfig)
 }

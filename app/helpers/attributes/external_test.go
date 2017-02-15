@@ -150,7 +150,9 @@ func ExampleExternalAttributes() {
 	}
 
 	delegate := new(SampleDelegate)
-	modelEA.AddExternalAttributes(delegate)
+	if err := modelEA.AddExternalAttributes(delegate); err != nil {
+		panic(err)
+	}
 
 	// testing result: setting "a", "b" attributes to SampleModel instances and getting them back
 	var obj1, obj2 models.InterfaceObject
@@ -194,10 +196,18 @@ func ExampleExternalAttributes() {
 	}
 
 	if obj1, ok := obj1.(models.InterfaceStorable); ok {
-		obj1.Load("1")
-		obj1.Save()
-		obj1.Delete()
-		obj1.SetID("10")
+		if err := obj1.Load("1"); err != nil {
+			panic(err)
+		}
+		if err := obj1.Save(); err != nil {
+			panic(err)
+		}
+		if err := obj1.Delete(); err != nil {
+			panic(err)
+		}
+		if err := obj1.SetID("10"); err != nil {
+			panic(err)
+		}
 	} else {
 		panic(errors.New("models.InterfaceStorable not implemented"))
 	}

@@ -99,7 +99,7 @@ func (it *DefaultVisitor) IsVerified() bool {
 func (it *DefaultVisitor) Invalidate() error {
 
 	if it.GetEmail() == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bef673e9-79c1-42bc-ade0-e870b3da0e2f", "The email address field cannot be blank.")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9310827d-a15a-4abb-b47d-a9c1520c37ba", "The email address field cannot be blank.")
 	}
 
 	data, err := time.Now().MarshalBinary()
@@ -162,7 +162,9 @@ func (it *DefaultVisitor) Validate(key string) error {
 
 	stamp := time.Now()
 	timeNow := stamp.Unix()
-	stamp.UnmarshalBinary([]byte(data))
+	if err := stamp.UnmarshalBinary([]byte(data)); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4e4f872c-1838-4a65-bf38-fb592f2c401c", err.Error())
+	}
 	timeWas := stamp.Unix()
 
 	verificationExpired := (timeNow - timeWas) > ConstEmailVerifyExpire
@@ -178,7 +180,9 @@ func (it *DefaultVisitor) Validate(key string) error {
 		if !verificationExpired {
 			visitorModel := visitorModel.(*DefaultVisitor)
 			visitorModel.VerificationKey = ""
-			visitorModel.Save()
+			if err := visitorModel.Save(); err != nil {
+				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef91c830-bbbd-47fd-9801-7a86539ac771", err.Error())
+			}
 		} else {
 			err = visitorModel.Invalidate()
 			if err != nil {
@@ -226,7 +230,9 @@ func (it *DefaultVisitor) GenerateNewPassword() error {
 	const n = 10
 
 	var bytes = make([]byte, n)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96fb318e-98e9-491c-9f03-7e7b35a2425f", err.Error())
+	}
 	for i, b := range bytes {
 		bytes[i] = alphanum[b%byte(len(alphanum))]
 	}
@@ -364,7 +370,9 @@ func (it *DefaultVisitor) LoadByGoogleID(googleID string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("google_id", "=", googleID)
+	if err := collection.AddFilter("google_id", "=", googleID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a0f84b2-518c-45ba-acd4-318716792f8f", err.Error())
+	}
 	rows, err := collection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -394,7 +402,9 @@ func (it *DefaultVisitor) LoadByFacebookID(facebookID string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("facebook_id", "=", facebookID)
+	if err := collection.AddFilter("facebook_id", "=", facebookID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d4afa8b-0870-4f98-a00a-c55b1a92079e", err.Error())
+	}
 	rows, err := collection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -424,7 +434,9 @@ func (it *DefaultVisitor) LoadByEmail(email string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("email", "=", email)
+	if err := collection.AddFilter("email", "=", email); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bee796f-ae90-42dd-bf4c-48f9d8731e2a", err.Error())
+	}
 	rows, err := collection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)

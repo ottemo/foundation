@@ -147,9 +147,9 @@ func TestBlogPostAPI(t *testing.T) {
 	// api redeclaration to mimic priveleged calls
 	apiListPosts := post.APIListPosts
 	apiPostByID := post.APIPostByID
-	apiCreateBlogPost := api.IsAdmin(post.APICreateBlogPost)
-	apiUpdateByID := api.IsAdmin(post.APIUpdateByID)
-	apiDeleteByID := api.IsAdmin(post.APIDeleteByID)
+	apiCreateBlogPost := api.IsAdminHandler(post.APICreateBlogPost)
+	apiUpdateByID := api.IsAdminHandler(post.APIUpdateByID)
+	apiDeleteByID := api.IsAdminHandler(post.APIDeleteByID)
 
 	// init session
 	session := new(testSession)
@@ -157,7 +157,9 @@ func TestBlogPostAPI(t *testing.T) {
 
 	// init context
 	context := new(testContext)
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		t.Error(err)
+	}
 
 	numberOfPosts := 15
 	numberOfPublished := 10

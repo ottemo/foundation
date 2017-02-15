@@ -16,14 +16,14 @@ import (
 //   - internal usage function for AddFilter and AddStaticFilter routines
 func (it *DBCollection) makeSQLFilterString(ColumnName string, Operator string, Value interface{}) (string, error) {
 	if !it.HasColumn(ColumnName) {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "51a0ae66-a5fe-4db3-9c5f-6b55f196f714", "can't find column '"+ColumnName+"'")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8a113e66-b2e8-472d-a92c-476794b2d127", "can't find column '"+ColumnName+"'")
 	}
 
 	Operator = strings.ToUpper(Operator)
 	allowedOperators := []string{"=", "!=", "<>", ">", ">=", "<", "<=", "LIKE", "IN"}
 
 	if !utils.IsInListStr(Operator, allowedOperators) {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "793c0ec0-aa84-46cf-9305-6245d9198d45", "unknown operator '"+Operator+"' for column '"+ColumnName+"', allowed: '"+strings.Join(allowedOperators, "', ")+"'")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "11a51df3-83bb-4250-bff7-60e2e8bb6b49", "unknown operator '"+Operator+"' for column '"+ColumnName+"', allowed: '"+strings.Join(allowedOperators, "', ")+"'")
 	}
 
 	columnType := it.GetColumnType(ColumnName)
@@ -173,7 +173,7 @@ func (it *DBCollection) getFilterGroup(groupName string) *StructDBFilterGroup {
 func (it *DBCollection) updateFilterGroup(groupName string, columnName string, operator string, value interface{}) error {
 
 	/*if !it.HasColumn(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9e9c8c2-39bd-48b5-9fd6-5929b9bf30f5", "not existing column " + columnName)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "67fa360b-ba93-407c-a787-1c013ebb8947", "not existing column " + columnName)
 	}*/
 
 	newValue, err := it.makeSQLFilterString(columnName, operator, value)
@@ -194,7 +194,9 @@ func (it *DBCollection) makeUUID(id string) string {
 		timeStamp := strconv.FormatInt(time.Now().Unix(), 16)
 
 		randomBytes := make([]byte, 8)
-		rand.Reader.Read(randomBytes)
+		if _, err := rand.Reader.Read(randomBytes); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		randomHex := make([]byte, 16)
 		hex.Encode(randomHex, randomBytes)

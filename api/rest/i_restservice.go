@@ -40,7 +40,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		defer func() {
 			if recoverResult := recover(); recoverResult != nil {
 				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28d7ef2f-631f-4f38-a916-579bf822908b", "API call fail: "+fmt.Sprintf("%v", recoverResult))
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 		}()
 
@@ -87,9 +87,11 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err := ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
-			json.Unmarshal(body, &newContent)
+			if err := json.Unmarshal(body, &newContent); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 
 			content = newContent
 
@@ -97,12 +99,16 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		case strings.Contains(contentType, "form-data"):
 			newContent := map[string]interface{}{}
 
-			req.ParseForm()
+			if err := req.ParseForm(); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 			for attribute, value := range req.PostForm {
 				newContent[attribute], _ = url.QueryUnescape(value[0])
 			}
 
-			req.ParseMultipartForm(32 << 20) // 32 MB
+			if err := req.ParseMultipartForm(32 << 20); err != nil {// 32 MB
+				_ = env.ErrorDispatch(err)
+			}
 			if req.MultipartForm != nil {
 				for attribute, value := range req.MultipartForm.Value {
 					newContent[attribute], _ = url.QueryUnescape(value[0])
@@ -115,7 +121,9 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		case strings.Contains(contentType, "urlencode"):
 			newContent := map[string]interface{}{}
 
-			req.ParseForm()
+			if err := req.ParseForm(); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 			for attribute, value := range req.PostForm {
 				newContent[attribute], _ = url.QueryUnescape(value[0])
 			}
@@ -130,7 +138,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			body, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 
 			content = string(body)
@@ -176,7 +184,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		currentSession, err := api.StartSession(applicationContext)
 		if err != nil {
 			err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 		applicationContext.Session = currentSession
 
@@ -219,10 +227,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		var result interface{}
 		context.MakeContext(func() {
 			if callContext := context.GetContext(); callContext != nil {
-				callContext["is_admin"] = false
-				if api.ValidateAdminRights(applicationContext) == nil {
-					callContext["is_admin"] = true
-				}
+				callContext["is_admin"] = api.IsAdminSession(applicationContext)
 			} else {
 				err = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6b94a499-9d71-403e-9f67-06fd90d6250d", "can not get context for API handler")
 			}
@@ -234,7 +239,7 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		})
 
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			env.LogEvent(env.LogFields{
 				"request_thread_id": debugRequestIdentifier,
 				"session_id":        currentSession.GetID(),
@@ -284,11 +289,11 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 							"code":    ottemoError.ErrorCode(),
 						}
 					} else {
-						env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bdbb8627-18e8-4969-a048-c8b482235f39", "can't convert error to ottemoError")
+						_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bdbb8627-18e8-4969-a048-c8b482235f39", "can't convert error to ottemoError")
 						errorMsg = map[string]interface{}{
 							"message": err.Error(),
 							"level":   env.ConstErrorLevelAPI,
-							"code":    "bdbb8627-18e8-4969-a048-c8b482235f39",
+							"code":    "896810b9-9b54-471a-830c-b77b33379adc",
 						}
 					}
 				}
@@ -324,9 +329,13 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 		}
 
 		if value, ok := result.([]byte); ok {
-			resp.Write(value)
+			if _, err := resp.Write(value); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		} else if result != nil {
-			resp.Write([]byte(fmt.Sprint(result)))
+			if _, err := resp.Write([]byte(fmt.Sprint(result))); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
 	}
 

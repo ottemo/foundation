@@ -115,13 +115,17 @@ func (it *DefaultSEOCollection) ListAddExtraAttribute(attribute string) error {
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultSEOCollection) ListFilterAdd(attribute string, operator string, value interface{}) error {
-	it.listCollection.AddFilter(attribute, operator, value.(string))
+	if err := it.listCollection.AddFilter(attribute, operator, value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fe0b923d-9571-4c64-9a6a-99d2cda3d587", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultSEOCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd115bb7-6c5e-4fc0-86c5-a13a5d12cf92", err.Error())
+	}
 	return nil
 }
 
@@ -148,7 +152,9 @@ func (it *DefaultSEOCollection) ListSEOItems() []seo.InterfaceSEOItem {
 		if err != nil {
 			return result
 		}
-		seoItemModel.FromHashMap(dbRecordData)
+		if err := seoItemModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d6811b7c-1d4f-4435-9365-8b10b6bbe9a0", err.Error())
+		}
 
 		result = append(result, seoItemModel)
 	}

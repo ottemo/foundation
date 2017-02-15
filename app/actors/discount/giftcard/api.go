@@ -23,7 +23,7 @@ func setupAPI() error {
 	service.POST("cart/giftcards/:giftcode", Apply)
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
-	service.POST("giftcard", api.IsAdmin(createFromAdmin))
+	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
 	return nil
 }

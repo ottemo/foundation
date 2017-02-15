@@ -101,7 +101,9 @@ func MapToCSV(input []map[string]interface{}, csvWriter *csv.Writer) error {
 		csvHeader = append(csvHeader, csvColumnHeaders[currentPath])
 	}
 
-	csvWriter.Write(csvHeader)
+	if err := csvWriter.Write(csvHeader); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	csvWriter.Flush()
 
 	// making contents
@@ -136,7 +138,9 @@ func MapToCSV(input []map[string]interface{}, csvWriter *csv.Writer) error {
 		}
 
 		for _, csvRecord := range itemCSVRecords {
-			csvWriter.Write(csvRecord)
+			if err := csvWriter.Write(csvRecord); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
 		csvWriter.Flush()
 	}
@@ -538,7 +542,7 @@ func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvR
 					return env.ErrorDispatch(err)
 				}
 			} else {
-				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "004e9f7b-bb97-4356-bbc2-5e084736983b", "unknown cmd '"+args[0]+"'")
+				return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c787e632-bd20-4a9c-94a4-2e4a20a3ed40", "unknown cmd '"+args[0]+"'")
 			}
 		}
 	}
@@ -566,10 +570,18 @@ func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvR
 			}
 
 			if testMode {
-				io.WriteString(output, fmt.Sprintf("Command: %s", commandsRaw[chainIdx]))
-				io.WriteString(output, "\n")
-				io.WriteString(output, fmt.Sprintf("item: %s", utils.EncodeToJSONString(itemData)))
-				io.WriteString(output, "\n\n")
+				if _, err := io.WriteString(output, fmt.Sprintf("Command: %s", commandsRaw[chainIdx])); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+				if _, err := io.WriteString(output, "\n"); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+				if _, err := io.WriteString(output, fmt.Sprintf("item: %s", utils.EncodeToJSONString(itemData))); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+				if _, err := io.WriteString(output, "\n\n"); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 
 				input, err = command.Test(itemData, input, exchangeDict)
 			} else {
@@ -582,7 +594,7 @@ func ImportCSVData(commandLine string, exchangeDict map[string]interface{}, csvR
 				if ConstImpexLog || ConstDebugLog {
 					env.Log(ConstLogFileName, env.ConstLogPrefixDebug, fmt.Sprintf("Error: %s", err.Error()))
 				}
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				return true
 			}
 

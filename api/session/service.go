@@ -163,13 +163,15 @@ func (it *DefaultSessionService) GetName() string {
 func (it *DefaultSessionService) allocateSessionInstance(sessionInstance *DefaultSessionContainer) error {
 
 	if ConstSessionUpdateTime == -1 && ConstSessionKeepInMemoryItems > 0 {
-		it.GC()
+		_ = it.GC()
 
 		numOfSessionsToClean := it.syncCount() - ConstSessionKeepInMemoryItems
 		if numOfSessionsToClean >= 0 {
 			it.syncLoop(
 				func(item *DefaultSessionContainer) bool {
-					it.storage.FlushSession(item.id)
+					if err := it.storage.FlushSession(item.id); err != nil {
+						_ = env.ErrorDispatch(err)
+					}
 					numOfSessionsToClean--
 
 					if numOfSessionsToClean <= 0 {
@@ -183,7 +185,9 @@ func (it *DefaultSessionService) allocateSessionInstance(sessionInstance *Defaul
 	it.syncSet(sessionInstance.id, sessionInstance)
 
 	if ConstSessionUpdateTime <= 0 {
-		it.storage.FlushSession(sessionInstance.id)
+		if err := it.storage.FlushSession(sessionInstance.id); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 
 	return nil
@@ -242,7 +246,9 @@ func (it *DefaultSessionService) Get(sessionID string, create bool) (api.Interfa
 		it.syncSet(sessionID, sessionInstance)
 
 		if ConstSessionUpdateTime <= 0 {
-			it.storage.FlushSession(sessionID)
+			if err := it.storage.FlushSession(sessionID); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -288,7 +294,9 @@ func (it *DefaultSessionService) Touch(sessionID string) error {
 			sessionInstance.SetUpdatedAt(time.Now())
 
 			if ConstSessionUpdateTime <= 0 {
-				it.storage.FlushSession(sessionID)
+				if err := it.storage.FlushSession(sessionID); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 			}
 		}
 	}
@@ -306,7 +314,7 @@ func (it *DefaultSessionService) Close(sessionID string) error {
 		if _, err := os.Stat(filename); err == nil {
 			err := os.Remove(filename)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 		}
 
@@ -342,7 +350,9 @@ func (it *DefaultSessionService) SetKey(sessionID string, key string, value inte
 			sessionInstance.SetUpdatedAt(time.Now())
 
 			if ConstSessionUpdateTime <= 0 {
-				it.storage.FlushSession(sessionID)
+				if err := it.storage.FlushSession(sessionID); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 			}
 		}
 	}
@@ -356,7 +366,9 @@ func (it *DefaultSessionService) GC() error {
 
 			// closing out of date sessions
 			if secondsAfterLastUpdate >= ConstSessionLifeTime {
-				it.Close(sessionInstance.id)
+				if err := it.Close(sessionInstance.id); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 				return false
 			}
 
@@ -364,7 +376,7 @@ func (it *DefaultSessionService) GC() error {
 			if secondsAfterLastUpdate > ConstSessionUpdateTime {
 				err := it.storage.FlushSession(sessionInstance.id)
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 				}
 			}
 			return false
@@ -378,7 +390,7 @@ func (it *DefaultSessionService) IsEmpty(sessionID string) bool {
 
 	_, err := it.Get(sessionID, false)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	if sessionInstance := it.syncGet(sessionID); sessionInstance != nil {

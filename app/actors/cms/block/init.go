@@ -13,16 +13,22 @@ import (
 func init() {
 	cmsBlockInstance := new(DefaultCMSBlock)
 	var _ cms.InterfaceCMSBlock = cmsBlockInstance
-	models.RegisterModel(cms.ConstModelNameCMSBlock, cmsBlockInstance)
+	if err := models.RegisterModel(cms.ConstModelNameCMSBlock, cmsBlockInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b3834a39-b6c1-4b2d-9051-3c81f76216c9", err.Error())
+	}
 
 	cmsBlockCollectionInstance := new(DefaultCMSBlockCollection)
 	var _ cms.InterfaceCMSBlockCollection = cmsBlockCollectionInstance
-	models.RegisterModel(cms.ConstModelNameCMSBlockCollection, cmsBlockCollectionInstance)
+	if err := models.RegisterModel(cms.ConstModelNameCMSBlockCollection, cmsBlockCollectionInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "49336ec2-3204-4fe4-b530-975b347dbd0e", err.Error())
+	}
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)
 
-	utils.RegisterTemplateFunction("block", blockTemplateDirective)
+	if err := utils.RegisterTemplateFunction("block", blockTemplateDirective); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "43876927-a8f4-4c5e-8ced-e8daa7faed7c", err.Error())
+	}
 
 }
 
@@ -33,10 +39,18 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("identifier", db.ConstTypeVarchar, true)
-	collection.AddColumn("content", db.ConstTypeText, false)
-	collection.AddColumn("created_at", db.ConstTypeDatetime, false)
-	collection.AddColumn("updated_at", db.ConstTypeDatetime, false)
+	if err := collection.AddColumn("identifier", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28029fa1-02d7-4ec6-a482-924e6121ab5f", err.Error())
+	}
+	if err := collection.AddColumn("content", db.ConstTypeText, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2013333b-0f9d-4b4b-8cc7-ed9ae6d214e7", err.Error())
+	}
+	if err := collection.AddColumn("created_at", db.ConstTypeDatetime, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d8b786b-4382-45a1-80cd-f8585309f43d", err.Error())
+	}
+	if err := collection.AddColumn("updated_at", db.ConstTypeDatetime, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5170d746-127f-40ff-ab30-05804931b84d", err.Error())
+	}
 
 	return nil
 }

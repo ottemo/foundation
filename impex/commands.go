@@ -177,7 +177,7 @@ func (it *ImportCmdImport) Process(itemData map[string]interface{}, input interf
 	// preparing model
 	//-----------------
 	if it.model == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb15163b-bca9-41a7-92bc-c646fe4eba53", "IMPORT command have no assigned model to work on")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84ae6a9e-2172-4ca5-9a8c-2459b3542035", "IMPORT command have no assigned model to work on")
 	}
 
 	// model attributes
@@ -218,7 +218,7 @@ func (it *ImportCmdInsert) Test(itemData map[string]interface{}, input interface
 	// preparing model
 	//-----------------
 	if it.model == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb15163b-bca9-41a7-92bc-c646fe4eba53", "INSERT command have no assigned model to work on")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "33995d8e-6abe-44b5-92db-d69e1b7fa59a", "INSERT command have no assigned model to work on")
 	}
 	cmdModel, err := it.model.New()
 	if err != nil {
@@ -247,7 +247,7 @@ func (it *ImportCmdInsert) Process(itemData map[string]interface{}, input interf
 	// preparing model
 	//-----------------
 	if it.model == nil {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb15163b-bca9-41a7-92bc-c646fe4eba53", "INSERT command have no assigned model to work on")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d334c2ad-c5f2-4c4b-abfa-8702c79036d1", "INSERT command have no assigned model to work on")
 	}
 	cmdModel, err := it.model.New()
 	if err != nil {
@@ -332,7 +332,9 @@ func (it *ImportCmdUpdate) Test(itemData map[string]interface{}, input interface
 			}
 
 			if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
-				modelAsObject.Set(attribute, value)
+				if err := modelAsObject.Set(attribute, value); err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
 			}
 		}
 	}
@@ -371,7 +373,9 @@ func (it *ImportCmdUpdate) Process(itemData map[string]interface{}, input interf
 		}
 
 		if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
-			modelAsObject.Set(attribute, value)
+			if err := modelAsObject.Set(attribute, value); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -588,7 +592,7 @@ func (it *ImportCmdMedia) Init(args []string, exchange map[string]interface{}) e
 
 // Test is a MEDIA command processor for test mode
 func (it *ImportCmdMedia) Test(itemData map[string]interface{}, input interface{}, exchange map[string]interface{}) (interface{}, error) {
-	return input, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c6384ea9-08db-46aa-b49b-cb8ee28598fa", "MEDIA command is not allowed in test mode")
+	return input, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8b8b5147-be2a-4485-bc61-b18c77ad5d70", "MEDIA command is not allowed in test mode")
 }
 
 // Process is a MEDIA command processor
@@ -830,7 +834,7 @@ func (it *ImportCmdAttributeAdd) Process(itemData map[string]interface{}, input 
 	modelAsCustomAttributesInterface := it.model.(models.InterfaceCustomAttributes)
 	err := modelAsCustomAttributesInterface.AddNewAttribute(it.attribute)
 	if err != nil {
-		env.ErrorDispatch(err)
+		return input, env.ErrorDispatch(err)
 	}
 
 	return input, nil

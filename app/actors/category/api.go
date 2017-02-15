@@ -37,15 +37,15 @@ func setupAPI() error {
 	service.GET("category/:categoryID/mediapath/:mediaType", APIGetMediaPath)
 
 	// Admin Only
-	service.POST("category", api.IsAdmin(APICreateCategory))
-	service.PUT("category/:categoryID", api.IsAdmin(APIUpdateCategory))
-	service.DELETE("category/:categoryID", api.IsAdmin(APIDeleteCategory))
+	service.POST("category", api.IsAdminHandler(APICreateCategory))
+	service.PUT("category/:categoryID", api.IsAdminHandler(APIUpdateCategory))
+	service.DELETE("category/:categoryID", api.IsAdminHandler(APIDeleteCategory))
 
-	service.POST("category/:categoryID/product/:productID", api.IsAdmin(APIAddProductToCategory))
-	service.DELETE("category/:categoryID/product/:productID", api.IsAdmin(APIRemoveProductFromCategory))
+	service.POST("category/:categoryID/product/:productID", api.IsAdminHandler(APIAddProductToCategory))
+	service.DELETE("category/:categoryID/product/:productID", api.IsAdminHandler(APIRemoveProductFromCategory))
 
-	service.POST("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForCategory))
-	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForCategory))
+	service.POST("category/:categoryID/media/:mediaType/:mediaName", api.IsAdminHandler(APIAddMediaForCategory))
+	service.DELETE("category/:categoryID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRemoveMediaForCategory))
 
 	return nil
 }
@@ -61,11 +61,15 @@ func APIListCategories(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// applying requested filters
-	models.ApplyFilters(context, categoryCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, categoryCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7d867be7-731c-4af1-952f-23dd297e56c3", err.Error())
+	}
 
 	// excluding disabled categories for a regular visitor
-	if err := api.ValidateAdminRights(context); err != nil {
-		categoryCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := categoryCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4c40fe1d-34f3-4b21-8c53-e0a6d074eab0", err.Error())
+		}
 	}
 
 	// checking for a "count" request
@@ -74,10 +78,14 @@ func APIListCategories(context api.InterfaceApplicationContext) (interface{}, er
 	}
 
 	// limit parameter handle
-	categoryCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := categoryCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb982f7a-97b4-45f6-b5ad-84960d60050e", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, categoryCollectionModel)
+	if err := models.ApplyExtraAttributes(context, categoryCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "deeb537f-2a4a-4808-9e59-e827160581f4", err.Error())
+	}
 
 	listItems, err := categoryCollectionModel.List()
 	if err != nil {
@@ -252,7 +260,7 @@ func APIGetCategoryAttributes(context api.InterfaceApplicationContext) (interfac
 func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{}, error) {
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "389975e7-611c-4d6c-8b4d-bca450f5f7e7", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "3edd349a-269f-4400-8762-d685bb8e3a5b", "category id was not specified")
 	}
 
 	categoryModel, err := category.LoadCategoryByID(categoryID)
@@ -260,7 +268,7 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8-373a-4247-a81e-fbbe39a7fe74", "category is not available")
 	}
 
@@ -275,11 +283,15 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 
 	result := make(map[string]interface{})
 
-	models.ApplyFilters(context, productsDBCollection)
+	if err := models.ApplyFilters(context, productsDBCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "876d62b2-4d80-455c-8dcd-ac7971197df6", err.Error())
+	}
 
 	// not allowing to see disabled products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsDBCollection.AddFilter("enabled", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := productsDBCollection.AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ea8e2ba1-c9df-484a-ac53-1b9fa43fcab1", err.Error())
+		}
 	}
 
 	for _, productAttribute := range productAttributesInfo {
@@ -308,18 +320,24 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a6f080d-dfa4-4f8c-8a0c-ec31cbe1cd87", "category is not available")
 	}
 
 	productsCollection := categoryModel.GetProductsCollection()
 
-	models.ApplyFilters(context, productsCollection.GetDBCollection())
+	if err := models.ApplyFilters(context, productsCollection.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee3b2e74-81d4-460d-80ef-e9f973744ecd", err.Error())
+	}
 
 	// not allowing to see disabled and hidden products if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true)
-		productsCollection.GetDBCollection().AddGroupFilter("visitor", "visible", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := productsCollection.GetDBCollection().AddGroupFilter("visitor", "enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "00051bb2-83a7-484f-8ad8-51697385afa1", err.Error())
+		}
+		if err := productsCollection.GetDBCollection().AddGroupFilter("visitor", "visible", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b02437f-fceb-492e-a70e-f5cfb10d048d", err.Error())
+		}
 	}
 
 	// checking for a "count" request
@@ -328,7 +346,9 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 	}
 
 	// limit parameter handle
-	productsCollection.ListLimit(models.GetListLimit(context))
+	if err := productsCollection.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d36c2098-5a68-4073-ae4b-a49ca56e9f27", err.Error())
+	}
 
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {
@@ -343,7 +363,7 @@ func APIGetCategoryProducts(context api.InterfaceApplicationContext) (interface{
 
 		productInfo["image"], err = mediaStorage.GetAllSizes(product.ConstModelNameProduct, productModel.GetID(), ConstCategoryMediaTypeImage)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 		result = append(result, productInfo)
 	}
@@ -429,7 +449,7 @@ func APIGetCategory(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if api.ValidateAdminRights(context) != nil && !categoryModel.GetEnabled() {
+	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "80615e04-f43d-42a4-9482-39a5e7f8ccb7", "category is not available")
 	}
 
@@ -520,12 +540,12 @@ func APIGetMediaPath(context api.InterfaceApplicationContext) (interface{}, erro
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6597ff92-f2ee-4233-bcf9-eb73b957fb05", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "091d758d-9c3d-4e4f-8515-0f33a04b0354", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "75c00741-5873-4be1-9fa0-df9d2956d3de", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5571ec1-a56d-4897-aaa8-6b14b466d82e", "media type was not specified")
 	}
 
 	// list media operation
@@ -551,12 +571,12 @@ func APIListMedia(context api.InterfaceApplicationContext) (interface{}, error) 
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "52677450-8a7f-49c9-a472-51d0e80bc7ca", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363bf428-ba51-432e-9b80-7d4a0a11fe18", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b8b31a9f-6fac-47b3-89e2-c9b3e589a8f6", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d05160cb-4df5-4917-bdb3-c06767d2483b", "media type was not specified")
 	}
 
 	// list media operation
@@ -583,17 +603,17 @@ func APIAddMediaForCategory(context api.InterfaceApplicationContext) (interface{
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a4696c5d-3276-4272-8d86-8061e57743a5", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "98e86d33-83c3-47c6-986b-11925c4f21ac", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f3ea9a01-412a-4af2-9496-cb58cdb8139d", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9db218b8-b37c-49a7-86d8-04a58d0f4fbc", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "23fb7617-f19a-4505-b706-10f7898fd980", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "74cec364-c64d-493a-8848-e8af474eebc0", "media name was not specified")
 	}
 
 	// income file processing
@@ -640,12 +660,12 @@ func APIRemoveMediaForCategory(context api.InterfaceApplicationContext) (interfa
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f5f77b7f-6606-4bdd-a113-0a3b26f5759c", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dfde9c02-97bb-4bc6-8874-669392ad32a1", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e81b841f-8253-4b66-ac7d-2cc9a484044c", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "224dd952-7c84-4ae4-882a-b15a002c37e6", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")
@@ -677,12 +697,12 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 	//---------------------
 	categoryID := context.GetRequestArgument("categoryID")
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d33b8a67-359f-4a3e-b626-f58b6c70f09f", "category id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "41d5d10d-9c15-4144-b1e2-ebf47d1911d8", "category id was not specified")
 	}
 
 	mediaType := context.GetRequestArgument("mediaType")
 	if mediaType == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d081b726-caf4-4694-baaa-7b1801ca9713", "media type was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "453e4717-8101-41b4-91c1-172d1b489662", "media type was not specified")
 	}
 
 	mediaName := context.GetRequestArgument("mediaName")
@@ -690,7 +710,9 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name was not specified")
 	}
 
-	context.SetResponseContentType(mime.TypeByExtension(mediaName))
+	if err := context.SetResponseContentType(mime.TypeByExtension(mediaName)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d8c7a09-3ee7-489f-899c-d6c32c3f5285", err.Error())
+	}
 
 	// list media operation
 	//---------------------

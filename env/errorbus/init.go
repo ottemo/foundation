@@ -12,7 +12,9 @@ func init() {
 
 	var _ env.InterfaceOttemoError = new(OttemoError)
 
-	env.RegisterErrorBus(instance)
+	if err := env.RegisterErrorBus(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	env.RegisterOnConfigIniStart(setupOnIniConfigStart)
 	env.RegisterOnConfigStart(setupConfig)
 }

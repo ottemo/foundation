@@ -12,6 +12,8 @@ import (
 	"github.com/ottemo/foundation/app/actors/visitor"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/env/logger"
 
 	visitorInterface "github.com/ottemo/foundation/app/models/visitor"
 )
@@ -165,13 +167,17 @@ func TestReviewAPI(t *testing.T) {
 		t.Error(err)
 	}
 
+	initConfig(t)
+
 	// init session
 	session := new(testSession)
 	session._test_data_ = map[string]interface{}{}
 
 	// init context
 	context := new(testContext)
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		t.Error(err)
+	}
 
 	// scenario
 	var visitor1 = createVisitor(t, context, "1")
@@ -465,5 +471,12 @@ func checkGetReview(t *testing.T, context *testContext, visitorID interface{}, r
 		}
 	} else if !canGet {
 		t.Error(msg, ", should not be able to get review")
+	}
+}
+
+func initConfig(t *testing.T) {
+	var config = env.GetConfig()
+	if err := config.SetValue(logger.ConstConfigPathErrorLogLevel, 10); err != nil {
+		t.Error(err)
 	}
 }

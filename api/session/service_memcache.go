@@ -55,7 +55,7 @@ func startup() error {
 
 	memcacheService, ok := SessionService.(*MemcacheSessionService)
 	if !ok {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "846e84a1-06cf-4dda-b441-5ebb6c7b3413", "unexpected session service instance")
 	}
 
 	serversList := "127.0.0.1:11211"
@@ -128,7 +128,7 @@ func (it *MemcacheSessionService) FlushSession(sessionID string) error {
 	// checking session existence
 	sessionInstance := it.syncGet(sessionID)
 	if sessionInstance == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5eabd4f1-2ebb-4601-92de-188a6ef7da4e", "session "+sessionID+" not found")
 	}
 
 	// skipping flush for empty sessions

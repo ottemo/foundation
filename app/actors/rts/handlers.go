@@ -34,7 +34,7 @@ func visitsHandler(event string, eventData map[string]interface{}) bool {
 
 				err := SaveStatisticsData()
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 				}
 			}
 		}
@@ -63,7 +63,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
 					err := SaveStatisticsData()
 					if err != nil {
-						env.ErrorDispatch(err)
+						_ = env.ErrorDispatch(err)
 					}
 				}
 
@@ -79,7 +79,7 @@ func addToCartHandler(event string, eventData map[string]interface{}) bool {
 
 				err := SaveStatisticsData()
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 				}
 			}
 		}
@@ -100,7 +100,7 @@ func visitCheckoutHandler(event string, eventData map[string]interface{}) bool {
 
 	err := SaveStatisticsData()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	return true
@@ -118,7 +118,7 @@ func setPaymentHandler(event string, eventData map[string]interface{}) bool {
 
 	err := SaveStatisticsData()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	return true
@@ -162,7 +162,7 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 			err := SaveStatisticsData()
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 		}
 	} else {
@@ -181,7 +181,7 @@ func purchasedHandler(event string, eventData map[string]interface{}) bool {
 
 			err := SaveStatisticsData()
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 		}
 	}
@@ -205,7 +205,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 
 		salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			return true
 		}
 		currentDate := time.Now().Truncate(time.Hour).Add(time.Hour)
@@ -213,12 +213,18 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 
 			salesHistoryRecord := make(map[string]interface{})
 
-			salesHistoryCollection.ClearFilters()
-			salesHistoryCollection.AddFilter("created_at", "=", currentDate)
-			salesHistoryCollection.AddFilter("product_id", "=", productID)
+			if err := salesHistoryCollection.ClearFilters(); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "121c0d25-de60-47d7-99ee-e393af75825e", err.Error())
+			}
+			if err := salesHistoryCollection.AddFilter("created_at", "=", currentDate); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "051a6574-108b-41b3-983e-c05da5ba887e", err.Error())
+			}
+			if err := salesHistoryCollection.AddFilter("product_id", "=", productID); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6405bd35-8410-41ca-9e1f-75eb36b32531", err.Error())
+			}
 			dbSaleRow, err := salesHistoryCollection.Load()
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				return true
 			}
 
@@ -236,7 +242,7 @@ func salesHandler(event string, eventData map[string]interface{}) bool {
 				salesHistoryRecord["count"] = newCount
 				_, err = salesHistoryCollection.Save(salesHistoryRecord)
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 					return true
 				}
 			}

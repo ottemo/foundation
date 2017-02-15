@@ -186,7 +186,11 @@ func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer visitorModel.Delete()
+	defer func (v visitor.InterfaceVisitor){
+		if err := v.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(visitorModel)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
 
