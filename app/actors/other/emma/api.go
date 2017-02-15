@@ -28,12 +28,16 @@ func APIEmmaAddContact(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "email", "group_ids") {
+	if !utils.KeysInMapAndNotBlank(requestData, "email") {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email or group_ids have not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6372b9a3-29f3-4ea4-a19f-40051a8f330b", "email has not been specified")
 	}
-
 	email := utils.InterfaceToString(requestData["email"])
+
+	if !utils.KeysInMapAndNotBlank(requestData, "group_ids") {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eee81283-86c4-487c-a5b5-b78996be038e", "group_ids not specified")
+	}
 	groupIDs := utils.InterfaceToString(requestData["group_ids"])
 
 	if !utils.ValidEmailAddress(email) {

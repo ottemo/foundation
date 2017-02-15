@@ -131,7 +131,7 @@ func APIRelay(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	sessionInstance, err := api.GetSessionByID(utils.InterfaceToString(requestData["x_session"]), false)
 	if sessionInstance == nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "48f70911-836f-41ba-9ed9-b2afcb7ca462", "Wrong session ID")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ca56bc43-904a-456a-9df5-03299e713c85", "Wrong session ID")
 	}
 	context.SetSession(sessionInstance)
 
