@@ -97,7 +97,7 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 
 		if initialAmount == 0.0 {
-			initialAmount = value["amount"]
+			initialAmount = utils.InterfaceToFloat64(value["amount"])
 		}
 
 		value["initial_amount"] = initialAmount
