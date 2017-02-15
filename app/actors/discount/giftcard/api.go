@@ -91,13 +91,10 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	for _, value := range dbRecords {
 
-		initialAmount := 0.0
+
+		initialAmount := utils.InterfaceToFloat64(value["amount"])
 		for _, amount := range utils.InterfaceToMap(value["orders_used"]) {
 			initialAmount = initialAmount + math.Abs(utils.InterfaceToFloat64(amount))
-		}
-
-		if initialAmount == 0.0 {
-			initialAmount = utils.InterfaceToFloat64(value["amount"])
 		}
 
 		value["initial_amount"] = initialAmount
@@ -192,8 +189,8 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 //    - giftcard id should be specified in the "giftid" argument
 func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	giftCardId := context.GetRequestArgument("id")
-	if giftCardId == "" {
+	giftCardID := context.GetRequestArgument("id")
+	if giftCardID == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10ab8fd5-05ca-43e2-9da9-8acac0ea13f9", "No giftcard code specified in the request.")
 	}
@@ -204,7 +201,7 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	row, err := collection.LoadByID(giftCardId)
+	row, err := collection.LoadByID(giftCardID)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
