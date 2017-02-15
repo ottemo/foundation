@@ -59,6 +59,8 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 			collection.AddFilter("review", "!=", "")
 			collection.AddFilter("approved", "=", true)
 		} else {
+			collection.SetupFilterGroup("default", false, "")
+
 			collection.SetupFilterGroup("visible", true, "default")
 
 			collection.SetupFilterGroup("content", false, "visible")
