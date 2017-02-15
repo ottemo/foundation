@@ -1,11 +1,13 @@
 package mongo
 
 import (
-	"github.com/ottemo/foundation/env"
+	"crypto/x509"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"sync"
 	"time"
+
+	"github.com/ottemo/foundation/env"
 )
 
 // Package global variables
@@ -64,4 +66,14 @@ type DBEngine struct {
 
 	DBName      string
 	collections map[string]bool
+
+	isConnected bool
+}
+
+// connectionParamsType describes params required to connect to DB
+type connectionParamsType struct {
+	UseSSL      bool
+	DBUri       string
+	DBName      string
+	CertPoolPtr *x509.CertPool
 }
