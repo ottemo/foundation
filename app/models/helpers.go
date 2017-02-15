@@ -73,7 +73,10 @@ func ApplyExtraAttributes(context api.InterfaceApplicationContext, collection In
 	for _, attributeName := range extraAttributes {
 		err := collection.ListAddExtraAttribute(attributeName)
 		if err != nil {
-			return env.ErrorDispatch(err)
+			// Ignore error processing if attribute is wrong. Log it anyway as warning.
+			// Attribute could be absent in collection declaration because of external attribute package is disabled.
+			// For example, "sale_price" attribute could be absent, if "Sale Price" package disabled.
+			env.Log(ConstErrorModule+".log", env.ConstLogPrefixWarning, "incorrect or disabled attribute '" + attributeName + "' added to collection list.")
 		}
 	}
 
