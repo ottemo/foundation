@@ -48,21 +48,27 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	useDebugLog := utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathDebugLog))
 
 	templateValues := map[string]interface{}{
-		"key":         utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathKey)),
-		"password":    utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPassword)),
-		"number":      utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathNumber)),
-		"meter":       utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMeter)),
-		"origin":      utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathShippingOriginZip)),
-		"dropoff":     utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDropoff)),
-		"packaging":   utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPackaging)),
-		"destination": nil,
-		"weight":      "0.01",
+		"key":           	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathKey)),
+		"password":      	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPassword)),
+		"number":        	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathNumber)),
+		"meter":         	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathMeter)),
+		"originZip":     	utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathShippingOriginZip)),
+		"originCountry": 	utils.InterfaceToString(env.ConfigGetValue(checkout.ConstConfigPathShippingOriginCountry)),
+		"dropoff":       	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDropoff)),
+		"packaging":     	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathPackaging)),
+		"residential":     	utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathResidential)),
+		"destinationZip":     	nil,
+		"destinationCountry": 	nil,
+		"weight":             	"0.01",
+		"amount":             	checkoutObject.GetSubtotal(),
 	}
 
 	// getting destination zip code
 	//-----------------------------
-	if shippingAddress := checkoutObject.GetShippingAddress(); shippingAddress != nil && shippingAddress.GetZipCode() != "" {
-		templateValues["destination"] = shippingAddress.GetZipCode()
+	if shippingAddress := checkoutObject.GetShippingAddress();
+		shippingAddress != nil && shippingAddress.GetZipCode() != "" && shippingAddress.GetCountry() != "" {
+		templateValues["destinationZip"] = shippingAddress.GetZipCode()
+		templateValues["destinationCountry"] = shippingAddress.GetCountry()
 	} else {
 		return result
 	}
@@ -128,15 +134,16 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 
             <Shipper>
                <Address>
-                  <PostalCode>{{.origin}}</PostalCode>
-                  <CountryCode>US</CountryCode>
+                  <PostalCode>{{.originZip}}</PostalCode>
+                  <CountryCode>{{.originCountry}}</CountryCode>
                </Address>
             </Shipper>
 
             <Recipient>
                <Address>
-                  <PostalCode>{{.destination}}</PostalCode>
-                  <CountryCode>US</CountryCode>
+                  <PostalCode>{{.destinationZip}}</PostalCode>
+                  <CountryCode>{{.destinationCountry}}</CountryCode>
+                  <Residential>{{.residential}}</Residential>
                </Address>
             </Recipient>
 
@@ -144,9 +151,11 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
             <PackageCount>1</PackageCount>
 
             <RequestedPackageLineItems>
-               <SequenceNumber>1</SequenceNumber>
-               <GroupNumber>1</GroupNumber>
                <GroupPackageCount>1</GroupPackageCount>
+               <InsuredValue>
+	          <Currency>USD</Currency>
+	          <Amount>{{.amount}}</Amount>
+               </InsuredValue>
                <Weight>
                   <Units>LB</Units>
                   <Value>{{.weight}}</Value>

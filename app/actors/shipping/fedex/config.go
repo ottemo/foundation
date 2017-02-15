@@ -239,6 +239,21 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
+		err = config.RegisterItem(env.StructConfigItem{
+			Path:        ConstConfigPathResidential,
+			Value:       true,
+			Type:        env.ConstConfigTypeBoolean,
+			Editor:      "boolean",
+			Options:     nil,
+			Label:       "Residential Delivery",
+			Description: "Indicates whether this delivery residential (as opposed to commercial).",
+			Image:       "",
+		}, func(value interface{}) (interface{}, error) { return utils.InterfaceToBool(value), nil })
+
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "ba621a64-5ab2-4f65-8953-1165e4a401ac", "Unable to obtain configuration for FedEx")
 		return env.ErrorDispatch(err)
