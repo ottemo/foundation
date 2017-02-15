@@ -20,7 +20,7 @@ func setupAPI() error {
 	service.GET("giftcards", GetList)
 
 	// Admin Only
-	service.GET("giftcard/:giftid/history", api.IsAdmin(GetHistory))
+	service.GET("giftcard/:id/history", api.IsAdmin(GetHistory))
 
 	// cart endpoints
 	service.POST("cart/giftcards/:giftcode", Apply)
@@ -97,10 +97,10 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 
 		if initialAmount == 0.0 {
-			value["initial_amount"] = value["amount"]
-		} else {
-			value["initial_amount"] = initialAmount
+			initialAmount = value["amount"]
 		}
+
+		value["initial_amount"] = initialAmount
 	}
 
 	return dbRecords, nil
@@ -192,8 +192,8 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 //    - giftcard id should be specified in the "giftid" argument
 func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	giftCardID := context.GetRequestArgument("giftid")
-	if giftCardID == "" {
+	giftCardId := context.GetRequestArgument("id")
+	if giftCardId == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10ab8fd5-05ca-43e2-9da9-8acac0ea13f9", "No giftcard code specified in the request.")
 	}
@@ -204,7 +204,7 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	row, err := collection.LoadByID(giftCardID)
+	row, err := collection.LoadByID(giftCardId)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
