@@ -63,6 +63,9 @@ func APIListReviews(context api.InterfaceApplicationContext) (interface{}, error
 				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d441a78d-ec6e-4d70-88df-58112552a9b9", err.Error())
 			}
 		} else {
+			collection.SetupFilterGroup("default", false, "")
+
+			collection.SetupFilterGroup("visible", true, "default")
 			if err := collection.SetupFilterGroup("visible", true, "default"); err != nil {
 				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8b90261-bce2-4506-8e5c-39146dcb142f", err.Error())
 			}

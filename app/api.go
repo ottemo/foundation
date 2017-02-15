@@ -154,6 +154,8 @@ func restStatusInfo(context api.InterfaceApplicationContext) (interface{}, error
 				result["Ottemo.DBName"] = iniValue
 			}
 		}
+
+		result["Ottemo.DBConnected"] = utils.InterfaceToString(dbEngine.IsConnected())
 	}
 
 	result["Ottemo.VersionMajor"] = ConstVersionMajor

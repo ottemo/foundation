@@ -91,6 +91,10 @@ func SendTask(params map[string]interface{}) error {
 				buyerInfo["Name"] = currentOrder.Get("customer_name")
 				buyerInfo["Email"] = currentOrder.Get("customer_email")
 			}
+		} else {
+			// set default name and email
+			buyerInfo["Name"] = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardAdminBuyerName))
+			buyerInfo["Email"] = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardAdminBuyerEmail))
 		}
 
 		recipientInfo := map[string]interface{}{

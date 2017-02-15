@@ -303,7 +303,12 @@ func (it *DBCollection) DeleteByID(id string) error {
 // SetupFilterGroup setups filter group params for collection
 func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, parentGroup string) error {
 	if _, present := it.FilterGroups[parentGroup]; !present && parentGroup != "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
+		if parentGroup == ConstFilterGroupDefault {
+			// create default group if not present and required as parent
+			it.getFilterGroup(ConstFilterGroupDefault)
+		} else {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
+		}
 	}
 
 	filterGroup := it.getFilterGroup(groupName)
