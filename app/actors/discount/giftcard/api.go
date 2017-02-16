@@ -2,6 +2,7 @@ package giftcard
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
@@ -9,7 +10,6 @@ import (
 	"math"
 	"strings"
 	"time"
-	"github.com/ottemo/foundation/app/models/order"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -88,7 +88,6 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	for _, value := range dbRecords {
-
 
 		initialAmount := utils.InterfaceToFloat64(value["amount"])
 		for _, amount := range utils.InterfaceToMap(value["orders_used"]) {
