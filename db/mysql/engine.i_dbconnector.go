@@ -104,8 +104,9 @@ func (it *DBEngine) AfterConnect(srcConnectionParams interface{}) error {
 
 // Reconnect tries to reconnect to DB
 func (it *DBEngine) Reconnect(connectionParams interface{}) error {
-	// it reconnects automatically
-	return nil
+	// Call Connect to "select database".
+	// Simple it.Ping is not enough - it restores connection, but doesn't "select database".
+	return it.Connect(connectionParams)
 }
 
 // IsConnected returns connection status
@@ -120,7 +121,18 @@ func (it *DBEngine) SetConnected(connected bool) {
 
 // Ping checks connection alive
 func (it *DBEngine) Ping() error {
-	_, err := it.connection.Query("SELECT DATABASE()")
+	// Better way to check connection is alive and "database is selected"
+	rows, err := it.connection.Query("SELECT * from " + ConstCollectionNameColumnInfo);
+
+	defer func(rows *sql.Rows){
+		if rows != nil {
+			err := rows.Close()
+			if err != nil {
+				it.LogConnection(err.Error())
+			}
+		}
+	}(rows)
+
 	return err
 }
 
