@@ -184,7 +184,7 @@ func setupConfig() error {
 		Image:       "",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "90107e36-0259-49ff-b74f-3bb498fbed05", "can't be blank")
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f9251264-9587-4679-ae20-114ded7e242f", "can't be blank")
 			return nil, env.ErrorDispatch(err)
 		}
 		return value, nil

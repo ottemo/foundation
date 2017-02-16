@@ -26,17 +26,17 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Dashboard API
-	service.POST("visitor", api.IsAdmin(APICreateVisitor))
+	service.POST("visitor", api.IsAdminHandler(APICreateVisitor))
 	service.PUT("visitor/:visitorID", APIUpdateVisitor)
-	service.DELETE("visitor/:visitorID", api.IsAdmin(APIDeleteVisitor))
-	service.GET("visitor/:visitorID", api.IsAdmin(APIGetVisitor))
+	service.DELETE("visitor/:visitorID", api.IsAdminHandler(APIDeleteVisitor))
+	service.GET("visitor/:visitorID", api.IsAdminHandler(APIGetVisitor))
 
-	service.GET("visitors", api.IsAdmin(APIListVisitors))
+	service.GET("visitors", api.IsAdminHandler(APIListVisitors))
 	service.GET("visitors/attributes", APIListVisitorAttributes)
-	service.DELETE("visitors/attribute/:attribute", api.IsAdmin(APIDeleteVisitorAttribute))
-	service.PUT("visitors/attribute/:attribute", api.IsAdmin(APIUpdateVisitorAttribute))
-	service.POST("visitors/attribute", api.IsAdmin(APICreateVisitorAttribute))
-	service.GET("visitors/guests", api.IsAdmin(APIGetGuestsList))
+	service.DELETE("visitors/attribute/:attribute", api.IsAdminHandler(APIDeleteVisitorAttribute))
+	service.PUT("visitors/attribute/:attribute", api.IsAdminHandler(APIUpdateVisitorAttribute))
+	service.POST("visitors/attribute", api.IsAdminHandler(APICreateVisitorAttribute))
+	service.GET("visitors/guests", api.IsAdminHandler(APIGetGuestsList))
 
 	// Storefront API
 	service.POST("visitors/register", APIRegisterVisitor)
@@ -67,13 +67,19 @@ func APIGetGuestsList(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	dbCollection := orderCollectionModel.GetDBCollection()
-	dbCollection.AddFilter("visitor_id", "=", "")
+	if err := dbCollection.AddFilter("visitor_id", "=", ""); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "388a3235-8be4-4d89-b705-720233451b29", err.Error())
+	}
 
 	// handle filters
-	models.ApplyFilters(context, dbCollection)
+	if err := models.ApplyFilters(context, dbCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c76e230f-43b7-456b-8017-9219847f5374", err.Error())
+	}
 
 	// remove limits to get right GROUP BY result
-	dbCollection.SetLimit(0, 0)
+	if err := dbCollection.SetLimit(0, 0); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6383e2e6-caf1-4c9f-b668-3230f2ce7c59", err.Error())
+	}
 
 	orders := orderCollectionModel.ListOrders()
 
@@ -145,7 +151,9 @@ func APICreateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 			return nil, env.ErrorDispatch(err)
 		}
 	}
-	visitorModel.Set("created_at", time.Now())
+	if err := visitorModel.Set("created_at", time.Now()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "38f3fe0f-4ab6-43f0-9677-8b4e4a3ba45a", err.Error())
+	}
 
 	err = visitorModel.Save()
 	if err != nil {
@@ -182,7 +190,7 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		// Visitor. Not admin.
 		if visitor.GetCurrentVisitorID(context) != visitorID {
 			return nil, env.ErrorDispatch(err)
@@ -198,14 +206,14 @@ func APIUpdateVisitor(context api.InterfaceApplicationContext) (interface{}, err
 				}
 				delete(requestData, "old_password")
 			} else {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "157df5fa-d775-4934-af94-b77ef8c826e9", "Please enter current password and try again.")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2ba2d5ac-84f6-421e-a7a6-da10c16e85f3", "Please enter current password and try again.")
 			}
 		}
 	} else if oldPass, present := requestData["old_password"]; present {
 		// Admin
 		// When admin user change password from storefront we will validate it
 		if ok := visitorModel.CheckPassword(utils.InterfaceToString(oldPass)); !ok {
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "Password entered does not match stored password.")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9c4c53c3-6b8d-4719-8515-7a31df1d08bb", "Password entered does not match stored password.")
 		}
 		delete(requestData, "old_password")
 	}
@@ -312,7 +320,9 @@ func APIListVisitors(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// filters handle
-	models.ApplyFilters(context, visitorCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, visitorCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a77781e4-1c24-44c6-9dbd-307b7d2a1713", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -320,10 +330,14 @@ func APIListVisitors(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// limit parameter handle
-	visitorCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := visitorCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "578bd204-2e56-4b86-a72f-e5475d20a69c", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, visitorCollectionModel)
+	if err := models.ApplyExtraAttributes(context, visitorCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "57962242-bf9c-4c11-847a-a21656a378b1", err.Error())
+	}
 
 	return visitorCollectionModel.List()
 }
@@ -423,7 +437,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "Attribute Name was not specified, this is a required field.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7d28bb9-5969-40b8-ae59-9134baa4d8d1", "Attribute Name was not specified, this is a required field.")
 	}
 
 	visitorModel, err := visitor.GetVisitorModel()
@@ -434,7 +448,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 	for _, attribute := range visitorModel.GetAttributesInfo() {
 		if attribute.Attribute == attributeName {
 			if attribute.IsStatic == true {
-				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "Attribute is static, cannot edit static attributes.")
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8a4e1d22-cd3f-4da9-a9b0-d6950245b349", "Attribute is static, cannot edit static attributes.")
 			}
 
 			for key, value := range requestData {
@@ -467,7 +481,7 @@ func APIUpdateVisitorAttribute(context api.InterfaceApplicationContext) (interfa
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "Unable to find specified attribute.")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4137313b-f2ae-4545-923e-eac0324d923f", "Unable to find specified attribute.")
 }
 
 // APIDeleteVisitorAttribute removes existing custom attribute of a visitor model
@@ -524,7 +538,9 @@ func APIRegisterVisitor(context api.InterfaceApplicationContext) (interface{}, e
 		}
 	}
 
-	visitorModel.Set("created_at", time.Now())
+	if err := visitorModel.Set("created_at", time.Now()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0a12b807-6998-4d68-91bb-ce85ad804b08", err.Error())
+	}
 
 	err = visitorModel.Save()
 	if err != nil {
@@ -619,9 +635,9 @@ func APIInvalidateVisitor(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	// checking rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorModel.IsVerified() {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cfb275fd-b3b8-4073-a4eb-455996502e99", "Not verified.")
 		}
 	}
 
@@ -692,15 +708,10 @@ func APIForgotPassword(context api.InterfaceApplicationContext) (interface{}, er
 func APIGetVisit(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	// so if user was logged to app as admin, we want to reflect this
-	isAdmin := false
-	if api.ValidateAdminRights(context) == nil {
-		isAdmin = true
-	}
-
 	sessionValue := context.GetSession().Get(visitor.ConstSessionKeyVisitorID)
 	visitorID, ok := sessionValue.(string)
 	if !ok {
-		if isAdmin {
+		if api.IsAdminSession(context) {
 			return map[string]interface{}{"is_admin": true}, nil
 		}
 		return "No session found, please log in first.", nil
@@ -718,7 +729,7 @@ func APIGetVisit(context api.InterfaceApplicationContext) (interface{}, error) {
 	result["google_id"] = visitorModel.GetGoogleID()
 
 	// overriding DB value if currently logged as admin
-	if isAdmin {
+	if api.IsAdminSession(context) {
 		result["is_admin"] = true
 	}
 
@@ -766,7 +777,9 @@ func APILogout(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
-	context.GetSession().Close()
+	if err := context.GetSession().Close(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8fc6c2fa-7f0e-475b-856f-d4af161812fd", err.Error())
+	}
 
 	return "ok", nil
 }
@@ -815,7 +828,7 @@ func APILogin(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	ok := visitorModel.CheckPassword(requestPassword)
 	if !ok {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "13a80ab1-d44e-4a90-979c-ea6914d9c012", "The password entered does not match the stored password.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9fd0a895-4b42-4d89-9aa7-9104ba23f96a", "The password entered does not match the stored password.")
 	}
 
 	// api session updates
@@ -912,13 +925,23 @@ func APIFacebookLogin(context api.InterfaceApplicationContext) (interface{}, err
 
 		// visitor not exists in out DB - creating new one
 		if err != nil && strings.Contains(err.Error(), "Unable to find") {
-			visitorModel.Set("email", visitorFacebookAccount["email"])
-			visitorModel.Set("first_name", visitorFacebookAccount["first_name"])
-			visitorModel.Set("last_name", visitorFacebookAccount["last_name"])
-			visitorModel.Set("created_at", time.Now())
+			if err := visitorModel.Set("email", visitorFacebookAccount["email"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bdc1cd48-51e1-4c6d-a2b9-8b1e32ce813a", err.Error())
+			}
+			if err := visitorModel.Set("first_name", visitorFacebookAccount["first_name"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4416efb3-af73-443b-a741-a36e437b77d1", err.Error())
+			}
+			if err := visitorModel.Set("last_name", visitorFacebookAccount["last_name"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "0ce238fe-189c-48dd-af30-3a12c6b209b2", err.Error())
+			}
+			if err := visitorModel.Set("created_at", time.Now()); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc2dbf8e-7754-4128-ae9b-d8915f00de47", err.Error())
+			}
 		}
 
-		visitorModel.Set("facebook_id", visitorFacebookAccount["id"])
+		if err := visitorModel.Set("facebook_id", visitorFacebookAccount["id"]); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2f40a1c5-8a80-44a0-8317-cb1cf1a64484", err.Error())
+		}
 
 		err := visitorModel.Save()
 		if err != nil {
@@ -1003,13 +1026,23 @@ func APIGoogleLogin(context api.InterfaceApplicationContext) (interface{}, error
 		if err != nil && strings.Contains(err.Error(), "Unable to find") {
 
 			// As the visitor does not exist, create a new one
-			visitorModel.Set("email", visitorGoogleAccount["email"])
-			visitorModel.Set("first_name", visitorGoogleAccount["given_name"])
-			visitorModel.Set("last_name", visitorGoogleAccount["family_name"])
-			visitorModel.Set("created_at", time.Now())
+			if err := visitorModel.Set("email", visitorGoogleAccount["email"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1d871e0a-4e16-423c-8a11-e551ec771e4f", err.Error())
+			}
+			if err := visitorModel.Set("first_name", visitorGoogleAccount["given_name"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "168d491d-e432-4fd6-8cd4-f650857cab82", err.Error())
+			}
+			if err := visitorModel.Set("last_name", visitorGoogleAccount["family_name"]); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "9a4607bb-d439-48a6-a625-b8b5a6ae04de", err.Error())
+			}
+			if err := visitorModel.Set("created_at", time.Now()); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "de3bc9ec-51f7-44b0-85a3-d8b955e7485d", err.Error())
+			}
 		}
 
-		visitorModel.Set("google_id", visitorGoogleAccount["id"])
+		if err := visitorModel.Set("google_id", visitorGoogleAccount["id"]); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8f1f5929-0f72-4157-b341-af669cb82e37", err.Error())
+		}
 
 		err := visitorModel.Save()
 		if err != nil {

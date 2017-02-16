@@ -232,7 +232,9 @@ func (it *DBCollection) prepareQuery() *mgo.Query {
 	}
 
 	for idx, subCollection := range it.subcollections {
-		subCollection.prepareQuery().Distinct(subCollection.ResultAttributes[0], it.subresults[idx])
+		if err := subCollection.prepareQuery().Distinct(subCollection.ResultAttributes[0], it.subresults[idx]); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 
 	return query

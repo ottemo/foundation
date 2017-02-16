@@ -141,10 +141,11 @@ func (it *DBCollection) getSQLFilters() string {
 					joinOperator = " OR "
 				}
 				subFilters := collectSubfilters(filterGroupName)
-				if len(subFilters) > 0 {
-					subFilters = append([]string{""}, subFilters...)
+				subFilters = append(subFilters, filterGroup.FilterValues...)
+				filterValue := strings.Join(subFilters, joinOperator)
+				if len(subFilters) > 1 {
+					filterValue = "(" + filterValue + ")"
 				}
-				filterValue := "(" + strings.Join(filterGroup.FilterValues, joinOperator) + strings.Join(subFilters, joinOperator) + ")"
 				result = append(result, filterValue)
 			}
 		}
@@ -195,7 +196,9 @@ func (it *DBCollection) makeUUID(id string) string {
 		timeStamp := strconv.FormatInt(time.Now().Unix(), 16)
 
 		randomBytes := make([]byte, 8)
-		rand.Reader.Read(randomBytes)
+		if _, err := rand.Reader.Read(randomBytes); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		randomHex := make([]byte, 16)
 		hex.Encode(randomHex, randomBytes)

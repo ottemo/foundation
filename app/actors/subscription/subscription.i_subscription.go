@@ -118,13 +118,13 @@ func (it *DefaultSubscription) GetShippingAddress() visitor.InterfaceVisitorAddr
 
 	shippingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = shippingAddress.FromHashMap(it.ShippingAddress)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -150,13 +150,13 @@ func (it *DefaultSubscription) GetBillingAddress() visitor.InterfaceVisitorAddre
 
 	billingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = billingAddress.FromHashMap(it.BillingAddress)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -179,7 +179,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -189,7 +189,7 @@ func (it *DefaultSubscription) GetCreditCard() visitor.InterfaceVisitorCard {
 
 	err = visitorCardModel.FromHashMap(it.PaymentInstrument)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return visitorCardModel
 	}
 
@@ -239,21 +239,31 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 	// set visitor basic info
 	visitorID := it.GetVisitorID()
 	if visitorID != "" {
-		checkoutInstance.Set("VisitorID", visitorID)
+		if err := checkoutInstance.Set("VisitorID", visitorID); err != nil {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "205c5663-e5d7-404e-b731-7de78c055fac", err.Error())
+		}
 	}
 
-	checkoutInstance.SetInfo("customer_email", it.GetCustomerEmail())
-	checkoutInstance.SetInfo("customer_name", it.GetCustomerName())
+	if err := checkoutInstance.SetInfo("customer_email", it.GetCustomerEmail()); err != nil {
+		return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "12ef8ee8-0f77-4f1f-9a65-cc94648cf981", err.Error())
+	}
+	if err := checkoutInstance.SetInfo("customer_name", it.GetCustomerName()); err != nil {
+		return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "7054a0f4-294c-47a3-8921-96a4406b7ed4", err.Error())
+	}
 
 	// set billing and shipping address
 	shippingAddress := it.GetShippingAddress()
 	if shippingAddress != nil {
-		checkoutInstance.Set("ShippingAddress", shippingAddress.ToHashMap())
+		if err := checkoutInstance.Set("ShippingAddress", shippingAddress.ToHashMap()); err != nil {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "37424b34-0406-4361-a882-43514292c5bd", err.Error())
+		}
 	}
 
 	billingAddress := it.GetBillingAddress()
 	if billingAddress != nil {
-		checkoutInstance.Set("BillingAddress", billingAddress.ToHashMap())
+		if err := checkoutInstance.Set("BillingAddress", billingAddress.ToHashMap()); err != nil {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "f07174df-4eb7-4447-9b3b-338076516369", err.Error())
+		}
 	}
 
 	// check payment and shipping methods for availability
@@ -286,7 +296,9 @@ func (it *DefaultSubscription) GetCheckout() (checkout.InterfaceCheckout, error)
 		}
 	}
 
-	checkoutInstance.SetInfo("cc", it.GetCreditCard())
+	if err := checkoutInstance.SetInfo("cc", it.GetCreditCard()); err != nil {
+		return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "4b47d1a1-577d-4ef0-a57a-8e7f00679b72", err.Error())
+	}
 
 	// handle cart
 	currentCart, err := cart.GetCartModel()
@@ -333,7 +345,7 @@ func (it *DefaultSubscription) Validate() error {
 	}
 
 	if len(it.items) == 0 {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "1c033c36-d63b-4659-95e8-9f348f5e2880", "no items in subscription")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "c9110694-12af-4dd3-9730-986ec03539e5", "no items in subscription")
 	}
 
 	return nil

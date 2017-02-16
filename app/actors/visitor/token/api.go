@@ -89,7 +89,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	cardInfoMap := utils.InterfaceToMap(paymentResult)
 	if !utils.KeysInMapAndNotBlank(cardInfoMap, "transactionID") {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "22e17290-56f3-452a-8d54-18d5a9eb2833", "A transaction ID was not provided.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a3e57e63-b1f7-4027-9344-14d8e1eca0ea", "A transaction ID was not provided.")
 	}
 
 	// create visitor address operation
@@ -122,7 +122,7 @@ func APICreateToken(context api.InterfaceApplicationContext) (interface{}, error
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	
+
 	return visitorCardModel.ToHashMap(), nil
 }
 
@@ -141,9 +141,9 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	}
 
 	// check rights
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if visitorID != visitor.GetCurrentVisitorID(context) {
-			return nil, env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "24566eab-6bb9-4aef-8172-0c8350ae5093", "Operation not allowed.")
 		}
 	}
 
@@ -154,7 +154,9 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 		return nil, env.ErrorDispatch(err)
 	}
 	dbCollection := visitorCardCollectionModel.GetDBCollection()
-	dbCollection.AddStaticFilter("visitor_id", "=", visitorID)
+	if err := dbCollection.AddStaticFilter("visitor_id", "=", visitorID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "86cfb0c9-747a-4861-a9b0-fcddcb7e4bf5", err.Error())
+	}
 
 	// add allowed payment methods filter
 	currentCheckout, err := checkout.GetCurrentCheckout(context, false)
@@ -165,10 +167,14 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 			paymentMethods = append(paymentMethods, paymentMethod.GetCode())
 		}
 	}
-	dbCollection.AddStaticFilter("payment", "IN", paymentMethods)
+	if err := dbCollection.AddStaticFilter("payment", "IN", paymentMethods); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "535889b4-ba73-4a20-aef9-86a7378b5948", err.Error())
+	}
 
 	// filters handle
-	models.ApplyFilters(context, dbCollection)
+	if err := models.ApplyFilters(context, dbCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153d70d2-c8ec-4a38-966e-cf45456e18af", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument("count") != "" {
@@ -176,10 +182,14 @@ func APIListVisitorCards(context api.InterfaceApplicationContext) (interface{}, 
 	}
 
 	// limit parameter handle
-	visitorCardCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := visitorCardCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "139a6aeb-5375-4480-b6d9-9740938cb7a3", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, visitorCardCollectionModel)
+	if err := models.ApplyExtraAttributes(context, visitorCardCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "c78e4f66-5722-4849-bc69-f006c91900f8", "token_id was not specified")
+	}
 
 	return visitorCardCollectionModel.List()
 }
@@ -205,14 +215,20 @@ func APIDeleteToken(context api.InterfaceApplicationContext) (interface{}, error
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	visitorCardModel.Delete()
+	if err := visitorCardModel.Delete(); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f4a1d8e4-4f05-4d8b-8ea2-dbcf520350fa", "unable to delete visitor card: " + err.Error())
+	}
 
 	// unset default token for visitor
 	card := visitorModel.GetToken()
 
 	if card.GetID() == tokenID {
-		visitorModel.Set("token_id", nil)
-		visitorModel.Save()
+		if err := visitorModel.Set("token_id", nil); err != nil {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "38084eef-fe8a-4c05-93e2-4866b0bb048a", err.Error())
+		}
+		if err := visitorModel.Save(); err != nil {
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "30dab7a4-314c-48f3-87d2-dd6660b4a98f", err.Error())
+		}
 	}
 
 	return "ok", nil
@@ -223,14 +239,14 @@ func APISetDefaultToken(context api.InterfaceApplicationContext) (interface{}, e
 
 	visitorModel, err := visitor.GetCurrentVisitor(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "331b2735-48da-4ee0-9b92-291ff7e246a2", err.Error())
 	} else if visitorModel == nil {
 		return "You are not logged in, please log in.", nil
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8bfc867-b89b-4c54-a326-50acd8e6b421", err.Error())
 	}
 
 	tokenID := utils.InterfaceToString(requestData["tokenID"])
@@ -242,19 +258,20 @@ func APISetDefaultToken(context api.InterfaceApplicationContext) (interface{}, e
 	//---------------
 	visitorCardModel, err := visitor.GetVisitorCardModel()
 	if err != nil {
-		return nil, env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c97c889c-6c94-494d-9f03-3586d3142374", err.Error())
 	}
 
-	err = visitorCardModel.Load(tokenID)
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+
+	if err := visitorCardModel.Load(tokenID); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b323663-2728-4fb7-b066-2345e4517175", err.Error())
 	}
 
-	visitorModel.Set("token_id", visitorCardModel.GetID())
+	if err := visitorModel.Set("token_id", visitorCardModel.GetID()); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f8d5e84a-f284-40e4-8c17-6b7584dab087", err.Error())
+	}
 
-	err = visitorModel.Save()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
+	if err := visitorModel.Save(); err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eca959f4-96a4-415a-a2f6-acdec68d129b", err.Error())
 	}
 
 	return "ok", nil

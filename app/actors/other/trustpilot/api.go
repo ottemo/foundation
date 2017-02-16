@@ -1,6 +1,7 @@
 package trustpilot
 
 import (
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -76,7 +77,11 @@ func APIGetTrustpilotProductsSummaries(context api.InterfaceApplicationContext) 
 			context.SetResponseStatusInternalServerError()
 			return nil, env.ErrorDispatch(err)
 		}
-		defer response.Body.Close()
+		defer func (c io.ReadCloser){
+			if err := c.Close(); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "05ffa9ae-3b84-4835-a732-af4aa7f6bc2a", err.Error())
+			}
+		}(response.Body)
 
 		responseBody, err := ioutil.ReadAll(response.Body)
 		if err != nil {

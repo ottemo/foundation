@@ -35,13 +35,13 @@ func (it *DefaultCheckout) GetShippingAddress() visitor.InterfaceVisitorAddress 
 
 	shippingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = shippingAddress.FromHashMap(it.ShippingAddress)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -67,13 +67,13 @@ func (it *DefaultCheckout) GetBillingAddress() visitor.InterfaceVisitorAddress {
 
 	billingAddress, err := visitor.GetVisitorAddressModel()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
 	err = billingAddress.FromHashMap(it.BillingAddress)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return nil
 	}
 
@@ -536,8 +536,12 @@ func (it *DefaultCheckout) CalculateAmount(calculateTarget float64) float64 {
 			infoDetails[utils.InterfaceToString(index)] = details
 		}
 
-		it.SetInfo("calculation", infoDetails)
-		it.SetInfo("price_adjustments", it.priceAdjustments)
+		if err := it.SetInfo("calculation", infoDetails); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3f7a3ad2-724b-4a6c-b62d-7d3eee5df1e8", err.Error())
+		}
+		if err := it.SetInfo("price_adjustments", it.priceAdjustments); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a1e6050e-4f10-4525-bea2-8b1fd6ed4abc", err.Error())
+		}
 
 		it.calculateFlag = false
 	}
@@ -648,51 +652,79 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 			return nil, env.ErrorDispatch(err)
 		}
 
-		newOrder.Set("created_at", currentTime)
+		if err := newOrder.Set("created_at", currentTime); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8718b96a-3a5f-4ac2-95ad-e19cabcedda9", err.Error())
+		}
 
 		checkoutOrder = newOrder
 	}
 
 	// updating order information
 	//---------------------------
-	checkoutOrder.Set("session_id", it.GetInfo("session_id"))
-	checkoutOrder.Set("updated_at", currentTime)
+	if err := checkoutOrder.Set("session_id", it.GetInfo("session_id")); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "92434482-8676-4b0c-be94-710f98f70a60", err.Error())
+	}
+	if err := checkoutOrder.Set("updated_at", currentTime); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bdece7e9-8667-48b1-8783-9d6d0c29f06e", err.Error())
+	}
 
-	checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+	if err := checkoutOrder.SetStatus(order.ConstOrderStatusNew); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b5d801d-a553-4e18-a8f4-520e05f138d1", err.Error())
+	}
 
 	// If the visitor is logged in that should dictate the email and name
 	if currentVisitor != nil {
-		checkoutOrder.Set("visitor_id", currentVisitor.GetID())
+		if err := checkoutOrder.Set("visitor_id", currentVisitor.GetID()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "85d8fe53-4853-428a-9dfa-3ad594647472", err.Error())
+		}
 
-		checkoutOrder.Set("customer_email", currentVisitor.GetEmail())
-		checkoutOrder.Set("customer_name", currentVisitor.GetFullName())
+		if err := checkoutOrder.Set("customer_email", currentVisitor.GetEmail()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b426f813-d607-4dfc-b7cd-e780945ea2a2", err.Error())
+		}
+		if err := checkoutOrder.Set("customer_name", currentVisitor.GetFullName()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a5e7127a-9c09-492e-9e4f-684031f9cba7", err.Error())
+		}
 	} else {
 		// Visitor is not logged in, maybe we were passed some extra data
 		if it.GetInfo("customer_email") != nil {
 			orderCustomerEmail := utils.InterfaceToString(it.GetInfo("customer_email"))
-			checkoutOrder.Set("customer_email", orderCustomerEmail)
+			if err := checkoutOrder.Set("customer_email", orderCustomerEmail); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0b8126f1-3b33-4f1a-8cfe-9ddcc915b290", err.Error())
+			}
 		}
 		if it.GetInfo("customer_name") != nil {
 			orderCustomerName := utils.InterfaceToString(it.GetInfo("customer_name"))
-			checkoutOrder.Set("customer_name", orderCustomerName)
+			if err := checkoutOrder.Set("customer_name", orderCustomerName); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffe69f29-27b6-4b53-820f-9ba7ca6570ae", err.Error())
+			}
 		}
 	}
 
 	billingAddress := it.GetBillingAddress().ToHashMap()
-	checkoutOrder.Set("billing_address", billingAddress)
+	if err := checkoutOrder.Set("billing_address", billingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c7f3cae2-ed76-4002-8d7c-5031cf55c6c6", err.Error())
+	}
 
 	shippingAddress := it.GetShippingAddress().ToHashMap()
-	checkoutOrder.Set("shipping_address", shippingAddress)
+	if err := checkoutOrder.Set("shipping_address", shippingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c005d525-4c06-4d65-933b-6a928dd93bac", err.Error())
+	}
 
 	shippingInfo := utils.InterfaceToMap(checkoutOrder.Get("shipping_info"))
 	shippingInfo["shipping_method_name"] = it.GetShippingMethod().GetName() + "/" + it.GetShippingRate().Name
 	if notes := utils.InterfaceToString(it.GetInfo("notes")); notes != "" {
 		shippingInfo["notes"] = notes
 	}
-	checkoutOrder.Set("shipping_info", shippingInfo)
-	checkoutOrder.Set("shipping_method", it.GetShippingMethod().GetCode()+"/"+it.GetShippingRate().Code)
+	if err := checkoutOrder.Set("shipping_info", shippingInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6de55fb-4a18-4aee-b474-1f0ecf742789", err.Error())
+	}
+	if err := checkoutOrder.Set("shipping_method", it.GetShippingMethod().GetCode()+"/"+it.GetShippingRate().Code); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "78ef6507-709c-4aa9-a3ac-d13364128b42", err.Error())
+	}
 
-	checkoutOrder.Set("cart_id", currentCart.GetID())
+	if err := checkoutOrder.Set("cart_id", currentCart.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "792a8468-4e49-43f6-9670-8f1c2fa122c0", err.Error())
+	}
 
 	paymentMethod := it.GetPaymentMethod()
 
@@ -702,33 +734,51 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	customInfo := utils.InterfaceToMap(checkoutOrder.Get("custom_info"))
 	customInfo["calculation"] = it.Info["calculation"]
-	checkoutOrder.Set("custom_info", customInfo)
+	if err := checkoutOrder.Set("custom_info", customInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "937c4411-c18d-4cf2-a0de-17c0ccb9d42b", err.Error())
+	}
 
 	if notes := utils.InterfaceToArray(it.GetInfo("order_notes")); len(notes) > 0 {
-		checkoutOrder.Set("notes", notes)
+		if err := checkoutOrder.Set("notes", notes); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ebc2b8ad-914f-4922-b5b1-97fe237a840e", err.Error())
+		}
 	}
 
 	if !paymentMethod.IsAllowed(it) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7a5490ee-daa3-42b4-a84a-dade12d103e8", "Payment method not allowed")
 	}
 
-	checkoutOrder.Set("payment_method", paymentMethod.GetCode())
+	if err := checkoutOrder.Set("payment_method", paymentMethod.GetCode()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "275dbdd6-7721-4176-bea0-1d208fed88c4", err.Error())
+	}
 	paymentInfo := utils.InterfaceToMap(checkoutOrder.Get("payment_info"))
 	paymentInfo["payment_method_name"] = it.GetPaymentMethod().GetInternalName()
 	paymentInfo["gift_cards_charged_amount"] = it.GetItemSpecificTotal(0, checkout.ConstLabelGiftCard)
-	checkoutOrder.Set("payment_info", paymentInfo)
+	if err := checkoutOrder.Set("payment_info", paymentInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "606c7244-e577-40e2-a23a-456127035fc4", err.Error())
+	}
 
 	discounts := it.GetDiscounts()
 	discountAmount := it.GetDiscountAmount()
-	checkoutOrder.Set("discount", discountAmount)
-	checkoutOrder.Set("discounts", discounts)
+	if err := checkoutOrder.Set("discount", discountAmount); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7f124c39-3928-4525-966d-58ebd75f4739", err.Error())
+	}
+	if err := checkoutOrder.Set("discounts", discounts); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c06c9a96-ff20-4a2e-a793-1911a75827a4", err.Error())
+	}
 
 	taxes := it.GetTaxes()
 	taxAmount := it.GetTaxAmount()
-	checkoutOrder.Set("tax_amount", taxAmount)
-	checkoutOrder.Set("taxes", taxes)
+	if err := checkoutOrder.Set("tax_amount", taxAmount); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9e58b4bb-fe0c-458a-aa2f-e0a87bbdddd7", err.Error())
+	}
+	if err := checkoutOrder.Set("taxes", taxes); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "97a4c133-a8f6-4f59-b996-b5b9baeca46a", err.Error())
+	}
 
-	checkoutOrder.Set("shipping_amount", it.GetShippingAmount())
+	if err := checkoutOrder.Set("shipping_amount", it.GetShippingAmount()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c592435a-71fc-45cb-bd7a-18790fe616a6", err.Error())
+	}
 
 	// remove order items, and add new from current cart with new description
 	for index := range checkoutOrder.GetItems() {
@@ -742,7 +792,9 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	for _, cartItem := range cartItems {
 		orderItem, err := checkoutOrder.AddItem(cartItem.GetProductID(), cartItem.GetQty(), cartItem.GetOptions())
-		orderItem.Set("idx", cartItem.GetIdx())
+		if err := orderItem.Set("idx", cartItem.GetIdx()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b1423471-070a-430e-9af5-1143133afba4", err.Error())
+		}
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -753,7 +805,9 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		orderDescription += fmt.Sprintf("%dx %s", cartItem.GetQty(), orderItem.GetName())
 	}
 
-	checkoutOrder.Set("description", orderDescription)
+	if err := checkoutOrder.Set("description", orderDescription); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f30e65ba-e0a4-4198-960a-0a0d1392dbb4", err.Error())
+	}
 
 	err := checkoutOrder.CalculateTotals()
 	if err != nil {
@@ -765,7 +819,9 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	it.SetOrder(checkoutOrder)
+	if err := it.SetOrder(checkoutOrder); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96f10bcc-4f5e-49a3-b043-678eadd7d327", err.Error())
+	}
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
@@ -784,7 +840,9 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 
 	result, err := paymentMethod.Authorize(checkoutOrder, paymentDetails)
 	if err != nil {
-		checkoutOrder.SetStatus(order.ConstOrderStatusNew)
+		if err := checkoutOrder.SetStatus(order.ConstOrderStatusNew); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "93aa7713-8dc5-4db8-81e9-24c219641908", err.Error())
+		}
 		return nil, env.ErrorDispatch(err)
 	}
 
@@ -812,7 +870,9 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 
 	// track for order status to prevent double executing of checkout success
 	previousOrderStatus := checkoutOrder.GetStatus()
-	checkoutOrder.SetStatus(order.ConstOrderStatusProcessed)
+	if err := checkoutOrder.SetStatus(order.ConstOrderStatusProcessed); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f4007de4-3426-46da-a911-e70133a5d02c", err.Error())
+	}
 
 	// updating payment info of order with info given from payment method
 	if paymentInfo != nil {
@@ -821,12 +881,18 @@ func (it *DefaultCheckout) SubmitFinish(paymentInfo map[string]interface{}) (int
 			currentPaymentInfo[key] = value
 		}
 
-		checkoutOrder.Set("payment_info", currentPaymentInfo)
+		if err := checkoutOrder.Set("payment_info", currentPaymentInfo); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6aa02b33-100e-4f75-b54b-6251b9391c7c", err.Error())
+		}
 	}
 
-	checkoutOrder.Set("created_at", time.Now())
+	if err := checkoutOrder.Set("created_at", time.Now()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ba3c0e93-600b-49fd-b8c6-b7a132452edf", err.Error())
+	}
 	if utils.InterfaceToString(checkoutOrder.Get("session_id")) == "" {
-		checkoutOrder.Set("session_id", it.GetInfo("session_id"))
+		if err := checkoutOrder.Set("session_id", it.GetInfo("session_id")); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4d2106e2-e32c-435d-864c-5dada3970aff", err.Error())
+		}
 	}
 
 	err := checkoutOrder.Save()

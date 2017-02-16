@@ -55,7 +55,7 @@ func startup() error {
 
 	redisService, ok := SessionService.(*RedisSessionService)
 	if !ok {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a95b6e53-1fb5-480a-a8c6-a6169a7da9fa", "unexpected session service instance")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "281f883d-1ec8-47d4-a916-0107e9de997c", "unexpected session service instance")
 	}
 
 	serversList := "127.0.0.1:6379"
@@ -130,7 +130,7 @@ func (it *RedisSessionService) FlushSession(sessionID string) error {
 	// checking session existence
 	sessionInstance := it.syncGet(sessionID)
 	if sessionInstance == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5ec1d9b8-48e4-43e7-a1b6-a658a576c286", "session "+sessionID+" not found")
 	}
 
 	// skipping flush for empty sessions

@@ -27,7 +27,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// inspect the order only if not nil
 	if checkoutOrder != nil {
-		go processOrder(checkoutOrder)
+		go func (checkoutOrder order.InterfaceOrder){
+			if err := processOrder(checkoutOrder); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb34fc37-1f59-4873-9753-a318ef9aee15", err.Error())
+			}
+		}(checkoutOrder)
 	}
 
 	return true
@@ -124,7 +128,7 @@ func subscribe(email string, commaSeparatedGroupIDs string) (interface{}, error)
 var composeEmmaCredentials = func() (*emmaCredentialsType, error) {
 	var accountID = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaAccountID))
 	if accountID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88111f54-e8a1-4c43-bc38-0e660c4caa16", "account id was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "888b9572-ddd9-4e5c-905a-a09973095c44", "account id was not specified")
 	}
 
 	var publicAPIKey = utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathEmmaPublicAPIKey))

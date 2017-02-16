@@ -16,7 +16,9 @@ func init() {
 
 	instance := new(DefaultRestService)
 
-	api.RegisterRestService(instance)
+	if err := api.RegisterRestService(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	env.RegisterOnConfigIniStart(instance.startup)
 }
 
@@ -34,12 +36,16 @@ func (it *DefaultRestService) startup() error {
 
 	it.Router.PanicHandler = func(w http.ResponseWriter, r *http.Request, params interface{}) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("page not found"))
+		if _, err := w.Write([]byte("page not found")); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 
 	it.Router.GET("/", it.rootPageHandler)
 
-	api.OnRestServiceStart()
+	if err := api.OnRestServiceStart(); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	return nil
 }
@@ -51,16 +57,28 @@ func (it *DefaultRestService) rootPageHandler(w http.ResponseWriter, r *http.Req
 	w.Header().Add("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 
-	w.Write([]byte("Ottemo REST API:"))
-	w.Write(newline)
-	w.Write([]byte("----"))
-	w.Write(newline)
+	if _, err := w.Write([]byte("Ottemo REST API:")); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if _, err := w.Write(newline); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if _, err := w.Write([]byte("----")); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if _, err := w.Write(newline); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	// sorting handlers before output
 	sort.Strings(it.Handlers)
 
 	for _, handlerPath := range it.Handlers {
-		w.Write([]byte(handlerPath))
-		w.Write(newline)
+		if _, err := w.Write([]byte(handlerPath)); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
+		if _, err := w.Write(newline); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 }

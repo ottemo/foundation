@@ -25,7 +25,11 @@ func init() {
 
 // executable file start point
 func main1() {
-	defer app.End() // application close event
+	defer func (){
+		if err := app.End(); err != nil { // application close event
+			fmt.Println(err.Error())
+		}
+	}()
 
 	fmt.Println("starting application " + time.Now().String())
 	// application start event

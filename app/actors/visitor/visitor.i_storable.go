@@ -50,7 +50,9 @@ func (it *DefaultVisitor) Delete() error {
 		return env.ErrorDispatch(err)
 	}
 
-	addressCollection.AddFilter("visitor_id", "=", it.GetID())
+	if err := addressCollection.AddFilter("visitor_id", "=", it.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d35f39ef-1e4d-4072-9cce-11f3dceb0b5c", err.Error())
+	}
 	if _, err := addressCollection.Delete(); err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -72,7 +74,9 @@ func (it *DefaultVisitor) Save() error {
 	}
 
 	if it.GetID() == "" {
-		collection.AddFilter("email", "=", it.GetEmail())
+		if err := collection.AddFilter("email", "=", it.GetEmail()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "105b8b9f-d901-4ec2-94eb-691da841a481", err.Error())
+		}
 		n, err := collection.Count()
 		if err != nil {
 			return env.ErrorDispatch(err)
@@ -125,7 +129,9 @@ func (it *DefaultVisitor) Save() error {
 
 	// saving visitor
 	if newID, err := collection.Save(storableValues); err == nil {
-		it.Set("_id", newID)
+		if err := it.Set("_id", newID); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4dd5f3ca-188f-4ddd-a654-45418caf2009", err.Error())
+		}
 	} else {
 		return env.ErrorDispatch(err)
 	}

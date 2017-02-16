@@ -47,7 +47,11 @@ func TestSEO(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer seoItemModel.Delete()
+	defer func(m seo.InterfaceSEOItem){
+		if err := m.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(seoItemModel)
 
 	seoItemID := seoItemModel.GetID()
 

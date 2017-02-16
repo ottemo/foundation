@@ -31,7 +31,9 @@ func (it *DefaultCMSBlock) Load(id string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	it.SetID(utils.InterfaceToString(dbValues["_id"]))
+	if err := it.SetID(utils.InterfaceToString(dbValues["_id"])); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5c2adf9c-070c-4332-b9ef-4c5592d9fe5d", err.Error())
+	}
 
 	it.Content = utils.InterfaceToString(dbValues["content"])
 	it.Identifier = utils.InterfaceToString(dbValues["identifier"])
@@ -85,7 +87,9 @@ func (it *DefaultCMSBlock) Save() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	it.SetID(newID)
+	if err := it.SetID(newID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2d71c28e-d8b6-4ce0-95b9-73b724bc5d89", err.Error())
+	}
 
 	return nil
 }

@@ -159,7 +159,9 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 
 	var body bytes.Buffer
 	parsedTemplate, _ := template.New("fedex").Parse(requestTemplate)
-	parsedTemplate.Execute(&body, templateValues)
+	if err := parsedTemplate.Execute(&body, templateValues); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e61049c9-4728-4f76-bf32-2ee577281542", err.Error())
+	}
 
 	if useDebugLog {
 		env.Log("fedex.log", "REQUEST", string(body.Bytes()))
@@ -168,7 +170,7 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	url := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGateway)) + "/rate"
 	request, err := http.NewRequest("POST", url, &body)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return result
 	}
 
@@ -179,13 +181,13 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	//--------------------------------------
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return result
 	}
 
 	responseData, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return result
 	}
 
@@ -197,13 +199,13 @@ func (it *FedEx) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.
 	//------------------------------
 	xmlRoot, err := xmlpath.Parse(bytes.NewReader(responseData))
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return result
 	}
 
 	xmlErrorFlag, _ := xmlpath.Compile("//Severity")
 	if value, ok := xmlErrorFlag.String(xmlRoot); ok && value == "ERROR" {
-		env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bf4bb50-0ba8-4aaf-90a9-695fed9d497a", string(responseData))
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bf4bb50-0ba8-4aaf-90a9-695fed9d497a", string(responseData))
 	}
 
 	xmlPostage, _ := xmlpath.Compile("//RateReplyDetails")

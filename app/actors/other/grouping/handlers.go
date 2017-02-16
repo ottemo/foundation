@@ -21,7 +21,7 @@ func updateCartHandler(event string, eventData map[string]interface{}) bool {
 	}
 
 	if err := currentCart.Save(); err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	return true
@@ -89,11 +89,15 @@ func applyGroupRule(currentCart cart.InterfaceCart, groupProductsArray []interfa
 				if groupProductID == cartItem.GetProductID() && utils.MatchMapAValuesToMapB(groupProductOptions, cartItem.GetOptions()) {
 
 					if cartProductNewQty := cartItem.GetQty() - qtyToReduce; cartProductNewQty > 0 {
-						cartItem.SetQty(cartProductNewQty)
+						if err := cartItem.SetQty(cartProductNewQty); err != nil {
+							_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9fb24a71-d0b5-4395-90e8-634625e1ad1b", err.Error())
+						}
 						break
 					} else {
 						if cartProductNewQty == 0 {
-							currentCart.RemoveItem(cartItem.GetIdx())
+							if err := currentCart.RemoveItem(cartItem.GetIdx()); err != nil {
+								_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1daf4e23-0f8d-49a6-bce9-1f1756b68d4b", err.Error())
+							}
 							break
 						}
 					}
@@ -114,7 +118,7 @@ func applyGroupRule(currentCart cart.InterfaceCart, groupProductsArray []interfa
 
 			_, err := currentCart.AddItem(intoProductPID, intoProductQty*ruleMultiplier, intoProductOptions)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 		}
 	}

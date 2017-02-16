@@ -9,7 +9,7 @@ import (
 func (it *DefaultCategory) AddMedia(mediaType string, mediaName string, content []byte) error {
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "85650715-3acf-4e47-a365-c6e8911d9118", "category id not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ce5dc3e-db9d-44df-ba82-29daf7fabf9a", "category id not set")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()
@@ -24,7 +24,7 @@ func (it *DefaultCategory) AddMedia(mediaType string, mediaName string, content 
 func (it *DefaultCategory) RemoveMedia(mediaType string, mediaName string) error {
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "87bb383a-cf35-48e0-9d50-ad517ed2e8f9", "category id not set")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "05d2b165-ad76-4376-81c2-e9cc3fb8eac5", "category id not set")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()
@@ -41,7 +41,7 @@ func (it *DefaultCategory) ListMedia(mediaType string) ([]string, error) {
 
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "45b1ebde-3dd0-4c6c-9960-fddd89f4907f", "category id not set")
+		return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e9a39d29-bc54-42d4-aa65-c0eb043be822", "category id not set")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()
@@ -56,7 +56,7 @@ func (it *DefaultCategory) ListMedia(mediaType string) ([]string, error) {
 func (it *DefaultCategory) GetMedia(mediaType string, mediaName string) ([]byte, error) {
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5f5d3c33-de82-4580-a6e7-f5c45e9281e5", "category id not set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dca7abba-3814-49a8-8e23-80607e6ad1ee", "category id not set")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()
@@ -71,7 +71,7 @@ func (it *DefaultCategory) GetMedia(mediaType string, mediaName string) ([]byte,
 func (it *DefaultCategory) GetMediaPath(mediaType string) (string, error) {
 	categoryID := it.GetID()
 	if categoryID == "" {
-		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0055f93a-5d10-41db-8d93-ea2bb4bee216", "category id not set")
+		return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "23685b86-37e9-4151-86fd-f1c7d662b450", "category id not set")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()

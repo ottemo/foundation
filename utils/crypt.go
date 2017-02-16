@@ -30,7 +30,8 @@ func SetKey(key []byte) error {
 // GetKey returns a key used in crypto/cipher algorithm
 func GetKey() []byte {
 	if cryptKey == nil {
-		SetKey([]byte("hard-coded key:)"))
+		// ignore error - no logging ability
+		_ = SetKey([]byte("hard-coded key:)"))
 	}
 	return cryptKey
 }
@@ -192,9 +193,11 @@ func PasswordEncode(password string, salt string) string {
 		if len(password) > 2 {
 			salt += password[0:1]
 		}
-		hasher.Write([]byte(password + salt))
+		// ignore error - no logging ability
+		_, _ = hasher.Write([]byte(password + salt))
 	} else {
-		hasher.Write([]byte(salt + password))
+		// ignore error - no logging ability
+		_, _ = hasher.Write([]byte(salt + password))
 	}
 
 	return hex.EncodeToString(hasher.Sum(nil))

@@ -22,7 +22,9 @@ func (it *DefaultVisitorCollection) List() ([]models.StructListItem, error) {
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		visitorModel.FromHashMap(dbRecordData)
+		if err := visitorModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e46fc881-1820-4eaf-9f06-6452be240cfd", err.Error())
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -76,13 +78,17 @@ func (it *DefaultVisitorCollection) ListAddExtraAttribute(attribute string) erro
 
 // ListFilterAdd provides the ability to add a selection filter to List() function
 func (it *DefaultVisitorCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "46acf901-4b7b-49b4-a97c-b1d1e6257ebe", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears the presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultVisitorCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a0d1dbbb-e482-469c-8685-12712128b371", err.Error())
+	}
 	return nil
 }
 

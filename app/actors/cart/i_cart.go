@@ -218,7 +218,9 @@ func (it *DefaultCart) GetSubtotal() float64 {
 	if it.Subtotal == 0 {
 		for _, cartItem := range it.Items {
 			if cartProduct := cartItem.GetProduct(); cartProduct != nil {
-				cartProduct.ApplyOptions(cartItem.GetOptions())
+				if err := cartProduct.ApplyOptions(cartItem.GetOptions()); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 				it.Subtotal += cartProduct.GetPrice() * float64(cartItem.GetQty())
 			}
 		}
@@ -259,8 +261,11 @@ func (it *DefaultCart) SetVisitorID(visitorID string) error {
 
 // GetVisitor returns visitor model represents owner or current cart or nil if visitor was not set to cart
 func (it *DefaultCart) GetVisitor() visitor.InterfaceVisitor {
-	visitor, _ := visitor.LoadVisitorByID(it.VisitorID)
-	return visitor
+	visitorInstance, err := visitor.LoadVisitorByID(it.VisitorID)
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	return visitorInstance
 }
 
 // SetCartInfo assigns some information to current cart
@@ -298,8 +303,12 @@ func (it *DefaultCart) MakeCartForVisitor(visitorID string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	cartCollection.AddFilter("visitor_id", "=", visitorID)
-	cartCollection.AddFilter("active", "=", true)
+	if err := cartCollection.AddFilter("visitor_id", "=", visitorID); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := cartCollection.AddFilter("active", "=", true); err != nil {
+		return env.ErrorDispatch(err)
+	}
 	rowsData, err := cartCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -311,9 +320,15 @@ func (it *DefaultCart) MakeCartForVisitor(visitorID string) error {
 			return env.ErrorDispatch(err)
 		}
 		newCart := newModel.(*DefaultCart)
-		newCart.SetVisitorID(visitorID)
-		newCart.Activate()
-		newCart.Save()
+		if err := newCart.SetVisitorID(visitorID); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := newCart.Activate(); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := newCart.Save(); err != nil {
+			return env.ErrorDispatch(err)
+		}
 
 		*it = *newCart
 	} else {

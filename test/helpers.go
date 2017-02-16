@@ -228,11 +228,15 @@ func UpdateShippingAndPaymentMethods(currentCheckout checkout.InterfaceCheckout)
 	// making sure methods are enabled in config
 	if config := env.GetConfig(); config != nil {
 		for _, configItem := range config.GetItemsInfo("*flat_rate*.enabled") {
-			config.SetValue(configItem.Path, true)
+			if err := config.SetValue(configItem.Path, true); err != nil {
+				return err
+			}
 		}
 
 		for _, configItem := range config.GetItemsInfo("*checkmo*.enabled") {
-			config.SetValue(configItem.Path, true)
+			if err := config.SetValue(configItem.Path, true); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -240,7 +244,9 @@ func UpdateShippingAndPaymentMethods(currentCheckout checkout.InterfaceCheckout)
 	found := false
 	for _, shippingMethod := range checkout.GetRegisteredShippingMethods() {
 		if shippingMethod.GetCode() == "flat_rate" {
-			currentCheckout.SetShippingMethod(shippingMethod)
+			if err := currentCheckout.SetShippingMethod(shippingMethod); err != nil {
+				return err
+			}
 			found = true
 			break
 		}
@@ -253,7 +259,9 @@ func UpdateShippingAndPaymentMethods(currentCheckout checkout.InterfaceCheckout)
 	found = false
 	for _, paymentMethod := range checkout.GetRegisteredPaymentMethods() {
 		if paymentMethod.GetCode() == "checkmo" {
-			currentCheckout.SetPaymentMethod(paymentMethod)
+			if err := currentCheckout.SetPaymentMethod(paymentMethod); err != nil {
+				return err
+			}
 			found = true
 			break
 		}
@@ -326,16 +334,32 @@ func MakeSureProductsCount(countShouldBe int) error {
 			return err
 		}
 
-		productModel.Set("enabled", true)
-		productModel.Set("sku", fmt.Sprintf("test-%d", i))
-		productModel.Set("name", fmt.Sprintf("Test Product %d", i))
+		if err := productModel.Set("enabled", true); err != nil {
+			return err
+		}
+		if err := productModel.Set("sku", fmt.Sprintf("test-%d", i)); err != nil {
+			return err
+		}
+		if err := productModel.Set("name", fmt.Sprintf("Test Product %d", i)); err != nil {
+			return err
+		}
 
-		productModel.Set("short_description", golorem.Paragraph(1, 5))
-		productModel.Set("description", golorem.Paragraph(5, 10))
+		if err := productModel.Set("short_description", golorem.Paragraph(1, 5)); err != nil {
+			return err
+		}
+		if err := productModel.Set("description", golorem.Paragraph(5, 10)); err != nil {
+			return err
+		}
 
-		productModel.Set("default_image", "")
-		productModel.Set("price", utils.RoundPrice(rand.Float64()*10))
-		productModel.Set("weight", utils.RoundPrice(rand.Float64()*10))
+		if err := productModel.Set("default_image", ""); err != nil {
+			return err
+		}
+		if err := productModel.Set("price", utils.RoundPrice(rand.Float64()*10)); err != nil {
+			return err
+		}
+		if err := productModel.Set("weight", utils.RoundPrice(rand.Float64()*10)); err != nil {
+			return err
+		}
 
 		// productModel.Set("options", "")
 

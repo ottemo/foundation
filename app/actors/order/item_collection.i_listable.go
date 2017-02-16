@@ -70,13 +70,17 @@ func (it *DefaultOrderItemCollection) ListAddExtraAttribute(attribute string) er
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultOrderItemCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7d34fbe6-ac90-430b-8ede-9768982bac7d", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultOrderItemCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a6f914e9-a6ae-4b0b-be9a-21a4fbf81a1d", err.Error())
+	}
 	return nil
 }
 

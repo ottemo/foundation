@@ -17,23 +17,25 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 	orderProceed, ok := eventData["order"].(order.InterfaceOrder)
 	if !ok {
-		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4bb5d8a8-15bf-42d8-bd1d-1f9e715779e6", "Unable to find an order when firing event, order.proceed."))
+		env.LogError(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a9d70cad-0a05-4af1-8d03-947abdc0e25a", "Unable to find an order when firing event, order.proceed."))
 		return false
 	}
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return false
 	}
 
 	orderID := orderProceed.GetID()
 
-	giftCardCollection.AddFilter("orders_used", "LIKE", orderID)
+	if err := giftCardCollection.AddFilter("orders_used", "LIKE", orderID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e86db38c-1081-4c16-99ff-45cba3e957a3", err.Error())
+	}
 
 	orderGiftCardApplying, err := giftCardCollection.Load()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return false
 	}
 
@@ -46,15 +48,15 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 		for _, orderAppliedDiscount := range orderAppliedDiscounts {
 
 			if err := giftCardCollection.ClearFilters(); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 			if err := giftCardCollection.AddFilter("code", "=", orderAppliedDiscount.Code); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 
 			records, err := giftCardCollection.Load()
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				return false
 			}
 
@@ -85,7 +87,7 @@ func orderProceedHandler(event string, eventData map[string]interface{}) bool {
 
 				_, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 					continue
 				}
 			}
@@ -107,7 +109,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return false
 	}
 
@@ -115,12 +117,12 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 	orderID := rollbackOrder.GetID()
 
 	if err := giftCardCollection.AddFilter("orders_used", "LIKE", orderID); err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	records, err := giftCardCollection.Load()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return false
 	}
 
@@ -142,7 +144,7 @@ func orderRollbackHandler(event string, eventData map[string]interface{}) bool {
 
 			_, err := giftCardCollection.Save(record)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				return false
 			}
 		}
@@ -162,7 +164,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return false
 	}
 
@@ -267,7 +269,7 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 				giftCardID, err := giftCardCollection.Save(giftCard)
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 					return false
 				}
 				if deliveryDate.Truncate(time.Hour).Before(currentTime) {
@@ -284,7 +286,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 			"ignoreDeliveryDate": true,
 		}
 
-		go SendTask(params)
+		go func (params map[string]interface{}){
+			if err := SendTask(params); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5786c5de-4ba3-4e3f-981c-58101331a7c6", err.Error())
+			}
+		}(params)
 	}
 
 	return true

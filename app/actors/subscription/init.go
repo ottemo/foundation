@@ -14,11 +14,15 @@ import (
 func init() {
 	subscriptionInstance := new(DefaultSubscription)
 	var _ subscription.InterfaceSubscription = subscriptionInstance
-	models.RegisterModel(subscription.ConstModelNameSubscription, subscriptionInstance)
+	if err := models.RegisterModel(subscription.ConstModelNameSubscription, subscriptionInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7f2293e4-1f6c-4fed-8410-83f99f145e65", err.Error())
+	}
 
 	subscriptionCollectionInstance := new(DefaultSubscriptionCollection)
 	var _ subscription.InterfaceSubscriptionCollection = subscriptionCollectionInstance
-	models.RegisterModel(subscription.ConstModelNameSubscriptionCollection, subscriptionCollectionInstance)
+	if err := models.RegisterModel(subscription.ConstModelNameSubscriptionCollection, subscriptionCollectionInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c7513220-d5e5-4770-87b4-6405fced1c9d", err.Error())
+	}
 
 	db.RegisterOnDatabaseStart(setupDB)
 	api.RegisterOnRestServiceStart(setupAPI)
@@ -34,32 +38,66 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("visitor_id", db.ConstTypeID, true)
-	collection.AddColumn("order_id", db.ConstTypeID, true)
+	if err := collection.AddColumn("visitor_id", db.ConstTypeID, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36a415d0-08ea-4ea0-8205-cfbb690ab10a", err.Error())
+	}
+	if err := collection.AddColumn("order_id", db.ConstTypeID, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1864f423-be12-4b70-b910-366420cfbfcf", err.Error())
+	}
 
-	collection.AddColumn("items", db.TypeArrayOf(db.ConstTypeJSON), true)
+	if err := collection.AddColumn("items", db.TypeArrayOf(db.ConstTypeJSON), true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3726acfb-afeb-4a1a-a8fe-f251bdfa1196", err.Error())
+	}
 
-	collection.AddColumn("customer_email", db.TypeWPrecision(db.ConstTypeVarchar, 100), true)
-	collection.AddColumn("customer_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
+	if err := collection.AddColumn("customer_email", db.TypeWPrecision(db.ConstTypeVarchar, 100), true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2a4ce601-2f55-46c7-a79b-09860c97fb92", err.Error())
+	}
+	if err := collection.AddColumn("customer_name", db.TypeWPrecision(db.ConstTypeVarchar, 100), false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffd385b2-d16d-456e-a226-3a11122cd789", err.Error())
+	}
 
-	collection.AddColumn("shipping_address", db.ConstTypeJSON, false)
-	collection.AddColumn("billing_address", db.ConstTypeJSON, false)
+	if err := collection.AddColumn("shipping_address", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1f39d1a1-d8b9-4b8d-8079-a6bc984684f8", err.Error())
+	}
+	if err := collection.AddColumn("billing_address", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "be736068-2e21-4572-94f9-4190675fdde9", err.Error())
+	}
 
-	collection.AddColumn("shipping_method", db.TypeWPrecision(db.ConstTypeVarchar, 100), false)
-	collection.AddColumn("shipping_rate", db.ConstTypeJSON, false)
+	if err := collection.AddColumn("shipping_method", db.TypeWPrecision(db.ConstTypeVarchar, 100), false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "22f061f4-e69b-4167-b52f-88877c93a0bb", err.Error())
+	}
+	if err := collection.AddColumn("shipping_rate", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ac231f31-2f64-466a-977d-7205794b2717", err.Error())
+	}
 
-	collection.AddColumn("payment_instrument", db.ConstTypeJSON, false)
+	if err := collection.AddColumn("payment_instrument", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8b657dc-4faf-476b-a634-42b1f942325b", err.Error())
+	}
 
-	collection.AddColumn("period", db.ConstTypeInteger, false)
-	collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), false)
+	if err := collection.AddColumn("period", db.ConstTypeInteger, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "98bc7437-a59f-4056-a833-5fa0a5663b1a", err.Error())
+	}
+	if err := collection.AddColumn("status", db.TypeWPrecision(db.ConstTypeVarchar, 50), false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "726d93f5-d0cd-463f-9e02-51d1d41ac456", err.Error())
+	}
 
-	collection.AddColumn("action_date", db.ConstTypeDatetime, true)
-	collection.AddColumn("last_submit", db.ConstTypeDatetime, true)
+	if err := collection.AddColumn("action_date", db.ConstTypeDatetime, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "236c2336-f857-404d-bf70-0bf00f051850", err.Error())
+	}
+	if err := collection.AddColumn("last_submit", db.ConstTypeDatetime, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "029666db-8126-4f92-a6bb-758569b1cb34", err.Error())
+	}
 
-	collection.AddColumn("created_at", db.ConstTypeDatetime, true)
-	collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
+	if err := collection.AddColumn("created_at", db.ConstTypeDatetime, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c41472f-38c5-4ff9-83f8-6563afbe93b3", err.Error())
+	}
+	if err := collection.AddColumn("updated_at", db.ConstTypeDatetime, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bd4a1231-5eee-40c4-ad4f-edeba80f621e", err.Error())
+	}
 
-	collection.AddColumn("info", db.ConstTypeJSON, false)
+	if err := collection.AddColumn("info", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "10cfb39e-7f3b-44fd-9159-a852cdd86943", err.Error())
+	}
 
 	return nil
 }
@@ -83,14 +121,18 @@ func onAppStart() error {
 
 	// process order creation every one hour
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask(ConstSchedulerTaskName, placeOrders)
-		scheduler.ScheduleRepeat(
+		if err := scheduler.RegisterTask(ConstSchedulerTaskName, placeOrders); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6f4451a3-6f11-404c-86b5-d6dab58bcd44", err.Error())
+		}
+		if _, err := scheduler.ScheduleRepeat(
 			subscription.GetSubscriptionCronExpr(
 				subscription.GetSubscriptionPeriodValue(
 					utils.InterfaceToString(
 						env.ConfigGetValue(subscription.ConstConfigPathSubscriptionExecutionTime)))),
 			ConstSchedulerTaskName,
-			nil)
+			nil); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "30717db6-0e30-4656-8698-531c5c4d60f6", err.Error())
+		}
 	}
 
 	return nil

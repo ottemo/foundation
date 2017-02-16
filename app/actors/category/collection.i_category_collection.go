@@ -3,6 +3,7 @@ package category
 import (
 	"github.com/ottemo/foundation/app/models/category"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
 // GetDBCollection returns database collection
@@ -24,7 +25,9 @@ func (it *DefaultCategoryCollection) ListCategories() []category.InterfaceCatego
 		if err != nil {
 			return result
 		}
-		categoryModel.FromHashMap(recordData)
+		if err := categoryModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f5cc61ae-cdff-4f38-9a72-12e235e586a5", err.Error())
+		}
 
 		result = append(result, categoryModel)
 	}
