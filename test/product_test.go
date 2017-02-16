@@ -140,7 +140,7 @@ func BenchmarkList50Products(b *testing.B) {
 			b.Error(err)
 		}
 
-		productCollection.ListLimit(0, 50)
+		err = productCollection.ListLimit(0, 50)
 		if err != nil {
 			b.Error(err)
 		}
@@ -204,14 +204,18 @@ func BenchmarkProductLoad(b *testing.B) {
 	}
 
 	productDBCollection := productCollection.GetDBCollection()
-	productDBCollection.SetResultColumns("_id")
+	if err := productDBCollection.SetResultColumns("_id"); err != nil {
+		b.Error(err)
+	}
 	productIds, err := productDBCollection.Load()
 	count := len(productIds)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		randomID := utils.InterfaceToString(productIds[rand.Intn(count)]["_id"])
-		product.LoadProductByID(randomID)
+		if _, err := product.LoadProductByID(randomID); err != nil {
+			b.Error(err)
+		}
 	}
 }
 

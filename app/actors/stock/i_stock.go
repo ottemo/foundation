@@ -15,26 +15,26 @@ func (it *DefaultStock) GetProductQty(productID string, options map[string]inter
 	// receiving database information
 	dbCollection, err := db.GetCollection(ConstCollectionNameStock)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return minQty
 	}
 
 	err = dbCollection.AddFilter("product_id", "=", productID)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return minQty
 	}
 
 	dbRecords, err := dbCollection.Load()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		return minQty
 	}
 
 	// there could be couple matching request - we are looking for minimal value
 	for _, dbRecord := range dbRecords {
 		if !utils.StrKeysInMap(dbRecord, "qty", "options") {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c4d7d994-3f85-434e-9a72-8d3ab02eb063", "unexpected db result")
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c4d7d994-3f85-434e-9a72-8d3ab02eb063", "unexpected db result")
 			break
 		}
 
@@ -169,7 +169,7 @@ func (it *DefaultStock) SetProductQty(productID string, options map[string]inter
 	recordsProcessed := 0
 	for _, dbRecord := range dbRecords {
 		if !utils.StrKeysInMap(dbRecord, "_id", "qty", "options") {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b0d88054-0678-4894-831b-f332583a2ae7", "unexpected db result")
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b0d88054-0678-4894-831b-f332583a2ae7", "unexpected db result")
 			break
 		}
 
@@ -224,7 +224,7 @@ func (it *DefaultStock) UpdateProductQty(productID string, options map[string]in
 	recordsProcessed := 0
 	for _, dbRecord := range dbRecords {
 		if !utils.StrKeysInMap(dbRecord, "_id", "qty", "options") {
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f99c2f4b-ab56-4aa6-9950-00dcb09c15fd", "unexpected db result")
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f99c2f4b-ab56-4aa6-9950-00dcb09c15fd", "unexpected db result")
 			break
 		}
 

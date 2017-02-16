@@ -94,23 +94,27 @@ func getCustomerIDByVisitorID(visitorID string) string {
 	var customerIDAttribute = "customer_id"
 
 	if visitorID == "" {
-		env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "16666b2f-1b40-44c5-8e0e-2cfcd868ba4c", "empty visitor ID passed to look up customer token"))
+		_ = env.ErrorDispatch(env.ErrorNew(ConstErrorModule, ConstErrorLevel, "16666b2f-1b40-44c5-8e0e-2cfcd868ba4c", "empty visitor ID passed to look up customer token"))
 		return absentIDValue
 	}
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
-	model.ListFilterAdd("visitor_id", "=", visitorID)
-	model.ListFilterAdd("payment", "=", ConstPaymentAuthorizeNetRestAPICode)
+	if err := model.ListFilterAdd("visitor_id", "=", visitorID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "60cfa19b-a868-4200-b410-3bf6fe6fcf37", err.Error())
+	}
+	if err := model.ListFilterAdd("payment", "=", ConstPaymentAuthorizeNetRestAPICode); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f8e857ee-4a9d-4db1-ab5d-75464bafdec9", err.Error())
+	}
 
 	// 3rd party customer identifier, used by braintree
 	err := model.ListAddExtraAttribute(customerIDAttribute)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	visitorCards, err := model.List()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	for _, visitorCard := range visitorCards {

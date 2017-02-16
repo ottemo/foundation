@@ -75,7 +75,9 @@ func basicAuth(next api.FuncAPIHandler) api.FuncAPIHandler {
 // - Should return any orders that were modified within the date range
 //   regardless of the order status
 func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
-	context.SetResponseContentType("text/xml")
+	if err := context.SetResponseContentType("text/xml"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "45e8aebc-bd20-4780-aa9a-5938d76b3c10", err.Error())
+	}
 
 	// Our utils.InterfaceToTime doesn't handle this format well `01/23/2012 17:28`
 	const parseDateFormat = "01/02/2006 15:04"
@@ -89,8 +91,14 @@ func listOrders(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	startArg := context.GetRequestArgument("start_date")
 	endArg := context.GetRequestArgument("end_date")
-	startDate, _ := time.Parse(parseDateFormat, startArg)
-	endDate, _ := time.Parse(parseDateFormat, endArg)
+	startDate, err := time.Parse(parseDateFormat, startArg)
+	if err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fc81004e-1666-4368-8241-bcc1473f8f2c", err.Error())
+	}
+	endDate, err := time.Parse(parseDateFormat, endArg)
+	if err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cf5e1e29-43d7-416e-b1ea-7a27dd4e271f", err.Error())
+	}
 	// page := context.GetRequestArgument("page") // we don't paginate currently
 
 	// Get the orders
@@ -252,15 +260,23 @@ func updateShipmentStatus(context api.InterfaceApplicationContext) (interface{},
 	shippingInfo["tracking_number"] = trackingNumber
 	shippingInfo["tracking_url"] = buildTrackingUrl(carrier, trackingNumber)
 
-	orderModel.Set("shipping_info", shippingInfo)
-	orderModel.Set("updated_at", time.Now())
-	orderModel.SetStatus(order.ConstOrderStatusCompleted)
+	if err := orderModel.Set("shipping_info", shippingInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9a3d35fe-3de7-4810-8e23-b9a79474ed90", err.Error())
+	}
+	if err := orderModel.Set("updated_at", time.Now()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0467a420-f40d-499f-a215-d1ad922b5a89", err.Error())
+	}
+	if err := orderModel.SetStatus(order.ConstOrderStatusCompleted); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9e87ea89-754c-46b5-916c-9cbf20dfbfe0", err.Error())
+	}
 	err := orderModel.Save()
 
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 	} else {
-		orderModel.SendShippingStatusUpdateEmail()
+		if err := orderModel.SendShippingStatusUpdateEmail(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8b6511ba-38d3-4966-8e2b-bd8b531533b3", err.Error())
+		}
 	}
 
 	return nil, nil

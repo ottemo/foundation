@@ -92,5 +92,35 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathGiftCardAdminBuyerName,
+		Value:       "",
+		Type:        env.ConstConfigTypeText,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Gift card admin buyer name",
+		Description: "",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathGiftCardAdminBuyerEmail,
+		Value:       "",
+		Type:        env.ConstConfigTypeText,
+		Editor:      "line_text",
+		Options:     nil,
+		Label:       "Gift card admin buyer email",
+		Description: "",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

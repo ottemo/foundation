@@ -141,7 +141,9 @@ func (it *USPS) GetRates(checkoutObject checkout.InterfaceCheckout) []checkout.S
 
 	var buff bytes.Buffer
 	parsedTemplate, _ := template.New("usps").Parse(requestTemplate)
-	parsedTemplate.Execute(&buff, templateValues)
+	if err := parsedTemplate.Execute(&buff, templateValues); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "25c5e1f9-6a57-4de1-b6da-4ad00dd408a1", err.Error())
+	}
 
 	if useDebugLog {
 		env.Log("usps.log", "REQUEST", buff.String())

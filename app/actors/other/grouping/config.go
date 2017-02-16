@@ -30,7 +30,7 @@ func setupConfig() error {
 			case []interface{}:
 				rules = value
 			default:
-				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df1ccfbd-90ce-412a-b638-5211f23ef525", "can't convert to array")
+				err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "32417b78-6881-471e-922c-d7d7d4ddef1f", "can't convert to array")
 				return nil, env.ErrorDispatch(err)
 			}
 

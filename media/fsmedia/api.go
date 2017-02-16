@@ -9,7 +9,7 @@ import (
 // configures package related API endpoint routines
 func setupAPI() error {
 
-	api.GetRestService().GET("media", api.IsAdmin(APIGetMediaInfo))
+	api.GetRestService().GET("media", api.IsAdminHandler(APIGetMediaInfo))
 
 	return nil
 }

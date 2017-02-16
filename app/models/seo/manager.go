@@ -64,7 +64,7 @@ func UnRegisterSEOEngine() error {
 // RegisterSEOEngine registers given SEO engine in system
 func RegisterSEOEngine(seoEngine InterfaceSEOEngine) error {
 	if registeredSEOEngine != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "99b01aae-e0cb-4d27-b0cf-406888828e31", "Already registered")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a953a440-1c05-416a-8412-e01454e81c17", "Already registered")
 	}
 	registeredSEOEngine = seoEngine
 

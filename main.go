@@ -21,7 +21,11 @@ func init() {
 
 // executable file start point
 func main() {
-	defer app.End() // application close event
+	defer func() {
+		if err := app.End(); err != nil { // application close event
+			fmt.Println(err.Error())
+		}
+	}()
 
 	// we should intercept os signals to application as we should call app.End() before
 	signalChain := make(chan os.Signal, 1)
@@ -30,7 +34,7 @@ func main() {
 		for _ = range signalChain {
 			err := app.End()
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				fmt.Println(err.Error())
 			}
 
@@ -40,7 +44,7 @@ func main() {
 
 	// application start event
 	if err := app.Start(); err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
@@ -48,5 +52,7 @@ func main() {
 	fmt.Println("Ottemo " + app.GetVerboseVersion())
 
 	// starting HTTP server
-	app.Serve()
+	if err := app.Serve(); err != nil {
+		fmt.Println(err.Error())
+	}
 }

@@ -71,12 +71,12 @@ func (it *SalePriceDelegate) Set(attribute string, value interface{}) error {
 					return env.ErrorDispatch(err)
 				}
 
-				salePriceModel.FromHashMap(utils.InterfaceToMap(valueItem))
+				err = salePriceModel.FromHashMap(utils.InterfaceToMap(valueItem))
 				if err != nil {
 					return env.ErrorDispatch(err)
 				}
 
-				salePriceModel.SetProductID(it.productInstance.GetID())
+				err = salePriceModel.SetProductID(it.productInstance.GetID())
 				if err != nil {
 					return env.ErrorDispatch(err)
 				}
@@ -115,28 +115,30 @@ func (it *SalePriceDelegate) Load(id string) error {
 
 	salePriceCollectionModel, err := saleprice.GetSalePriceCollectionModel()
 	if err != nil {
-		newErrorHelper("can not get sale price collection", "1ee355c3-20f4-4706-9723-9fe6c7e1bda4")
+		_ = newErrorHelper("can not get sale price collection", "1ee355c3-20f4-4706-9723-9fe6c7e1bda4")
 		return nil
 	}
 
-	salePriceCollectionModel.GetDBCollection().AddFilter("product_id", "=", it.productInstance.GetID())
+	if err := salePriceCollectionModel.GetDBCollection().AddFilter("product_id", "=", it.productInstance.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "79800c35-7372-4c5f-abec-a153405b8ae1", err.Error())
+	}
 
 	salePriceStructListItems, err := salePriceCollectionModel.List()
 	if err != nil {
-		newErrorHelper("can not get sale prices list", "9d77e24b-e45f-426a-8b7d-dd859271b0d2")
+		_ = newErrorHelper("can not get sale prices list", "9d77e24b-e45f-426a-8b7d-dd859271b0d2")
 		return nil
 	}
 
 	for _, salePriceStructListItem := range salePriceStructListItems {
 		salePriceModel, err := saleprice.GetSalePriceModel()
 		if err != nil {
-			newErrorHelper("can not get sale price model", "d5f43503-d73c-4d60-a349-2668ae37c6b0")
+			_ = newErrorHelper("can not get sale price model", "d5f43503-d73c-4d60-a349-2668ae37c6b0")
 			continue
 		}
 
 		err = salePriceModel.Load(salePriceStructListItem.ID)
 		if err != nil {
-			newErrorHelper("can not load sale price model", "dd08dffe-6147-4d96-8306-c6b60dcb704f")
+			_ = newErrorHelper("can not load sale price model", "dd08dffe-6147-4d96-8306-c6b60dcb704f")
 			continue
 		}
 
@@ -156,7 +158,9 @@ func (it *SalePriceDelegate) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	salePriceCollectionModel.GetDBCollection().AddFilter("product_id", "=", it.productInstance.GetID())
+	if err := salePriceCollectionModel.GetDBCollection().AddFilter("product_id", "=", it.productInstance.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "57b5ad9f-90ed-4d64-ad8e-b648bdb41a6c", err.Error())
+	}
 
 	salePriceStructListItems, err := salePriceCollectionModel.List()
 	if err != nil {
@@ -201,7 +205,7 @@ func (it *SalePriceDelegate) Save() error {
 				return env.ErrorDispatch(err)
 			}
 
-			salePriceModel.SetID(salePriceStructListItem.ID)
+			err = salePriceModel.SetID(salePriceStructListItem.ID)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}

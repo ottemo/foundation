@@ -80,7 +80,9 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 
 	switch attribute {
 	case "_id", "id":
-		it.SetID(utils.InterfaceToString(value))
+		if err := it.SetID(utils.InterfaceToString(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef5400da-4a42-4b37-8747-e25a24bc6a45", err.Error())
+		}
 
 	case "enabled":
 		it.Enabled = utils.InterfaceToBool(value)
@@ -130,9 +132,11 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 		case category.InterfaceCategory:
 			it.Parent = value
 		case string:
-			it.Set("parent_id", value)
+			if err := it.Set("parent_id", value); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d0ee8340-3de0-43e0-8d1d-9da85887cfb7", err.Error())
+			}
 		default:
-			env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2156d563-932b-4de7-a615-7d473717a3bd", "unsupported 'parent' value")
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2156d563-932b-4de7-a615-7d473717a3bd", "unsupported 'parent' value")
 		}
 		// path should be changed as well
 		it.updatePath()
@@ -178,7 +182,7 @@ func (it *DefaultCategory) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 

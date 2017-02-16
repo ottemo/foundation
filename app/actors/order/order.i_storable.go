@@ -35,7 +35,9 @@ func (it *DefaultOrder) Load(ID string) error {
 
 	// initializing DefaultOrder structure
 	for attribute, value := range values {
-		it.Set(attribute, value)
+		if err := it.Set(attribute, value); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e4770f57-e1f9-4b73-a23a-7b2627c659ee", err.Error())
+		}
 	}
 
 	it.Items = make(map[int]order.InterfaceOrderItem)
@@ -47,7 +49,9 @@ func (it *DefaultOrder) Load(ID string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	orderItemsCollection.AddFilter("order_id", "=", it.GetID())
+	if err := orderItemsCollection.AddFilter("order_id", "=", it.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b4bd653-2b14-4e6a-ba2f-4f3fc083a608", err.Error())
+	}
 	orderItems, err := orderItemsCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -57,7 +61,9 @@ func (it *DefaultOrder) Load(ID string) error {
 		orderItem := new(DefaultOrderItem)
 
 		for attribute, value := range orderItemValues {
-			orderItem.Set(attribute, value)
+			if err := orderItem.Set(attribute, value); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8047073d-164b-4a5c-bb29-d076c8bd3065", err.Error())
+			}
 		}
 
 		it.Items[orderItem.idx] = orderItem
@@ -120,18 +126,24 @@ func (it *DefaultOrder) Save() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	it.SetID(newID)
+	if err := it.SetID(newID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9e1abe0d-20a0-4bea-8f81-40fddaacde3f", err.Error())
+	}
 
 	// storing order items
 	for _, orderItem := range it.GetItems() {
-		orderItem.Set("order_id", newID)
+		if err := orderItem.Set("order_id", newID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "90202b42-0cd0-4e08-a11a-6f1f5981d246", err.Error())
+		}
 		orderItemStoringValues := orderItem.ToHashMap()
 
 		newID, err := orderItemsCollection.Save(orderItemStoringValues)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-		orderItem.SetID(newID)
+		if err := orderItem.SetID(newID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "95eb6404-df35-4386-8a74-268df577194d", err.Error())
+		}
 	}
 
 	return nil

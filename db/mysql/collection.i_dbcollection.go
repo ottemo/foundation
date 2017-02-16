@@ -16,12 +16,18 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 	var result map[string]interface{}
 
 	if !ConstUseUUIDids {
-		it.AddFilter("_id", "=", id)
+		if err := it.AddFilter("_id", "=", id); err != nil {
+			return result, env.ErrorDispatch(err)
+		}
 	} else {
 		if idValue, err := strconv.ParseInt(id, 10, 64); err == nil {
-			it.AddFilter("_id", "=", idValue)
+			if err := it.AddFilter("_id", "=", idValue); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		} else {
-			it.AddFilter("_id", "=", id)
+			if err := it.AddFilter("_id", "=", id); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -81,7 +87,9 @@ func (it *DBCollection) Iterate(iteratorFunc func(record map[string]interface{})
 func (it *DBCollection) Distinct(columnName string) ([]interface{}, error) {
 
 	prevResultColumns := it.ResultColumns
-	it.SetResultColumns(columnName)
+	if err := it.SetResultColumns(columnName); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	SQL := "SELECT DISTINCT " + it.getSQLResultColumns() + " FROM `" + it.Name + "`" + it.getSQLFilters() + it.getSQLOrder() + it.Limit
 
@@ -199,7 +207,7 @@ func (it *DBCollection) Save(item map[string]interface{}) (string, error) {
 				}
 
 			} else {
-				return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3c32afc6-eb74-4324-97a8-9425724be0d1", "unexpected _id value '"+fmt.Sprint(item)+"'")
+				return "", env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6bb61d5-c16b-4463-89a8-cc0bf99972a4", "unexpected _id value '"+fmt.Sprint(item)+"'")
 			}
 		} else {
 			item["_id"] = nil
@@ -273,7 +281,7 @@ func (it *DBCollection) DeleteByID(id string) error {
 // SetupFilterGroup setups filter group params for collection
 func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, parentGroup string) error {
 	if _, present := it.FilterGroups[parentGroup]; !present && parentGroup != "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d7c8917-4502-478f-92b5-1a10dc2036c8", "invalid parent group")
 	}
 
 	filterGroup := it.getFilterGroup(groupName)
@@ -286,7 +294,7 @@ func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, pare
 // RemoveFilterGroup removes filter group for collection
 func (it *DBCollection) RemoveFilterGroup(groupName string) error {
 	if _, present := it.FilterGroups[groupName]; !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9eb6f989-782d-41f1-9865-5977c3dc64ef", "invalid group name")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "07d09c7d-c98e-460b-9f79-53eefa0ced6c", "invalid group name")
 	}
 
 	delete(it.FilterGroups, groupName)
@@ -345,7 +353,7 @@ func (it *DBCollection) AddSort(ColumnName string, Desc bool) error {
 			it.Order = append(it.Order, ColumnName)
 		}
 	} else {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3086170-7995-4f0a-94ff-3344c18502b7", "can't find column '"+ColumnName+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "57703bc5-d3a5-4367-92e5-960d5582a407", "can't find column '"+ColumnName+"'")
 	}
 
 	return nil
@@ -361,7 +369,7 @@ func (it *DBCollection) ClearSort() error {
 func (it *DBCollection) SetResultColumns(columns ...string) error {
 	for _, columnName := range columns {
 		if !it.HasColumn(columnName) {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e1fe347f-3232-4921-b03d-afcff93be895", "there is no column "+columnName+" found")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "82fad6da-5970-42dc-bd29-306b65ef4dbd", "there is no column "+columnName+" found")
 		}
 
 		it.ResultColumns = append(it.ResultColumns, columnName)
@@ -400,7 +408,7 @@ func (it *DBCollection) ListColumns() map[string]string {
 	for ok := rows.Next(); ok == true; ok = rows.Next() {
 		row, err := getRowAsStringMap(rows)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 
 		key := row["column"].(string)
@@ -458,13 +466,13 @@ func (it *DBCollection) AddColumn(columnName string, columnType string, indexed 
 
 	// checking column name
 	if !ConstSQLNameValidator.MatchString(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bf491919-5800-4fd1-8802-6b78846bd6b4", "not valid column name for DB engine: "+columnName)
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "528f0656-92e2-4069-aae9-97323ef43094", "not valid column name for DB engine: "+columnName)
 	}
 
 	// checking if column already present
 	if it.HasColumn(columnName) {
 		if currentType := it.GetColumnType(columnName); currentType != columnType {
-			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f568e952-db01-4b3b-b5b7-8d0d1acb2d08", "column '"+columnName+"' already exists with type '"+currentType+"' for '"+it.Name+"' collection. Requested type '"+columnType+"'")
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5d10721d-9ab5-4484-a142-052cfc7c8c41", "column '"+columnName+"' already exists with type '"+currentType+"' for '"+it.Name+"' collection. Requested type '"+columnType+"'")
 		}
 		return nil
 	}
@@ -512,11 +520,11 @@ func (it *DBCollection) RemoveColumn(columnName string) error {
 	// checking column in table
 	//-------------------------
 	if columnName == "_id" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5d68214b-2604-4ebd-a20d-522fbbc61afe", "you can't remove _id column")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d444e354-0f1d-4781-acce-3e746c6ecc66", "you can't remove _id column")
 	}
 
 	if !it.HasColumn(columnName) {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e0b589c-d295-49ae-bc47-2fbe1e243248", "column '"+columnName+"' not exists in '"+it.Name+"' collection")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "131311b3-8f7c-4c8f-a05f-231d1c6d3c80", "column '"+columnName+"' not exists in '"+it.Name+"' collection")
 	}
 
 	// getting table create SQL to take columns from

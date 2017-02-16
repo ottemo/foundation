@@ -56,7 +56,9 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 			if product := cartItem.GetProduct(); product != nil {
 
-				product.ApplyOptions(cartItem.GetOptions())
+				if err := product.ApplyOptions(cartItem.GetOptions()); err != nil {
+					return nil, env.ErrorDispatch(err)
+				}
 
 				productData := make(map[string]interface{})
 
@@ -68,7 +70,7 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 				productData["image"], err = mediaStorage.GetSizes(product.GetModelName(), product.GetID(), "image", product.GetDefaultImage())
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 				}
 
 				item["product"] = productData
@@ -124,12 +126,13 @@ func APICartItemAdd(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	_, err = currentCart.AddItem(pid, qty, options)
-	if err != nil {
+	if _, err := currentCart.AddItem(pid, qty, options); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	currentCart.Save()
+	if err := currentCart.Save(); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "pid": pid, "qty": qty, "options": options}
 	env.Event(ConstEventAPIAdd, eventData)
@@ -177,7 +180,9 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 
 	for _, cartItem := range cartItems {
 		if cartItem.GetIdx() == itemIdx {
-			cartItem.SetQty(qty)
+			if err := cartItem.SetQty(qty); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
 			found = true
 
 			eventData["pid"] = cartItem.GetProductID()
@@ -191,7 +196,9 @@ func APICartItemUpdate(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b1ae8e41-3aef-4f2e-b417-bd6975ff7bb1", "wrong itemIdx was specified")
 	}
 
-	currentCart.Save()
+	if err := currentCart.Save(); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	env.Event(ConstEventAPIUpdate, eventData)
 
@@ -219,11 +226,12 @@ func APICartItemDelete(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	err = currentCart.RemoveItem(itemIdx)
-	if err != nil {
+	if err := currentCart.RemoveItem(itemIdx); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	currentCart.Save()
+	if err := currentCart.Save(); err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	eventData := map[string]interface{}{"session": context.GetSession(), "cart": currentCart, "idx": itemIdx, "qty": 0}
 	env.Event(ConstEventAPIUpdate, eventData)

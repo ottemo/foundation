@@ -82,7 +82,9 @@ func GetCurrentCheckout(context api.InterfaceApplicationContext, bindToSession b
 		}
 
 		//setting session
-		newCheckoutInstance.SetSession(context.GetSession())
+		if err := newCheckoutInstance.SetSession(context.GetSession()); err != nil {
+			return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bc6d7e0c-ce29-4b44-bbaa-e57de48cc714", "Unable to set session for checkout: "+err.Error())
+		}
 
 		checkoutInstance = newCheckoutInstance
 	}
@@ -100,14 +102,18 @@ func GetCurrentCheckout(context api.InterfaceApplicationContext, bindToSession b
 	if err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
-	checkoutInstance.SetCart(currentCart)
+	if err := checkoutInstance.SetCart(currentCart); err != nil {
+		return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f4fe8d99-b4e7-441d-8ad7-87f6696c5b54", "Unable to set cart for checkout: "+err.Error())
+	}
 
 	// setting visitor
 	currentVisitor, err := visitor.GetCurrentVisitor(context)
 	if err != nil {
 		return checkoutInstance, env.ErrorDispatch(err)
 	}
-	checkoutInstance.SetVisitor(currentVisitor)
+	if err := checkoutInstance.SetVisitor(currentVisitor); err != nil {
+		return checkoutInstance, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d95b9a96-2dc7-41bc-8375-302b8be91325", "Unable to set visitor for checkout: "+err.Error())
+	}
 
 	return checkoutInstance, nil
 }

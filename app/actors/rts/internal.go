@@ -16,12 +16,18 @@ func GetDateFrom() (time.Time, error) {
 
 	salesHistoryCollection, err := db.GetCollection(ConstCollectionNameRTSSalesHistory)
 	if err == nil {
-		salesHistoryCollection.SetResultColumns("created_at")
-		salesHistoryCollection.AddSort("created_at", true)
-		salesHistoryCollection.SetLimit(0, 1)
+		if err := salesHistoryCollection.SetResultColumns("created_at"); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ed738eda-ddcb-4beb-b45c-98cf6c7676f1", err.Error())
+		}
+		if err := salesHistoryCollection.AddSort("created_at", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "aeac1ed0-a4ac-474e-8b06-853ce0518c4c", err.Error())
+		}
+		if err := salesHistoryCollection.SetLimit(0, 1); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e419217-c040-4eac-8a97-9cf84863d490", err.Error())
+		}
 		dbRecord, err := salesHistoryCollection.Load()
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 
 		if len(dbRecord) > 0 {
@@ -35,12 +41,18 @@ func GetDateFrom() (time.Time, error) {
 		return result, env.ErrorDispatch(err)
 	}
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
-	dbOrderCollection.SetResultColumns("created_at")
-	dbOrderCollection.AddSort("created_at", false)
-	dbOrderCollection.SetLimit(0, 1)
+	if err := dbOrderCollection.SetResultColumns("created_at"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1cc773ac-9e20-43ca-bd9b-75597b935d6b", err.Error())
+	}
+	if err := dbOrderCollection.AddSort("created_at", false); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "54966243-6ffb-4e56-9622-d74aeb6a494e", err.Error())
+	}
+	if err := dbOrderCollection.SetLimit(0, 1); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d5b6cce3-f1e4-41f5-a391-9165fadd0d87", err.Error())
+	}
 	dbRecord, err := dbOrderCollection.Load()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	if len(dbRecord) > 0 {
@@ -64,8 +76,12 @@ func initSalesHistory() error {
 		return env.ErrorDispatch(err)
 	}
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
-	dbOrderCollection.SetResultColumns("_id", "created_at")
-	dbOrderCollection.AddFilter("created_at", ">", dateFrom)
+	if err := dbOrderCollection.SetResultColumns("_id", "created_at"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6dc6ad78-156c-43a2-ac5e-b78af7445e63", err.Error())
+	}
+	if err := dbOrderCollection.AddFilter("created_at", ">", dateFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d6e71ebd-4569-4379-89e7-b1e5590ae472", err.Error())
+	}
 
 	ordersForPeriod, err := dbOrderCollection.Load()
 	if err != nil {
@@ -92,9 +108,15 @@ func initSalesHistory() error {
 	// in format map[pid][time]qty
 	for _, order := range ordersForPeriod {
 
-		dbOrderItemCollection.ClearFilters()
-		dbOrderItemCollection.AddFilter("order_id", "=", order["_id"])
-		dbOrderItemCollection.SetResultColumns("product_id", "qty")
+		if err := dbOrderItemCollection.ClearFilters(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3d10114-dd6c-45e2-b385-0e92913a8fcd", err.Error())
+		}
+		if err := dbOrderItemCollection.AddFilter("order_id", "=", order["_id"]); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fc15ac2d-7d3f-466b-8450-4fad508e714e", err.Error())
+		}
+		if err := dbOrderItemCollection.SetResultColumns("product_id", "qty"); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2d4b396c-b975-46ba-ac7d-5b227b8ae4ba", err.Error())
+		}
 		orderItems, err := dbOrderItemCollection.Load()
 		if err != nil {
 			return env.ErrorDispatch(err)
@@ -127,9 +149,15 @@ func initSalesHistory() error {
 
 			salesRow := make(map[string]interface{})
 
-			salesHistoryCollection.ClearFilters()
-			salesHistoryCollection.AddFilter("created_at", "=", orderTime)
-			salesHistoryCollection.AddFilter("product_id", "=", productID)
+			if err := salesHistoryCollection.ClearFilters(); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "47d706c8-dee9-4777-92d9-e325a55815bd", err.Error())
+			}
+			if err := salesHistoryCollection.AddFilter("created_at", "=", orderTime); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ae240f2-1ca7-4f3b-b6cf-813693861221", err.Error())
+			}
+			if err := salesHistoryCollection.AddFilter("product_id", "=", productID); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "74551cab-8227-48e0-ba4a-96741d136550", err.Error())
+			}
 
 			dbSaleRow, err := salesHistoryCollection.Load()
 			if err != nil {
@@ -192,8 +220,12 @@ func initStatistic() error {
 		return env.ErrorDispatch(err)
 	}
 
-	visitorInfoCollection.AddFilter("day", "<=", dateTo)
-	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
+	if err := visitorInfoCollection.AddFilter("day", "<=", dateTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d6a6bead-3367-451f-b37b-8a833dfaa9c3", err.Error())
+	}
+	if err := visitorInfoCollection.AddFilter("day", ">=", dateFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ce11e113-2184-4c9d-a6e5-c09f503d4620", err.Error())
+	}
 
 	dbRecords, err := visitorInfoCollection.Load()
 	if err != nil {
@@ -224,9 +256,15 @@ func initStatistic() error {
 	// beginning of current month
 	dateFrom = time.Date(dateTo.Year(), dateTo.Month(), 0, 0, 0, 0, 0, time.UTC)
 
-	visitorInfoCollection.ClearFilters()
-	visitorInfoCollection.AddFilter("day", "<", dateTo)
-	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
+	if err := visitorInfoCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e0ced5a-827d-486a-bb3f-9af6e15569e1", err.Error())
+	}
+	if err := visitorInfoCollection.AddFilter("day", "<", dateTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "716a7108-eec0-4f51-91c1-6bada62f20f9", err.Error())
+	}
+	if err := visitorInfoCollection.AddFilter("day", ">=", dateFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b655d07-b069-4ce7-870f-5640eb8f7562", err.Error())
+	}
 
 	dbRecords, err = visitorInfoCollection.Load()
 	if err != nil {
@@ -257,7 +295,9 @@ func SaveStatisticsData() error {
 	currentHour := time.Now().Truncate(time.Hour)
 
 	// find last saved record time to start saving from it
-	visitorInfoCollection.AddFilter("day", "=", currentHour)
+	if err := visitorInfoCollection.AddFilter("day", "=", currentHour); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e80bdc72-a8d2-4984-bbf4-b400dd68264d", err.Error())
+	}
 	dbRecord, err := visitorInfoCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)

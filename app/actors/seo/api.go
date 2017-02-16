@@ -16,6 +16,7 @@ import (
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/app/models/seo"
+	"io"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -24,7 +25,7 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("seo/items", APIListSEOItems)
-	service.GET("seo/attributes", api.IsAdmin(APIListSeoAttributes))
+	service.GET("seo/attributes", api.IsAdminHandler(APIListSeoAttributes))
 
 	service.GET("seo/url", APIGetSEOItem)
 	service.GET("seo/url/:url", APIGetSEOItem)
@@ -34,9 +35,9 @@ func setupAPI() error {
 	service.GET("seo/sitemap/sitemap.xml", APIGetSitemap)
 
 	// Admin Only
-	service.POST("seo/item", api.IsAdmin(APICreateSEOItem))
-	service.PUT("seo/item/:itemID", api.IsAdmin(APIUpdateSEOItem))
-	service.DELETE("seo/item/:itemID", api.IsAdmin(APIDeleteSEOItem))
+	service.POST("seo/item", api.IsAdminHandler(APICreateSEOItem))
+	service.PUT("seo/item/:itemID", api.IsAdminHandler(APIUpdateSEOItem))
+	service.DELETE("seo/item/:itemID", api.IsAdminHandler(APIDeleteSEOItem))
 
 	return nil
 }
@@ -52,7 +53,9 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// filters handle
-	models.ApplyFilters(context, seoItemCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, seoItemCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8f41ce59-fd0d-4755-b5f8-a11613adf9bc", err.Error())
+	}
 
 	// check "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -60,10 +63,14 @@ func APIListSEOItems(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// limit parameter handle
-	seoItemCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := seoItemCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9b662ffc-1ef4-4f5f-ac97-552554321536", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, seoItemCollectionModel)
+	if err := models.ApplyExtraAttributes(context, seoItemCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7607d46c-9700-4380-875f-56cce8c550cf", err.Error())
+	}
 
 	listItems, err := seoItemCollectionModel.List()
 	if err != nil {
@@ -105,7 +112,9 @@ func APIListSEOItemsAlt(context api.InterfaceApplicationContext) (interface{}, e
 	for key := range requestData {
 		switch key {
 		case "url":
-			collection.AddFilter("url", "=", context.GetRequestArgument("url"))
+			if err := collection.AddFilter("url", "=", context.GetRequestArgument("url")); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ce480db1-58b1-4189-b7ec-c5a10c7197ac", err.Error())
+			}
 		}
 	}
 
@@ -131,7 +140,9 @@ func APIGetSEOItem(context api.InterfaceApplicationContext) (interface{}, error)
 	// No starting slashes pls
 	specifiedURL := context.GetRequestArgument("url")
 	specifiedURL = strings.Trim(specifiedURL, "/")
-	collection.AddFilter("url", "=", specifiedURL)
+	if err := collection.AddFilter("url", "=", specifiedURL); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3902720b-ad39-4b17-a8bc-d80989147808", err.Error())
+	}
 	records, err := collection.Load()
 
 	if err != nil {
@@ -197,7 +208,9 @@ func APIUpdateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 	if urlValue, present := postValues["url"]; present && urlValue != record["url"] {
 		urlValue := utils.InterfaceToString(urlValue)
 
-		collection.AddFilter("url", "=", urlValue)
+		if err := collection.AddFilter("url", "=", urlValue); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4183d389-8cca-4be7-b3a4-abf10fe06500", err.Error())
+		}
 		recordsNumber, err := collection.Count()
 		if err != nil {
 			context.SetResponseStatusInternalServerError()
@@ -257,7 +270,9 @@ func APICreateSEOItem(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("url", "=", valueURL)
+	if err := collection.AddFilter("url", "=", valueURL); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef9c3c87-10d0-4341-8bee-8dba22487905", err.Error())
+	}
 	recordsNumber, err := collection.Count()
 	if err != nil {
 		context.SetResponseStatusInternalServerError()
@@ -332,10 +347,16 @@ func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error)
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
-	defer sitemapFile.Close()
+	defer func(c io.Closer){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b9b14fb0-43c6-434c-b075-f73428e9285e", err.Error())
+		}
+	}(sitemapFile)
 
 	if responseWriter := context.GetResponseWriter(); responseWriter != nil {
-		context.SetResponseContentType("text/xml")
+		if err := context.SetResponseContentType("text/xml"); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ad383f8-065f-420a-a197-9011d88f8efa", err.Error())
+		}
 
 		buffer := make([]byte, 1024)
 		for {
@@ -364,7 +385,9 @@ func APIGetSitemap(context api.InterfaceApplicationContext) (interface{}, error)
 //   - result is not a JSON but "text/xml"
 func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	context.SetResponseContentType("text/xml")
+	if err := context.SetResponseContentType("text/xml"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f3c9b7e7-d0fd-4f7d-9a42-86a78f828231", err.Error())
+	}
 	responseWriter := context.GetResponseWriter()
 
 	// creating sitemap file
@@ -373,18 +396,30 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 		context.SetResponseStatusInternalServerError()
 		return nil, env.ErrorDispatch(err)
 	}
-	defer sitemapFile.Close()
+	defer func(c io.Closer){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5a85194f-7963-42a2-9d07-c97c463ae66b", err.Error())
+		}
+	}(sitemapFile)
 
 	// writer to write into HTTP and file simultaneously
 	newline := []byte("\n")
 	writeLine := func(line []byte) {
 		if responseWriter != nil {
-			responseWriter.Write(line)
-			responseWriter.Write(newline)
+			if _, err := responseWriter.Write(line); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "71fc4613-626a-4720-aac2-a13a188cf51e", err.Error())
+			}
+			if _, err := responseWriter.Write(newline); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8b5b411-d1a3-4481-abd0-e8fff0e1f642", err.Error())
+			}
 		}
 
-		sitemapFile.Write(line)
-		sitemapFile.Write(newline)
+		if _, err := sitemapFile.Write(line); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26265d8c-3293-4319-b1f3-5f1073b07cbb", err.Error())
+		}
+		if _, err := sitemapFile.Write(newline); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "50959d06-083d-4176-9aef-69f27b6cffc5", err.Error())
+		}
 	}
 
 	// sitemap file preparations
@@ -410,42 +445,76 @@ func APIGenerateSitemap(context api.InterfaceApplicationContext) (interface{}, e
 
 	// Re-writed pages
 	rewritesCollection, err := db.GetCollection(ConstCollectionNameURLRewrites)
-	rewritesCollection.SetResultColumns("url")
-	rewritesCollection.Iterate(iteratorFunc)
+	if err := rewritesCollection.SetResultColumns("url"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "33b433a2-e50e-4ae4-a509-8ba147779202", err.Error())
+	}
+	if err := rewritesCollection.Iterate(iteratorFunc); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5fec2d5d-388b-4ae6-8bb9-7f19dd1eccc8", err.Error())
+	}
 
-	rewritesCollection.SetResultColumns("rewrite")
+	if err := rewritesCollection.SetResultColumns("rewrite"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4f55972e-323f-4cc4-81e1-517b5d94f8d5", err.Error())
+	}
 
 	// Product pages
 	rewriteType = "product"
-	rewritesCollection.AddFilter("type", "=", rewriteType)
+	if err := rewritesCollection.AddFilter("type", "=", rewriteType); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1add17b7-e505-404a-8905-04332be27ff6", err.Error())
+	}
 
 	productCollectionModel, _ := product.GetProductCollectionModel()
 	dbProductCollection := productCollectionModel.GetDBCollection()
-	dbProductCollection.SetResultColumns("_id")
-	dbProductCollection.AddFilter("_id", "nin", rewritesCollection)
-	dbProductCollection.Iterate(iteratorFunc)
+	if err := dbProductCollection.SetResultColumns("_id"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "063b59b0-37da-4c9a-b13b-a1277c110598", err.Error())
+	}
+	if err := dbProductCollection.AddFilter("_id", "nin", rewritesCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee74ae99-a295-47de-9fea-366045a75aca", err.Error())
+	}
+	if err := dbProductCollection.Iterate(iteratorFunc); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "510d47f9-66a6-4e49-a05f-016e3099aaf4", err.Error())
+	}
 
 	// Category pages
 	rewriteType = "category"
-	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", rewriteType)
+	if err := rewritesCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1517d748-9784-49be-8021-d3d99d68c52e", err.Error())
+	}
+	if err := rewritesCollection.AddFilter("type", "=", rewriteType); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "09452416-ec3c-4c48-b952-83ce528e20c3", err.Error())
+	}
 
 	categoryCollectionModel, _ := category.GetCategoryCollectionModel()
 	dbCategoryCollection := categoryCollectionModel.GetDBCollection()
-	dbCategoryCollection.SetResultColumns("_id")
-	dbCategoryCollection.AddFilter("_id", "nin", rewritesCollection)
-	dbCategoryCollection.Iterate(iteratorFunc)
+	if err := dbCategoryCollection.SetResultColumns("_id"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "85e91980-eb5f-4f44-94b2-ae3cda6a7420", err.Error())
+	}
+	if err := dbCategoryCollection.AddFilter("_id", "nin", rewritesCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd334247-273d-4dcd-81d6-8e2a68c5c09c", err.Error())
+	}
+	if err := dbCategoryCollection.Iterate(iteratorFunc); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cd3958c9-3ba5-45fc-881d-86e5c6ffab12", err.Error())
+	}
 
 	// Cms pages
 	rewriteType = "page"
-	rewritesCollection.ClearFilters()
-	rewritesCollection.AddFilter("type", "=", rewriteType)
+	if err := rewritesCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "eb511139-07dd-439e-926e-3107bac96281", err.Error())
+	}
+	if err := rewritesCollection.AddFilter("type", "=", rewriteType); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3f742f50-489d-41f8-b6f6-9dbbe204a7a9", err.Error())
+	}
 
 	cmsPageCollectionModel, _ := cms.GetCMSPageCollectionModel()
 	dbCMSPageCollection := cmsPageCollectionModel.GetDBCollection()
-	dbCMSPageCollection.SetResultColumns("_id")
-	dbCMSPageCollection.AddFilter("_id", "nin", rewritesCollection)
-	dbCMSPageCollection.Iterate(iteratorFunc)
+	if err := dbCMSPageCollection.SetResultColumns("_id"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1fae19a4-d2a3-47f4-a028-128a87fbf925", err.Error())
+	}
+	if err := dbCMSPageCollection.AddFilter("_id", "nin", rewritesCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "484f4837-8cf7-49aa-922f-1c872642b3db", err.Error())
+	}
+	if err := dbCMSPageCollection.Iterate(iteratorFunc); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7b6cd323-5a7b-4c93-86ba-ea0833af69f2", err.Error())
+	}
 
 	writeLine([]byte("</urlset>"))
 

@@ -39,20 +39,20 @@ func setupAPI() error {
 	service.GET("product/:productID/related", APIListRelatedProducts)
 
 	// Admin Only
-	service.POST("product", api.IsAdmin(APICreateProduct))
-	service.PUT("product/:productID", api.IsAdmin(APIUpdateProduct))
-	service.DELETE("product/:productID", api.IsAdmin(APIDeleteProduct))
+	service.POST("product", api.IsAdminHandler(APICreateProduct))
+	service.PUT("product/:productID", api.IsAdminHandler(APIUpdateProduct))
+	service.DELETE("product/:productID", api.IsAdminHandler(APIDeleteProduct))
 
-	service.POST("products/attribute", api.IsAdmin(APICreateProductAttribute))
-	service.PUT("products/attribute/:attribute", api.IsAdmin(APIUpdateProductAttribute))
-	service.DELETE("products/attribute/:attribute", api.IsAdmin(APIDeleteProductsAttribute))
+	service.POST("products/attribute", api.IsAdminHandler(APICreateProductAttribute))
+	service.PUT("products/attribute/:attribute", api.IsAdminHandler(APIUpdateProductAttribute))
+	service.DELETE("products/attribute/:attribute", api.IsAdminHandler(APIDeleteProductsAttribute))
 
-	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIAddMediaForProduct))
-	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRemoveMediaForProduct))
-	service.PUT("product/:productID/media/:mediaType/:mediaName", api.IsAdmin(APIRenameMediaForProduct))
+	service.POST("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIAddMediaForProduct))
+	service.DELETE("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRemoveMediaForProduct))
+	service.PUT("product/:productID/media/:mediaType/:mediaName", api.IsAdminHandler(APIRenameMediaForProduct))
 
 	// TODO: remove after patching
-	service.GET("patch/options", api.IsAdmin(APIPatchOptions))
+	service.GET("patch/options", api.IsAdminHandler(APIPatchOptions))
 
 	return nil
 }
@@ -108,7 +108,9 @@ func APIPatchOptions(context api.InterfaceApplicationContext) (interface{}, erro
 			updatedItems = append(updatedItems, subscriptionItem)
 		}
 
-		currentSubscription.Set("items", updatedItems)
+		if err := currentSubscription.Set("items", updatedItems); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "08046b92-da83-46d3-b379-756e425db506", err.Error())
+		}
 
 		err = currentSubscription.Save()
 		if err != nil {
@@ -217,7 +219,7 @@ func APIUpdateProductAttribute(context api.InterfaceApplicationContext) (interfa
 		}
 	}
 
-	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "2893262f-a61a-42f8-9c75-e763e0a5c8ca", "attribute not found")
+	return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8fd0beb8-c69d-444b-8466-db9e46818212", "attribute not found")
 }
 
 // APICreateProductAttribute creates a new custom attribute for a product model
@@ -304,7 +306,7 @@ func APIDeleteProductsAttribute(context api.InterfaceApplicationContext) (interf
 	//--------------------
 	attributeName := context.GetRequestArgument("attribute")
 	if attributeName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb8f7251-e22b-4605-97bb-e239df6c7aac", "attribute name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "70334b43-a431-44a3-91a5-ef054ec0e928", "attribute name was not specified")
 	}
 
 	// remove attribute actions
@@ -341,7 +343,7 @@ func APIGetProduct(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled products if not admin
-	if api.ValidateAdminRights(context) != nil && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
+	if !api.IsAdminSession(context) && (!productModel.GetEnabled() || !utils.InterfaceToBool(productModel.Get("visible"))) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "153673ac-1008-40b5-ada9-2286ad3f02b0", "product not available")
 	}
 
@@ -579,7 +581,7 @@ func APIAddMediaForProduct(context api.InterfaceApplicationContext) (interface{}
 	//-----------------------
 	files := context.GetRequestFiles()
 	if len(files) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "75a2ddaf-b63d-4eed-b16d-4b32778f5fc1", "media file was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce56af17-88b5-4da7-8378-c8ab8fd48e0a", "media file was not specified")
 	}
 
 	var fileContents []byte
@@ -629,7 +631,7 @@ func APIRemoveMediaForProduct(context api.InterfaceApplicationContext) (interfac
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "487390f9-6de7-4380-9f52-c589c5125eb4", "media name was not specified")
 	}
 
 	// list media operation
@@ -742,10 +744,12 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name was not specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e788ff70-0a0a-4baa-8c87-c45e747107e6", "media name was not specified")
 	}
 
-	context.SetResponseContentType(mime.TypeByExtension(mediaName))
+	if err := context.SetResponseContentType(mime.TypeByExtension(mediaName)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bde82a1b-e601-40cc-b280-87d2aa767a85", err.Error())
+	}
 
 	// list media operation
 	//---------------------
@@ -770,12 +774,18 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// filters handle
-	models.ApplyFilters(context, productCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, productCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8cf27a73-51aa-45de-afdf-20417e6bc040", err.Error())
+	}
 
 	// exclude disabled and hidden products for visitors, but not Admins
-	if err := api.ValidateAdminRights(context); err != nil {
-		productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
-		productCollectionModel.GetDBCollection().AddFilter("visible", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := productCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2ac1a628-5157-4dff-9529-bfaa7aecae23", err.Error())
+		}
+		if err := productCollectionModel.GetDBCollection().AddFilter("visible", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "34153a66-09c3-418a-bab3-5683894f9a36", err.Error())
+		}
 	}
 
 	// check "count" request
@@ -784,10 +794,14 @@ func APIListProducts(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// limit parameter handle
-	productCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := productCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "862bc0b3-684c-4dfd-a145-214a6e00ee29", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, productCollectionModel)
+	if err := models.ApplyExtraAttributes(context, productCollectionModel); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	listItems, err := productCollectionModel.List()
 	if err != nil {
@@ -859,15 +873,21 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 	relatedPids := utils.InterfaceToArray(productModel.Get("related_pids"))
 
 	productsCollection, _ := product.GetProductCollectionModel()
-	productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids)
+	if err := productsCollection.GetDBCollection().AddFilter("_id", "in", relatedPids); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b5b68a51-e025-4a28-881e-7f5882825dc4", err.Error())
+	}
 
 	// if you aren't an admin the product must be enabled
-	if err := api.ValidateAdminRights(context); err != nil {
-		productsCollection.GetDBCollection().AddFilter("enabled", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := productsCollection.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8faddb67-41d0-4a32-9b2c-3c3d3b20bbcf", err.Error())
+		}
 	}
 
 	// add a limit
-	productsCollection.ListLimit(models.GetListLimit(context))
+	if err := productsCollection.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b52c8d72-0e43-4e40-b7e3-d35594d3d54d", err.Error())
+	}
 
 	mediaStorage, err := media.GetMediaStorage()
 	if err != nil {
@@ -880,7 +900,7 @@ func APIListRelatedProducts(context api.InterfaceApplicationContext) (interface{
 		defaultImage := utils.InterfaceToString(productInfo["default_image"])
 		productInfo["image"], err = mediaStorage.GetSizes(product.ConstModelNameProduct, relatedProduct.GetID(), ConstProductMediaTypeImage, defaultImage)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 
 		result = append(result, productInfo)

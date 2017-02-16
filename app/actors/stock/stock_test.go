@@ -81,7 +81,11 @@ func TestStock(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer productModel.Delete()
+	defer func(p product.InterfaceProduct){
+		if err := p.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(productModel)
 
 	productID := productModel.GetID()
 	registeredStock := product.GetRegisteredStock()
@@ -176,7 +180,11 @@ func TestDecrementingStock(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer productModel.Delete()
+	defer func(p product.InterfaceProduct){
+		if err := p.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(productModel)
 
 	productID := productModel.GetID()
 	registeredStock := product.GetRegisteredStock()
@@ -188,12 +196,20 @@ func TestDecrementingStock(t *testing.T) {
 	optionsColorGreenSizeXL := map[string]interface{}{"color": "Green", "size": "XL"}
 
 	// setting stock for test options
-	registeredStock.SetProductQty(productID, optionsSizeS, 20)
-	registeredStock.SetProductQty(productID, optionsColorRedSizeS, 5)
-	registeredStock.SetProductQty(productID, optionsColorGreenSizeXL, 20)
+	if err := registeredStock.SetProductQty(productID, optionsSizeS, 20); err != nil {
+		t.Error(err)
+	}
+	if err := registeredStock.SetProductQty(productID, optionsColorRedSizeS, 5); err != nil {
+		t.Error(err)
+	}
+	if err := registeredStock.SetProductQty(productID, optionsColorGreenSizeXL, 20); err != nil {
+		t.Error(err)
+	}
 
 	// Test Case 1
-	registeredStock.UpdateProductQty(productID, map[string]interface{}{"wrap": "Y"}, -5)
+	if err := registeredStock.UpdateProductQty(productID, map[string]interface{}{"wrap": "Y"}, -5); err != nil {
+		t.Error(err)
+	}
 
 	qty := registeredStock.GetProductQty(productID, map[string]interface{}{})
 	qtyWrapY := registeredStock.GetProductQty(productID, optionsWrapY)
@@ -207,7 +223,9 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 2
-	registeredStock.UpdateProductQty(productID, map[string]interface{}{"size": "S"}, -5)
+	if err := registeredStock.UpdateProductQty(productID, map[string]interface{}{"size": "S"}, -5); err != nil {
+		t.Error(err)
+	}
 
 	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
 	qtySizeS := registeredStock.GetProductQty(productID, optionsSizeS)
@@ -221,7 +239,9 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 3
-	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S"}, -1)
+	if err := registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S"}, -1); err != nil {
+		t.Error(err)
+	}
 
 	// TODO: check is it possible to add more than we have
 	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
@@ -238,7 +258,9 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 4
-	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Green", "size": "XL"}, -5)
+	if err := registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Green", "size": "XL"}, -5); err != nil {
+		t.Error(err)
+	}
 
 	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
 	qtyColorGreenSizeXL := registeredStock.GetProductQty(productID, optionsColorGreenSizeXL)
@@ -252,7 +274,9 @@ func TestDecrementingStock(t *testing.T) {
 	}
 
 	// Test Case 5
-	registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S", "wrap": "Y"}, -1)
+	if err := registeredStock.UpdateProductQty(productID, map[string]interface{}{"color": "Red", "size": "S", "wrap": "Y"}, -1); err != nil {
+		t.Error(err)
+	}
 
 	qty = registeredStock.GetProductQty(productID, map[string]interface{}{})
 	qtyWrapY = registeredStock.GetProductQty(productID, optionsWrapY)
