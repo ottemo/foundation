@@ -16,6 +16,7 @@ import (
 	"github.com/ottemo/foundation/env/logger"
 
 	visitorInterface "github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/db"
 )
 
 //--------------------------------------------------------------------------------------------------------------
@@ -158,14 +159,21 @@ var apiUpdateProductReview = review.APIUpdateReview
 var apiDeleteProductReview = review.APIDeleteProductReview
 
 func TestReviewAPI(t *testing.T) {
-
-	_ = fmt.Sprint("")
-
 	// start app
 	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
 	}
+
+	db.RegisterOnDatabaseStart(func () error {
+		testReviewAPI(t)
+		return nil
+	})
+}
+
+func testReviewAPI(t *testing.T) {
+
+	_ = fmt.Sprint("")
 
 	initConfig(t)
 

@@ -20,6 +20,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/product"
+	"github.com/ottemo/foundation/db"
 )
 
 const (
@@ -36,8 +37,19 @@ type testDataType struct {
 }
 
 func TestProductApplyOptions(t *testing.T) {
+	// start app
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+	}
 
-	start(t)
+	db.RegisterOnDatabaseStart(func () error {
+		testProductApplyOptions(t)
+		return nil
+	})
+}
+
+func testProductApplyOptions(t *testing.T) {
 
 	var product = populateProductModel(t, `{
 		"_id": "123456789012345678901234",
@@ -107,8 +119,19 @@ func TestProductApplyOptions(t *testing.T) {
 }
 
 func TestConfigurableProductApplyOption(t *testing.T) {
+	// start app
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+	}
 
-	start(t)
+	db.RegisterOnDatabaseStart(func () error {
+		testConfigurableProductApplyOption(t)
+		return nil
+	})
+}
+
+func testConfigurableProductApplyOption(t *testing.T) {
 
 	var simpleProduct = createProductFromJson(t, `{
 		"sku": "test-simple",
@@ -194,8 +217,19 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 }
 
 func TestConfigurableProductApplyOptions(t *testing.T) {
+	// start app
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
+	}
 
-	start(t)
+	db.RegisterOnDatabaseStart(func () error {
+		testConfigurableProductApplyOptions(t)
+		return nil
+	})
+}
+
+func testConfigurableProductApplyOptions(t *testing.T) {
 
 	var simpleProduct1 = createProductFromJson(t, `{
 		"sku": "test-simple-1",
@@ -354,13 +388,6 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 	deleteProduct(t, simpleProduct2)
 	deleteProduct(t, simpleProduct3)
 	deleteProduct(t, simpleProduct4)
-}
-
-func start(t *testing.T) {
-	err := test.StartAppInTestingMode()
-	if err != nil {
-		t.Error(err)
-	}
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {

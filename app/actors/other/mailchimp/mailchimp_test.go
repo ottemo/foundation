@@ -9,13 +9,23 @@ import (
 	"github.com/ottemo/foundation/app/actors/other/mailchimp"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/test"
+	"github.com/ottemo/foundation/db"
 )
 
-func TestMailchimpSubscribe(tst *testing.T) {
-	if err := test.StartAppInTestingMode(); err != nil {
-		tst.Error(err)
+func TestMailchimpSubscribe(t *testing.T) {
+	// start app
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testMailchimpSubscribe(t)
+		return nil
+	})
+}
+
+func testMailchimpSubscribe(tst *testing.T) {
 	//set the configuration to allow mailchimp
 	var config = env.GetConfig()
 	if err := config.SetValue(mailchimp.ConstConfigPathMailchimpEnabled, true); err != nil {
