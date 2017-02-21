@@ -10,6 +10,7 @@ import (
 	"github.com/ottemo/foundation/app/actors/blog/post"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/db"
 )
 
 //--------------------------------------------------------------------------------------------------------------
@@ -137,13 +138,19 @@ func (it *testContext) SetSession(session api.InterfaceSession) error {
 //--------------------------------------------------------------------------------------------------------------
 
 func TestBlogPostAPI(t *testing.T) {
-
 	// start app
 	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testBlogPostAPI(t)
+		return nil
+	})
+}
+
+func testBlogPostAPI(t *testing.T) {
 	// api redeclaration to mimic priveleged calls
 	apiListPosts := post.APIListPosts
 	apiPostByID := post.APIPostByID

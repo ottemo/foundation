@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -136,7 +137,8 @@ func CheckTestIniDefaults() error {
 
 	envConfig := env.GetConfig()
 	if err := envConfig.SetValue(app.ConstConfigPathMailPort, nil); err != nil {
-		return err
+		// Ignoring error dispatching because of purpose of this block is for testing
+		fmt.Println("338d3826-6421-4475-9ff6-29c9eeb7b05d - Check log file. Non critical error:", err)
 	}
 
 	return nil
