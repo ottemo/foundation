@@ -164,8 +164,7 @@ func APIUpdateCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 
 	for attribute, value := range requestData {
 		if err := cmsPageModel.Set(attribute, value); err != nil {
-			_ = env.ErrorDispatch(err)
-			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f82fdb15-c2f6-407c-b5da-e81fae20068d", "internal error")
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f82fdb15-c2f6-407c-b5da-e81fae20068d", err.Error())
 		}
 	}
 
