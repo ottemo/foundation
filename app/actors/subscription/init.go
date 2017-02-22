@@ -24,10 +24,20 @@ func init() {
 		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c7513220-d5e5-4770-87b4-6405fced1c9d", err.Error())
 	}
 
-	db.RegisterOnDatabaseStart(setupDB)
+	db.RegisterOnDatabaseStart(onDatabaseStart)
+
 	api.RegisterOnRestServiceStart(setupAPI)
 	env.RegisterOnConfigStart(setupConfig)
+}
+
+func onDatabaseStart() error {
+	if err := setupDB(); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	app.OnAppStart(onAppStart)
+
+	return nil
 }
 
 // setupDB prepares system database for package usage
