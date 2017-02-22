@@ -36,7 +36,7 @@ type testDataType struct {
 	additionalProductJson string
 }
 
-func testProductApplyOptions(t *testing.T) {
+func TestProductApplyOptions(t *testing.T) {
 
 	start(t)
 
@@ -107,109 +107,7 @@ func testProductApplyOptions(t *testing.T) {
 	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
 }
 
-//func TestProductApplyOptionsQty(t *testing.T) {
-//	var readyChannel = make(chan int)
-//
-//	db.RegisterOnDatabaseStart(func () error {
-//		readyChannel <- 1
-//		return nil
-//	})
-//
-//	err := test.StartAppInTestingMode()
-//	if err != nil {
-//		t.Error(err)
-//	}
-//
-//	<-readyChannel
-//
-//	testProductApplyOptionsQty(t)
-//}
-//
-
-func TestProductApplyOptionsQty(t *testing.T) {
-
-	start(t)
-
-	//var product = populateProductModel(t, `{
-	//	"_id": "123456789012345678901234",
-	//	"name": "Test Product",
-	//	"short_description": "something short",
-	//	"description": "something long",
-	//	"default_image": "",
-	//	"price": 1.1,
-	//	"weight": 0.5,
-	//	"test": "ok",
-	//	"options" : {
-	//		"field_option":{
-	//			"code": "field_option", "controls_inventory": false, "key": "field_option",
-	//			"label": "FieldOption", "order": 2, "price": "+13", "required": false,
-	//			"sku": "-fo", "type": "field"
-	//		},
-	//		"another_option":{
-	//			"code": "another_option", "controls_inventory": false, "key": "another_option",
-	//			"label": "AnotherOption", "order": 3, "price": "14", "required": false,
-	//			"sku": "-ao", "type": "field"
-	//		},
-	//		"color" : {
-	//			"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
-	//			"order": 1, "required": true, "type": "select",
-	//			"options" : {
-	//				"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
-	//				"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
-	//				"red":   {
-	//					"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red"
-	//				}
-	//			}
-	//		}
-	//	}
-	//}`)
-
-	var product = populateProductModel(t, `{
-		"sku": "test",
-		"options" : {
-			"color" : {
-				"code": "color", "controls_inventory": true, "key": "color", "label": "Color",
-				"order": 1, "required": true, "type": "select",
-				"options" : {
-					"black": {"order": "3", "key": "black", "label": "Black", "price": 10,  "sku": "-black"},
-					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 50,  "sku": "-blue"},
-					"red":   {"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red"}
-				}
-			}
-		}
-	}`)
-
-	appliedOptions := map[string]interface{}{
-		"color":        "red",
-	}
-
-	checkJson := `{
-		"sku": "test-red",
-		"price": 100,
-		"options": {
-			"color": {
-				"options": {
-					"red": "` + ConstPresent + `",
-					"black": "` + ConstAbsent + `",
-					"blue": "` + ConstAbsent + `"
-				}
-			}
-		}
-	}`
-
-	product = applyOptions(t, product, appliedOptions)
-	fmt.Println("product", utils.InterfaceToString(product))
-
-	check, err := utils.DecodeJSONToInterface(checkJson)
-	if err != nil {
-		fmt.Println("checkJson: " + checkJson)
-		t.Error(err)
-	}
-
-	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
-}
-
-func testConfigurableProductApplyOption(t *testing.T) {
+func TestConfigurableProductApplyOption(t *testing.T) {
 
 	start(t)
 
@@ -296,7 +194,7 @@ func testConfigurableProductApplyOption(t *testing.T) {
 	deleteProduct(t, simpleProduct)
 }
 
-func testConfigurableProductApplyOptions(t *testing.T) {
+func TestConfigurableProductApplyOptions(t *testing.T) {
 
 	start(t)
 
