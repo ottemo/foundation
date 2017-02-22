@@ -125,24 +125,10 @@ func testProductApplyOptions(t *testing.T) {
 //	testProductApplyOptionsQty(t)
 //}
 //
-func startNew(t *testing.T) {
-	var readyChannel = make(chan int)
-
-	db.RegisterOnDatabaseStart(func () error {
-		readyChannel <- 1
-		return nil
-	})
-
-	err := test.StartAppInTestingMode()
-	if err != nil {
-		t.Error(err)
-	}
-
-	<-readyChannel
-}
 
 func TestProductApplyOptionsQty(t *testing.T) {
-	startNew(t)
+
+	start(t)
 
 	//var product = populateProductModel(t, `{
 	//	"_id": "123456789012345678901234",
@@ -474,10 +460,19 @@ func testConfigurableProductApplyOptions(t *testing.T) {
 }
 
 func start(t *testing.T) {
+	var readyChannel = make(chan int)
+
+	db.RegisterOnDatabaseStart(func () error {
+		readyChannel <- 1
+		return nil
+	})
+
 	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
 	}
+
+	<-readyChannel
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
