@@ -21,6 +21,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/app"
 )
 
 const (
@@ -39,6 +40,14 @@ type testDataType struct {
 func TestProductApplyOptions(t *testing.T) {
 
 	start(t)
+	defer func() {
+		fmt.Println("app.End")
+		if err := app.End(); err != nil { // application close event
+			fmt.Println(err.Error())
+		}
+	}()
+
+	fmt.Println("TestProductApplyOptions")
 
 	var product = populateProductModel(t, `{
 		"_id": "123456789012345678901234",
@@ -110,6 +119,14 @@ func TestProductApplyOptions(t *testing.T) {
 func TestConfigurableProductApplyOption(t *testing.T) {
 
 	start(t)
+	defer func() {
+		fmt.Println("app.End")
+		if err := app.End(); err != nil { // application close event
+			fmt.Println(err.Error())
+		}
+	}()
+
+	fmt.Println("TestConfigurableProductApplyOption")
 
 	var simpleProduct = createProductFromJson(t, `{
 		"sku": "test-simple",
@@ -358,19 +375,28 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 }
 
 func start(t *testing.T) {
+	fmt.Println(1)
 	var readyChannel = make(chan int)
 
+	fmt.Println(2)
 	db.RegisterOnDatabaseStart(func () error {
+		fmt.Println(3)
 		readyChannel <- 1
+		fmt.Println(4)
 		return nil
 	})
 
+	fmt.Println(5)
 	err := test.StartAppInTestingMode()
+	fmt.Println(6)
 	if err != nil {
+		fmt.Println(7)
 		t.Error(err)
 	}
 
+	fmt.Println(8)
 	<-readyChannel
+	fmt.Println(9)
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
