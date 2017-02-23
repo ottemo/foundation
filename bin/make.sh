@@ -64,7 +64,8 @@ fi
 
 
 if [ -n "$TAGS" ]; then
-TAGS="-tags $TAGS"
+TAGS=$(echo $TAGS| sed 's/,/ /g')
+TAGS="-tags '$TAGS'"
 fi
 
 CMD="go get $TAGS $OTTEMOPKG"
