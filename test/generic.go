@@ -12,6 +12,7 @@ import (
 
 	// using standard set of packages
 	_ "github.com/ottemo/foundation/basebuild"
+	"github.com/ottemo/foundation/db"
 )
 
 // Package global variables
@@ -146,6 +147,13 @@ func CheckTestIniDefaults() error {
 
 // StartAppInTestingMode starts application in "test mode" (you should use that function for your package test)
 func StartAppInTestingMode() error {
+	var readyChannel = make(chan int, 1)
+
+	db.RegisterOnDatabaseStart(func() error {
+		readyChannel <- 1
+		return nil
+	})
+
 	startAppMutex.Lock()
 	defer startAppMutex.Unlock()
 
@@ -172,6 +180,8 @@ func StartAppInTestingMode() error {
 
 		startAppFlag = true
 	}
+
+	<-readyChannel
 
 	return nil
 }
