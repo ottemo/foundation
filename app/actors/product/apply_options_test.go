@@ -10,23 +10,22 @@ package product_test
 // $ go test -v -tags sqlite github.com/ottemo/foundation/app/actors/product/
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"fmt"
-
+	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/product"
-	"github.com/ottemo/foundation/db"
-	"github.com/ottemo/foundation/app"
 )
 
 const (
 	ConstPresent = "$present"
-	ConstAbsent = "$absent"
+	ConstAbsent  = "$absent"
 )
 
 type testDataType struct {
@@ -37,16 +36,16 @@ type testDataType struct {
 	additionalProductJson string
 }
 
+func TestMain(m *testing.M) {
+	err := test.StartAppInTestingMode()
+	if err != nil {
+		fmt.Println("Unable to start app in testing mode:", err)
+	}
+
+	os.Exit(m.Run())
+}
+
 func TestProductApplyOptions(t *testing.T) {
-
-	start(t)
-	defer func() {
-		fmt.Println("app.End")
-		if err := app.End(); err != nil { // application close event
-			fmt.Println(err.Error())
-		}
-	}()
-
 	fmt.Println("TestProductApplyOptions")
 
 	var product = populateProductModel(t, `{
@@ -116,16 +115,81 @@ func TestProductApplyOptions(t *testing.T) {
 	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
 }
 
-func TestConfigurableProductApplyOption(t *testing.T) {
+func TestProductApplyOptionsQty(t *testing.T) {
+	fmt.Println("TestProductApplyOptionsQty")
 
-	start(t)
-	defer func() {
-		fmt.Println("app.End")
-		if err := app.End(); err != nil { // application close event
-			fmt.Println(err.Error())
+	if config := env.GetConfig(); config != nil {
+		if config.GetValue("general.stock.enabled") != true {
+			err := env.GetConfig().SetValue("general.stock.enabled", true)
+			if err != nil {
+				t.Error(err)
+			}
 		}
-	}()
+	}
 
+	var product = createProductFromJson(t, `{
+		"_id": "123456789012345678904444",
+		"sku": "test",
+		"name": "Test",
+		"price": 1,
+		"options": {
+			"color": {
+				"controls_inventory": true, "key": "color", "label": "color",
+				"options": {
+					"red_2": {"key": "red_2", "label": "red-2", "order": 1, "price": ""},
+					"red_3": {"key": "red_3", "label": "red-3", "order": 2}
+				},
+				"order": 1, "required": true, "type": "select"
+			}
+		},
+		"inventory": [
+		    {
+			"options": { },
+			"qty": 5
+		    },
+		    {
+			"options": {
+			    "color": "red_2"
+			},
+			"qty": 2
+		    },
+		    {
+			"options": {
+			    "color": "red_3"
+			},
+			"qty": 3
+		    }
+		],
+		"qty": 5
+	}`)
+
+	appliedOptions := map[string]interface{}{
+		"color": "red_2",
+	}
+
+	checkJson := `{
+		"options": {
+			"color": {
+				"options": {
+					"red_2": "` + ConstPresent + `"
+				}
+			}
+		},
+		"qty": "2"
+	}`
+
+	product = applyOptions(t, product, appliedOptions)
+
+	check, err := utils.DecodeJSONToInterface(checkJson)
+	if err != nil {
+		fmt.Println("checkJson: " + checkJson)
+		t.Error(err)
+	}
+
+	checkResults(t, product.ToHashMap(), check.(map[string]interface{}))
+}
+
+func TestConfigurableProductApplyOption(t *testing.T) {
 	fmt.Println("TestConfigurableProductApplyOption")
 
 	var simpleProduct = createProductFromJson(t, `{
@@ -168,7 +232,7 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue"},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct.GetID() + `"]
+						"`+product.ConstOptionProductIDs+`": ["`+simpleProduct.GetID()+`"]
 					}
 				}
 			}
@@ -212,8 +276,7 @@ func TestConfigurableProductApplyOption(t *testing.T) {
 }
 
 func TestConfigurableProductApplyOptions(t *testing.T) {
-
-	start(t)
+	fmt.Println("TestConfigurableProductApplyOptions")
 
 	var simpleProduct1 = createProductFromJson(t, `{
 		"sku": "test-simple-1",
@@ -304,11 +367,11 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"options" : {
 					"black": {"order": "3", "key": "black", "label": "Black", "price": 1.3, "sku": "-black"},
 					"blue":  {"order": "1", "key": "blue",  "label": "Blue",  "price": 2.0, "sku": "-blue",
-						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct3.GetID() + `", "` + simpleProduct4.GetID() + `"]
+						"`+product.ConstOptionProductIDs+`": ["`+simpleProduct3.GetID()+`", "`+simpleProduct4.GetID()+`"]
 					},
 					"red":   {
 						"order": "2", "key": "red",   "label": "Red",   "price": 100, "sku": "-red",
-						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct2.GetID() + `"]
+						"`+product.ConstOptionProductIDs+`": ["`+simpleProduct1.GetID()+`", "`+simpleProduct2.GetID()+`"]
 					}
 				}
 			},
@@ -317,11 +380,11 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 				"order": 2, "required": true, "type": "select",
 				"options" : {
 					"xl": {"order": "1", "key": "xl", "label": "xxl", "price": 1.3, "sku": "-xl",
-						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct1.GetID() + `", "` + simpleProduct3.GetID() + `"]
+						"`+product.ConstOptionProductIDs+`": ["`+simpleProduct1.GetID()+`", "`+simpleProduct3.GetID()+`"]
 					},
 					"xxl":   {
 						"order": "2", "key": "xxl",   "label": "xxl",   "price": 100, "sku": "-xxl",
-						"` + product.ConstOptionProductIDs + `": ["` + simpleProduct2.GetID() + `", "` + simpleProduct4.GetID() + `"]
+						"`+product.ConstOptionProductIDs+`": ["`+simpleProduct2.GetID()+`", "`+simpleProduct4.GetID()+`"]
 					}
 				}
 			}
@@ -372,31 +435,6 @@ func TestConfigurableProductApplyOptions(t *testing.T) {
 	deleteProduct(t, simpleProduct2)
 	deleteProduct(t, simpleProduct3)
 	deleteProduct(t, simpleProduct4)
-}
-
-func start(t *testing.T) {
-	fmt.Println(1)
-	var readyChannel = make(chan int)
-
-	fmt.Println(2)
-	db.RegisterOnDatabaseStart(func () error {
-		fmt.Println(3)
-		readyChannel <- 1
-		fmt.Println(4)
-		return nil
-	})
-
-	fmt.Println(5)
-	err := test.StartAppInTestingMode()
-	fmt.Println(6)
-	if err != nil {
-		fmt.Println(7)
-		t.Error(err)
-	}
-
-	fmt.Println(8)
-	<-readyChannel
-	fmt.Println(9)
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
@@ -485,7 +523,7 @@ func checkResults(
 					t.Error("Key [" + key + "] present.")
 				}
 			} else {
-				assert.Equal(t, valueStr, checkValueStr)
+				assert.Equal(t, checkValueStr, valueStr, key)
 			}
 		}
 	}
