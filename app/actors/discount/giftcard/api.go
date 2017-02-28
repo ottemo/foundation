@@ -66,13 +66,13 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
-	}
-
 	if api.ValidateAdminRights(context) != nil {
+		visitorID := visitor.GetCurrentVisitorID(context)
+		if visitorID == "" {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
+		}
+
 		collection.AddFilter("visitor_id", "=", visitorID)
 	}
 
