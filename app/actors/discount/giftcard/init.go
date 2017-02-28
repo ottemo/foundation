@@ -75,6 +75,9 @@ func setupDB() error {
 	if err := collection.AddColumn("delivery_date", db.ConstTypeDatetime, true); err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3ea6c6e1-1c37-4630-8774-4d92022eba5f", err.Error())
 	}
+	if err := collection.AddColumn("created_at", db.ConstTypeDatetime, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d5b22b68-91a5-4f00-8459-c5ef53a5d4bb", err.Error())
+	}
 
 	return nil
 }

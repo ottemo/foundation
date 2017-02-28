@@ -265,6 +265,8 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 				giftCard["recipient_mailbox"] = recipientEmail
 				giftCard["delivery_date"] = deliveryDate
 
+				giftCard["created_at"] = time.Now()
+
 				giftCardID, err := giftCardCollection.Save(giftCard)
 				if err != nil {
 					_ = env.ErrorDispatch(err)

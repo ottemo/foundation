@@ -2,10 +2,12 @@ package giftcard
 
 import (
 	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/app/models/order"
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"math"
 	"strings"
 	"time"
 )
@@ -23,6 +25,8 @@ func setupAPI() error {
 	service.POST("cart/giftcards/:giftcode", Apply)
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
+	// Admin Only
+	service.GET("giftcard/:id/history", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
 	return nil
@@ -62,19 +66,38 @@ func GetList(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
-	}
-
 	if api.ValidateAdminRights(context) != nil {
+		visitorID := visitor.GetCurrentVisitorID(context)
+		if visitorID == "" {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
+		}
+
 		collection.AddFilter("visitor_id", "=", visitorID)
 	}
 
-	dbRecords, err := collection.Load()
+	// checking for a "count" request
+	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
+		return collection.Count()
+	}
 
-	return dbRecords, env.ErrorDispatch(err)
+	dbRecords, err := collection.Load()
+	if err != nil {
+		context.SetResponseStatusInternalServerError()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, value := range dbRecords {
+
+		initialAmount := utils.InterfaceToFloat64(value["amount"])
+		for _, amount := range utils.InterfaceToMap(value["orders_used"]) {
+			initialAmount = initialAmount + math.Abs(utils.InterfaceToFloat64(amount))
+		}
+
+		value["initial_amount"] = initialAmount
+	}
+
+	return dbRecords, nil
 }
 
 // Apply applies the provided gift card to current checkout
@@ -146,6 +169,51 @@ func Remove(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	return "Remove successful", nil
+}
+
+// GetHistory returns a history of gift cards for the admin in the context passed
+//    - giftcard id should be specified in the "giftid" argument
+func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	giftCardID := context.GetRequestArgument("id")
+	if giftCardID == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10ab8fd5-05ca-43e2-9da9-8acac0ea13f9", "No giftcard code specified in the request.")
+	}
+
+	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	row, err := collection.LoadByID(giftCardID)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(row) == 0 {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5caad227-e93b-46a9-9833-1b2eb53d19e1", "No giftcard code matching the one supplied on the request found.")
+	}
+
+	var historyData []map[string]interface{}
+
+	for orderId, amount := range utils.InterfaceToMap(row["orders_used"]) {
+		orderData, err := order.LoadOrderByID(orderId)
+		if err != nil {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cb86e6de-b94d-4480-bc87-90301676f4fe", "system error loading id from db: "+utils.InterfaceToString(orderId))
+		}
+		historyData = append(historyData, map[string]interface{}{
+			"order_id":         utils.InterfaceToString(orderId),
+			"amount":           math.Abs(utils.InterfaceToFloat64(amount)),
+			"transaction_date": orderData.Get("created_at"),
+		})
+	}
+
+	return historyData, nil
 }
 
 // createFromAdmin
