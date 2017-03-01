@@ -59,7 +59,9 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	transactionKey := []byte(utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathDPMKey)))
 
 	hmacEncoder := hmac.New(md5.New, transactionKey)
-	hmacEncoder.Write([]byte(loginID + "^" + sequence + "^" + timeStamp + "^" + amount + "^USD"))
+	if _, err := hmacEncoder.Write([]byte(loginID + "^" + sequence + "^" + timeStamp + "^" + amount + "^USD")); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1b24fa5b-aa72-4474-bc7c-dca378709ef8", err.Error())
+	}
 	fingerprint := hex.EncodeToString(hmacEncoder.Sum(nil))
 
 	billingAddress := orderInstance.GetBillingAddress()

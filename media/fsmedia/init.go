@@ -36,7 +36,7 @@ func (it *FilesystemMediaStorage) setupCheckDone() {
 	if it.setupWaitCnt--; it.setupWaitCnt == 0 {
 		err := media.OnMediaStorageStart()
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 }
@@ -88,11 +88,21 @@ func (it *FilesystemMediaStorage) setupOnDatabaseStart() error {
 		return env.ErrorDispatch(err)
 	}
 
-	dbCollection.AddColumn("model", db.ConstTypeVarchar, true)
-	dbCollection.AddColumn("object", db.ConstTypeVarchar, true)
-	dbCollection.AddColumn("type", db.ConstTypeVarchar, true)
-	dbCollection.AddColumn("media", db.ConstTypeVarchar, false)
-	dbCollection.AddColumn("created_at", db.ConstTypeDatetime, false)
+	if err := dbCollection.AddColumn("model", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddColumn("object", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddColumn("type", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddColumn("media", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := dbCollection.AddColumn("created_at", db.ConstTypeDatetime, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 	it.setupCheckDone()
 
 	return nil

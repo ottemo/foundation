@@ -19,9 +19,13 @@ func init() {
 
 	api.RegisterOnRestServiceStart(setupAPI)
 
-	env.RegisterConfig(instance)
+	if err := env.RegisterConfig(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
-	impex.RegisterImpexModel("Config", instance)
+	if err := impex.RegisterImpexModel("Config", instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }
 
 // setupDB prepares system database for package usage
@@ -31,18 +35,34 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("path", db.ConstTypeVarchar, true)
-	collection.AddColumn("value", db.ConstTypeText, false)
+	if err := collection.AddColumn("path", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := collection.AddColumn("value", db.ConstTypeText, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	collection.AddColumn("type", db.ConstTypeVarchar, false)
+	if err := collection.AddColumn("type", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	collection.AddColumn("editor", db.ConstTypeVarchar, false)
-	collection.AddColumn("options", db.ConstTypeText, false)
+	if err := collection.AddColumn("editor", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := collection.AddColumn("options", db.ConstTypeText, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	collection.AddColumn("label", db.ConstTypeVarchar, false)
-	collection.AddColumn("description", db.ConstTypeText, false)
+	if err := collection.AddColumn("label", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
+	if err := collection.AddColumn("description", db.ConstTypeText, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
-	collection.AddColumn("image", db.ConstTypeVarchar, false)
+	if err := collection.AddColumn("image", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	return nil
 }

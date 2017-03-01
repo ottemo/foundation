@@ -44,7 +44,9 @@ func (it *DefaultCategory) Load(ID string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	junctionCollection.AddFilter("category_id", "=", it.GetID())
+	if err := junctionCollection.AddFilter("category_id", "=", it.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c176c200-bc35-41ea-81d6-453f1e8c01bb", err.Error())
+	}
 	junctedProducts, err := junctionCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -104,9 +106,13 @@ func (it *DefaultCategory) Save() error {
 	// saving category
 	if newID, err := categoryCollection.Save(storingValues); err == nil {
 		if it.GetID() != newID {
-			it.SetID(newID)
+			if err := it.SetID(newID); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ddd740b0-f866-4901-a7b9-f8e86b34191e", err.Error())
+			}
 			it.updatePath()
-			it.Save()
+			if err := it.Save(); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f8fff0a3-9c6a-4528-84b3-11fc9ef10d4c", err.Error())
+			}
 		}
 	} else {
 		return env.ErrorDispatch(err)
@@ -119,7 +125,9 @@ func (it *DefaultCategory) Save() error {
 	}
 
 	// deleting old assigned products
-	junctionCollection.AddFilter("category_id", "=", it.GetID())
+	if err := junctionCollection.AddFilter("category_id", "=", it.GetID()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d59a3a77-c72d-479d-8ed4-e84332dd89be", err.Error())
+	}
 	_, err = junctionCollection.Delete()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -127,7 +135,9 @@ func (it *DefaultCategory) Save() error {
 
 	// adding new assignments
 	for _, categoryProductID := range it.ProductIds {
-		junctionCollection.Save(map[string]interface{}{"category_id": it.GetID(), "product_id": categoryProductID})
+		if _, err := junctionCollection.Save(map[string]interface{}{"category_id": it.GetID(), "product_id": categoryProductID}); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8548775c-1b1b-41d4-92ac-643bd186dc65", err.Error())
+		}
 	}
 
 	return nil

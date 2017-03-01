@@ -23,7 +23,9 @@ func init() {
 	app.OnAppInit(instance.appInitEvent)
 	app.OnAppEnd(instance.appEndEvent)
 
-	env.RegisterIniConfig(instance)
+	if err := env.RegisterIniConfig(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }
 
 // routines before application end
@@ -35,7 +37,7 @@ func (it *DefaultIniConfig) appEndEvent() error {
 		// Backup ini file.
 		// Implemented by function to be sure all file operations are finished.
 		// Do not copy empty file. Stop on error and ignore it.
-		func() error {
+		err := func() error {
 			// check source content exists
 			srcFileInfo, err := os.Stat(it.iniFilePath)
 			if err != nil {
@@ -50,14 +52,22 @@ func (it *DefaultIniConfig) appEndEvent() error {
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
-			defer srcFile.Close()
+			defer func(c io.Closer){
+				if err := c.Close(); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+			}(srcFile)
 
 			// create target file
 			tgtFile, err := os.Create(it.iniFilePath + ConstBackupFileSuffix)
 			if err != nil {
 				return env.ErrorDispatch(err)
 			}
-			defer tgtFile.Close()
+			defer func(c io.Closer){
+				if err := c.Close(); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+			}(tgtFile)
 
 			// copy content
 			_, err = io.Copy(tgtFile, srcFile)
@@ -73,6 +83,9 @@ func (it *DefaultIniConfig) appEndEvent() error {
 
 			return nil
 		}()
+		if err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		// making alphabetically sorted section names
 		sortedSections := make([]string, 0, len(it.iniFileValues))
@@ -121,7 +134,11 @@ func (it *DefaultIniConfig) appEndEvent() error {
 		if len(output) > 0 {
 			// opening ini file
 			iniFile, err := os.OpenFile(it.iniFilePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-			defer iniFile.Close()
+			defer func(c io.Closer) {
+				if err := c.Close(); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
+			}(iniFile)
 
 			if err != nil {
 				return env.ErrorDispatch(err)

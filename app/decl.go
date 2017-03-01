@@ -9,7 +9,7 @@ import (
 // Package global constants
 const (
 	ConstVersionMajor = 1
-	ConstVersionMinor = 3
+	ConstVersionMinor = 4
 	ConstSprintNumber = 0
 
 	ConstConfigPathGroup      = "general"

@@ -13,6 +13,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/db"
 )
 
 // TestPaymentMethodCcGuestTransaction tests Authorize method for guest visitor transaction.
@@ -23,6 +24,14 @@ func TestPaymentMethodCcGuestTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodCcGuestTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodCcGuestTransaction tests Authorize method for guest visitor transaction.
+func testPaymentMethodCcGuestTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
@@ -72,6 +81,15 @@ func TestPaymentMethodCcGuestTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodCcGuestTokenizedTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodCcGuestTokenizedTransaction tests Authorize method for guest visitor with token creation and
+// creating transaction based on that token
+func testPaymentMethodCcGuestTokenizedTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
@@ -156,7 +174,7 @@ func TestPaymentMethodCcGuestTokenizedTransaction(t *testing.T) {
 	}
 }
 
-// TestPaymentMethodCcVisitorTokenizedTransaction tests Authorize method for registered visitor with token creation and
+// TestPaymentMethodCcVisitorTokenizedTransaction tests Authorize method for guest visitor with token creation and
 // creating transaction based on that token
 func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 	// start app
@@ -165,6 +183,15 @@ func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodCcVisitorTokenizedTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodCcVisitorTokenizedTransaction tests Authorize method for registered visitor with token creation and
+// creating transaction based on that token
+func testPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var visitorData = map[string]interface{}{
@@ -186,7 +213,11 @@ func TestPaymentMethodCcVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer visitorModel.Delete()
+	defer func (v visitor.InterfaceVisitor){
+		if err := v.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(visitorModel)
 
 	var paymentMethod = &braintree.CreditCardMethod{}
 
@@ -277,7 +308,17 @@ func TestPaymentMethodCcConfigurationReload(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodCcConfigurationReload(t)
+		return nil
+	})
+}
+
+// testPaymentMethodCcConfigurationReload checks if package reloads configuration
+func testPaymentMethodCcConfigurationReload(t *testing.T) {
 	initConfig(t, "", "", "", "")
+
+	var err error
 
 	var paymentMethod = &braintree.CreditCardMethod{}
 	var orderInstance = &order.DefaultOrder{

@@ -69,7 +69,9 @@ func (it *DefaultVisitorAddress) Save() error {
 			}
 
 			if newID, err := collection.Save(it.ToHashMap()); err == nil {
-				it.Set("_id", newID)
+				if err := it.Set("_id", newID); err != nil {
+					return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "af29eade-5386-4c81-bfa3-6d4c473ef214", err.Error())
+				}
 				return env.ErrorDispatch(err)
 			}
 			return env.ErrorDispatch(err)

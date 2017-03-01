@@ -329,7 +329,9 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 					}
 				}
 			} else {
-				it.Set("price", optionValue)
+				if err := it.Set("price", optionValue); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "016da6e7-5489-49d7-a8fb-14f3733398be", err.Error())
+				}
 			}
 		}
 
@@ -413,6 +415,14 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 	it.Price = utils.RoundPrice(it.Price)
 
 	it.appliedOptions = options
+
+
+	if !isSimpleProductUsed {
+		err := it.LoadExternalAttributes();
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
 
 	return nil
 }

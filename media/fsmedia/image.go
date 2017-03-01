@@ -14,6 +14,7 @@ import (
 	"github.com/disintegration/imaging"
 
 	"github.com/ottemo/foundation/env"
+	"io"
 )
 
 // GetBiggestSize returns size with a image bounds limit 0x0 or with most resolution, "" - default size
@@ -163,7 +164,11 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 
 	// opening source file
 	sourceFile, err := os.Open(sourceFileName)
-	defer sourceFile.Close()
+	defer func(c io.Closer){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
+	}(sourceFile)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -262,7 +267,11 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-		defer file.Close()
+		defer func(c io.Closer) {
+			if err := c.Close(); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
+		}(file)
 
 		switch sourceImageFormat {
 		case "png":
@@ -273,7 +282,7 @@ func (it *FilesystemMediaStorage) ResizeMediaImage(model string, objID string, m
 			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d1494cdc-6884-4cbb-babd-13c5c0669559", "Unknown image format: "+sourceFileName)
 		}
 		if err != nil {
-			env.ErrorDispatch(err)
+			return env.ErrorDispatch(err)
 		}
 	}
 

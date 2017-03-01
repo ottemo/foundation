@@ -115,7 +115,9 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 
 	switch attribute {
 	case "_id", "id":
-		it.SetID(utils.InterfaceToString(value))
+		if err := it.SetID(utils.InterfaceToString(value)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "751bc438-198f-4997-8a84-042e763f2f25", err.Error())
+	}
 
 	case "increment_id":
 		it.IncrementID = utils.InterfaceToString(value)
@@ -124,7 +126,9 @@ func (it *DefaultOrder) Set(attribute string, value interface{}) error {
 		if "" == it.Status {
 			it.Status = utils.InterfaceToString(value)
 		} else {
-			it.SetStatus(utils.InterfaceToString(value))
+			if err := it.SetStatus(utils.InterfaceToString(value)); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c510d022-7cf3-4e53-bf71-9d4d203ab7f1", err.Error())
+			}
 		}
 
 	case "visitor_id":
@@ -300,7 +304,7 @@ func (it *DefaultOrder) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 

@@ -22,7 +22,9 @@ func (it *DefaultSubscriptionCollection) List() ([]models.StructListItem, error)
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		subscriptionModel.FromHashMap(dbRecordData)
+		if err := subscriptionModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1b35881d-262a-48fe-9998-3edd319b8284", err.Error())
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -65,13 +67,17 @@ func (it *DefaultSubscriptionCollection) ListAddExtraAttribute(attribute string)
 
 // ListFilterAdd provides the ability to add a selection filter to List() function
 func (it *DefaultSubscriptionCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c2d5627-3d4e-4f1e-ba7c-5bf590afad09", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears the presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultSubscriptionCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cc11f942-83bf-426f-b62a-b5240449b934", err.Error())
+	}
 	return nil
 }
 

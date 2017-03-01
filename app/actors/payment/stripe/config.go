@@ -41,7 +41,7 @@ func setupConfig() error {
 		Editor: "line_text",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cfc4cb85-b769-414c-90fb-9be3fbe7fe98", "can't be blank")
+			err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "661b47d6-69b9-490b-a22a-130e77b7ab48", "can't be blank")
 			return nil, env.ErrorDispatch(err)
 		}
 		return value, nil

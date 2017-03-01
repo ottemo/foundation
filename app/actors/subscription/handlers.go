@@ -43,7 +43,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 	}
 
 	if checkoutOrder != nil {
-		go subscriptionCreate(currentCheckout, checkoutOrder)
+		go func() {
+			if err := subscriptionCreate(currentCheckout, checkoutOrder); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c55060e4-f29a-43e6-9c6b-5345ae1652f1", err.Error())
+			}
+		}();
 	}
 
 	return true
@@ -89,16 +93,30 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 	visitor := currentCheckout.GetVisitor()
 	if visitor != nil {
-		subscriptionInstance.Set("visitor_id", visitor.GetID())
-		subscriptionInstance.Set("customer_email", visitor.GetEmail())
-		subscriptionInstance.Set("customer_name", visitor.GetFullName())
+		if err := subscriptionInstance.Set("visitor_id", visitor.GetID()); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3eef50f0-4bda-41f4-9da8-b80e7a4a07f2", err.Error())
+		}
+		if err := subscriptionInstance.Set("customer_email", visitor.GetEmail()); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "12f4bfb9-0abe-4d6c-8b09-b3ef177144d3", err.Error())
+		}
+		if err := subscriptionInstance.Set("customer_name", visitor.GetFullName()); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "71049641-67eb-47dc-982d-d2d86475132c", err.Error())
+		}
 	} else {
-		subscriptionInstance.Set("customer_email", currentCheckout.GetInfo("customer_email"))
-		subscriptionInstance.Set("customer_name", currentCheckout.GetInfo("customer_name"))
+		if err := subscriptionInstance.Set("customer_email", currentCheckout.GetInfo("customer_email")); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8c1420f9-10c9-4904-ac3f-7de3037b85a1", err.Error())
+		}
+		if err := subscriptionInstance.Set("customer_name", currentCheckout.GetInfo("customer_name")); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d451050d-9a2c-4b75-a031-c7df7fb887c8", err.Error())
+		}
 	}
 
-	subscriptionInstance.SetShippingAddress(currentCheckout.GetShippingAddress())
-	subscriptionInstance.SetBillingAddress(currentCheckout.GetBillingAddress())
+	if err := subscriptionInstance.SetShippingAddress(currentCheckout.GetShippingAddress()); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1ba46a05-bb87-4c52-8340-d371a274dccc", err.Error())
+	}
+	if err := subscriptionInstance.SetBillingAddress(currentCheckout.GetBillingAddress()); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "015edd41-f549-468c-a129-9387b5f42042", err.Error())
+	}
 
 	shippingMethod := currentCheckout.GetShippingMethod()
 	var shippingRate checkout.StructShippingRate
@@ -129,15 +147,23 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		}
 	}
 
-	subscriptionInstance.SetShippingMethod(shippingMethod)
-	subscriptionInstance.SetShippingRate(checkout.StructShippingRate{
+	if err := subscriptionInstance.SetShippingMethod(shippingMethod); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f894070c-044c-4258-9902-b51ad4800e93", err.Error())
+	}
+	if err := subscriptionInstance.SetShippingRate(checkout.StructShippingRate{
 		Name:  shippingRate.Name,
 		Code:  shippingRate.Code,
 		Price: shippingRate.Price,
-	})
+	}); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6a1b1715-8ab4-40e9-986b-ce2769eb3258", err.Error())
+	}
 
-	subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusConfirmed)
-	subscriptionInstance.Set("order_id", checkoutOrder.GetID())
+	if err := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusConfirmed); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4ceb2aee-cd8c-4251-8080-4e0c20c72cc6", err.Error())
+	}
+	if err := subscriptionInstance.Set("order_id", checkoutOrder.GetID()); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "25d58d3e-f857-4dd7-bf6b-7e482deeb276", err.Error())
+	}
 
 	subscriptionTime := time.Now().Truncate(time.Hour)
 
@@ -146,17 +172,17 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 		if subscriptionPeriodValue, present := subscriptionItems[cartItem.GetIdx()]; present && subscriptionPeriodValue != 0 {
 
 			if err = subscriptionInstance.SetActionDate(subscriptionTime); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.SetPeriod(subscriptionPeriodValue); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 
 			if err = subscriptionInstance.UpdateActionDate(); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 
@@ -171,7 +197,9 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			}
 
 			if product := cartItem.GetProduct(); product != nil {
-				product.ApplyOptions(subscriptionItem.Options)
+				if err := product.ApplyOptions(subscriptionItem.Options); err != nil {
+					return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "45e3febc-9aa8-45b3-8506-ae4876454e4e", err.Error())
+				}
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
@@ -235,11 +263,15 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 
 			items = append(items, subscriptionItem)
 
-			subscriptionInstance.Set("items", items)
-			subscriptionInstance.SetID("")
+			if err := subscriptionInstance.Set("items", items); err != nil {
+				return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "bbff14b1-817f-4321-a9ab-72ba836b8a3a", err.Error())
+			}
+			if err := subscriptionInstance.SetID(""); err != nil {
+				return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "cf7abf5c-51a6-44e7-8709-a09912f8d2e6", err.Error())
+			}
 
 			if err = subscriptionInstance.Save(); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 		}

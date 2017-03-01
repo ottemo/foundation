@@ -16,6 +16,9 @@ const (
 
 	ConstConfigPathGiftCardApplyPriority = "general.discounts.giftCard_apply_priority"
 
+	ConstConfigPathGiftCardAdminBuyerName       = "general.discounts.giftCard_admin_buyer_name"
+	ConstConfigPathGiftCardAdminBuyerEmail       = "general.discounts.giftCard_admin_buyer_email"
+
 	ConstErrorModule = "giftcard"
 	ConstErrorLevel  = env.ConstErrorLevelActor
 

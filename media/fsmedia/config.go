@@ -27,7 +27,7 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 			if !resizeImagesOnFly && it.setupWaitCnt == 0 {
 				err = it.ResizeAllMediaImages()
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 				}
 			}
 
@@ -55,7 +55,9 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	imageSizesValidator(env.ConfigGetValue(ConstConfigPathMediaImageSizes))
+	if _, err := imageSizesValidator(env.ConfigGetValue(ConstConfigPathMediaImageSizes)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	imageDefaultSizeValidator := func(newValue interface{}) (interface{}, error) {
 		if newValue, ok := newValue.(string); ok && newValue != "" {
@@ -67,7 +69,7 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 		}
 		err := env.ErrorNew(ConstErrorModule,
 			env.ConstErrorLevelStartStop,
-			"165834bd-d8ca-4b1d-8cfa-b8a153288913",
+			"51e91650-8666-48a6-b473-a83ee0c8ec31",
 			"Unexpected value for image size found.")
 		return ConstDefaultImageSize, env.ErrorDispatch(err)
 	}
@@ -87,7 +89,9 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	imageDefaultSizeValidator(env.ConfigGetValue(ConstConfigPathMediaImageSize))
+	if _, err := imageDefaultSizeValidator(env.ConfigGetValue(ConstConfigPathMediaImageSize)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	imageBasePathValidator := func(newValue interface{}) (interface{}, error) {
 		if newValue, ok := newValue.(string); ok {
@@ -121,7 +125,9 @@ func (it *FilesystemMediaStorage) setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	imageBasePathValidator(env.ConfigGetValue(ConstConfigPathMediaBaseURL))
+	if _, err := imageBasePathValidator(env.ConfigGetValue(ConstConfigPathMediaBaseURL)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	it.setupCheckDone()
 

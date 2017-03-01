@@ -147,7 +147,9 @@ func (it *StockDelegate) Save() error {
 func (it *StockDelegate) Delete() error {
 	// remove qty and inventory values from database
 	if stockManager := product.GetRegisteredStock(); stockManager != nil {
-		stockManager.RemoveProductQty(it.instance.GetID(), make(map[string]interface{}))
+		if err := stockManager.RemoveProductQty(it.instance.GetID(), make(map[string]interface{})); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "45a37ef3-6fb7-4c57-a8cd-8a1306eb513e", err.Error())
+		}
 	}
 	return nil
 }

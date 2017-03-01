@@ -71,7 +71,9 @@ func (it *DefaultVisitor) Set(attribute string, value interface{}) error {
 	case "lname", "last_name":
 		it.LastName = utils.InterfaceToString(value)
 	case "password", "passwd":
-		it.SetPassword(utils.InterfaceToString(value))
+		if err := it.SetPassword(utils.InterfaceToString(value)); err != nil {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5e134436-0de2-437e-98ef-1ec0767dfe56", err.Error())
+		}
 	case "validate":
 		it.VerificationKey = utils.InterfaceToString(value)
 	case "facebook_id":
@@ -212,7 +214,7 @@ func (it *DefaultVisitor) FromHashMap(input map[string]interface{}) error {
 
 	for attribute, value := range input {
 		if err := it.Set(attribute, value); err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 

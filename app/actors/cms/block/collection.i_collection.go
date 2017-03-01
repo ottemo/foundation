@@ -21,7 +21,9 @@ func (it *DefaultCMSBlockCollection) List() ([]models.StructListItem, error) {
 		if err != nil {
 			return result, env.ErrorDispatch(err)
 		}
-		cmsBlockModel.FromHashMap(dbRecordData)
+		if err := cmsBlockModel.FromHashMap(dbRecordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d84fee6-a9a2-4ea1-bb10-ba4d5fc0d3f6", err.Error())
+		}
 
 		// retrieving minimal data needed for list
 		resultItem := new(models.StructListItem)
@@ -64,13 +66,17 @@ func (it *DefaultCMSBlockCollection) ListAddExtraAttribute(attribute string) err
 
 // ListFilterAdd adds selection filter to List() function
 func (it *DefaultCMSBlockCollection) ListFilterAdd(Attribute string, Operator string, Value interface{}) error {
-	it.listCollection.AddFilter(Attribute, Operator, Value.(string))
+	if err := it.listCollection.AddFilter(Attribute, Operator, Value.(string)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9d1685d0-0a77-4399-86c7-c5956c85157e", err.Error())
+	}
 	return nil
 }
 
 // ListFilterReset clears presets made by ListFilterAdd() and ListAddExtraAttribute() functions
 func (it *DefaultCMSBlockCollection) ListFilterReset() error {
-	it.listCollection.ClearFilters()
+	if err := it.listCollection.ClearFilters(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9197a345-bb0d-4903-8160-bb93488f5867", err.Error())
+	}
 	return nil
 }
 

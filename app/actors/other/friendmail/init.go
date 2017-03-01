@@ -45,9 +45,15 @@ func init() {
 func setupDB() error {
 
 	if collection, err := db.GetCollection(ConstCollectionNameFriendMail); err == nil {
-		collection.AddColumn("date", db.ConstTypeID, true)
-		collection.AddColumn("email", db.ConstTypeVarchar, true)
-		collection.AddColumn("data", db.ConstTypeJSON, false)
+		if err := collection.AddColumn("date", db.ConstTypeID, true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "52acc483-0132-4252-acf3-9e965eefd73b", err.Error())
+		}
+		if err := collection.AddColumn("email", db.ConstTypeVarchar, true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "53288f58-6cc8-4ae5-913d-d8f735a66678", err.Error())
+		}
+		if err := collection.AddColumn("data", db.ConstTypeJSON, false); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c18bbf88-a104-4154-b8eb-0ccb6ae7a7e9", err.Error())
+		}
 	} else {
 		return env.ErrorDispatch(err)
 	}

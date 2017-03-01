@@ -16,12 +16,12 @@ func setupAPI() error {
 	// Admin Only
 	//-----------
 
-	service.GET("saleprices", api.IsAdmin(listAllScheduled))
+	service.GET("saleprices", api.IsAdminHandler(listAllScheduled))
 
-	service.POST("saleprice", api.IsAdmin(createSalePrice))
-	service.GET("saleprice/:id", api.IsAdmin(priceByID))
-	service.PUT("saleprice/:id", api.IsAdmin(updateByID))
-	service.DELETE("saleprice/:id", api.IsAdmin(deleteByID))
+	service.POST("saleprice", api.IsAdminHandler(createSalePrice))
+	service.GET("saleprice/:id", api.IsAdminHandler(priceByID))
+	service.PUT("saleprice/:id", api.IsAdminHandler(updateByID))
+	service.DELETE("saleprice/:id", api.IsAdminHandler(deleteByID))
 
 	return nil
 }
@@ -34,7 +34,9 @@ func listAllScheduled(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// applying requested filters
-	models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, salePriceCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c19d40b6-dc72-4ee1-b851-40cdf3636991", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -42,10 +44,14 @@ func listAllScheduled(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	// limit parameter handle
-	salePriceCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := salePriceCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "34a048a7-e6f6-4041-b9af-6c884fd74f09", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, salePriceCollectionModel)
+	if err := models.ApplyExtraAttributes(context, salePriceCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d1cc9dd-d7c4-4190-9fb7-dac7aa69d3fb", err.Error())
+	}
 
 	listItems, err := salePriceCollectionModel.List()
 	if err != nil {
@@ -127,7 +133,7 @@ func updateByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	//-------------------------
 	salePriceID := context.GetRequestArgument("id")
 	if salePriceID == "" {
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "fc0e40f9-c51e-46a7-b53b-c480be5bd556")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -169,7 +175,7 @@ func deleteByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	//-------------------------
 	salePriceID := context.GetRequestArgument("id")
 	if salePriceID == "" {
-		return nil, newErrorHelper("Required field 'id' is blank or absend.", "beb06bd0-db31-4daa-9fdd-d9872da7fdd6")
+		return nil, newErrorHelper("Required field 'id' is blank or absend.", "1cb07d89-5447-4de5-b15a-3a8e76f8a818")
 	}
 
 	// operation

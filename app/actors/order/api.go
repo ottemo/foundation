@@ -25,17 +25,17 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	// Admin
-	service.GET("orders/attributes", api.IsAdmin(APIListOrderAttributes))
-	service.GET("orders", api.IsAdmin(APIListOrders))
-	service.POST("orders/exportToCSV", api.IsAdmin(APIExportOrders))
-	service.POST("orders/setStatus", api.IsAdmin(APIChangeOrderStatus))
+	service.GET("orders/attributes", api.IsAdminHandler(APIListOrderAttributes))
+	service.GET("orders", api.IsAdminHandler(APIListOrders))
+	service.POST("orders/exportToCSV", api.IsAdminHandler(APIExportOrders))
+	service.POST("orders/setStatus", api.IsAdminHandler(APIChangeOrderStatus))
 
-	service.GET("order/:orderID", api.IsAdmin(APIGetOrder))
-	service.PUT("order/:orderID", api.IsAdmin(APIUpdateOrder))
-	service.DELETE("order/:orderID", api.IsAdmin(APIDeleteOrder))
-	service.GET("order/:orderID/emailShipStatus", api.IsAdmin(APISendShipStatusEmail))
-	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdmin(APISendOrderConfirmationEmail))
-	service.POST("order/:orderID/emailTrackingCode", api.IsAdmin(APIUpdateTrackingInfoAndSendEmail))
+	service.GET("order/:orderID", api.IsAdminHandler(APIGetOrder))
+	service.PUT("order/:orderID", api.IsAdminHandler(APIUpdateOrder))
+	service.DELETE("order/:orderID", api.IsAdminHandler(APIDeleteOrder))
+	service.GET("order/:orderID/emailShipStatus", api.IsAdminHandler(APISendShipStatusEmail))
+	service.GET("order/:orderID/emailOrderConfirmation", api.IsAdminHandler(APISendOrderConfirmationEmail))
+	service.POST("order/:orderID/emailTrackingCode", api.IsAdminHandler(APIUpdateTrackingInfoAndSendEmail))
 
 	// Public
 	service.GET("visit/orders", APIGetVisitorOrders)
@@ -97,7 +97,9 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// filters handle
-	models.ApplyFilters(context, orderCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, orderCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "feb1e3b3-fb65-4e77-9524-d64f4cf574e8", err.Error())
+	}
 
 	// checking for a "count" request
 	if context.GetRequestArgument(api.ConstRESTActionParameter) == "count" {
@@ -105,10 +107,14 @@ func APIListOrders(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// limit parameter handle
-	orderCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := orderCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3257c74b-a809-45ed-8863-14ee273d3f3b", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, orderCollectionModel)
+	if err := models.ApplyExtraAttributes(context, orderCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5e81c9be-1df8-436b-8c22-b9b29949dd1b", err.Error())
+	}
 
 	return orderCollectionModel.List()
 }
@@ -168,10 +174,14 @@ func APIUpdateOrder(context api.InterfaceApplicationContext) (interface{}, error
 	}
 
 	for attribute, value := range requestData {
-		orderModel.Set(attribute, value)
+		if err := orderModel.Set(attribute, value); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b563c756-92a7-4d08-b85b-d365c713cd69", err.Error())
+		}
 	}
 
-	orderModel.Save()
+	if err := orderModel.Save(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9a5c8363-baad-4060-a287-4d88b46878a6", err.Error())
+	}
 
 	return orderModel.ToHashMap(), nil
 }
@@ -187,7 +197,9 @@ func APIDeleteOrder(context api.InterfaceApplicationContext) (interface{}, error
 		return nil, env.ErrorDispatch(err)
 	}
 
-	orderModel.Delete()
+	if err := orderModel.Delete(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ad203565-3975-4f7c-acea-28d4a58be966", err.Error())
+	}
 	return "Order deleted: " + orderModel.GetID(), nil
 }
 
@@ -242,16 +254,24 @@ func APIGetVisitorOrders(context api.InterfaceApplicationContext) (interface{}, 
 
 	// We only return orders that are in these two states
 	statusFilter := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
-	orderCollection.GetDBCollection().AddFilter("status", "in", statusFilter)
+	if err := orderCollection.GetDBCollection().AddFilter("status", "in", statusFilter); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88c33afe-4341-470f-a9ab-da024927e5ea", err.Error())
+	}
 
 	descending := true
-	orderCollection.GetDBCollection().AddSort("created_at", descending)
+	if err := orderCollection.GetDBCollection().AddSort("created_at", descending); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c923b47c-fa6c-42ad-8c27-7c86688866bb", err.Error())
+	}
 
 	// filters handle
-	models.ApplyFilters(context, orderCollection.GetDBCollection())
+	if err := models.ApplyFilters(context, orderCollection.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2190f86e-1aef-4461-8107-37533c01d1ab", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, orderCollection)
+	if err := models.ApplyExtraAttributes(context, orderCollection); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "16e512ae-3cfb-4d92-a671-0e6dea9446e3", err.Error())
+	}
 
 	result, err := orderCollection.List()
 
@@ -311,12 +331,16 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
-	dbOrderCollection.AddSort("created_at", false)
+	if err := dbOrderCollection.AddSort("created_at", false); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d237815b-a87b-4c2a-a4e0-fa28e1ed6459", err.Error())
+	}
 
 	// load orders based on order IDs passed
 	orders = utils.InterfaceToStringArray(utils.InterfaceToArray(requestData["orders"]))
 	if orders != nil && len(orders) > 0 && !utils.IsInListStr("all", orders) {
-		dbOrderCollection.AddFilter("_id", "in", orders)
+		if err := dbOrderCollection.AddFilter("_id", "in", orders); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb689aa7-3cab-4f8b-b504-165aa8b7f00a", err.Error())
+		}
 	}
 
 	ordersRecords, err := dbOrderCollection.Load()
@@ -342,8 +366,12 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 
 	for _, orderRecord := range ordersRecords {
 
-		dbOrderItemsCollection.ClearFilters()
-		dbOrderItemsCollection.AddFilter("order_id", "=", orderRecord["_id"])
+		if err := dbOrderItemsCollection.ClearFilters(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b88f2ac6-308c-486c-8e67-a014cf8e12ef", err.Error())
+		}
+		if err := dbOrderItemsCollection.AddFilter("order_id", "=", orderRecord["_id"]); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "257eef6d-b273-4d4e-95aa-c4fcdd6aed27", err.Error())
+		}
 
 		orderItemsRecords, err := dbOrderItemsCollection.Load()
 		if err != nil {
@@ -419,11 +447,17 @@ func APIExportOrders(context api.InterfaceApplicationContext) (interface{}, erro
 
 	exportFilename := "orders_export_" + time.Now().Format(time.RFC3339) + ".csv"
 
-	context.SetResponseContentType("text/csv")
-	context.SetResponseSetting("Content-disposition", "attachment;filename="+exportFilename)
+	if err := context.SetResponseContentType("text/csv"); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4fd36680-5527-410a-be51-c02f79b986aa", err.Error())
+	}
+	if err := context.SetResponseSetting("Content-disposition", "attachment;filename="+exportFilename); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c937338-a89d-4980-9489-ef5f7508a81b", err.Error())
+	}
 
 	for _, csvRecord := range itemCSVRecords {
-		csvWriter.Write(csvRecord)
+		if err := csvWriter.Write(csvRecord); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b0435377-138d-448e-b8b5-ed37d1f44549", err.Error())
+		}
 	}
 	csvWriter.Flush()
 
@@ -520,7 +554,9 @@ func APIUpdateTrackingInfoAndSendEmail(context api.InterfaceApplicationContext) 
 	shippingInfo["carrier"] = carrier
 	shippingInfo["tracking_number"] = trackingNumber
 	shippingInfo["tracking_url"] = trackingURL
-	orderModel.Set("shipping_info", shippingInfo)
+	if err := orderModel.Set("shipping_info", shippingInfo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c786a6dc-a0b9-486e-a7d5-0b922cd31902", err.Error())
+	}
 
 	err = orderModel.Save()
 	if err != nil {
@@ -528,7 +564,9 @@ func APIUpdateTrackingInfoAndSendEmail(context api.InterfaceApplicationContext) 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	orderModel.SendShippingStatusUpdateEmail()
+	if err := orderModel.SendShippingStatusUpdateEmail(); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c258f6eb-97fc-4eb1-a91a-615d8abbe89a", err.Error())
+	}
 
 	return "ok", nil
 }

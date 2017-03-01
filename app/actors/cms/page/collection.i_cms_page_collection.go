@@ -3,6 +3,7 @@ package page
 import (
 	"github.com/ottemo/foundation/app/models/cms"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
 // GetDBCollection returns database collection
@@ -24,7 +25,9 @@ func (it *DefaultCMSPageCollection) ListCMSPages() []cms.InterfaceCMSPage {
 		if err != nil {
 			return result
 		}
-		cmsPageModel.FromHashMap(recordData)
+		if err := cmsPageModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e74b4b4-08e9-44d5-805d-e158f5af518c", err.Error())
+		}
 
 		result = append(result, cmsPageModel)
 	}

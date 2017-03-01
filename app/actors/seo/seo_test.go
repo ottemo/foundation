@@ -7,16 +7,25 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/seo"
+	"github.com/ottemo/foundation/db"
 )
 
 // Basic SEOItem test: check model save/load
 func TestSEO(t *testing.T) {
+	// start app
 	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testSEO(t)
+		return nil
+	})
+}
+
+// Basic SEOItem test: check model save/load
+func testSEO(t *testing.T) {
 	seoItemData, err := utils.DecodeJSONToStringKeyMap(`{
 		"url": "url value",
 		"rewrite": "rewrite value",
@@ -47,7 +56,11 @@ func TestSEO(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer seoItemModel.Delete()
+	defer func(m seo.InterfaceSEOItem){
+		if err := m.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(seoItemModel)
 
 	seoItemID := seoItemModel.GetID()
 

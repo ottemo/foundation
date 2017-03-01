@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/env"
+	"io"
 )
 
 // Log is a general case logging function
@@ -19,9 +20,13 @@ func (it *DefaultLogger) Log(storage string, prefix string, msg string) {
 		return
 	}
 
-	logFile.Write([]byte(message))
+	if _, err := logFile.Write([]byte(message)); err != nil {
+		fmt.Println(err)
+	}
 
-	logFile.Close()
+	if err := logFile.Close(); err != nil {
+		fmt.Println(err)
+	}
 }
 
 // LogError makes error log
@@ -44,14 +49,20 @@ func (it *DefaultLogger) LogEvent(fields env.LogFields, eventName string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer f.Close()
+	defer func(c io.Closer){
+		if err := c.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}(f)
 
 	msg, err := logstashFormatter(fields, eventName)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	f.Write(msg)
+	if _, err := f.Write(msg); err != nil {
+		fmt.Println(err)
+	}
 }
 
 func logstashFormatter(fields env.LogFields, eventName string) ([]byte, error) {

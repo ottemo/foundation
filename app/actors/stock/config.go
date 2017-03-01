@@ -27,19 +27,25 @@ func setupConfig() error {
 		validateEnabled := func(value interface{}) (interface{}, error) {
 			boolValue := utils.InterfaceToBool(value)
 			if boolValue {
-				product.RegisterStock(new(DefaultStock))
+				if product.GetRegisteredStock() == nil {
+					if err := product.RegisterStock(new(DefaultStock)); err != nil {
+						_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "98dce16f-6cf3-4cc7-931e-f7d822da4a10", err.Error())
+					}
 
-				productModel, err := product.GetProductModel()
-				if err != nil {
-					env.LogError(err)
-				}
+					productModel, err := product.GetProductModel()
+					if err != nil {
+						env.LogError(err)
+					}
 
-				if err = productModel.AddExternalAttributes(stockDelegate); err != nil {
-					env.LogError(err)
+					if err = productModel.AddExternalAttributes(stockDelegate); err != nil {
+						env.LogError(err)
+					}
 				}
 
 			} else {
-				product.UnRegisterStock()
+				if err := product.UnRegisterStock(); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "aaefff04-476a-4b66-86d9-e6b787a3485e", err.Error())
+				}
 
 				productModel, err := product.GetProductModel()
 				if err != nil {
@@ -68,7 +74,9 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		validateEnabled(env.ConfigGetValue(ConstConfigPathEnabled))
+		if _, err := validateEnabled(env.ConfigGetValue(ConstConfigPathEnabled)); err != nil {
+			return env.ErrorDispatch(err)
+		}
 	} else {
 		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "fdc4f498-3d03-48a9-b51b-46aeae42edd1", "Unable to obtain configuration for Stock")
 		return env.ErrorDispatch(err)

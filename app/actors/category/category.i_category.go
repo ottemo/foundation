@@ -32,7 +32,9 @@ func (it *DefaultCategory) GetProductsCollection() product.InterfaceProductColle
 
 	dbCollection := productCollection.GetDBCollection()
 	if dbCollection != nil {
-		dbCollection.AddStaticFilter("_id", "in", it.ProductIds)
+		if err := dbCollection.AddStaticFilter("_id", "in", it.ProductIds); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "208cb734-953c-4921-add8-71101154d312", err.Error())
+		}
 	}
 
 	return productCollection
@@ -88,8 +90,12 @@ func (it *DefaultCategory) AddProduct(productID string) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2a7b643-e1b0-46c8-88ad-de2447407875", "product ID is not set")
 	}
 
-	collection.AddFilter("category_id", "=", categoryID)
-	collection.AddFilter("product_id", "=", productID)
+	if err := collection.AddFilter("category_id", "=", categoryID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0dadcd29-a5cd-4a7c-82e5-4b87279f7e03", err.Error())
+	}
+	if err := collection.AddFilter("product_id", "=", productID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0d27e020-0515-4b0d-9674-30bd2da5023c", err.Error())
+	}
 	cnt, err := collection.Count()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -128,8 +134,12 @@ func (it *DefaultCategory) RemoveProduct(productID string) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "70b5aa6b-dadd-4be8-b8b9-d6f41a7cf237", "product ID is not set")
 	}
 
-	collection.AddFilter("category_id", "=", categoryID)
-	collection.AddFilter("product_id", "=", productID)
+	if err := collection.AddFilter("category_id", "=", categoryID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b7f797c0-2e71-422c-bbe8-23c1d551a585", err.Error())
+	}
+	if err := collection.AddFilter("product_id", "=", productID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b43af18d-1bd3-436a-a21e-b29d468a2131", err.Error())
+	}
 	_, err = collection.Delete()
 
 	return env.ErrorDispatch(err)

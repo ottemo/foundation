@@ -63,4 +63,14 @@ type DBEngine struct {
 
 	attributeTypes      map[string]map[string]string
 	attributeTypesMutex sync.RWMutex
+
+	isConnected bool
+}
+
+// connectionParamsType describes params required to connect to DB
+type connectionParamsType struct {
+	uri 		string
+	dbName 		string
+	poolConnections int
+	maxConnections 	int
 }
