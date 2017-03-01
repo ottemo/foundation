@@ -19,8 +19,8 @@ func setupAPI() error {
 	// store
 	service.GET("giftcards/:giftcode", GetSingleCode)
 	service.GET("giftcards", GetList)
-	service.GET("giftcard/check/:giftcode", IfGiftCardCodeUnique)
-	service.GET("giftcard/generate/code", GetUniqueGiftCode)
+	service.GET("check/giftcards/:giftcode", IfGiftCardCodeUnique)
+	service.GET("generate/giftcards/code", GetUniqueGiftCode)
 
 	// cart endpoints
 	service.POST("cart/giftcards/:giftcode", Apply)
@@ -30,7 +30,7 @@ func setupAPI() error {
 	service.GET("giftcard/:id", GetSingleID)
 	service.POST("giftcard", api.IsAdminHandler(Create))
 	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
-	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
+	service.GET("giftcard/:id/history", api.IsAdminHandler(GetHistory))
 
 	return nil
 }
@@ -356,6 +356,8 @@ func GetUniqueGiftCode(context api.InterfaceApplicationContext) (interface{}, er
 // Edit gift card
 func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 
+	giftCard := make(map[string]interface{})
+
 	giftID := context.GetRequestArgument("id")
 	if giftID == "" {
 		context.SetResponseStatusBadRequest()
@@ -373,24 +375,26 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
 
-	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("id", "=", giftID)
-	rows, err := collection.Load()
+	giftCardCollection.AddFilter("id", "=", giftID)
+	rows, err := giftCardCollection.Load()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-
+	if len(rows) != 0 {
+		giftCard = rows[0]
+	}
 
 	giftCardAmount := utils.InterfaceToInt(requestData["amount"])
 	customMessage := utils.InterfaceToString(requestData["message"])
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	rows, err = getGiftCardsByCode(giftCardUniqueCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
@@ -404,22 +408,19 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
-	giftCard := make(map[string]interface{})
 
 	giftCard["code"] = giftCardUniqueCode
 	giftCard["amount"] = giftCardAmount
 	giftCard["message"] = customMessage
 	giftCard["recipient_mailbox"] = recipientEmail
 
-	giftModel.FromHashMap(giftCard)
-
-	err = giftModel.Save()
+	_, err = giftCardCollection.Save(giftCard)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return false, env.ErrorDispatch(err)
 	}
 
-	return giftModel.ToHashMap(), nil
+	return giftCard, nil
 
 }
 
