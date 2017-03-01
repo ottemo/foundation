@@ -290,6 +290,7 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 		context.SetResponseStatusBadRequest()
 		return false, env.ErrorDispatch(err)
 	}
+	giftCard["_id"] = giftCardID
 
 	var giftCardsToSendImmediately []string
 
@@ -305,7 +306,7 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 		go SendTask(params)
 	}
 
-	return true, nil
+	return giftCard, nil
 }
 
 // getGiftCardsByCode returns a list of gift cards for the giftCardCode
