@@ -145,7 +145,9 @@ func TestApplyFilters(t *testing.T) {
 
 	// init context
 	context := new(testContext)
-	context.SetSession(session)
+	if err := context.SetSession(session); err != nil {
+		t.Error(err)
+	}
 
 	// create test db in memory
 	if newConnection, err := sqlite3.Open(":memory:"); err == nil {

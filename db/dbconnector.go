@@ -52,14 +52,19 @@ func (it *DBConnector) Connect() error {
 		}
 	}
 
-	it.connector.AfterConnect(connectionParams)
+	err := it.connector.AfterConnect(connectionParams)
+	if err != nil {
+		it.log("After DB connect error:")
+	}
 
 	go func() {
 		for range ticker.C {
 			if err := it.connector.Ping(); err != nil {
 				it.connector.SetConnected(false)
 				it.log("DB connection lost. Reconnect in 60 seconds.")
-				it.connector.Reconnect(connectionParams)
+				if err := it.connector.Reconnect(connectionParams); err != nil {
+					it.log("Unable to reconnect: "+err.Error())
+				}
 			} else if !it.connector.IsConnected() { // Show message only once
 				it.connector.SetConnected(true)
 				it.log("DB connection restored.")
@@ -67,7 +72,7 @@ func (it *DBConnector) Connect() error {
 		}
 	}()
 
-	err := OnDatabaseStart()
+	err = OnDatabaseStart()
 
 	return err
 }
