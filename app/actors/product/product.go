@@ -416,6 +416,14 @@ func (it *DefaultProduct) ApplyOptions(options map[string]interface{}) error {
 
 	it.appliedOptions = options
 
+
+	if !isSimpleProductUsed {
+		err := it.LoadExternalAttributes();
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
+
 	return nil
 }
 
