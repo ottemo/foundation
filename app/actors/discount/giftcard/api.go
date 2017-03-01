@@ -27,6 +27,7 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
+	service.GET("giftcard/:id", GetSingleID)
 	service.POST("giftcard", api.IsAdminHandler(Create))
 	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
 	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
@@ -372,10 +373,17 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
 
-	giftModel, err := visitor.LoadVisitorByID(giftID)
+	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+
+	collection.AddFilter("id", "=", giftID)
+	rows, err := collection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 
 	giftCardAmount := utils.InterfaceToInt(requestData["amount"])
 	customMessage := utils.InterfaceToString(requestData["message"])
@@ -413,4 +421,31 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	return giftModel.ToHashMap(), nil
 
+}
+
+// GetSingleCode returns the gift card and related info
+//    - giftcode must be specified on the request
+func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	giftCardID := context.GetRequestArgument("id")
+	if giftCardID == "" {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "06792fd7-c838-4acc-9c6f-cb8fcff833dd", "No giftcard id specified in the request.")
+	}
+
+	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	collection.AddFilter("id", "=", giftCardID)
+	rows, err := collection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(rows) == 0 {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd7b2130-b5ed-4b26-b1fc-2d36c3bf147f", "No giftcard code matching the one supplied on the request found.")
+	}
+
+	return rows[0], nil
 }
