@@ -10,6 +10,7 @@ import (
 	"math"
 	"strings"
 	"time"
+	"fmt"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -20,6 +21,7 @@ func setupAPI() error {
 	// store
 	service.GET("giftcards/:giftcode", GetSingleCode)
 	service.GET("giftcards", GetList)
+	service.GET("giftcard/generate/code", GetUniqueGiftCode)
 
 	// cart endpoints
 	service.POST("cart/giftcards/:giftcode", Apply)
@@ -326,4 +328,32 @@ func getGiftCardsByCode(giftCardCode string) ([]map[string]interface{}, error) {
 	}
 
 	return rows, nil
+}
+
+// IfGiftCardCodeUnique returns a history of gift cards for the admin in the context passed
+//    - giftcard id should be specified in the "giftid" argument
+func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{}, error) {
+
+	giftCardUniqueCode := context.GetRequestArgument("giftcode")
+	if giftCardUniqueCode == "" {
+		context.SetResponseStatusBadRequest()
+		return false, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2940eda-4023-4a27-80d3-c39bab1c28fe", "amount or message or name or recipient_mailbox or sku have not been specified")
+	}
+
+	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return false, env.ErrorDispatch(err)
+	}
+
+	if len(rows) > 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// GetUniqueGiftCode returns unique gift card code
+func GetUniqueGiftCode() (interface{}, error) {
+	return utils.InterfaceToString(time.Now().UnixNano()), nil
 }
