@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 	"math"
 	"time"
+	"fmt"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -27,7 +28,8 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
+	//service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
+	service.PUT("giftcard/:id", Edit)
 	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
@@ -356,10 +358,10 @@ func GetUniqueGiftCode(context api.InterfaceApplicationContext) (interface{}, er
 func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 
 
-	giftID := context.GetRequestArgument("giftID")
+	giftID := context.GetRequestArgument("id")
 	if giftID == "" {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7a97b45-a22a-48c5-96f8-f4ecd3f8380f", "Not logged in, please login.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ac41eca7-4590-439d-92a2-4eaf2d9a45f2", "ID have not been specified")
 	}
 
 	requestData, err := api.GetRequestContentAsMap(context)
@@ -368,9 +370,9 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "name", "recipient_mailbox", "sku", "code") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "recipient_mailbox", "code") {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e4a6ad26-fd34-428b-8cca-9baed590a67e", "amount or message or name or recipient_mailbox or sku or code have not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
 
 
@@ -384,17 +386,19 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	//rows, err := getGiftCardsByCode(giftCardUniqueCode)
-	//if err != nil {
-	//	context.SetResponseStatusBadRequest()
-	//	return nil, env.ErrorDispatch(err)
-	//}
-	//
-	//if len(rows) != 0 {
-	//	//if
-	//	context.SetResponseStatusBadRequest()
-	//	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
-	//}
+	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(rows) != 0 {
+		rowId := rows[0]["_id"]
+		if (rowId != giftID) {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f26ec81-e555-4856-89ed-e2b4e050c808", "Gift code must be unique")
+		}
+	}
 
 	giftCard := make(map[string]interface{})
 
