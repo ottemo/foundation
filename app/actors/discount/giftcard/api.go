@@ -10,7 +10,6 @@ import (
 	"math"
 	"strings"
 	"time"
-	"fmt"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -21,6 +20,7 @@ func setupAPI() error {
 	// store
 	service.GET("giftcards/:giftcode", GetSingleCode)
 	service.GET("giftcards", GetList)
+	service.GET("giftcard/check/:giftcode", IfGiftCardCodeUnique)
 	service.GET("giftcard/generate/code", GetUniqueGiftCode)
 
 	// cart endpoints
@@ -28,7 +28,8 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	service.GET("giftcard/:id/history", api.IsAdminHandler(GetHistory))
+	service.GET("giftcard/edit/:id", api.IsAdminHandler(Edit))
+	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
 	return nil
@@ -226,9 +227,9 @@ func createFromAdmin(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "name", "recipient_mailbox", "sku") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "name", "recipient_mailbox", "sku", "code") {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e4a6ad26-fd34-428b-8cca-9baed590a67e", "amount or message or name or recipient_mailbox or sku have not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e4a6ad26-fd34-428b-8cca-9baed590a67e", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
 
 	currentTime := time.Now()
@@ -247,23 +248,18 @@ func createFromAdmin(context api.InterfaceApplicationContext) (interface{}, erro
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if giftCardUniqueCode == "" || len(rows) != 0 {
-		// generate unique code by unix nano time
-		giftCardUniqueCode = utils.InterfaceToString(time.Now().UnixNano())
+	if len(rows) != 0 {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
 	}
 
 	// collect necessary info to variables
 	// get a customer and his mail to set him as addressee
+	// todo if root admin
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39a37b12-93fb-4660-836e-ef5e07c2af52", "Please log in to complete your request.")
-	}
-
-	giftCardSkuElement := utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathGiftCardSKU))
-	if strings.Contains(giftCardSku, giftCardSkuElement) == false {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "bdb67702-5939-483b-8be3-079bdc576ae6", "Please log in to complete your request.")
 	}
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
@@ -331,13 +327,13 @@ func getGiftCardsByCode(giftCardCode string) ([]map[string]interface{}, error) {
 }
 
 // IfGiftCardCodeUnique returns a history of gift cards for the admin in the context passed
-//    - giftcard id should be specified in the "giftid" argument
+//    - giftcard code should be specified in the "gift card code" argument
 func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardUniqueCode := context.GetRequestArgument("giftcode")
 	if giftCardUniqueCode == "" {
 		context.SetResponseStatusBadRequest()
-		return false, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2940eda-4023-4a27-80d3-c39bab1c28fe", "amount or message or name or recipient_mailbox or sku have not been specified")
+		return false, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2940eda-4023-4a27-80d3-c39bab1c28fe", "giftcode have not been specified")
 	}
 
 	rows, err := getGiftCardsByCode(giftCardUniqueCode)
@@ -357,3 +353,66 @@ func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{},
 func GetUniqueGiftCode() (interface{}, error) {
 	return utils.InterfaceToString(time.Now().UnixNano()), nil
 }
+
+func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
+
+
+	giftID := context.GetRequestArgument("giftID")
+	if giftID == "" {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "e7a97b45-a22a-48c5-96f8-f4ecd3f8380f", "Not logged in, please login.")
+	}
+
+	requestData, err := api.GetRequestContentAsMap(context)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "name", "recipient_mailbox", "sku", "code") {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e4a6ad26-fd34-428b-8cca-9baed590a67e", "amount or message or name or recipient_mailbox or sku or code have not been specified")
+	}
+
+
+	giftModel, err := visitor.LoadVisitorByID(giftID)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	giftCardAmount := utils.InterfaceToInt(requestData["amount"])
+	customMessage := utils.InterfaceToString(requestData["message"])
+	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
+	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
+
+	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(rows) != 0 {
+		if
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
+	}
+
+	giftCard := make(map[string]interface{})
+
+	giftCard["code"] = giftCardUniqueCode
+	giftCard["amount"] = giftCardAmount
+	giftCard["message"] = customMessage
+	giftCard["recipient_mailbox"] = recipientEmail
+
+	giftModel.FromHashMap(giftCard)
+
+	err = giftModel.Save()
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return false, env.ErrorDispatch(err)
+	}
+
+	return giftModel.ToHashMap(), nil
+
+}
+
