@@ -27,9 +27,9 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
-	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(Create))
+	service.PUT("giftcards/:id", api.IsAdminHandler(Edit))
+	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 
 	return nil
 }
@@ -255,11 +255,9 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 	// collect necessary info to variables
 	// get a customer and his mail to set him as addressee
 	visitorID := visitor.GetCurrentVisitorID(context)
-	if visitorID == "" {
-		if api.ValidateAdminRights(context) != nil {
-			context.SetResponseStatusBadRequest()
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39a37b12-93fb-4660-836e-ef5e07c2af52", "Please log in to complete your request.")
-		}
+	if visitorID == "" && api.ValidateAdminRights(context) != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39a37b12-93fb-4660-836e-ef5e07c2af52", "Please log in to complete your request.")
 	}
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
@@ -354,8 +352,8 @@ func GetUniqueGiftCode(context api.InterfaceApplicationContext) (interface{}, er
 	return utils.InterfaceToString(time.Now().UnixNano()), nil
 }
 
+// Edit gift card
 func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
-
 
 	giftID := context.GetRequestArgument("id")
 	if giftID == "" {
@@ -373,7 +371,6 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
-
 
 	giftModel, err := visitor.LoadVisitorByID(giftID)
 	if err != nil {
@@ -393,7 +390,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	if len(rows) != 0 {
 		rowId := rows[0]["_id"]
-		if (rowId != giftID) {
+		if rowId != giftID {
 			context.SetResponseStatusBadRequest()
 			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f26ec81-e555-4856-89ed-e2b4e050c808", "Gift code must be unique")
 		}
@@ -417,4 +414,3 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	return giftModel.ToHashMap(), nil
 
 }
-
