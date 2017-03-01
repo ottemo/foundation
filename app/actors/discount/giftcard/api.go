@@ -9,7 +9,6 @@ import (
 	"github.com/ottemo/foundation/utils"
 	"math"
 	"time"
-	"fmt"
 )
 
 // setupAPI configures the API endpoints for the giftcard package
@@ -28,10 +27,9 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	//service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
-	service.PUT("giftcard/:id", Edit)
+	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
 	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
-	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
+	service.POST("giftcard", api.IsAdminHandler(Create))
 
 	return nil
 }
@@ -220,8 +218,8 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 	return historyData, nil
 }
 
-// createFromAdmin
-func createFromAdmin(context api.InterfaceApplicationContext) (interface{}, error) {
+// Create gift card from admin panel
+func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 	requestData, err := api.GetRequestContentAsMap(context)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
@@ -256,11 +254,12 @@ func createFromAdmin(context api.InterfaceApplicationContext) (interface{}, erro
 
 	// collect necessary info to variables
 	// get a customer and his mail to set him as addressee
-	// todo if root admin
 	visitorID := visitor.GetCurrentVisitorID(context)
 	if visitorID == "" {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39a37b12-93fb-4660-836e-ef5e07c2af52", "Please log in to complete your request.")
+		if api.ValidateAdminRights(context) != nil {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39a37b12-93fb-4660-836e-ef5e07c2af52", "Please log in to complete your request.")
+		}
 	}
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
