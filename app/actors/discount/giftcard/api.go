@@ -438,7 +438,7 @@ func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("id", "=", giftCardID)
+	collection.AddFilter("_id", "=", giftCardID)
 	rows, err := collection.Load()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
