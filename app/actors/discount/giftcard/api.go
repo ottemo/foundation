@@ -27,7 +27,7 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	service.POST("giftcard/edit/:id", api.IsAdminHandler(Edit))
+	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
 	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
