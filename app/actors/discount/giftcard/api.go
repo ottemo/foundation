@@ -8,7 +8,6 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 	"math"
-	"strings"
 	"time"
 )
 
@@ -28,7 +27,7 @@ func setupAPI() error {
 	service.DELETE("cart/giftcards/:giftcode", Remove)
 
 	// Admin Only
-	service.GET("giftcard/edit/:id", api.IsAdminHandler(Edit))
+	service.POST("giftcard/edit/:id", api.IsAdminHandler(Edit))
 	service.GET("giftcard/history/:id", api.IsAdminHandler(GetHistory))
 	service.POST("giftcard", api.IsAdminHandler(createFromAdmin))
 
@@ -350,7 +349,7 @@ func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{},
 }
 
 // GetUniqueGiftCode returns unique gift card code
-func GetUniqueGiftCode() (interface{}, error) {
+func GetUniqueGiftCode(context api.InterfaceApplicationContext) (interface{}, error) {
 	return utils.InterfaceToString(time.Now().UnixNano()), nil
 }
 
@@ -385,17 +384,17 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	rows, err := getGiftCardsByCode(giftCardUniqueCode)
-	if err != nil {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if len(rows) != 0 {
-		if
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
-	}
+	//rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	//if err != nil {
+	//	context.SetResponseStatusBadRequest()
+	//	return nil, env.ErrorDispatch(err)
+	//}
+	//
+	//if len(rows) != 0 {
+	//	//if
+	//	context.SetResponseStatusBadRequest()
+	//	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
+	//}
 
 	giftCard := make(map[string]interface{})
 
