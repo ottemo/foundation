@@ -14,16 +14,25 @@ import (
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/db"
 )
 
 // TestPaymentMethodRESTGuestTransaction tests Authorize method for guest visitor transaction.
 func TestPaymentMethodRESTGuestTransaction(t *testing.T) {
+	// start app
 	err := test.StartAppInTestingMode()
 	if err != nil {
 		t.Error(err)
-		return
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodRESTGuestTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodRESTGuestTransaction tests Authorize method for guest visitor transaction.
+func testPaymentMethodRESTGuestTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var paymentMethod = &authorizenet.RestMethod{}
@@ -70,7 +79,7 @@ func TestPaymentMethodRESTGuestTransaction(t *testing.T) {
 	}
 }
 
-// TestPaymentMethodRestGuestTokenizedTransaction tests Authorize method for guest visitor with token creation and
+// testPaymentMethodRestGuestTokenizedTransaction tests Authorize method for guest visitor with token creation and
 // creating transaction based on that token
 func TestPaymentMethodRestGuestTokenizedTransaction(t *testing.T) {
 	// start app
@@ -79,6 +88,15 @@ func TestPaymentMethodRestGuestTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodRestGuestTokenizedTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodRestGuestTokenizedTransaction tests Authorize method for guest visitor with token creation and
+// creating transaction based on that token
+func testPaymentMethodRestGuestTokenizedTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var paymentMethod = &authorizenet.RestMethod{}
@@ -180,6 +198,15 @@ func TestPaymentMethodRestVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodRestVisitorTokenizedTransaction(t)
+		return nil
+	})
+}
+
+// testPaymentMethodRestVisitorTokenizedTransaction tests Authorize method for registered visitor with token creation and
+// creating transaction based on that token
+func testPaymentMethodRestVisitorTokenizedTransaction(t *testing.T) {
 	initConfigWithSandboxData(t)
 
 	var visitorData = map[string]interface{}{
@@ -201,7 +228,11 @@ func TestPaymentMethodRestVisitorTokenizedTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer visitorModel.Delete()
+	defer func (v visitor.InterfaceVisitor){
+		if err := v.Delete(); err != nil {
+			t.Error(err)
+		}
+	}(visitorModel)
 
 	var paymentMethod = &authorizenet.RestMethod{}
 
@@ -300,7 +331,17 @@ func TestPaymentMethodRestConfigurationReload(t *testing.T) {
 		t.Error(err)
 	}
 
+	db.RegisterOnDatabaseStart(func () error {
+		testPaymentMethodRestConfigurationReload(t)
+		return nil
+	})
+}
+
+// testPaymentMethodRestConfigurationReload checks if package reloads configuration
+func testPaymentMethodRestConfigurationReload(t *testing.T) {
 	initConfig(t, "", "")
+
+	var err error
 
 	var paymentMethod = &authorizenet.RestMethod{}
 	var orderInstance = &order.DefaultOrder{

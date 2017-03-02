@@ -16,9 +16,9 @@ func setupAPI() error {
 	service.GET("cms/page/:pageID", APIGetCMSPage)
 
 	// Admin Only
-	service.POST("cms/page", api.IsAdmin(APICreateCMSPage))
-	service.PUT("cms/page/:pageID", api.IsAdmin(APIUpdateCMSPage))
-	service.DELETE("cms/page/:pageID", api.IsAdmin(APIDeleteCMSPage))
+	service.POST("cms/page", api.IsAdminHandler(APICreateCMSPage))
+	service.PUT("cms/page/:pageID", api.IsAdminHandler(APIUpdateCMSPage))
+	service.DELETE("cms/page/:pageID", api.IsAdminHandler(APIDeleteCMSPage))
 
 	return nil
 }
@@ -44,11 +44,15 @@ func APIListCMSPages(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// applying requested filters
-	models.ApplyFilters(context, cmsPageCollectionModel.GetDBCollection())
+	if err := models.ApplyFilters(context, cmsPageCollectionModel.GetDBCollection()); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "91f07843-374a-43ba-89c6-9c1dd2c84b28", err.Error())
+	}
 
 	// excluding disabled pages for a regular visitor
-	if err := api.ValidateAdminRights(context); err != nil {
-		cmsPageCollectionModel.GetDBCollection().AddFilter("enabled", "=", true)
+	if !api.IsAdminSession(context) {
+		if err := cmsPageCollectionModel.GetDBCollection().AddFilter("enabled", "=", true); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "348d2715-84a3-43a6-a3d8-dc65a3fc3b88", err.Error())
+		}
 	}
 
 	// checking for a "count" request
@@ -57,10 +61,14 @@ func APIListCMSPages(context api.InterfaceApplicationContext) (interface{}, erro
 	}
 
 	// limit parameter handle
-	cmsPageCollectionModel.ListLimit(models.GetListLimit(context))
+	if err := cmsPageCollectionModel.ListLimit(models.GetListLimit(context)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3d2c6ffd-5702-40f6-917d-90d302c0cd4d", err.Error())
+	}
 
 	// extra parameter handle
-	models.ApplyExtraAttributes(context, cmsPageCollectionModel)
+	if err := models.ApplyExtraAttributes(context, cmsPageCollectionModel); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0bfd8539-0c2b-4914-a379-ee5e92ec94ed", err.Error())
+	}
 
 	return cmsPageCollectionModel.List()
 }
@@ -85,7 +93,7 @@ func APIGetCMSPage(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	// not allowing to see disabled if not admin
-	if api.ValidateAdminRights(context) != nil && !cmsPage.GetEnabled() {
+	if !api.IsAdminSession(context) && !cmsPage.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "fa76f5ac-0cce-4670-9e62-197a600ec0b9", "cms page is not available")
 	}
 
@@ -114,11 +122,19 @@ func APICreateCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	for attribute, value := range requestData {
-		cmsPageModel.Set(attribute, value)
+		if err := cmsPageModel.Set(attribute, value); err != nil {
+			_ = env.ErrorDispatch(err)
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d3339e7a-f651-48e8-8959-91a96471e788", "internal error")
+		}
 	}
 
-	cmsPageModel.SetID("")
-	cmsPageModel.Save()
+	if err := cmsPageModel.SetID(""); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dc87c362-bfd2-4865-8cfa-4ec11ccc76f5", err.Error())
+	}
+	if err := cmsPageModel.Save(); err != nil {
+		_ = env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bb702fce-8a97-4913-aa8d-d2ceea3d6f56", "unable to save page")
+	}
 
 	return cmsPageModel.ToHashMap(), nil
 }
@@ -147,11 +163,19 @@ func APIUpdateCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 	}
 
 	for attribute, value := range requestData {
-		cmsPageModel.Set(attribute, value)
+		if err := cmsPageModel.Set(attribute, value); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f82fdb15-c2f6-407c-b5da-e81fae20068d", err.Error())
+		}
 	}
 
-	cmsPageModel.SetID(pageID)
-	cmsPageModel.Save()
+	if err := cmsPageModel.SetID(pageID); err != nil {
+		_ = env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8e660cca-8748-4759-808f-6531e11e6776", "internal error")
+	}
+	if err := cmsPageModel.Save(); err != nil {
+		_ = env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1fa828f2-ee96-4533-aab1-cd6c5ba6f570", "unable to save page")
+	}
 
 	return cmsPageModel.ToHashMap(), nil
 }
@@ -174,7 +198,10 @@ func APIDeleteCMSPage(context api.InterfaceApplicationContext) (interface{}, err
 		return nil, env.ErrorDispatch(err)
 	}
 
-	cmsPageModel.Delete()
+	if err := cmsPageModel.Delete(); err != nil {
+		_ = env.ErrorDispatch(err)
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "1d11f5ef-0fca-4d87-9c70-14cdd56a677e", "unable to delete page")
+	}
 
 	return "ok", nil
 }

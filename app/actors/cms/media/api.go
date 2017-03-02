@@ -23,12 +23,12 @@ func setupAPI() error {
 	service.GET("cms/media", APIListMedia)
 
 	// Admin only
-	service.POST("cms/media", api.IsAdmin(APIAddMedia))
+	service.POST("cms/media", api.IsAdminHandler(APIAddMedia))
 
 	// By default "type" is image
-	service.DELETE("cms/media/:mediaName/:mediaType", api.IsAdmin(APIRemoveMedia))
+	service.DELETE("cms/media/:mediaName/:mediaType", api.IsAdminHandler(APIRemoveMedia))
 	// Deprecated: Method with explicit mediaType should be used
-	service.DELETE("cms/media/:mediaName", api.IsAdmin(APIRemoveMedia))
+	service.DELETE("cms/media/:mediaName", api.IsAdminHandler(APIRemoveMedia))
 
 	return nil
 }
@@ -57,7 +57,7 @@ func APIAddMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	files := context.GetRequestFiles()
 	if len(files) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "75a2ddaf-b63d-4eed-b16d-4b32778f5fc1", "media files has not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a5a24434-67e8-49c8-aabd-44315ddc9d61", "media files has not been specified")
 	}
 
 	mediaStorage, err := media.GetMediaStorage()
@@ -97,7 +97,7 @@ func APIAddMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 		// save to media storage operation
 		err = mediaStorage.Save(ConstStorageModel, ConstStorageObject, mediaType, mediaName, fileContent)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 			result = append(result, "Media: '"+fileName+"', returned error on save")
 			continue
 		}
@@ -116,7 +116,7 @@ func APIRemoveMedia(context api.InterfaceApplicationContext) (interface{}, error
 	//---------------------
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "63b37b08-3b21-48b7-9058-291bb7e635a1", "media name has not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b2f9f0ee-894a-4d8c-8e7a-d150cd9827e2", "media name has not been specified")
 	}
 
 	var mediaType = correctMediaType(context.GetRequestArgument("mediaType"))
@@ -145,7 +145,7 @@ func APIGetMedia(context api.InterfaceApplicationContext) (interface{}, error) {
 	//---------------------
 	mediaName := context.GetRequestArgument("mediaName")
 	if mediaName == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "124c8b9d-1a6b-491c-97ba-a03e8c828337", "media name has not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "be4cbede-b87e-4384-ab7d-2bb3c05317f5", "media name has not been specified")
 	}
 
 	var mediaType = correctMediaType(context.GetRequestArgument("mediaType"))

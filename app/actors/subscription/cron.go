@@ -25,9 +25,15 @@ func placeOrders(params map[string]interface{}) error {
 		return env.ErrorDispatch(err)
 	}
 
-	subscriptionCollection.AddFilter("action_date", ">=", currentHourBeginning)
-	subscriptionCollection.AddFilter("action_date", "<", currentHourBeginning.Add(time.Hour))
-	subscriptionCollection.AddFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed)
+	if err := subscriptionCollection.AddFilter("action_date", ">=", currentHourBeginning); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7cd48d8b-5cc2-4475-8f64-93d88d5ddd02", err.Error())
+	}
+	if err := subscriptionCollection.AddFilter("action_date", "<", currentHourBeginning.Add(time.Hour)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "79a6da16-5c69-4ad7-8f3b-0ec10f9d4bca", err.Error())
+	}
+	if err := subscriptionCollection.AddFilter("status", "=", subscription.ConstSubscriptionStatusConfirmed); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "b467c195-fa47-4d1d-b543-9f52efc82a60", err.Error())
+	}
 
 	//	get subscriptions with current day date and do action
 	subscriptionsOnSubmit, err := subscriptionCollection.Load()
@@ -55,7 +61,10 @@ func placeOrders(params map[string]interface{}) error {
 			continue
 		}
 
-		checkoutInstance.SetInfo("subscription_id", subscriptionInstance.GetID())
+		if err := checkoutInstance.SetInfo("subscription_id", subscriptionInstance.GetID()); err != nil {
+			handleSubscriptionError(subscriptionInstance, err)
+			continue
+		}
 
 		// need to check for unreached payment
 		// to send email to user in case of low balance on credit card
@@ -65,7 +74,10 @@ func placeOrders(params map[string]interface{}) error {
 			continue
 		}
 
-		subscriptionInstance.Set("last_submit", time.Now())
+		if err := subscriptionInstance.Set("last_submit", time.Now()); err != nil {
+			handleSubscriptionError(subscriptionInstance, err)
+			continue
+		}
 
 		// save new action date for current subscription
 		if err = subscriptionInstance.UpdateActionDate(); err != nil {
@@ -89,16 +101,16 @@ func handleCheckoutError(subscriptionInstance subscription.InterfaceSubscription
 	// handle notification of customers
 	if strings.Contains(errorMessage, checkout.ConstPaymentErrorDeclined) {
 		if emailError := sendNotificationEmail(subscriptionInstance); emailError != nil {
-			env.ErrorDispatch(emailError)
+			_ = env.ErrorDispatch(emailError)
 			env.Log(subscription.ConstSubscriptionLogStorage, "Notification Error", subscriptionInstance.GetID()+": "+emailError.Error())
 		}
 
 		if internalError := subscriptionInstance.SetStatus(subscription.ConstSubscriptionStatusCanceled); internalError != nil {
-			env.ErrorDispatch(internalError)
+			_ = env.ErrorDispatch(internalError)
 		}
 
 		if internalError := subscriptionInstance.Save(); internalError != nil {
-			env.ErrorDispatch(internalError)
+			_ = env.ErrorDispatch(internalError)
 		}
 
 		return

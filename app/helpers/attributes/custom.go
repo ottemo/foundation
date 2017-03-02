@@ -32,7 +32,9 @@ func CustomAttributes(model string, collection string) (*ModelCustomAttributes, 
 			return result, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "460f57a5-3c39-4db2-ae41-bce6bad58857", "Can't get collection 'custom_attributes': "+err.Error())
 		}
 
-		customAttributesCollection.AddFilter("model", "=", result.model)
+		if err := customAttributesCollection.AddFilter("model", "=", result.model); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c79a7389-4105-40ab-9d7a-22fcb5dc2402", "unable to add filter': "+err.Error())
+		}
 		records, err := customAttributesCollection.Load()
 		if err != nil {
 			env.LogError(err)
@@ -106,16 +108,20 @@ func (it *ModelCustomAttributes) EditAttribute(attributeName string, attributeVa
 
 	customAttribute, present := customAttributes[attributeName]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d4ba1021-eb4d-4f03-aafd-6a4e33efb5ed", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5b3d8da7-fa80-4510-8d5c-0a32fef48f22", "There is no attribute '"+attributeName+"' for model '"+it.model+"'")
 	}
 
 	customAttributesCollection, err := db.GetCollection(ConstCollectionNameCustomAttributes)
 	if err != nil {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3b8b1e23-c2ad-45c5-9252-215084a8cd81", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "15fcfa45-4b48-417f-93b0-9d1ac63ffa12", "Can't get collection '"+ConstCollectionNameCustomAttributes+"': "+err.Error())
 	}
 
-	customAttributesCollection.AddFilter("model", "=", customAttribute.Model)
-	customAttributesCollection.AddFilter("attribute", "=", attributeName)
+	if err := customAttributesCollection.AddFilter("model", "=", customAttribute.Model); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dacfa3ff-597a-4560-acc5-d778e090e28e", "unable to add filter': "+err.Error())
+	}
+	if err := customAttributesCollection.AddFilter("attribute", "=", attributeName); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9aea6045-1040-4e6d-82c4-6a3ddb222ee8", "unable to add filter': "+err.Error())
+	}
 	records, err := customAttributesCollection.Load()
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -171,7 +177,7 @@ func (it *ModelCustomAttributes) RemoveAttribute(attributeName string) error {
 
 	customAttributes, present := modelCustomAttributes[it.model]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f204f63d-0792-4e97-87a7-d612bc13d3b1", "There is no attributes for model '"+it.model+"'")
 	}
 
 	customAttribute, present := customAttributes[attributeName]
@@ -196,10 +202,14 @@ func (it *ModelCustomAttributes) RemoveAttribute(attributeName string) error {
 
 	delete(modelCustomAttributes, it.model)
 
-	customAttributesCollection.AddFilter("model", "=", customAttribute.Model)
-	customAttributesCollection.AddFilter("attribute", "=", attributeName)
-	_, err = customAttributesCollection.Delete()
-	if err != nil {
+	if err := customAttributesCollection.AddFilter("model", "=", customAttribute.Model); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "751f8e9e-9c2b-4e01-bed5-580fe46c1b3e", "unable to add filter': "+err.Error())
+	}
+	if err := customAttributesCollection.AddFilter("attribute", "=", attributeName); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3e771c53-c0ab-4695-8d30-77541c4b38d5", "unable to add filter': "+err.Error())
+	}
+
+	if _, err = customAttributesCollection.Delete(); err != nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "da771c6b-402f-4816-a07d-9602f584b45d", "Can't remove attribute '"+attributeName+"' information from 'custom_attributes' collection '"+customAttribute.Collection+"': "+err.Error())
 	}
 
@@ -214,7 +224,7 @@ func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttri
 
 	customAttributes, present := modelCustomAttributes[it.model]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a24f7729-58ef-42b1-865b-7e42542c108e", "There is no attributes for model '"+it.model+"'")
 	}
 
 	if _, present := customAttributes[newAttribute.Attribute]; present {
@@ -276,7 +286,9 @@ func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttri
 	// inserting new attribute to supposed location
 	err = modelCollection.AddColumn(newAttribute.Attribute, newAttribute.Type, false)
 	if err != nil {
-		customAttributesCollection.DeleteByID(newCustomAttributeID)
+		if err := customAttributesCollection.DeleteByID(newCustomAttributeID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7730b177-ae12-4211-b4b7-d0c8a5e8584b", "Unable to delete new attribute: "+err.Error())
+		}
 
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0c11b43b-ec29-4e08-b614-7a8ec8345c9b", "Can't insert attribute '"+newAttribute.Attribute+"' in collection '"+newAttribute.Collection+"': "+err.Error())
 	}
@@ -294,7 +306,9 @@ func (it *ModelCustomAttributes) AddNewAttribute(newAttribute models.StructAttri
 	modelCustomAttributesMutex.Lock()
 
 	if err != nil {
-		customAttributesCollection.DeleteByID(newCustomAttributeID)
+		if err := customAttributesCollection.DeleteByID(newCustomAttributeID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7dbfd42b-4af8-4768-b25a-97f478a06a43", "Unable to delete new attribute: "+err.Error())
+		}
 
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fb47e17b-152f-4afb-9254-74ff1e0aa320", "Unable to populate new attribute's default value: "+err.Error())
 	}
@@ -323,7 +337,7 @@ func (it *ModelCustomAttributes) Set(attribute string, value interface{}) error 
 
 	customAttributes, present := modelCustomAttributes[it.model]
 	if !present {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ee8037e8-3728-44b8-a548-d074fa2afda3", "There is no attributes for model '"+it.model+"'")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7972f82f-c8a5-43b6-a4da-a12b44cf7072", "There is no attributes for model '"+it.model+"'")
 	}
 
 	if _, present := customAttributes[attribute]; present {

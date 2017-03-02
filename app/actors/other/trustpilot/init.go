@@ -42,20 +42,30 @@ func schedulerFunc(params map[string]interface{}) error {
 	}
 
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
-	dbOrderCollection.AddFilter("created_at", ">=", ordersFrom)
-	dbOrderCollection.AddFilter("created_at", "<", ordersTo)
+	if err := dbOrderCollection.AddFilter("created_at", ">=", ordersFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c383d03c-cf98-47a5-8192-8eac20816091", err.Error())
+	}
+	if err := dbOrderCollection.AddFilter("created_at", "<", ordersTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d50606ff-1a1f-44b9-9ade-0b66b00cd913", err.Error())
+	}
 
 	validOrderStates := [2]string{order.ConstOrderStatusProcessed, order.ConstOrderStatusCompleted}
-	dbOrderCollection.AddFilter("status", "in", validOrderStates)
+	if err := dbOrderCollection.AddFilter("status", "in", validOrderStates); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "55a71adc-6f2e-489b-9d58-b5c64f00eb38", err.Error())
+	}
 
 	// Allows to use params value orders for specifying an array of orders by ID which would be processed
 	if ordersID, present := params["orders"]; present {
 		orders := utils.InterfaceToArray(ordersID)
 		if len(orders) > 0 {
 			if ordersFrom == twoWeeksAgo {
-				dbOrderCollection.ClearFilters()
+				if err := dbOrderCollection.ClearFilters(); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "31bab5ac-79fe-4a01-a2c3-e28f696779a5", err.Error())
+				}
 			}
-			dbOrderCollection.AddFilter("_id", "in", orders)
+			if err := dbOrderCollection.AddFilter("_id", "in", orders); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "28a770b2-5b0c-457e-8769-c38ccd52f12c", err.Error())
+			}
 		}
 	}
 
@@ -89,13 +99,13 @@ func schedulerFunc(params map[string]interface{}) error {
 					"Site":    siteMap})
 
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 
 			err = app.SendMail(visitorEmail, ConstEmailSubject, emailToVisitor)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 			customInfo[ConstOrderCustomInfoSentKey] = true
@@ -103,7 +113,7 @@ func schedulerFunc(params map[string]interface{}) error {
 			currentOrder["custom_info"] = customInfo
 			_, err = dbOrderCollection.Save(currentOrder)
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 				continue
 			}
 		}
@@ -118,8 +128,12 @@ func onAppStart() error {
 	env.EventRegisterListener("checkout.success", checkoutSuccessHandler)
 
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("trustPilotReview", schedulerFunc)
-		scheduler.ScheduleRepeat("0 9 * * *", "trustPilotReview", nil)
+		if err := scheduler.RegisterTask("trustPilotReview", schedulerFunc); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6bd3542b-7acf-4ee8-bd79-a15ddfe646f1", err.Error())
+		}
+		if _, err := scheduler.ScheduleRepeat("0 9 * * *", "trustPilotReview", nil); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a189f3a6-0963-462a-9283-9c87f42a725f", err.Error())
+		}
 	}
 
 	return nil

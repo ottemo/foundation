@@ -11,5 +11,7 @@ func init() {
 
 	var _ env.InterfaceEventBus = instance
 
-	env.RegisterEventBus(instance)
+	if err := env.RegisterEventBus(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }

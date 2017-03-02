@@ -58,14 +58,20 @@ func APIFriendCaptcha(context api.InterfaceApplicationContext) (interface{}, err
 	if context.GetRequestArguments()["json"] != "" {
 		buffer := new(bytes.Buffer)
 		buffer.WriteString("data:image/png;base64,")
-		image.WriteTo(base64.NewEncoder(base64.StdEncoding, buffer))
+		if _, err := image.WriteTo(base64.NewEncoder(base64.StdEncoding, buffer)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d56c1218-1d04-4e67-a389-048bf2e0a9be", err.Error())
+		}
 
 		result = map[string]interface{}{
 			"captcha": buffer.String(),
 		}
 	} else {
-		context.SetResponseContentType("image/png")
-		image.WriteTo(context.GetResponseWriter())
+		if err := context.SetResponseContentType("image/png"); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2490dcbc-58e3-4243-a9d5-cb0490810281", err.Error())
+		}
+		if _, err := image.WriteTo(context.GetResponseWriter()); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "adfabaa6-7ad2-4e01-b8bd-897754711bac", err.Error())
+		}
 	}
 
 	return result, nil

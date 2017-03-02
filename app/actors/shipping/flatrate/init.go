@@ -12,7 +12,9 @@ func init() {
 	instance := new(ShippingMethod)
 
 	app.OnAppStart(onAppStart)
-	checkout.RegisterShippingMethod(instance)
+	if err := checkout.RegisterShippingMethod(instance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "66cfb31e-66ff-43e8-bcd3-ddff50af3249", err.Error())
+	}
 
 	env.RegisterOnConfigStart(setupConfig)
 }

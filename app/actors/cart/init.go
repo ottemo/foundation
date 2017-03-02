@@ -30,15 +30,29 @@ func init() {
 		panic("DefaultCart - InterfaceCategory interface not implemented")
 	}
 
-	models.RegisterModel("Cart", instance)
-	db.RegisterOnDatabaseStart(instance.setupDB)
+	if err := models.RegisterModel("Cart", instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	api.RegisterOnRestServiceStart(setupAPI)
 	env.RegisterOnConfigStart(setupConfig)
 
+	db.RegisterOnDatabaseStart(onDatabaseStart)
+}
+
+func onDatabaseStart() error {
+	instance := new(DefaultCart)
+
+	if err := instance.setupDB(); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	// Because of async db start, these functions should wait DB connection
 	app.OnAppStart(setupEventListeners)
 	app.OnAppStart(cleanupGuestCarts)
 	app.OnAppStart(scheduleAbandonCartEmails)
+
+	return nil
 }
 
 // setupEventListeners registers model related event listeners within system
@@ -52,12 +66,12 @@ func setupEventListeners() error {
 
 						cartModel, err := cart.GetCartModelAndSetID(utils.InterfaceToString(cartID))
 						if err != nil {
-							env.ErrorDispatch(err)
+							_ = env.ErrorDispatch(err)
 						}
 
 						err = cartModel.Delete()
 						if err != nil {
-							env.ErrorDispatch(err)
+							_ = env.ErrorDispatch(err)
 						}
 					}
 				}
@@ -80,7 +94,9 @@ func cleanupGuestCarts() error {
 		return env.ErrorDispatch(err)
 	}
 
-	cartCollection.AddFilter("visitor_id", "=", nil)
+	if err := cartCollection.AddFilter("visitor_id", "=", nil); err != nil {
+		return env.ErrorDispatch(err)
+	}
 	err = cartCollection.SetResultColumns("_id", "session_id")
 	if err != nil {
 		return env.ErrorDispatch(err)
@@ -88,7 +104,7 @@ func cleanupGuestCarts() error {
 
 	records, err := cartCollection.Load()
 	if err != nil {
-		env.ErrorDispatch(err)
+		return env.ErrorDispatch(err)
 	}
 	for _, record := range records {
 		sessionID := utils.InterfaceToString(record["session_id"])
@@ -96,14 +112,18 @@ func cleanupGuestCarts() error {
 			cartID := utils.InterfaceToString(record["_id"])
 			err = cartCollection.DeleteByID(cartID)
 			if err != nil {
-				env.ErrorDispatch(err)
+				return env.ErrorDispatch(err)
 			}
 
-			cartItemsCollection.ClearFilters()
-			cartItemsCollection.AddFilter("cart_id", "=", cartID)
+			if err := cartItemsCollection.ClearFilters(); err != nil {
+				return env.ErrorDispatch(err)
+			}
+			if err := cartItemsCollection.AddFilter("cart_id", "=", cartID); err != nil {
+				return env.ErrorDispatch(err)
+			}
 			_, err = cartItemsCollection.Delete()
 			if err != nil {
-				env.ErrorDispatch(err)
+				return env.ErrorDispatch(err)
 			}
 		}
 	}
@@ -120,23 +140,45 @@ func (it *DefaultCart) setupDB() error {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("visitor_id", db.ConstTypeID, true)
-		collection.AddColumn("session_id", db.ConstTypeID, true)
-		collection.AddColumn("updated_at", db.ConstTypeDatetime, true)
-		collection.AddColumn("active", db.ConstTypeBoolean, true)
-		collection.AddColumn("info", db.ConstTypeJSON, false)
-		collection.AddColumn("custom_info", db.ConstTypeJSON, false)
+		if err := collection.AddColumn("visitor_id", db.ConstTypeID, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("session_id", db.ConstTypeID, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("updated_at", db.ConstTypeDatetime, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("active", db.ConstTypeBoolean, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("info", db.ConstTypeJSON, false); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("custom_info", db.ConstTypeJSON, false); err != nil {
+			return env.ErrorDispatch(err)
+		}
 
 		collection, err = dbEngine.GetCollection(ConstCartItemsCollectionName)
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
 
-		collection.AddColumn("idx", db.ConstTypeInteger, false)
-		collection.AddColumn("cart_id", db.ConstTypeID, true)
-		collection.AddColumn("product_id", db.ConstTypeID, true)
-		collection.AddColumn("qty", db.ConstTypeInteger, false)
-		collection.AddColumn("options", db.ConstTypeJSON, false)
+		if err := collection.AddColumn("idx", db.ConstTypeInteger, false); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("cart_id", db.ConstTypeID, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("product_id", db.ConstTypeID, true); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("qty", db.ConstTypeInteger, false); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if err := collection.AddColumn("options", db.ConstTypeJSON, false); err != nil {
+			return env.ErrorDispatch(err)
+		}
 
 	} else {
 		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "33076d0b-5c65-41dd-aa84-e4b68e1efa5b", "Can't get database engine")
@@ -147,8 +189,12 @@ func (it *DefaultCart) setupDB() error {
 
 func scheduleAbandonCartEmails() error {
 	if scheduler := env.GetScheduler(); scheduler != nil {
-		scheduler.RegisterTask("abandonCartEmail", abandonCartTask)
-		scheduler.ScheduleRepeat("0 * * * *", "abandonCartEmail", nil)
+		if err := scheduler.RegisterTask("abandonCartEmail", abandonCartTask); err != nil {
+			return env.ErrorDispatch(err)
+		}
+		if _, err := scheduler.ScheduleRepeat("0 * * * *", "abandonCartEmail", nil); err != nil {
+			return env.ErrorDispatch(err)
+		}
 	}
 
 	return nil
@@ -206,13 +252,27 @@ func getConfigSendBefore() (time.Time, bool) {
 func getAbandonedCarts(beforeDate time.Time) []map[string]interface{} {
 	dbEngine := db.GetDBEngine()
 	cartCollection, _ := dbEngine.GetCollection(ConstCartCollectionName)
-	cartCollection.AddFilter("active", "=", true)
-	cartCollection.AddFilter("custom_info.is_abandon_email_sent", "!=", true)
-	cartCollection.AddFilter("updated_at", "<", beforeDate)
+	if err := cartCollection.AddFilter("active", "=", true); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := cartCollection.AddFilter("custom_info.is_abandon_email_sent", "!=", true); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := cartCollection.AddFilter("updated_at", "<", beforeDate); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 	// 12 Aug 2016: Take carts not older than 25 hours
-	cartCollection.AddFilter("updated_at", ">=", beforeDate.Add(-time.Hour))
-	cartCollection.AddSort("updated_at", true)
-	resultCarts, _ := cartCollection.Load()
+	if err := cartCollection.AddFilter("updated_at", ">=", beforeDate.Add(-time.Hour)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+	if err := cartCollection.AddSort("updated_at", true); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+
+	resultCarts, err := cartCollection.Load()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	return resultCarts
 }
@@ -317,5 +377,7 @@ func flagCartAsEmailed(cartID string) {
 	info["abandon_email_sent_at"] = time.Now()
 
 	iCart.SetCustomInfo(info)
-	iCart.Save()
+	if err := iCart.Save(); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }

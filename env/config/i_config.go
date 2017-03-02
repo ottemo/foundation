@@ -67,7 +67,9 @@ func (it *DefaultConfig) RegisterItem(Item env.StructConfigItem, Validator env.F
 	if validator, present := it.configValidators[Item.Path]; present && validator != nil {
 		newValue, err := validator(it.configValues[Item.Path])
 		if err != nil {
-			it.SetValue(Item.Path, newValue)
+			if err := it.SetValue(Item.Path, newValue); err != nil {
+				return env.ErrorDispatch(err)
+			}
 		}
 	}
 

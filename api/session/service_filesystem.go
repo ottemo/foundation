@@ -37,13 +37,17 @@ func init() {
 		ticker := time.NewTicker(timerInterval)
 		go func() {
 			for _ = range ticker.C {
-				SessionService.GC()
+				if err := SessionService.GC(); err != nil {
+					_ = env.ErrorDispatch(err)
+				}
 			}
 		}()
 	}
 
 	// service registration within system
-	api.RegisterSessionService(SessionService)
+	if err := api.RegisterSessionService(SessionService); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	app.OnAppStart(startup)
 	app.OnAppEnd(shutdown)
@@ -75,7 +79,7 @@ func startup() error {
 		if currentTime.Sub(fileInfo.ModTime()).Seconds() >= ConstSessionLifeTime {
 			err := os.Remove(ConstStorageFolder + fileInfo.Name())
 			if err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 			continue
 		}
@@ -105,7 +109,7 @@ func shutdown() error {
 
 			// flushing session
 			if err := filesystemService.FlushSession(sessionInstance.id); err != nil {
-				env.ErrorDispatch(err)
+				_ = env.ErrorDispatch(err)
 			}
 			return false
 		})
@@ -149,7 +153,12 @@ func (it *FilesystemSessionService) LoadSession(sessionID string) (*DefaultSessi
 		return nil, env.ErrorDispatch(err)
 	}
 
-	defer sessionFile.Close()
+	// defer file close with error handling
+	defer func(c io.Closer){
+		if err := sessionFile.Close(); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
+	}(sessionFile)
 
 	var reader io.Reader = sessionFile
 	if ConstCryptSession {
@@ -181,7 +190,7 @@ func (it *FilesystemSessionService) LoadSession(sessionID string) (*DefaultSessi
 func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 	sessionInstance := it.syncGet(sessionID)
 	if sessionInstance == nil {
-		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "363cd5a8-1a3d-4163-a7d3-cb96dbaff01c", "session "+sessionID+" not found")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "b04bb3cd-fcaa-4a78-bf8a-ecdeb7dceaf3", "session "+sessionID+" not found")
 	}
 
 	// skipping flush for empty sessions
@@ -196,9 +205,13 @@ func (it *FilesystemSessionService) FlushSession(sessionID string) error {
 	}
 
 	defer func() {
-		sessionFile.Close()
+		if err := sessionFile.Close(); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 		updatedAt := sessionInstance.GetUpdatedAt()
-		os.Chtimes(sessionFile.Name(), updatedAt, updatedAt)
+		if err := os.Chtimes(sessionFile.Name(), updatedAt, updatedAt); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}()
 
 	var writer io.Writer = sessionFile

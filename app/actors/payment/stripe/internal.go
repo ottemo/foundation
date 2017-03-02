@@ -43,23 +43,27 @@ func getStripeCustomerToken(vid string) string {
 	const customerTokenPrefix = "cus"
 
 	if vid == "" {
-		env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "2ecfa3ec-7cfc-4783-9060-8467ca63beae", "empty vid passed to look up customer token"))
+		_ = env.ErrorDispatch(env.ErrorNew(ConstErrorModule, 1, "2ecfa3ec-7cfc-4783-9060-8467ca63beae", "empty vid passed to look up customer token"))
 		return ""
 	}
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
-	model.ListFilterAdd("visitor_id", "=", vid)
-	model.ListFilterAdd("payment", "=", ConstPaymentCode)
+	if err := model.ListFilterAdd("visitor_id", "=", vid); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "ec585a6e-2046-47da-be9e-d010d5149838", err.Error())
+	}
+	if err := model.ListFilterAdd("payment", "=", ConstPaymentCode); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "dc4bc550-705b-497e-b771-3c49ecd15d3a", err.Error())
+	}
 
 	// 3rd party customer identifier, used by stripe
 	err := model.ListAddExtraAttribute("customer_id")
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	tokens, err := model.List()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	for _, t := range tokens {

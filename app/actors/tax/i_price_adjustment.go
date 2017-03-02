@@ -3,6 +3,7 @@ package tax
 import (
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/env"
 
 	"github.com/ottemo/foundation/app/models/checkout"
 )
@@ -124,24 +125,40 @@ func (it *DefaultTax) Calculate(currentCheckout checkout.InterfaceCheckout, curr
 
 		if dbEngine := db.GetDBEngine(); dbEngine != nil {
 			if collection, err := dbEngine.GetCollection("Taxes"); err == nil {
-				collection.AddFilter("state", "=", "*")
-				collection.AddFilter("zip", "=", "*")
+				if err := collection.AddFilter("state", "=", "*"); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6ff4f7b9-204d-4cef-933e-1b50c0a7810f", err.Error())
+				}
+				if err := collection.AddFilter("zip", "=", "*"); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "56e7bcc3-da2f-4b14-a9d5-207144bab513", err.Error())
+				}
 
 				if records, err := collection.Load(); err == nil {
 					result = it.processRecords(records, result)
 				}
 
-				collection.ClearFilters()
-				collection.AddFilter("state", "=", state)
-				collection.AddFilter("zip", "=", "*")
+				if err := collection.ClearFilters(); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "45f36a5a-7039-4383-af0a-5d7014fd2972", err.Error())
+				}
+				if err := collection.AddFilter("state", "=", state); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "48cf0d87-3335-4276-9a9c-97d400fe3229", err.Error())
+				}
+				if err := collection.AddFilter("zip", "=", "*"); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "0dcafa80-5e1a-4848-8761-4aad8b9e7fff", err.Error())
+				}
 
 				if records, err := collection.Load(); err == nil {
 					result = it.processRecords(records, result)
 				}
 
-				collection.ClearFilters()
-				collection.AddFilter("state", "=", state)
-				collection.AddFilter("zip", "=", zip)
+				if err := collection.ClearFilters(); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "7c2fb5ab-15f9-4d61-a0e7-a4611796d783", err.Error())
+				}
+				if err := collection.AddFilter("state", "=", state); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "500125dd-5e8f-4130-9877-b5df489373dd", err.Error())
+				}
+				if err := collection.AddFilter("zip", "=", zip); err != nil {
+					_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "e5f12dd7-70ca-4563-aa51-1bfd913ac797", err.Error())
+				}
 
 				if records, err := collection.Load(); err == nil {
 					result = it.processRecords(records, result)

@@ -78,19 +78,29 @@ func (it *DefaultSalePrice) Set(attribute string, value interface{}) error {
 
 	switch attribute {
 	case "_id":
-		it.SetID(utils.InterfaceToString(value))
+		if err := it.SetID(utils.InterfaceToString(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5d2016b5-1663-4ba0-9085-361410d0f4ff", err.Error())
+		}
 
 	case "amount":
-		it.SetAmount(utils.InterfaceToFloat64(value))
+		if err := it.SetAmount(utils.InterfaceToFloat64(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a72c101b-7943-4c13-92ae-67de7f0b591d", err.Error())
+		}
 
 	case "end_datetime":
-		it.SetEndDatetime(utils.InterfaceToTime(value))
+		if err := it.SetEndDatetime(utils.InterfaceToTime(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9a3b5962-a362-4bec-9d9a-ee7cbcdf6dfe", err.Error())
+		}
 
 	case "product_id":
-		it.SetProductID(utils.InterfaceToString(value))
+		if err := it.SetProductID(utils.InterfaceToString(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6913634-885f-4d26-8bcf-fb0bf826b58e", err.Error())
+		}
 
 	case "start_datetime":
-		it.SetStartDatetime(utils.InterfaceToTime(value))
+		if err := it.SetStartDatetime(utils.InterfaceToTime(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "811a3d2e-93d5-4d42-b4ca-e710e1c4ec57", err.Error())
+		}
 	}
 
 	return nil
@@ -226,8 +236,12 @@ func (it *DefaultSalePrice) Save() error {
 	//-----------------
 
 	// Truncate datetimes by hour
-	it.SetStartDatetime(it.GetStartDatetime().Truncate(time.Hour))
-	it.SetEndDatetime(it.GetEndDatetime().Truncate(time.Hour))
+	if err := it.SetStartDatetime(it.GetStartDatetime().Truncate(time.Hour)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "967213a0-bdd3-4270-82f8-f80da3cfa32a", err.Error())
+	}
+	if err := it.SetEndDatetime(it.GetEndDatetime().Truncate(time.Hour)); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6ef36539-7fd9-47ef-8fb8-ead011696bfb", err.Error())
+	}
 
 	// Check amount positive
 	if it.GetAmount() <= 0 {
@@ -262,7 +276,9 @@ func (it *DefaultSalePrice) Save() error {
 		return env.ErrorDispatch(err)
 	}
 
-	it.SetID(newID)
+	if err := it.SetID(newID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffcfb3fc-efba-44b5-9b0e-695f22b1c5a1", err.Error())
+	}
 
 	return nil
 }

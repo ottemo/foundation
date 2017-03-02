@@ -17,9 +17,9 @@ func setupAPI() error {
 	service.GET("blog/posts/attributes", APIListPostAttributes)
 
 	// admin
-	service.POST("blog/post", api.IsAdmin(APICreateBlogPost))
-	service.PUT("blog/post/:id", api.IsAdmin(APIUpdateByID))
-	service.DELETE("blog/post/:id", api.IsAdmin(APIDeleteByID))
+	service.POST("blog/post", api.IsAdminHandler(APICreateBlogPost))
+	service.PUT("blog/post/:id", api.IsAdminHandler(APIUpdateByID))
+	service.DELETE("blog/post/:id", api.IsAdminHandler(APIDeleteByID))
 
 	return nil
 }
@@ -37,7 +37,7 @@ func APIListPosts(context api.InterfaceApplicationContext) (interface{}, error) 
 	}
 
 	// not allowing to see disabled articles if not admin
-	if err := api.ValidateAdminRights(context); err != nil {
+	if !api.IsAdminSession(context) {
 		if err = collection.AddGroupFilter("and_published", "published", "=", true); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -83,11 +83,7 @@ func APIPostByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	result["extra"] = resultExtra
 
 	// check for admin rights to see particular article
-	var isAdmin = false
-	if err = api.ValidateAdminRights(context); err == nil {
-		isAdmin = true
-	}
-	if !isAdmin && result["published"] == false {
+	if !api.IsAdminSession(context) && result["published"] == false {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "a3c29bd2-f4eb-4df2-bd75-722cb246def4", "no rights to see this post")
 	}
 
@@ -113,7 +109,7 @@ func APIPostByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	if err = collection.SetLimit(0, 1); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		if err = collection.AddFilter("published", "=", true); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
@@ -144,7 +140,7 @@ func APIPostByID(context api.InterfaceApplicationContext) (interface{}, error) {
 	if err = collection.SetLimit(0, 1); err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
-	if !isAdmin {
+	if !api.IsAdminSession(context) {
 		if err = collection.AddFilter("published", "=", true); err != nil {
 			return nil, env.ErrorDispatch(err)
 		}

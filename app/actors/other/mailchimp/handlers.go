@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -33,7 +34,11 @@ func checkoutSuccessHandler(event string, eventData map[string]interface{}) bool
 
 	// inspect the order only if not nil
 	if checkoutOrder != nil {
-		go processOrder(checkoutOrder)
+		go func (checkoutOrder order.InterfaceOrder){
+			if err := processOrder(checkoutOrder); err != nil {
+				_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f9bb4bb5-6c46-4a57-b769-8c76c966faf6", err.Error())
+			}
+		}(checkoutOrder)
 	}
 
 	return true
@@ -101,7 +106,9 @@ func Subscribe(listID string, registration Registration) error {
 
 	// subscribe to mailchimp
 	if _, err = sendRequest(fmt.Sprintf(baseURL+"/lists/%s/members", listID), payload); err != nil {
-		sendEmail(payload)
+		if err := sendEmail(payload); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "1a4f3321-c1b0-46dc-829f-8d83ffba51d7", err.Error())
+		}
 		return env.ErrorDispatch(err)
 	}
 
@@ -159,7 +166,11 @@ func sendRequest(url string, payload []byte) (map[string]interface{}, error) {
 
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "dc1dc0ce-0918-4eff-a6ce-575985a1bc58", "Unable to subscribe visitor to MailChimp list, response code returned was "+status)
 	}
-	defer response.Body.Close()
+	defer func (c io.ReadCloser){
+		if err := c.Close(); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "f58ed1a0-6041-40cd-a761-6b4a980fa041", err.Error())
+		}
+	}(response.Body)
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {

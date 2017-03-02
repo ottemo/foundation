@@ -17,12 +17,18 @@ func (it *DBCollection) LoadByID(id string) (map[string]interface{}, error) {
 	var result map[string]interface{}
 
 	if !ConstUseUUIDids {
-		it.AddFilter("_id", "=", id)
+		if err := it.AddFilter("_id", "=", id); err != nil {
+			return result, env.ErrorDispatch(err)
+		}
 	} else {
 		if idValue, err := strconv.ParseInt(id, 10, 64); err == nil {
-			it.AddFilter("_id", "=", idValue)
+			if err := it.AddFilter("_id", "=", idValue); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		} else {
-			it.AddFilter("_id", "=", id)
+			if err := it.AddFilter("_id", "=", id); err != nil {
+				return result, env.ErrorDispatch(err)
+			}
 		}
 	}
 
@@ -83,7 +89,9 @@ func (it *DBCollection) Iterate(iteratorFunc func(record map[string]interface{})
 func (it *DBCollection) Distinct(columnName string) ([]interface{}, error) {
 
 	prevResultColumns := it.ResultColumns
-	it.SetResultColumns(columnName)
+	if err := it.SetResultColumns(columnName); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	SQL := "SELECT DISTINCT " + it.getSQLResultColumns() + " FROM " + it.Name + it.getSQLFilters() + it.getSQLOrder() + it.Limit
 
@@ -295,7 +303,12 @@ func (it *DBCollection) DeleteByID(id string) error {
 // SetupFilterGroup setups filter group params for collection
 func (it *DBCollection) SetupFilterGroup(groupName string, orSequence bool, parentGroup string) error {
 	if _, present := it.FilterGroups[parentGroup]; !present && parentGroup != "" {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
+		if parentGroup == ConstFilterGroupDefault {
+			// create default group if not present and required as parent
+			it.getFilterGroup(ConstFilterGroupDefault)
+		} else {
+			return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a98927fa-3d4f-48d6-a902-0d29476940aa", "invalid parent group")
+		}
 	}
 
 	filterGroup := it.getFilterGroup(groupName)
@@ -421,7 +434,9 @@ func (it *DBCollection) ListColumns() map[string]string {
 
 	row := make(sqlite3.RowMap)
 	for ; err == nil; err = stmt.Next() {
-		stmt.Scan(row)
+		if err := stmt.Scan(row); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		key := row["column"].(string)
 		value := row["type"].(string)
