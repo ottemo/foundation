@@ -29,7 +29,8 @@ func setupAPI() error {
 	// Admin Only
 	service.GET("giftcard/:id", GetSingleID)
 	service.POST("giftcard", api.IsAdminHandler(Create))
-	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
+	//service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
+	service.PUT("giftcard/:id", Edit)
 	service.GET("giftcard/:id/history", api.IsAdminHandler(GetHistory))
 
 	return nil
@@ -357,8 +358,6 @@ func GetUniqueGiftCode(context api.InterfaceApplicationContext) (interface{}, er
 // Edit gift card
 func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	giftCard := make(map[string]interface{})
-
 	giftID := context.GetRequestArgument("id")
 	if giftID == "" {
 		context.SetResponseStatusBadRequest()
@@ -376,18 +375,9 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
 	}
 
-	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	giftCard, err := GetGiftCardByID(giftID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
-	}
-
-	giftCardCollection.AddFilter("id", "=", giftID)
-	rows, err := giftCardCollection.Load()
-	if err != nil {
-		return nil, env.ErrorDispatch(err)
-	}
-	if len(rows) != 0 {
-		giftCard = rows[0]
 	}
 
 	giftCardAmount := utils.InterfaceToInt(requestData["amount"])
@@ -395,7 +385,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	rows, err = getGiftCardsByCode(giftCardUniqueCode)
+	rows, err := getGiftCardsByCode(giftCardUniqueCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
@@ -409,6 +399,10 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		}
 	}
 
+	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
 
 	giftCard["code"] = giftCardUniqueCode
 	giftCard["amount"] = giftCardAmount
@@ -431,8 +425,13 @@ func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("id")
 	if giftCardID == "" {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "06792fd7-c838-4acc-9c6f-cb8fcff833dd", "No giftcard id specified in the request.")
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc227376-4654-4036-b01f-6706a3ed55c1", "No giftcard id specified in the request.")
 	}
+
+	return GetGiftCardByID(giftCardID)
+}
+
+func GetGiftCardByID(giftCardID string) (map[string]interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
@@ -446,7 +445,7 @@ func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	if len(rows) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd7b2130-b5ed-4b26-b1fc-2d36c3bf147f", "No giftcard code matching the one supplied on the request found.")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8bd579a3-bacc-4bcf-acd6-2f8f1393745a", "No giftcard code matching the one supplied on the request found.")
 	}
 
 	return rows[0], nil
