@@ -3,6 +3,7 @@ package token
 import (
 	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
 // GetDBCollection returns the database collection of the Visitor Cards
@@ -24,7 +25,9 @@ func (it *DefaultVisitorCardCollection) ListVisitorsCards() []visitor.InterfaceV
 		if err != nil {
 			return result
 		}
-		visitorCardModel.FromHashMap(recordData)
+		if err := visitorCardModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		result = append(result, visitorCardModel)
 	}

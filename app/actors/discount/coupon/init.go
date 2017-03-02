@@ -14,7 +14,9 @@ import (
 func init() {
 	instance := new(Coupon)
 	var _ checkout.InterfacePriceAdjustment = instance
-	checkout.RegisterPriceAdjustment(instance)
+	if err := checkout.RegisterPriceAdjustment(instance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2f05d681-eb95-43de-a1ed-7ceed18ff378", err.Error())
+	}
 
 	db.RegisterOnDatabaseStart(setupDB)
 	env.RegisterOnConfigStart(setupConfig)
@@ -31,15 +33,33 @@ func setupDB() error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddColumn("code", db.ConstTypeVarchar, true)
-	collection.AddColumn("name", db.ConstTypeVarchar, false)
-	collection.AddColumn("amount", db.ConstTypeDecimal, false)
-	collection.AddColumn("percent", db.ConstTypeDecimal, false)
-	collection.AddColumn("times", db.ConstTypeInteger, false)
-	collection.AddColumn("since", db.ConstTypeDatetime, false)
-	collection.AddColumn("until", db.ConstTypeDatetime, false)
-	collection.AddColumn("limits", db.ConstTypeJSON, false)
-	collection.AddColumn("target", db.ConstTypeVarchar, false)
+	if err := collection.AddColumn("code", db.ConstTypeVarchar, true); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3bd7188b-f77b-4d46-b661-87f56fbf6e81", err.Error())
+	}
+	if err := collection.AddColumn("name", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a4b7571d-e1b3-400c-89a1-79fcf8255da0", err.Error())
+	}
+	if err := collection.AddColumn("amount", db.ConstTypeDecimal, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e3f76159-c830-46a0-9d81-850748fa545a", err.Error())
+	}
+	if err := collection.AddColumn("percent", db.ConstTypeDecimal, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e69fa750-03b9-400c-8643-494bb8c6a1c7", err.Error())
+	}
+	if err := collection.AddColumn("times", db.ConstTypeInteger, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bc0f9f1f-b086-4c6e-9aef-0a88458436a1", err.Error())
+	}
+	if err := collection.AddColumn("since", db.ConstTypeDatetime, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "36107122-8e67-4645-9071-e57785e5fe26", err.Error())
+	}
+	if err := collection.AddColumn("until", db.ConstTypeDatetime, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "962103b3-44af-4175-91da-5bc5268cb667", err.Error())
+	}
+	if err := collection.AddColumn("limits", db.ConstTypeJSON, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7e3dedc2-4b36-42ec-9810-66c538d23685", err.Error())
+	}
+	if err := collection.AddColumn("target", db.ConstTypeVarchar, false); err != nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "84d2f4e4-2e12-4a44-8ca4-79d1000860f6", err.Error())
+	}
 
 	return nil
 }
@@ -75,7 +95,9 @@ func initUsedCoupons() error {
 	}
 
 	dbOrderCollection := orderCollectionModel.GetDBCollection()
-	dbOrderCollection.AddFilter("visitor_id", "!=", nil)
+	if err := dbOrderCollection.AddFilter("visitor_id", "!=", nil); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c5addde9-220b-40ae-9e9d-72e7d5608595", err.Error())
+	}
 	//	filtering for array can't be applied
 	//	dbOrderCollection.AddFilter("discounts", "!=", nil)
 

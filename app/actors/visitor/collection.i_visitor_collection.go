@@ -1,8 +1,10 @@
 package visitor
 
 import (
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // GetDBCollection returns database collection for the Visitor
@@ -24,7 +26,9 @@ func (it *DefaultVisitorCollection) ListVisitors() []visitor.InterfaceVisitor {
 		if err != nil {
 			return result
 		}
-		visitorModel.FromHashMap(recordData)
+		if err := visitorModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7c4664a6-52eb-419f-adec-df7b7fd146a1", err.Error())
+		}
 
 		result = append(result, visitorModel)
 	}

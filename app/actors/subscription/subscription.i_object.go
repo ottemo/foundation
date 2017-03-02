@@ -3,12 +3,13 @@ package subscription
 import (
 	"strings"
 
-	"github.com/ottemo/foundation/app/models"
-	"github.com/ottemo/foundation/app/models/checkout"
-	"github.com/ottemo/foundation/app/models/subscription"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/app/models/subscription"
 )
 
 // Get returns object attribute value or nil for the requested Subscription attribute
@@ -172,16 +173,22 @@ func (it *DefaultSubscription) Set(attribute string, value interface{}) error {
 		it.PaymentInstrument = utils.InterfaceToMap(value)
 
 	case "status":
-		it.SetStatus(utils.InterfaceToString(value))
+		if err := it.SetStatus(utils.InterfaceToString(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "8499d040-8003-43fc-9efe-d447464cd678", err.Error())
+		}
 
 	case "period":
-		it.SetPeriod(utils.InterfaceToInt(value))
+		if err := it.SetPeriod(utils.InterfaceToInt(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "5ca34f3b-d51f-4893-9972-83d19a99709b", err.Error())
+		}
 
 	case "last_submit":
 		it.LastSubmit = utils.InterfaceToTime(value)
 
 	case "action_date":
-		it.SetActionDate(utils.InterfaceToTime(value))
+		if err := it.SetActionDate(utils.InterfaceToTime(value)); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "02bec9d2-7157-4821-ab0c-4d077fbd2899", err.Error())
+		}
 
 	case "created_at":
 		it.CreatedAt = utils.InterfaceToTime(value)

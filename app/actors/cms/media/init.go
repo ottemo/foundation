@@ -13,7 +13,9 @@ func init() {
 	api.RegisterOnRestServiceStart(setupAPI)
 	app.OnAppStart(onAppStart)
 
-	utils.RegisterTemplateFunction("media", mediaTemplateDirective)
+	if err := utils.RegisterTemplateFunction("media", mediaTemplateDirective); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "706a59bb-cfdd-4e26-b8f1-42444daa3170", err.Error())
+	}
 }
 
 func onAppStart() error {

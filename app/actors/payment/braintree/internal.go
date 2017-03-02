@@ -17,23 +17,27 @@ func getCustomerIDByVisitorID(visitorID string) string {
 	var customerIDAttribute = "customer_id"
 
 	if visitorID == "" {
-		env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "0f6c678f-66a3-470e-8a80-5cc2ff619058", "empty visitor ID passed to look up customer token"))
+		_ = env.ErrorDispatch(env.ErrorNew(constErrorModule, constErrorLevel, "0f6c678f-66a3-470e-8a80-5cc2ff619058", "empty visitor ID passed to look up customer token"))
 		return absentIDValue
 	}
 
 	model, _ := visitor.GetVisitorCardCollectionModel()
-	model.ListFilterAdd("visitor_id", "=", visitorID)
-	model.ListFilterAdd("payment", "=", constCCMethodCode)
+	if err := model.ListFilterAdd("visitor_id", "=", visitorID); err != nil {
+		_ = env.ErrorNew(constErrorModule, constErrorLevel, "472ae679-c6f4-4e32-864f-6bbb88e11d3c", err.Error())
+	}
+	if err := model.ListFilterAdd("payment", "=", constCCMethodCode); err != nil {
+		_ = env.ErrorNew(constErrorModule, constErrorLevel, "d45b2df6-9850-479e-821e-77941d6ade7b", err.Error())
+	}
 
 	// 3rd party customer identifier, used by braintree
 	err := model.ListAddExtraAttribute(customerIDAttribute)
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	visitorCards, err := model.List()
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	for _, visitorCard := range visitorCards {
@@ -153,7 +157,7 @@ func braintreeCreateCustomer(visitorInfo map[string]interface{}) (*braintree.Cus
 	} else {
 		paramsPtr, err := braintreeCustomerParamsByVisitorID(visitorID)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "e67e5617-115f-409e-81c1-271bbc3eaa3f", "unable to create customer params: "+err.Error())
+			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "6d8155c9-969d-4f03-a7c3-e61005e661e1", "unable to create customer params: "+err.Error())
 		}
 
 		customerParamsPtr = paramsPtr
@@ -187,7 +191,7 @@ func braintreeCreateCardParams(creditCardMap map[string]interface{}) (*braintree
 func braintreeCreateCard(creditCardMap map[string]interface{}, customerID string) (*braintree.CreditCard, error) {
 	creditCardParams, err := braintreeCreateCardParams(creditCardMap)
 	if err != nil {
-		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "d9e6d4a3-c533-428a-9bd6-9978ca7c0c24", "unable to create card params: "+err.Error())
+		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "46ddda47-867d-4d28-979e-2c43f6f631dd", "unable to create card params: "+err.Error())
 	}
 
 	creditCardParams.CustomerId = customerID

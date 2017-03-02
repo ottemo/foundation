@@ -19,7 +19,9 @@ func init() {
 	app.OnAppEnd(instance.appEndEvent)
 	api.RegisterOnRestServiceStart(setupAPI)
 
-	env.RegisterScheduler(instance)
+	if err := env.RegisterScheduler(instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }
 
 // routines before application end

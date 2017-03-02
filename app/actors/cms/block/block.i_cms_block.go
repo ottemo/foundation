@@ -35,7 +35,7 @@ func (it *DefaultCMSBlock) LoadByIdentifier(identifier string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("identifier", "=", identifier)
+	err = collection.AddFilter("identifier", "=", identifier)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -46,11 +46,13 @@ func (it *DefaultCMSBlock) LoadByIdentifier(identifier string) error {
 	}
 
 	if len(records) == 0 {
-		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8890c17e-56cb-4a54-b37c-9ee787e15067", "not found")
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "4e3f46e8-bfa9-447c-a196-724334b7bf91", "not found")
 	}
 	record := records[0]
 
-	it.SetID(utils.InterfaceToString(record["_id"]))
+	if err := it.SetID(utils.InterfaceToString(record["_id"])); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "04e8f7bb-a3f1-4320-9e28-669d8f642d53", err.Error())
+	}
 
 	it.Content = utils.InterfaceToString(record["content"])
 	it.Identifier = utils.InterfaceToString(record["identifier"])

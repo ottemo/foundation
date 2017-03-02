@@ -132,7 +132,9 @@ func (it *DefaultOrder) NewIncrementID() error {
 	lastIncrementID++
 	it.IncrementID = fmt.Sprintf(ConstIncrementIDFormat, lastIncrementID)
 
-	env.GetConfig().SetValue(ConstConfigPathLastIncrementID, lastIncrementID)
+	if err := env.GetConfig().SetValue(ConstConfigPathLastIncrementID, lastIncrementID); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "43b9a95b-1cd7-4ede-a685-978eda1c136f", err.Error())
+	}
 
 	lastIncrementIDMutex.Unlock()
 
@@ -213,7 +215,9 @@ func (it *DefaultOrder) GetPaymentMethod() string {
 // GetShippingAddress returns shipping address for order
 func (it *DefaultOrder) GetShippingAddress() visitor.InterfaceVisitorAddress {
 	addressModel, _ := visitor.GetVisitorAddressModel()
-	addressModel.FromHashMap(it.ShippingAddress)
+	if err := addressModel.FromHashMap(it.ShippingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffcb0fb8-51b6-44df-b0f9-6377a765656c", err.Error())
+	}
 
 	return addressModel
 }
@@ -221,7 +225,9 @@ func (it *DefaultOrder) GetShippingAddress() visitor.InterfaceVisitorAddress {
 // GetBillingAddress returns billing address for order
 func (it *DefaultOrder) GetBillingAddress() visitor.InterfaceVisitorAddress {
 	addressModel, _ := visitor.GetVisitorAddressModel()
-	addressModel.FromHashMap(it.BillingAddress)
+	if err := addressModel.FromHashMap(it.BillingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e21f8402-2642-4abd-9c80-b4b5d4af80e2", err.Error())
+	}
 
 	return addressModel
 }
@@ -363,18 +369,28 @@ func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface
 	// set visitor basic info
 	visitorID := it.Get("visitor_id")
 	if visitorID != "" {
-		duplicateCheckout.Set("VisitorID", visitorID)
+		if err := duplicateCheckout.Set("VisitorID", visitorID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d00a8e8c-3ba5-4736-81b0-f06b17e88dbe", err.Error())
+		}
 	}
 
-	duplicateCheckout.SetInfo("customer_email", it.Get("customer_email"))
-	duplicateCheckout.SetInfo("customer_name", it.Get("customer_name"))
+	if err := duplicateCheckout.SetInfo("customer_email", it.Get("customer_email")); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "63fda490-a695-462c-b51f-55bdeaecd1e5", err.Error())
+	}
+	if err := duplicateCheckout.SetInfo("customer_name", it.Get("customer_name")); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2b829e06-f8e1-4ac1-ba9e-20314e044810", err.Error())
+	}
 
 	// set billing and shipping address
 	shippingAddress := it.GetShippingAddress().ToHashMap()
-	duplicateCheckout.Set("ShippingAddress", shippingAddress)
+	if err := duplicateCheckout.Set("ShippingAddress", shippingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96e398da-6be2-453e-9d61-a1dad52918ac", err.Error())
+	}
 
 	billingAddress := it.GetBillingAddress().ToHashMap()
-	duplicateCheckout.Set("BillingAddress", billingAddress)
+	if err := duplicateCheckout.Set("BillingAddress", billingAddress); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ffd351cd-57b6-4a60-9650-65e62e7784ad", err.Error())
+	}
 
 	// convert order Item object to cart
 	currentCart, err := cart.GetCartModel()
@@ -394,7 +410,7 @@ func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface
 
 		_, err = currentCart.AddItem(orderItem.GetProductID(), orderItem.GetQty(), itemOptions)
 		if err != nil {
-			env.ErrorDispatch(err)
+			_ = env.ErrorDispatch(err)
 		}
 	}
 
@@ -426,13 +442,13 @@ func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface
 					if orderShipping[1] == shippingRates.Code {
 						err := duplicateCheckout.SetShippingRate(shippingRates)
 						if err != nil {
-							env.ErrorDispatch(err)
+							_ = env.ErrorDispatch(err)
 							continue
 						}
 
 						err = duplicateCheckout.SetShippingMethod(shippingMethod)
 						if err != nil {
-							env.ErrorDispatch(err)
+							_ = env.ErrorDispatch(err)
 							methodFind = false
 							continue
 						}
@@ -455,7 +471,7 @@ func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface
 			if paymentMethod.IsAllowed(duplicateCheckout) {
 				err := duplicateCheckout.SetPaymentMethod(paymentMethod)
 				if err != nil {
-					env.ErrorDispatch(err)
+					_ = env.ErrorDispatch(err)
 					continue
 				}
 
@@ -466,7 +482,7 @@ func (it *DefaultOrder) DuplicateOrder(params map[string]interface{}) (interface
 
 	err = duplicateCheckout.SetInfo("cc", it.Get("payment_info"))
 	if err != nil {
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	return duplicateCheckout, nil

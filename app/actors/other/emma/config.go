@@ -8,7 +8,7 @@ func setupConfig() error {
 
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6b78d38a-35c5-4aa2-aec1-eaa16830ff61", "Error configuring Emma module")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "15bd5a43-7e43-4afe-bbfc-702c6cf6e613", "Error configuring Emma module")
 		return env.ErrorDispatch(err)
 	}
 

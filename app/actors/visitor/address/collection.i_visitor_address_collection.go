@@ -1,8 +1,10 @@
 package address
 
 import (
-	"github.com/ottemo/foundation/app/models/visitor"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
+
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // GetDBCollection returns the database collection of the Visitor Address
@@ -24,7 +26,9 @@ func (it *DefaultVisitorAddressCollection) ListVisitorsAddresses() []visitor.Int
 		if err != nil {
 			return result
 		}
-		visitorAddressModel.FromHashMap(recordData)
+		if err := visitorAddressModel.FromHashMap(recordData); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 
 		result = append(result, visitorAddressModel)
 	}

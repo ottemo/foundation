@@ -176,8 +176,12 @@ func APIGetVisitsDetails(context api.InterfaceApplicationContext) (interface{}, 
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
-	visitorInfoCollection.AddFilter("day", "<=", dateTo)
+	if err := visitorInfoCollection.AddFilter("day", ">=", dateFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6794ec0c-5b57-42d6-9ad4-d99150b5b1d9", err.Error())
+	}
+	if err := visitorInfoCollection.AddFilter("day", "<=", dateTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "701b181a-19e9-49ba-8b37-595477daecbe", err.Error())
+	}
 
 	dbRecords, err := visitorInfoCollection.Load()
 	if err != nil {
@@ -375,8 +379,12 @@ func APIGetSalesDetails(context api.InterfaceApplicationContext) (interface{}, e
 		return nil, env.ErrorDispatch(err)
 	}
 
-	visitorInfoCollection.AddFilter("day", ">=", dateFrom)
-	visitorInfoCollection.AddFilter("day", "<=", dateTo)
+	if err := visitorInfoCollection.AddFilter("day", ">=", dateFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "35ea9cd7-33aa-422b-b810-703cc90107e2", err.Error())
+	}
+	if err := visitorInfoCollection.AddFilter("day", "<=", dateTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "121d715e-564d-41d0-ae51-91fbd0bea342", err.Error())
+	}
 
 	dbRecords, err := visitorInfoCollection.Load()
 	if err != nil {
@@ -454,9 +462,15 @@ func APIGetBestsellers(context api.InterfaceApplicationContext) (interface{}, er
 		return nil, env.ErrorDispatch(err)
 	}
 
-	salesHistoryCollection.AddFilter("count", ">", 0)
-	salesHistoryCollection.AddFilter("created_at", ">", rangeFrom)
-	salesHistoryCollection.AddFilter("created_at", "<=", rangeTo)
+	if err := salesHistoryCollection.AddFilter("count", ">", 0); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d809de1a-c375-4b6b-ba99-7df3d239907d", err.Error())
+	}
+	if err := salesHistoryCollection.AddFilter("created_at", ">", rangeFrom); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "cffbbc14-0b87-4838-b3a2-114a716c388a", err.Error())
+	}
+	if err := salesHistoryCollection.AddFilter("created_at", "<=", rangeTo); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "480fbb9d-6272-4da4-94e7-0763379870e2", err.Error())
+	}
 
 	collectionRecords, err := salesHistoryCollection.Load()
 	if err != nil {

@@ -56,7 +56,9 @@ func (it *DefaultCartItem) GetProduct() product.InterfaceProduct {
 	if it.ProductID != "" {
 		cartProduct, err := product.LoadProductByID(it.ProductID)
 		if err == nil {
-			cartProduct.ApplyOptions(it.GetOptions())
+			if err := cartProduct.ApplyOptions(it.GetOptions()); err != nil {
+				_ = env.ErrorDispatch(err)
+			}
 			it.product = cartProduct
 			return cartProduct
 		}

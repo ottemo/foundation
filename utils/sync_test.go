@@ -105,12 +105,16 @@ func TestMutex(t *testing.T) {
 				key1 := rand.Intn(scatter)
 				key2 := rand.Intn(scatter)
 
-				SyncLock(x) // synchronization
+				if err := SyncLock(x); err != nil { // synchronization
+					t.Error(err)
+				}
 
 				oldValue := x[key1][key2]
 				x[key1][key2] = oldValue + rand.Float64()
 
-				SyncUnlock(x) // synchronization
+				if err := SyncUnlock(x); err != nil { // synchronization
+					t.Error(err)
+				}
 
 			}
 			finished <- i

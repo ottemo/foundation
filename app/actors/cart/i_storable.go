@@ -53,7 +53,9 @@ func (it *DefaultCart) Load(ID string) error {
 			return env.ErrorDispatch(err)
 		}
 
-		cartItemsCollection.AddFilter("cart_id", "=", it.GetID())
+		if err := cartItemsCollection.AddFilter("cart_id", "=", it.GetID()); err != nil {
+			return env.ErrorDispatch(err)
+		}
 		cartItems, err := cartItemsCollection.Load()
 		if err != nil {
 			return env.ErrorDispatch(err)
@@ -81,7 +83,9 @@ func (it *DefaultCart) Load(ID string) error {
 
 				it.Items[cartItem.idx] = cartItem
 			} else {
-				cartItemsCollection.DeleteByID(utils.InterfaceToString(cartItemValues["_id"]))
+				if err := cartItemsCollection.DeleteByID(utils.InterfaceToString(cartItemValues["_id"])); err != nil {
+					return env.ErrorDispatch(err)
+				}
 			}
 
 		}
@@ -160,7 +164,9 @@ func (it *DefaultCart) Save() error {
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
-	it.SetID(newID)
+	if err := it.SetID(newID); err != nil {
+		return env.ErrorDispatch(err)
+	}
 
 	// storing cart items
 	for _, cartItem := range it.GetItems() {
@@ -177,7 +183,9 @@ func (it *DefaultCart) Save() error {
 		if err != nil {
 			return env.ErrorDispatch(err)
 		}
-		cartItem.SetID(newID)
+		if err := cartItem.SetID(newID); err != nil {
+			return env.ErrorDispatch(err)
+		}
 	}
 
 	return nil

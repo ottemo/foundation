@@ -481,7 +481,7 @@ func setupConfig() error {
 			APIURIs[path] = path
 		}
 
-		config.RegisterItem(env.StructConfigItem{
+		err := config.RegisterItem(env.StructConfigItem{
 			Path:        rest.ConstConfigPathAPILogExclude,
 			Value:       "",
 			Type:        env.ConstConfigTypeVarchar,

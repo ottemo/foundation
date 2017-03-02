@@ -9,6 +9,7 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"errors"
 	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
@@ -21,13 +22,14 @@ func setupAPI() error {
 
 	// Admin only endpoint
 	service := api.GetRestService()
-	service.GET("reporting/product-performance", api.IsAdmin(listProductPerformance))
-	service.GET("reporting/customer-activity", api.IsAdmin(listCustomerActivity))
-	service.GET("reporting/payment-method", api.IsAdmin(listPaymentMethod))
-	service.GET("reporting/shipping-method", api.IsAdmin(listShippingMethod))
-	service.GET("reporting/location-country", api.IsAdmin(listLocationCountry))
-	service.GET("reporting/location-us", api.IsAdmin(listLocationUS))
-	service.GET("reporting/gift-cards", api.IsAdmin(listGiftCards))
+
+	service.GET("reporting/product-performance", api.IsAdminHandler(listProductPerformance))
+	service.GET("reporting/customer-activity", api.IsAdminHandler(listCustomerActivity))
+	service.GET("reporting/payment-method", api.IsAdminHandler(listPaymentMethod))
+	service.GET("reporting/shipping-method", api.IsAdminHandler(listShippingMethod))
+	service.GET("reporting/location-country", api.IsAdminHandler(listLocationCountry))
+	service.GET("reporting/location-us", api.IsAdminHandler(listLocationUS))
+	service.GET("reporting/gift-cards", api.IsAdminHandler(listGiftCards))
 
 	return nil
 }
@@ -140,24 +142,36 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "88b6fe1f-0e2f-4e63-b0a4-2e767c27dfd8", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "fb30b99c-0648-4219-8b9c-933edf9f7ed3", msg)
 		}
 	}
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("customer_name")
-	oModel.ListAddExtraAttribute("customer_email")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("35e5e271-a605-44f3-9bdc-0972cd9e14c8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("customer_name"); err != nil {
+		env.LogError(errors.New("30426172-a9a1-4d8c-978e-944acce18dde : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("customer_email"); err != nil {
+		env.LogError(errors.New("451cf083-dd39-4805-9732-115afd8bd347 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("d6c9dd6d-40ed-4820-9197-fadea124e46c : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("e1298ee1-9a10-47df-8404-908a4d9f4981 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("4afb1a1c-b8c9-42db-9e38-4286cc914190 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -255,23 +269,33 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "5731fd92-b2b1-44e7-8940-395575bca081", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "d771dc9d-de2a-4e84-8d5e-9bd050cc5d2d", msg)
 		}
 	}
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("payment_method")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("c63e01a1-2e2d-41a0-a8f9-09b55d25fadc : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("payment_method"); err != nil {
+		env.LogError(errors.New("4a53c0a8-67d3-4a1f-97c1-9c2d1f6e625c : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("f7524ade-0983-45a6-9f31-ed11de180680 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("b4206d27-7f73-47de-9e7a-4afe0600886d : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("be1b13f1-db44-47b9-b6a5-a05253b100bf : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -379,23 +403,33 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "48beae0f-f6fb-49f0-adff-1d0a2f8b5fff", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "eb050c5e-6ee8-4d09-9869-1813b252d3aa", msg)
 		}
 	}
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("shipping_method")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("4ff4ac4c-8048-41e6-89b6-ab65c03ffbde : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("shipping_method"); err != nil {
+		env.LogError(errors.New("8104d737-81a3-4059-8a65-1c5a513930a8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("d98106a4-63f9-4f7d-b854-74c6af6a0a33 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("2e38dab2-dedb-4e91-9538-b9d732c90408 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("eccd9296-fb5c-476b-ba05-efbbbb21a3b1 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -433,23 +467,33 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "8b9940cc-cc45-4ab8-af92-4f3cff0db5b1", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "dd9fad29-4321-4951-976f-9204890437bd", msg)
 		}
 	}
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("billing_address")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("fbcc01df-049c-418b-8a15-f3acb595a26f : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("billing_address"); err != nil {
+		env.LogError(errors.New("8d7c47d2-382e-4269-8633-fd4c7f5254fc : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("26dbf8cd-b884-4d2d-af4d-d0328ec4e24a : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("267ae749-0c75-4845-bc45-799978671084 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("c6c49618-49ab-4bf9-b123-6d2631ab3810 : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -532,24 +576,36 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "2eb1c70a-3d37-46ab-91b1-9e6124685406", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "bc431db2-77ea-45da-9e61-3ee156ec62b6", msg)
 		}
 	}
 
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
-	oModel.ListAddExtraAttribute("created_at")
-	oModel.ListAddExtraAttribute("billing_address")
-	oModel.ListFilterAdd("billing_address.country", "=", "US")
-	oModel.ListAddExtraAttribute("grand_total")
+	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
+		env.LogError(errors.New("afee38b6-7744-45d1-a202-fa3e38cebb77 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("billing_address"); err != nil {
+		env.LogError(errors.New("d425730d-3298-44db-8312-686b6a31fa2b : " + err.Error()))
+	}
+	if err := oModel.ListFilterAdd("billing_address.country", "=", "US"); err != nil {
+		env.LogError(errors.New("ca701edb-dad9-41ff-afa5-b8b71e9dbef8 : " + err.Error()))
+	}
+	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
+		env.LogError(errors.New("c2a7884f-30ec-46cf-9453-723fba5c4a72 : " + err.Error()))
+	}
 	if hasDateRange {
-		oModel.GetDBCollection().AddFilter("created_at", ">=", startDate)
-		oModel.GetDBCollection().AddFilter("created_at", "<", endDate)
+		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("29e271f7-97c4-4be1-a758-4c5360591814 : " + err.Error()))
+		}
+		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("8648b2b7-1450-4409-9324-17d7316d023c : " + err.Error()))
+		}
 	}
 
 	// This is the lite response StructListItem
@@ -588,12 +644,12 @@ func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error)
 		if startDate.IsZero() || endDate.IsZero() {
 			context.SetResponseStatusBadRequest()
 			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+			return nil, env.ErrorNew("reporting", 6, "dcb0c296-8416-4f8a-b716-efcccb74e0ad", msg)
 		}
 		if startDate.After(endDate) || startDate.Equal(endDate) {
 			context.SetResponseStatusBadRequest()
 			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+			return nil, env.ErrorNew("reporting", 6, "0dc2edcb-3e2b-43a4-b2c1-dd253cc78270", msg)
 		}
 	}
 
@@ -604,8 +660,12 @@ func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	if hasDateRange {
-		giftCardCollection.AddFilter("created_at", ">=", startDate)
-		giftCardCollection.AddFilter("created_at", "<", endDate)
+		if err := giftCardCollection.AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("30c49961-ab76-4eaa-a7ba-24d8aa591536 : " + err.Error()))
+		}
+		if err := giftCardCollection.AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("47403827-0a63-4067-bbb3-f00b85d6e775 : " + err.Error()))
+		}
 	}
 
 	collectionRecords, err := giftCardCollection.Load()

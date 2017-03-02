@@ -125,7 +125,9 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 			Amount:   uint64(orderInstance.GetGrandTotal() * 100), // Amount is in cents
 			Customer: stripeCID,                                   // Mandatory
 		}
-		chParams.SetSource(cardID)
+		if err := chParams.SetSource(cardID); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "329ddd35-8fdc-4681-9a02-06290a405073", err.Error())
+		}
 
 		ch, err = charge.New(&chParams)
 		if err != nil {
@@ -155,7 +157,9 @@ func (it *Payment) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		if err != nil {
 			return nil, env.ErrorDispatch(err)
 		}
-		chargeParams.SetSource(cp)
+		if err := chargeParams.SetSource(cp); err != nil {
+			_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "ed9f2315-7355-4e9f-959e-e2ac1f737e9f", err.Error())
+		}
 
 		ch, err = charge.New(&chargeParams)
 		if err != nil {
@@ -189,7 +193,7 @@ func formatCardExp(c stripe.Card) string {
 		exp = exp + y[:2]
 	} else {
 		err := env.ErrorNew(ConstErrorModule, 1, "0a17b25a-4155-487a-82ad-dfb4b654eba8", "unexpected year length coming back from stripe "+y)
-		env.ErrorDispatch(err)
+		_ = env.ErrorDispatch(err)
 	}
 
 	return exp

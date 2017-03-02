@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"fmt"
 )
 
 // backtrace collects current call stack information and modifies given error with
@@ -70,7 +71,9 @@ func (it *DefaultErrorBus) parseErrorMessage(message string) *OttemoError {
 
 	if resultError.Code == "" {
 		hasher := md5.New()
-		hasher.Write([]byte(resultError.Message))
+		if _, err := hasher.Write([]byte(resultError.Message)); err != nil {
+			fmt.Println("37a7ed91-1673-46f6-8160-685ee1cf2828", err.Error())
+		}
 
 		resultError.Code = hex.EncodeToString(hasher.Sum(nil))
 	}

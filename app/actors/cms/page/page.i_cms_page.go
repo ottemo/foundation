@@ -57,7 +57,9 @@ func (it *DefaultCMSPage) LoadByIdentifier(identifier string) error {
 		return env.ErrorDispatch(err)
 	}
 
-	collection.AddFilter("identifier", "=", identifier)
+	if err := collection.AddFilter("identifier", "=", identifier); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d51d2eae-7d71-4516-9cb7-aa380fcc35fb", err.Error())
+	}
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
@@ -72,7 +74,9 @@ func (it *DefaultCMSPage) LoadByIdentifier(identifier string) error {
 	}
 	record := records[0]
 
-	it.SetID(utils.InterfaceToString(record["_id"]))
+	if err := it.SetID(utils.InterfaceToString(record["_id"])); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6448e3d7-7d0d-4527-8f49-ce8e8453bc5e", err.Error())
+	}
 
 	it.Identifier = utils.InterfaceToString(record["identifier"])
 	it.Enabled = utils.InterfaceToBool(record["enabled"])

@@ -66,7 +66,9 @@ func connectionQuery(SQL string) (*sqlite3.Stmt, error) {
 // close sqlite3 statement routine
 func closeStatement(statement *sqlite3.Stmt) {
 	if statement != nil {
-		statement.Close()
+		if err := statement.Close(); err != nil {
+			_ = env.ErrorDispatch(err)
+		}
 	}
 	dbEngine.connectionMutex.Unlock()
 }
