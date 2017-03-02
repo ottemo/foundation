@@ -9,9 +9,11 @@ import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/db"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -25,6 +27,7 @@ func setupAPI() error {
 	service.GET("reporting/shipping-method", api.IsAdmin(listShippingMethod))
 	service.GET("reporting/location-country", api.IsAdmin(listLocationCountry))
 	service.GET("reporting/location-us", api.IsAdmin(listLocationUS))
+	service.GET("reporting/gift-cards", api.IsAdmin(listGiftCards))
 
 	return nil
 }
@@ -569,4 +572,72 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
 	}
 	return response, nil
+}
+
+// listGiftCards returns information about gift cards
+func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		if startDate.IsZero() || endDate.IsZero() {
+			context.SetResponseStatusBadRequest()
+			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+			return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
+		}
+		if startDate.After(endDate) || startDate.Equal(endDate) {
+			context.SetResponseStatusBadRequest()
+			msg := "the start_date must come before the end_date"
+			return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+		}
+	}
+
+	giftCardCollection, err := db.GetCollection(giftcard.ConstCollectionNameGiftCard)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if hasDateRange {
+		giftCardCollection.AddFilter("created_at", ">=", startDate)
+		giftCardCollection.AddFilter("created_at", "<", endDate)
+	}
+
+	collectionRecords, err := giftCardCollection.Load()
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	var giftCards []map[string]interface{}
+	var total = 0.0
+	var count = 0
+
+	// get gift cards information
+	for _, item := range collectionRecords {
+		amount := utils.InterfaceToFloat64(item["amount"])
+		giftCardItem := map[string]interface{}{
+			"code":   utils.InterfaceToString(item["code"]),
+			"name":   utils.InterfaceToString(item["name"]),
+			"amount": amount,
+			"date":   "",
+		}
+		total = total + amount
+		count = count + 1
+		giftCards = append(giftCards, giftCardItem)
+	}
+
+	results := map[string]interface{}{
+		"gift-cards": giftCards,
+		"total":      total,
+		"count":      count,
+		"perf_ms":    time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+
+	return results, nil
 }
