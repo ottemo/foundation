@@ -331,13 +331,18 @@ func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{},
 		return false, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2940eda-4023-4a27-80d3-c39bab1c28fe", "giftcode have not been specified")
 	}
 
-	giftCard, err := getGiftCardByCode(giftCardUniqueCode)
+	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		context.SetResponseStatusBadRequest()
-		return false, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
-	if len(giftCard) != 0 {
+	collection.AddFilter("code", "=", giftCardUniqueCode)
+	rows, err := collection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(rows) != 0 {
 		return false, nil
 	}
 
