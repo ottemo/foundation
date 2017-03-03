@@ -29,8 +29,7 @@ func setupAPI() error {
 	// Admin Only
 	service.GET("giftcard/:id", GetSingleID)
 	service.POST("giftcard", api.IsAdminHandler(Create))
-	//service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
-	service.PUT("giftcard/:id", Edit)
+	service.PUT("giftcard/:id", api.IsAdminHandler(Edit))
 	service.GET("giftcard/:id/history", api.IsAdminHandler(GetHistory))
 
 	return nil
@@ -45,17 +44,18 @@ func GetSingleCode(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "06792fd7-c838-4acc-9c6f-cb8fcff833dd", "No giftcard code specified in the request.")
 	}
 
-	rows, err := getGiftCardsByCode(giftCardID)
+	giftCard, err := getGiftCardByCode(giftCardID)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if len(rows) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "dd7b2130-b5ed-4b26-b1fc-2d36c3bf147f", "No giftcard code matching the one supplied on the request found.")
+	if giftCard["status"] == ConstGiftCardStatusCancelled {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34deea74-1378-4ec8-b7c1-53d73d8a8987", "Giftcard has cancelled.")
 	}
 
-	return rows[0], nil
+	return giftCard, nil
 }
 
 // GetList returns a list of gift cards for the visitor id in the context passed
@@ -120,15 +120,20 @@ func Apply(context api.InterfaceApplicationContext) (interface{}, error) {
 	}
 
 	// loading gift codes for specified code
-	records, err := getGiftCardsByCode(giftCardCode)
+	record, err := getGiftCardByCode(giftCardCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
+	if record["status"] == ConstGiftCardStatusCancelled {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "132a21e7-67bf-42f9-a21d-bdb5b0ca1cf2", "Giftcard has cancelled.")
+	}
+
 	// checking and applying provided gift card codes
-	if len(records) == 1 && utils.InterfaceToString(records[0]["code"]) == giftCardCode {
-		if utils.InterfaceToFloat64(records[0]["amount"]) <= 0 {
+	if utils.InterfaceToString(record["code"]) == giftCardCode {
+		if utils.InterfaceToFloat64(record["amount"]) <= 0 {
 			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "ce349f59-51c7-43ec-a64c-80f7d4af6d3c", "The provided giftcard value has been exhausted.")
 		}
 
@@ -243,15 +248,10 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	_, err = getGiftCardByCode(giftCardUniqueCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
-	}
-
-	if len(rows) != 0 {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ef398d27-2fa8-43c4-960d-1446e5ee0a2e", "Gift code must be unique")
 	}
 
 	// collect necessary info to variables
@@ -310,8 +310,8 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 	return giftCard, nil
 }
 
-// getGiftCardsByCode returns a list of gift cards for the giftCardCode
-func getGiftCardsByCode(giftCardCode string) ([]map[string]interface{}, error) {
+// getGiftCardByCode returns a list of gift cards for the giftCardCode
+func getGiftCardByCode(giftCardCode string) (map[string]interface{}, error) {
 
 	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
@@ -324,7 +324,11 @@ func getGiftCardsByCode(giftCardCode string) ([]map[string]interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return rows, nil
+	if len(rows) == 0 {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "02b3d669-f37d-429b-85a1-5b904ececde9", "No giftcard code matching the one supplied on the request found.")
+	}
+
+	return rows[0], nil
 }
 
 // IfGiftCardCodeUnique returns a history of gift cards for the admin in the context passed
@@ -337,13 +341,13 @@ func IfGiftCardCodeUnique(context api.InterfaceApplicationContext) (interface{},
 		return false, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e2940eda-4023-4a27-80d3-c39bab1c28fe", "giftcode have not been specified")
 	}
 
-	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	giftCard, err := getGiftCardByCode(giftCardUniqueCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return false, env.ErrorDispatch(err)
 	}
 
-	if len(rows) > 0 {
+	if len(giftCard) != 0 {
 		return false, nil
 	}
 
@@ -380,23 +384,25 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
+	if giftCard["status"] == ConstGiftCardStatusCancelled {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "39195589-ca3b-43ac-b8b2-d879fa80057d", "Giftcard has cancelled.")
+	}
+
 	giftCardAmount := utils.InterfaceToInt(requestData["amount"])
 	customMessage := utils.InterfaceToString(requestData["message"])
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
 
-	rows, err := getGiftCardsByCode(giftCardUniqueCode)
+	row, err := getGiftCardByCode(giftCardUniqueCode)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if len(rows) != 0 {
-		rowId := rows[0]["_id"]
-		if rowId != giftID {
-			context.SetResponseStatusBadRequest()
-			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f26ec81-e555-4856-89ed-e2b4e050c808", "Gift code must be unique")
-		}
+	if row["_id"] != giftID {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f26ec81-e555-4856-89ed-e2b4e050c808", "Gift code must be unique")
 	}
 
 	giftCardCollection, err := db.GetCollection(ConstCollectionNameGiftCard)
@@ -404,6 +410,9 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
+	if utils.InterfaceToString(requestData["code"]) == ConstGiftCardStatusCancelled {
+		giftCard["status"] = ConstGiftCardStatusCancelled
+	}
 	giftCard["code"] = giftCardUniqueCode
 	giftCard["amount"] = giftCardAmount
 	giftCard["message"] = customMessage
@@ -420,15 +429,27 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 }
 
 // GetSingleCode returns the gift card and related info
-//    - giftcode must be specified on the request
+//    - id must be specified on the request
 func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCardID := context.GetRequestArgument("id")
 	if giftCardID == "" {
+		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc227376-4654-4036-b01f-6706a3ed55c1", "No giftcard id specified in the request.")
 	}
 
-	return GetGiftCardByID(giftCardID)
+	giftCard, err := GetGiftCardByID(giftCardID)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if giftCard["status"] == ConstGiftCardStatusCancelled {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "58d83871-bc9e-4e98-a0f3-d57caa59f039", "Giftcard has cancelled.")
+	}
+
+	return giftCard, nil
 }
 
 func GetGiftCardByID(giftCardID string) (map[string]interface{}, error) {
