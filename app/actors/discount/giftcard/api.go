@@ -410,7 +410,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if utils.InterfaceToString(requestData["code"]) == ConstGiftCardStatusCancelled {
+	if utils.InterfaceToString(requestData["status"]) == ConstGiftCardStatusCancelled {
 		giftCard["status"] = ConstGiftCardStatusCancelled
 	}
 	giftCard["code"] = giftCardUniqueCode
