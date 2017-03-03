@@ -50,7 +50,7 @@ func GetSingleCode(context api.InterfaceApplicationContext) (interface{}, error)
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if giftCard["status"] == ConstGiftCardStatusCancelled {
+	if api.ValidateAdminRights(context) != nil && giftCard["status"] == ConstGiftCardStatusCancelled {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "34deea74-1378-4ec8-b7c1-53d73d8a8987", "Giftcard has cancelled.")
 	}
@@ -444,7 +444,7 @@ func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if giftCard["status"] == ConstGiftCardStatusCancelled {
+	if api.ValidateAdminRights(context) != nil && giftCard["status"] == ConstGiftCardStatusCancelled {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "58d83871-bc9e-4e98-a0f3-d57caa59f039", "Giftcard has cancelled.")
 	}
