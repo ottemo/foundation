@@ -190,26 +190,15 @@ func GetHistory(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "10ab8fd5-05ca-43e2-9da9-8acac0ea13f9", "No giftcard code specified in the request.")
 	}
 
-	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
+	giftCard, err := GetGiftCardByID(giftCardID)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
-	}
-
-	row, err := collection.LoadByID(giftCardID)
-	if err != nil {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorDispatch(err)
-	}
-
-	if len(row) == 0 {
-		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "5caad227-e93b-46a9-9833-1b2eb53d19e1", "No giftcard code matching the one supplied on the request found.")
 	}
 
 	var historyData []map[string]interface{}
 
-	for orderId, amount := range utils.InterfaceToMap(row["orders_used"]) {
+	for orderId, amount := range utils.InterfaceToMap(giftCard["orders_used"]) {
 		orderData, err := order.LoadOrderByID(orderId)
 		if err != nil {
 			context.SetResponseStatusBadRequest()
@@ -285,6 +274,7 @@ func Create(context api.InterfaceApplicationContext) (interface{}, error) {
 
 	giftCard["recipient_mailbox"] = recipientEmail
 	giftCard["delivery_date"] = deliveryDate
+	giftCard["created_at"] = currentTime
 
 	giftCardID, err := giftCardCollection.Save(giftCard)
 	if err != nil {
