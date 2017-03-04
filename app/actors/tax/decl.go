@@ -12,6 +12,8 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstPriorityValue = 2.50
+
+	ConstProductTaxableAttribute = "taxable"
 )
 
 var priority float64
