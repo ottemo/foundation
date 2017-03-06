@@ -315,7 +315,7 @@ func getGiftCardByCode(giftCardCode string) (map[string]interface{}, error) {
 	}
 
 	if len(rows) == 0 {
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "02b3d669-f37d-429b-85a1-5b904ececde9", "No giftcard code matching the one supplied on the request found.")
+		return make(map[string]interface{}), nil
 	}
 
 	return rows[0], nil
@@ -433,11 +433,33 @@ func GetSingleID(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "cc227376-4654-4036-b01f-6706a3ed55c1", "No giftcard id specified in the request.")
 	}
 
-	giftCard, err := GetGiftCardByID(giftCardID)
+	//giftCard, err := GetGiftCardByID(giftCardID)
+	collection, err := db.GetCollection(ConstCollectionNameGiftCard)
 	if err != nil {
-		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorDispatch(err)
 	}
+
+	if api.ValidateAdminRights(context) != nil {
+		visitorID := visitor.GetCurrentVisitorID(context)
+		if visitorID == "" {
+			context.SetResponseStatusBadRequest()
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "77d16dff-95bc-433d-9876-cc36e3645489", "Please log in to complete your request.")
+		}
+
+		collection.AddFilter("visitor_id", "=", visitorID)
+	}
+
+	collection.AddFilter("_id", "=", giftCardID)
+	rows, err := collection.Load()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	if len(rows) == 0 {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "96afa35f-24d9-4de0-9521-22b5aece5f57", "No giftcard code matching the one supplied on the request found.")
+	}
+
+	giftCard := rows[0]
 
 	if api.ValidateAdminRights(context) != nil && giftCard["status"] == ConstGiftCardStatusCancelled {
 		context.SetResponseStatusBadRequest()

@@ -1,4 +1,4 @@
-package review_test
+package giftcard_test
 
 import (
 	"fmt"
@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/product"
 	"github.com/ottemo/foundation/app/actors/product/review"
 	"github.com/ottemo/foundation/app/actors/visitor"
-	"github.com/ottemo/foundation/env"
-	"github.com/ottemo/foundation/env/logger"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/env/logger"
 
 	visitorInterface "github.com/ottemo/foundation/app/models/visitor"
+	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"os"
 )
 
@@ -145,18 +145,15 @@ func (it *testContext) SetSession(session api.InterfaceSession) error {
 
 // redeclare api in case of admin check
 // POST
-var apiCreateProductReview = review.APICreateProductReview
+var apiCreateGiftCard = giftcard.Create
 
 // GET
-var apiListReviews = review.APIListReviews
-var apiGetReview = review.APIGetReview
+var apiListGiftCards = giftcard.GetList
+var apiGetGiftCardByID = giftcard.GetSingleID
 
 //var apiGetProductRating = review.APIGetProductRating
 // PUT
 var apiUpdateProductReview = review.APIUpdateReview
-
-// DELETE
-var apiDeleteProductReview = review.APIDeleteProductReview
 
 func TestMain(m *testing.M) {
 	err := test.StartAppInTestingMode()
@@ -167,7 +164,8 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestReviewAPI(t *testing.T) {
+
+func TestGiftCardAPI(t *testing.T) {
 
 	_ = fmt.Sprint("")
 
@@ -189,76 +187,34 @@ func TestReviewAPI(t *testing.T) {
 	_ = visitor1
 	_ = visitor2
 
-	var product3 = createProduct(t, context, "3")
-	var product4 = createProduct(t, context, "4")
-	_ = product3
-	_ = product4
 
 	//--------------------------------------------------------------------------------------------------------------
-	// Count
+	// Create
 	//--------------------------------------------------------------------------------------------------------------
 
-	// admin could retrieve all reviews
-	// admin could delete reviews
-	deleteExistingReviewsByAdmin(t, context)
+	giftcardMap := createGiftCard(t, context, visitor1["_id"], 10, "1234567890", time.Now(), "Test 1", "Test Name 1", "test1@test.com", "test1")
 
-	// visitor could create review
-	var reviewMap = createReview(t, context, visitor1["_id"], product3["_id"], "")
+	checkGiftCardsCount(t, context, "guest without content", "", "0", false)
+	checkGiftCardsCount(t, context, "visitor own without content", visitor1["_id"], "1", true)
+	checkGiftCardsCount(t, context, "visitor other without content", visitor2["_id"], "0", false)
+	checkGiftCardsCount(t, context, "admin without content", "admin", "1", true)
 
-	// NOT approved
-	checkReviewsCount(t, context, "guest without content", "", "", "0")
-	checkReviewsCount(t, context, "visitor own without content", visitor1["_id"], "", "1")
-	checkReviewsCount(t, context, "visitor other without content", visitor2["_id"], "", "0")
-	checkReviewsCount(t, context, "admin without content", "admin", "", "1")
+	checkGetGiftCard(t, context, "", giftcardMap["_id"], "guest", false)
+	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap["_id"], "owner", true)
+	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap["_id"], "other", false)
+	checkGetGiftCard(t, context, "admin", giftcardMap["_id"], "admin", true)
 
-	// admin could update review
-	// admin could approve review
-	reviewMap = approveReview(t, context, reviewMap["_id"])
+	giftcardMap = createGiftCard(t, context, visitor2["_id"], 20, "09876654321", time.Now(), "Test 2", "Test Name 2", "test2@test.com", "test2")
 
-	// APPROVED WITHOUT content
-	checkReviewsCount(t, context, "guest without content approved", "", "", "0")
-	checkReviewsCount(t, context, "visitor own without content approved", visitor1["_id"], "", "1")
-	checkReviewsCount(t, context, "visitor other without content approved", visitor2["_id"], "", "0")
-	checkReviewsCount(t, context, "admin without content approved", "admin", "", "1")
+	checkGiftCardsCount(t, context, "guest without content", "", "0", false)
+	checkGiftCardsCount(t, context, "visitor own without content", visitor1["_id"], "1", true)
+	checkGiftCardsCount(t, context, "visitor other without content", visitor2["_id"], "1", false)
+	checkGiftCardsCount(t, context, "admin without content", "admin", "3", true)
 
-	// logged in visitor could update his/her review
-	reviewMap = updateByVisitorOwnReview(t, context, visitor1["_id"], reviewMap["_id"])
-	reviewMap = approveReview(t, context, reviewMap["_id"])
-
-	// APPROVED WITH content
-	checkReviewsCount(t, context, "guest content approved", "", "", "1")
-	checkReviewsCount(t, context, "visitor own content approved", visitor1["_id"], "", "1")
-	checkReviewsCount(t, context, "visitor other content approved", visitor2["_id"], "", "0")
-	checkReviewsCount(t, context, "admin content approved", "admin", "", "1")
-
-	// logged in visitor could not update other visitor review
-	updateByVisitorOtherReview(t, context, visitor2["_id"], reviewMap["_id"])
-
-	//--------------------------------------------------------------------------------------------------------------
-	// Single record
-	//--------------------------------------------------------------------------------------------------------------
-
-	deleteExistingReviewsByAdmin(t, context)
-	reviewMap = createReview(t, context, visitor1["_id"], product3["_id"], "")
-
-	checkGetReview(t, context, "", reviewMap["_id"], "not aproved, guest", false)
-	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "not aproved, owner", true)
-	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "not aproved, other", false)
-	checkGetReview(t, context, "admin", reviewMap["_id"], "not aproved, admin", true)
-
-	reviewMap = updateByVisitorOwnReview(t, context, visitor1["_id"], reviewMap["_id"])
-
-	checkGetReview(t, context, "", reviewMap["_id"], "not aproved, guest", false)
-	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "not aproved, owner", true)
-	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "not aproved, other", false)
-	checkGetReview(t, context, "admin", reviewMap["_id"], "not aproved, admin", true)
-
-	reviewMap = approveReview(t, context, reviewMap["_id"])
-
-	checkGetReview(t, context, "", reviewMap["_id"], "aproved, guest", true)
-	checkGetReview(t, context, visitor1["_id"], reviewMap["_id"], "aproved, owner", true)
-	checkGetReview(t, context, visitor2["_id"], reviewMap["_id"], "aproved, other", true)
-	checkGetReview(t, context, "admin", reviewMap["_id"], "aproved, admin", true)
+	checkGetGiftCard(t, context, "", giftcardMap["_id"], "not aproved, guest", false)
+	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap["_id"], "not aproved, owner", true)
+	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap["_id"], "not aproved, other", false)
+	checkGetGiftCard(t, context, "admin", giftcardMap["_id"], "not aproved, admin", true)
 
 }
 
@@ -278,128 +234,33 @@ func createVisitor(t *testing.T, context *testContext, counter string) map[strin
 	return utils.InterfaceToMap(newVisitor)
 }
 
-func createProduct(t *testing.T, context *testContext, counter string) map[string]interface{} {
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
-	context.ContextValues = map[string]interface{}{}
-	context.RequestArguments = map[string]string{}
-
-	context.RequestContent = map[string]interface{}{
-		"sku":  "sku" + utils.InterfaceToString(time.Now().Unix()) + counter,
-		"name": "product name" + utils.InterfaceToString(time.Now().Unix()) + counter,
-	}
-
-	newProduct, err := product.APICreateProduct(context)
-	if err != nil {
-		t.Error(err)
-	}
-
-	return utils.InterfaceToMap(newProduct)
-}
-
-func deleteExistingReviewsByAdmin(t *testing.T, context *testContext) {
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
-	context.ContextValues = map[string]interface{}{}
-	context.RequestContent = map[string]interface{}{}
-
-	reviews, err := apiListReviews(context)
-	if err != nil {
-		t.Error(err)
-	}
-
-	reviewsMap := utils.InterfaceToArray(reviews)
-	for _, reviewRecord := range reviewsMap {
-		reviewMap := utils.InterfaceToMap(reviewRecord)
-		context.RequestArguments = map[string]string{
-			"reviewID": utils.InterfaceToString(reviewMap["_id"]),
-		}
-		if _, err := apiDeleteProductReview(context); err != nil {
-			t.Error(err)
-		}
-	}
-}
-
-func createReview(t *testing.T, context *testContext, visitorID interface{}, productID interface{}, reviewValue string) map[string]interface{} {
+func createGiftCard(t *testing.T, context *testContext, visitorID interface{}, amount int, code string, delivery_date time.Time, message string, name string, recipient_mailbox string, sku string) map[string]interface{} {
 
 	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
 	context.ContextValues = map[string]interface{}{}
 	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
-	context.RequestArguments = map[string]string{
-		"productID": utils.InterfaceToString(productID),
-	}
+	context.RequestArguments = map[string]string{}
 	context.RequestContent = map[string]interface{}{
-		"review":        reviewValue,
-		"unknown_field": "value",
+		"code": utils.InterfaceToString(code),
+		"delivery_date": utils.InterfaceToTime(delivery_date),
+		"message": utils.InterfaceToString(message),
+		"amount": utils.InterfaceToInt(amount),
+		"name": utils.InterfaceToString(name),
+		"recipient_mailbox": utils.InterfaceToString(recipient_mailbox),
+		"sku": utils.InterfaceToString(sku),
 	}
 
-	reviewecord, err := apiCreateProductReview(context)
+	giftCard, err := apiCreateGiftCard(context)
 	if err != nil {
 		t.Error(err)
 	}
-	reviewMap := utils.InterfaceToMap(reviewecord)
+	giftCardMap := utils.InterfaceToMap(giftCard)
 
-	if utils.InterfaceToString(reviewMap["approved"]) != "false" {
-		t.Error("New review should not be approved.")
+	if utils.InterfaceToString(giftCardMap["_id"]) == "" {
+		t.Error("New gift card should have id.")
 	}
 
-	return (utils.InterfaceToMap(reviewMap))
-}
-
-func checkReviewsCount(
-	t *testing.T,
-	context *testContext,
-	msg string,
-	visitorID interface{},
-	productID interface{},
-	requiredCount string) {
-
-	var isAdmin = false
-	if utils.InterfaceToString(visitorID) == "admin" {
-		isAdmin = true
-		visitorID = ""
-	}
-
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
-	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
-
-	context.ContextValues = map[string]interface{}{}
-	context.RequestContent = map[string]interface{}{}
-	context.RequestArguments = map[string]string{
-		"action": "count",
-	}
-	if productID != "" {
-		context.RequestArguments["product_id"] = utils.InterfaceToString(productID)
-	}
-	if visitorID != "" {
-		context.RequestArguments["visitor_id"] = utils.InterfaceToString(visitorID)
-	}
-
-	countResult, err := apiListReviews(context)
-	if err != nil {
-		t.Error(err)
-	}
-	count := utils.InterfaceToString(countResult)
-
-	if count != requiredCount {
-		t.Error("Incorrect reviews count [" + count + "]. Shoud be " + requiredCount + ". [" + msg + "]")
-	}
-}
-
-func approveReview(t *testing.T, context *testContext, reviewID interface{}) map[string]interface{} {
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, true)
-	context.ContextValues = map[string]interface{}{}
-	context.RequestArguments = map[string]string{
-		"reviewID": utils.InterfaceToString(reviewID),
-	}
-	context.RequestContent = map[string]interface{}{
-		"approved": true,
-	}
-
-	updateResult, err := apiUpdateProductReview(context)
-	if err != nil {
-		t.Error(err)
-	}
-
-	return (utils.InterfaceToMap(updateResult))
+	return (utils.InterfaceToMap(giftCardMap))
 }
 
 func updateByVisitorOwnReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}) map[string]interface{} {
@@ -451,7 +312,7 @@ func updateByVisitorOtherReview(t *testing.T, context *testContext, visitorID in
 	}
 }
 
-func checkGetReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}, msg string, canGet bool) {
+func checkGetGiftCard(t *testing.T, context *testContext, visitorID interface{}, giftCardID interface{}, msg string, canGet bool) {
 
 	var isAdmin = false
 	if utils.InterfaceToString(visitorID) == "admin" {
@@ -465,16 +326,61 @@ func checkGetReview(t *testing.T, context *testContext, visitorID interface{}, r
 	context.ContextValues = map[string]interface{}{}
 	context.RequestContent = map[string]interface{}{}
 	context.RequestArguments = map[string]string{
-		"reviewID": utils.InterfaceToString(reviewID),
+		"id": utils.InterfaceToString(giftCardID),
 	}
 
-	_, err := apiGetReview(context)
+	result, err := apiGetGiftCardByID(context)
+	row := utils.InterfaceToMap(result)
+
 	if err != nil {
 		if canGet {
 			t.Error(err)
 		}
-	} else if !canGet {
-		t.Error(msg, ", should not be able to get review")
+	} else if len(row) != 0 && !canGet {
+		t.Error(msg, ", should not be able to get giftcard")
+	}
+}
+
+func checkGiftCardsCount(
+t *testing.T,
+context *testContext,
+msg string,
+visitorID interface{},
+requiredCount string,
+canGet bool) {
+
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
+
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+
+	context.ContextValues = map[string]interface{}{}
+	context.RequestContent = map[string]interface{}{}
+	context.RequestArguments = map[string]string{
+		"action": "count",
+	}
+
+	countResult, err := apiListGiftCards(context)
+	if countResult == nil && !canGet {
+		return
+	}
+	count := utils.InterfaceToString(countResult)
+	if err != nil {
+		if canGet {
+			t.Error(err)
+			return
+		}
+	} else if count != "0" && !canGet {
+		fmt.Println(count)
+		t.Error(msg, ", should not be able to get giftcard count")
+	}
+
+	if count != requiredCount {
+		t.Error("Incorrect giftcards count [" + count + "]. Shoud be " + requiredCount + ". [" + msg + "]")
 	}
 }
 
