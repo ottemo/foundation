@@ -15,5 +15,7 @@ func init() {
 	var dbConnector = db.NewDBConnector(dbEngine)
 	env.RegisterOnConfigIniStart(dbConnector.ConnectAsync)
 
-	db.RegisterDBEngine(dbEngine)
+	if err := db.RegisterDBEngine(dbEngine); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 }

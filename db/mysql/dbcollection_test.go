@@ -1,11 +1,9 @@
-package sqlite
+package mysql
 
 import (
 	"fmt"
 	"io"
 	"testing"
-
-	"github.com/mxk/go-sqlite/sqlite3"
 
 	"github.com/ottemo/foundation/api"
 
@@ -138,6 +136,7 @@ func (it *testContext) SetSession(session api.InterfaceSession) error {
 
 func TestApplyFilters(t *testing.T) {
 	var err error
+	_ = err
 
 	// init session
 	session := new(testSession)
@@ -145,43 +144,20 @@ func TestApplyFilters(t *testing.T) {
 
 	// init context
 	context := new(testContext)
-	if err := context.SetSession(session); err != nil {
-		t.Error(err)
-	}
+	context.SetSession(session)
 
-	// create test db in memory
-	if newConnection, err := sqlite3.Open(":memory:"); err == nil {
-		dbEngine.connection = newConnection
-	} else {
-		t.Error("sqlite3.Open", err)
-	}
-
-	// create helper table
-	SQL := "CREATE TABLE IF NOT EXISTS " + ConstCollectionNameColumnInfo + ` (
-		_id        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-		collection VARCHAR(255),
-		column     VARCHAR(255),
-		type       VARCHAR(255),
-		indexed    NUMERIC)`
-
-	err = dbEngine.connection.Exec(SQL)
-	if err != nil {
-		t.Error("dbEngine.connection.Exec", err)
-	}
-
-	// create test table
-	if err := dbEngine.CreateCollection("testTable"); err != nil {
-		t.Error("dbEngine.CreateCollection", err)
-	}
-
+	// create fake db collection in memory
 	var dbCollection = &DBCollection{
 		Name:         "testTable",
 		FilterGroups: make(map[string]*StructDBFilterGroup),
 	}
 
-	err = dbCollection.AddColumn("type", "string", false)
-	if err != nil {
-		t.Error("dbCollection.AddColumn", err)
+	// add columns to fake db collection
+	dbEngine.attributeTypes = map[string]map[string]string{
+		"testTable": {
+			"type": "string",
+			"_id": "string",
+		},
 	}
 
 	var wrongGroupName = "_initial_value_"
@@ -190,7 +166,6 @@ func TestApplyFilters(t *testing.T) {
 	// Order of keys in this map is IMPORTANT!!!
 	context.RequestArguments = map[string]string{
 		"_id":    "!=58592a4d9ccee8613b5f16e8,58591b893792efc42e122da5",
-		"action": "count",
 	}
 
 	// We should test functionality few times, because of map processing could take values
