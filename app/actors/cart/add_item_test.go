@@ -85,6 +85,7 @@ func TestCartItem(t *testing.T) {
 	}
 
 	// test
+	testCartGetSubtotal(t, currentCart)
 	testCartAddItem(t, cartItem)
 
 	// save cart
@@ -102,6 +103,15 @@ func TestCartItem(t *testing.T) {
 	testAPICartInfo(t, applicationContext)
 }
 
+func testCartGetSubtotal(t *testing.T, currentCart cart.InterfaceCart) {
+	var gotSubtotal = currentCart.GetSubtotal()
+	if gotSubtotal != constExpectedPrice {
+		t.Errorf("Incorrect Cart Subtotal. Expected: '%v'. Got: '%v'.", constExpectedPrice, gotSubtotal)
+	}
+
+	fmt.Println("testCartGetSubtotal RUN CHECK DONE")
+}
+
 func testCartAddItem(t *testing.T, cartItem cart.InterfaceCartItem) {
 	cartItemProduct := cartItem.GetProduct()
 
@@ -116,7 +126,7 @@ func testCartAddItem(t *testing.T, cartItem cart.InterfaceCartItem) {
 		t.Errorf("Incorrect Price. Expected: '%v'. Got: '%v'.", constExpectedPrice, gotPrice)
 	}
 
-	fmt.Println("testCartAddItem DONE")
+	fmt.Println("testCartAddItem RUN CHECK DONE")
 }
 
 func testAPICartInfo(t *testing.T, applicationContext api.InterfaceApplicationContext) {
@@ -140,7 +150,7 @@ func testAPICartInfo(t *testing.T, applicationContext api.InterfaceApplicationCo
 		t.Errorf("Incorrect Price. Expected: '%v'. Got: '%v'.", constExpectedPrice, gotPrice)
 	}
 
-	fmt.Println("testAPICartInfo DONE")
+	fmt.Println("testAPICartInfo RUN CHECK DONE")
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
