@@ -56,10 +56,6 @@ func APICartInfo(context api.InterfaceApplicationContext) (interface{}, error) {
 
 			if product := cartItem.GetProduct(); product != nil {
 
-				if err := product.ApplyOptions(cartItem.GetOptions()); err != nil {
-					return nil, env.ErrorDispatch(err)
-				}
-
 				productData := make(map[string]interface{})
 
 				productData["name"] = product.GetName()
