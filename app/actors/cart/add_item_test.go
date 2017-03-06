@@ -5,10 +5,20 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ottemo/foundation/api"
+	"github.com/ottemo/foundation/api/rest"
+	cartActor "github.com/ottemo/foundation/app/actors/cart"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/models/cart"
 	"github.com/ottemo/foundation/app/models/product"
+)
+
+const (
+	constTestSku         = "sku"
+	constTestSkuModifier = "-mod"
+	constExpectedPrice   = 11.0
 )
 
 func TestMain(m *testing.M) {
@@ -20,8 +30,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCartAddItem(t *testing.T) {
-
+func TestCartItem(t *testing.T) {
 	currentVisitor, err := test.GetRandomVisitor()
 	if err != nil {
 		t.Error(err)
@@ -37,12 +46,9 @@ func TestCartAddItem(t *testing.T) {
 		t.Error(err)
 	}
 
-	var testSku = "sku"
-	var testSkuModifier = "-mod"
-
 	var productModel = createProductFromJson(t, `{
 		"_id": "123456789012345678904444",
-		"sku": "`+testSku+`",
+		"sku": "`+constTestSku+`",
 		"name": "Test",
 		"price": 1,
 		"options": {
@@ -51,7 +57,7 @@ func TestCartAddItem(t *testing.T) {
 				"options": {
 					"red_2": {
 						"key": "red_2", "label": "red-2", "order": 1,
-						"sku": "`+testSkuModifier+`",
+						"sku": "`+constTestSkuModifier+`",
 						"price": "+10"
 					},
 					"red_3": {"key": "red_3", "label": "red-3", "order": 2, "sku": "-3"}
@@ -78,20 +84,63 @@ func TestCartAddItem(t *testing.T) {
 		t.Error(err)
 	}
 
-	cartItemProduct := cartItem.GetProduct()
+	// test
+	testCartAddItem(t, cartItem)
+
+	// save cart
+	applicationContext := new(rest.DefaultRestApplicationContext)
+	applicationContext.SetSession(currentCheckout.GetSession())
+
+	currentCheckout.GetSession().Set(cart.ConstSessionKeyCurrentCart, currentCart.GetID())
+
+	err = currentCart.Save()
+	if err != nil {
+		t.Error(err)
+	}
 
 	// test
-	var expectedSku = testSku + testSkuModifier
+	testAPICartInfo(t, applicationContext)
+}
+
+func testCartAddItem(t *testing.T, cartItem cart.InterfaceCartItem) {
+	cartItemProduct := cartItem.GetProduct()
+
+	var expectedSku = constTestSku + constTestSkuModifier
 	var gotSku = cartItemProduct.GetSku()
 	if gotSku != expectedSku {
 		t.Errorf("Incorrect Sku. Expected: '%v'. Got: '%v'.", expectedSku, gotSku)
 	}
 
-	var expectedPrice = 11.0
 	var gotPrice = cartItemProduct.GetPrice()
-	if gotPrice != expectedPrice {
-		t.Errorf("Incorrect Price. Expected: '%v'. Got: '%v'.", expectedPrice, gotPrice)
+	if gotPrice != constExpectedPrice {
+		t.Errorf("Incorrect Price. Expected: '%v'. Got: '%v'.", constExpectedPrice, gotPrice)
 	}
+
+	fmt.Println("testCartAddItem DONE")
+}
+
+func testAPICartInfo(t *testing.T, applicationContext api.InterfaceApplicationContext) {
+	loadedCart, err := cartActor.APICartInfo(applicationContext)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var loadedCartMap = loadedCart.(map[string]interface{})
+	var items = loadedCartMap["items"].([]map[string]interface{})
+	var itemProduct = items[0]["product"].(map[string]interface{})
+
+	var expectedSku = constTestSku + constTestSkuModifier
+	var gotSku = itemProduct["sku"].(string)
+	if gotSku != expectedSku {
+		t.Errorf("Incorrect Sku. Expected: '%v'. Got: '%v'.", expectedSku, gotSku)
+	}
+
+	var gotPrice = itemProduct["price"].(float64)
+	if gotPrice != constExpectedPrice {
+		t.Errorf("Incorrect Price. Expected: '%v'. Got: '%v'.", constExpectedPrice, gotPrice)
+	}
+
+	fmt.Println("testAPICartInfo DONE")
 }
 
 func createProductFromJson(t *testing.T, json string) product.InterfaceProduct {
