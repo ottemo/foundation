@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/actors/product/review"
 	"github.com/ottemo/foundation/app/actors/visitor"
 	"github.com/ottemo/foundation/test"
 	"github.com/ottemo/foundation/utils"
@@ -150,10 +149,12 @@ var apiCreateGiftCard = giftcard.Create
 // GET
 var apiListGiftCards = giftcard.GetList
 var apiGetGiftCardByID = giftcard.GetSingleID
+var apiGetGiftCardByCode = giftcard.GetSingleCode
+var apiGiftCardCodeUnique = giftcard.IfGiftCardCodeUnique
 
 //var apiGetProductRating = review.APIGetProductRating
 // PUT
-var apiUpdateProductReview = review.APIUpdateReview
+var apiUpdateGiftCard = giftcard.Edit
 
 func TestMain(m *testing.M) {
 	err := test.StartAppInTestingMode()
@@ -192,29 +193,67 @@ func TestGiftCardAPI(t *testing.T) {
 	// Create
 	//--------------------------------------------------------------------------------------------------------------
 
-	giftcardMap := createGiftCard(t, context, visitor1["_id"], 10, "1234567890", time.Now(), "Test 1", "Test Name 1", "test1@test.com", "test1")
+	giftcardMap1 := createGiftCard(t, context, visitor1["_id"], 10, "1234567890", time.Now(), "Test 1", "Test Name 1", "test1@test.com", "test1")
 
 	checkGiftCardsCount(t, context, "guest without content", "", "0", false)
 	checkGiftCardsCount(t, context, "visitor own without content", visitor1["_id"], "1", true)
-	checkGiftCardsCount(t, context, "visitor other without content", visitor2["_id"], "0", false)
+	checkGiftCardsCount(t, context, "visitor other without content1", visitor2["_id"], "0", false)
 	checkGiftCardsCount(t, context, "admin without content", "admin", "1", true)
 
-	checkGetGiftCard(t, context, "", giftcardMap["_id"], "guest", false)
-	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap["_id"], "owner", true)
-	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap["_id"], "other", false)
-	checkGetGiftCard(t, context, "admin", giftcardMap["_id"], "admin", true)
+	checkGetGiftCard(t, context, "", giftcardMap1["_id"], "guest", false)
+	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap1["_id"], "owner1", true)
+	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap1["_id"], "other", false)
+	checkGetGiftCard(t, context, "admin", giftcardMap1["_id"], "admin", true)
 
-	giftcardMap = createGiftCard(t, context, visitor2["_id"], 20, "09876654321", time.Now(), "Test 2", "Test Name 2", "test2@test.com", "test2")
+	checkGetGiftCardByCode(t, context, "", giftcardMap1["code"], "guest", true)
+	checkGetGiftCardByCode(t, context, visitor1["_id"], giftcardMap1["code"], "owner1", true)
+	checkGetGiftCardByCode(t, context, visitor2["_id"], giftcardMap1["code"], "other", true)
+	checkGetGiftCardByCode(t, context, "admin", giftcardMap1["code"], "admin", true)
+
+	checkGiftCardCode(t, context, "", giftcardMap1["code"], "guest", false)
+	checkGiftCardCode(t, context, visitor1["_id"], giftcardMap1["code"], "owner1", false)
+	checkGiftCardCode(t, context, visitor2["_id"], giftcardMap1["code"], "other", false)
+	checkGiftCardCode(t, context, "admin", giftcardMap1["code"], "admin", false)
+
+	checkGiftCardCode(t, context, "", "1234567891", "guest", true)
+	checkGiftCardCode(t, context, visitor1["_id"], "1234567891", "owner1", true)
+	checkGiftCardCode(t, context, visitor2["_id"], "1234567891", "other", true)
+	checkGiftCardCode(t, context, "admin", "1234567891", "admin", true)
+
+	//updateByVisitorGiftCard(t, context, visitor1["_id"], giftcardMap1["_id"], false)
+	//updateByVisitorGiftCard(t, context, visitor2["_id"], giftcardMap1["_id"], false)
+	//updateByVisitorGiftCard(t, context, "admin", giftcardMap1["_id"], true)
+
+	giftcardMap2 := createGiftCard(t, context, visitor2["_id"], 20, "09876654321", time.Now(), "Test 2", "Test Name 2", "test2@test.com", "test2")
 
 	checkGiftCardsCount(t, context, "guest without content", "", "0", false)
 	checkGiftCardsCount(t, context, "visitor own without content", visitor1["_id"], "1", true)
-	checkGiftCardsCount(t, context, "visitor other without content", visitor2["_id"], "1", false)
-	checkGiftCardsCount(t, context, "admin without content", "admin", "3", true)
+	checkGiftCardsCount(t, context, "visitor other without content2", visitor2["_id"], "1", true)
+	checkGiftCardsCount(t, context, "admin without content", "admin", "2", true)
 
-	checkGetGiftCard(t, context, "", giftcardMap["_id"], "not aproved, guest", false)
-	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap["_id"], "not aproved, owner", true)
-	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap["_id"], "not aproved, other", false)
-	checkGetGiftCard(t, context, "admin", giftcardMap["_id"], "not aproved, admin", true)
+	checkGetGiftCard(t, context, "", giftcardMap2["_id"], "guest", false)
+	checkGetGiftCard(t, context, visitor1["_id"], giftcardMap2["_id"], "owner2", false)
+	checkGetGiftCard(t, context, visitor2["_id"], giftcardMap2["_id"], "other", true)
+	checkGetGiftCard(t, context, "admin", giftcardMap2["_id"], "admin", true)
+
+	checkGetGiftCardByCode(t, context, "", giftcardMap2["code"], "guest", true)
+	checkGetGiftCardByCode(t, context, visitor1["_id"], giftcardMap2["code"], "owner", true)
+	checkGetGiftCardByCode(t, context, visitor2["_id"], giftcardMap2["code"], "other", true)
+	checkGetGiftCardByCode(t, context, "admin", giftcardMap2["code"], "admin", true)
+
+	checkGiftCardCode(t, context, "", giftcardMap2["code"], "guest", false)
+	checkGiftCardCode(t, context, visitor1["_id"], giftcardMap2["code"], "owner1", false)
+	checkGiftCardCode(t, context, visitor2["_id"], giftcardMap2["code"], "other", false)
+	checkGiftCardCode(t, context, "admin", giftcardMap2["code"], "admin", false)
+
+	checkGiftCardCode(t, context, "", "19876654321", "guest", true)
+	checkGiftCardCode(t, context, visitor1["_id"], "19876654321", "owner1", true)
+	checkGiftCardCode(t, context, visitor2["_id"], "19876654321", "other", true)
+	checkGiftCardCode(t, context, "admin", "19876654321", "admin", true)
+
+	//updateByVisitorGiftCard(t, context, visitor1["_id"], giftcardMap2["_id"], false)
+	//updateByVisitorGiftCard(t, context, visitor2["_id"], giftcardMap2["_id"], false)
+	//updateByVisitorGiftCard(t, context, "admin", giftcardMap2["_id"], true)
 
 }
 
@@ -263,53 +302,59 @@ func createGiftCard(t *testing.T, context *testContext, visitorID interface{}, a
 	return (utils.InterfaceToMap(giftCardMap))
 }
 
-func updateByVisitorOwnReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}) map[string]interface{} {
-	var reviewValue = "review text"
+func updateByVisitorGiftCard(t *testing.T, context *testContext, visitorID interface{}, giftCardID interface{}, canUpdate bool) map[string]interface{} {
+	giftCardAmount := 30
+	customMessage := "test updated"
+	recipientEmail := "newtest@test.com"
+	giftCardUniqueCode := utils.InterfaceToString(time.Now().UnixNano())
 
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
+
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
 	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
 
 	context.ContextValues = map[string]interface{}{}
 	context.RequestContent = map[string]interface{}{
-		"review":        reviewValue,
-		"unknown_field": "value",
+		"amount": giftCardAmount,
+		"message": customMessage,
+		"recipient_mailbox": recipientEmail,
+		"code": giftCardUniqueCode,
 	}
 
 	context.RequestArguments = map[string]string{
-		"reviewID": utils.InterfaceToString(reviewID),
+		"id": utils.InterfaceToString(giftCardID),
 	}
 
-	updateResult, err := apiUpdateProductReview(context)
+	updateResult, err := apiUpdateGiftCard(context)
+	var updateGiftCardMap = utils.InterfaceToMap(updateResult)
 	if err != nil {
-		t.Error(err)
+		if canUpdate {
+			t.Error(err)
+			return updateGiftCardMap
+		}
+	} else if !canUpdate {
+		t.Error(visitorID, ", should not be able to get giftcard")
 	}
-	var updateResultMap = utils.InterfaceToMap(updateResult)
 
-	if utils.InterfaceToString(updateResultMap["approved"]) != "false" {
-		t.Error("updated by visitor review should not be approved")
+
+	if utils.InterfaceToInt(updateGiftCardMap["amount"]) != giftCardAmount {
+		t.Error("updated gift card amount (" + utils.InterfaceToString(updateGiftCardMap["amount"]) + ") should be " + utils.InterfaceToString(giftCardAmount))
 	}
-	if utils.InterfaceToString(updateResultMap["review"]) != reviewValue {
-		t.Error("updated by visitor review is incorrect")
+	if utils.InterfaceToString(updateGiftCardMap["recipient_mailbox"]) != recipientEmail {
+		t.Error("updated gift card recipient_mailbox (" + utils.InterfaceToString(updateGiftCardMap["recipient_mailbox"]) + ") should be " + recipientEmail)
+	}
+	if utils.InterfaceToString(updateGiftCardMap["code"]) != giftCardUniqueCode {
+		t.Error("updated gift card code (" + utils.InterfaceToString(updateGiftCardMap["code"]) + ") should be " + giftCardUniqueCode)
+	}
+	if utils.InterfaceToString(updateGiftCardMap["message"]) != customMessage {
+		t.Error("updated gift card message (" + utils.InterfaceToString(updateGiftCardMap["message"]) + ") should be " + customMessage)
 	}
 
 	return utils.InterfaceToMap(updateResult)
-}
-
-func updateByVisitorOtherReview(t *testing.T, context *testContext, visitorID interface{}, reviewID interface{}) {
-	context.GetSession().Set(api.ConstSessionKeyAdminRights, false)
-	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
-
-	context.ContextValues = map[string]interface{}{}
-	context.RequestContent = map[string]interface{}{}
-
-	context.RequestArguments = map[string]string{
-		"reviewID": utils.InterfaceToString(reviewID),
-	}
-
-	_, err := apiUpdateProductReview(context)
-	if err == nil {
-		t.Error("visitor can not update other visitor review")
-	}
 }
 
 func checkGetGiftCard(t *testing.T, context *testContext, visitorID interface{}, giftCardID interface{}, msg string, canGet bool) {
@@ -330,6 +375,64 @@ func checkGetGiftCard(t *testing.T, context *testContext, visitorID interface{},
 	}
 
 	result, err := apiGetGiftCardByID(context)
+	row := utils.InterfaceToMap(result)
+
+	if err != nil {
+		if canGet {
+			t.Error(err)
+		}
+	} else if len(row) != 0 && !canGet {
+		t.Error(msg, ", should not be able to get giftcard")
+	}
+}
+
+func checkGiftCardCode(t *testing.T, context *testContext, visitorID interface{}, giftCardCode interface{}, msg string, isUnique bool) {
+
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
+
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+
+	context.ContextValues = map[string]interface{}{}
+	context.RequestContent = map[string]interface{}{}
+	context.RequestArguments = map[string]string{
+		"giftcode": utils.InterfaceToString(giftCardCode),
+	}
+
+	result, err := apiGiftCardCodeUnique(context)
+	unique := utils.InterfaceToBool(result)
+
+	if err != nil {
+		if isUnique {
+			t.Error(err)
+		}
+	} else if unique && !isUnique {
+		t.Error(msg, ", giftcard code not unique")
+	}
+}
+
+func checkGetGiftCardByCode(t *testing.T, context *testContext, visitorID interface{}, giftCardCode interface{}, msg string, canGet bool) {
+
+	var isAdmin = false
+	if utils.InterfaceToString(visitorID) == "admin" {
+		isAdmin = true
+		visitorID = ""
+	}
+
+	context.GetSession().Set(api.ConstSessionKeyAdminRights, isAdmin)
+	context.GetSession().Set(visitorInterface.ConstSessionKeyVisitorID, visitorID)
+
+	context.ContextValues = map[string]interface{}{}
+	context.RequestContent = map[string]interface{}{}
+	context.RequestArguments = map[string]string{
+		"giftcode": utils.InterfaceToString(giftCardCode),
+	}
+
+	result, err := apiGetGiftCardByCode(context)
 	row := utils.InterfaceToMap(result)
 
 	if err != nil {
