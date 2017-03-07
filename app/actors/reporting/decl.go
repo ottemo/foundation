@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+// Package global constants
+const (
+
+	ConstErrorModule = "reporting"
+	ConstErrorLevel  = 6
+)
+
 // ProductPerfItem is a container for sales by item reporting
 type ProductPerfItem struct {
 	Name       string  `json:"name"`
