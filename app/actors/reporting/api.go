@@ -546,7 +546,7 @@ func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error)
 			"code":   utils.InterfaceToString(item["code"]),
 			"name":   utils.InterfaceToString(item["name"]),
 			"amount": amount,
-			"date":   "",
+			"date":   utils.InterfaceToTime(item["created_at"]),
 		}
 		total = total + amount
 		count = count + 1
