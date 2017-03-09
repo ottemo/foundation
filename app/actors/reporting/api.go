@@ -554,7 +554,7 @@ func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error)
 	}
 
 	results := map[string]interface{}{
-		"gift-cards": giftCards,
+		"gift_cards": giftCards,
 		"total":      total,
 		"count":      count,
 		"perf_ms":    time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
