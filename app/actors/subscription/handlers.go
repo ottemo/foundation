@@ -197,9 +197,6 @@ func subscriptionCreate(currentCheckout checkout.InterfaceCheckout, checkoutOrde
 			}
 
 			if product := cartItem.GetProduct(); product != nil {
-				if err := product.ApplyOptions(subscriptionItem.Options); err != nil {
-					return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelActor, "45e3febc-9aa8-45b3-8506-ae4876454e4e", err.Error())
-				}
 				subscriptionItem.Name = product.GetName()
 				subscriptionItem.Sku = product.GetSku()
 				subscriptionItem.Price = product.GetPrice()
