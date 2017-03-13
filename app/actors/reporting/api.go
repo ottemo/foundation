@@ -1,18 +1,20 @@
 package reporting
 
 import (
+	"errors"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
 
+	"github.com/ottemo/foundation/app/actors/discount/giftcard"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
-	"errors"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -20,12 +22,14 @@ func setupAPI() error {
 
 	// Admin only endpoint
 	service := api.GetRestService()
+
 	service.GET("reporting/product-performance", api.IsAdminHandler(listProductPerformance))
 	service.GET("reporting/customer-activity", api.IsAdminHandler(listCustomerActivity))
 	service.GET("reporting/payment-method", api.IsAdminHandler(listPaymentMethod))
 	service.GET("reporting/shipping-method", api.IsAdminHandler(listShippingMethod))
 	service.GET("reporting/location-country", api.IsAdminHandler(listLocationCountry))
 	service.GET("reporting/location-us", api.IsAdminHandler(listLocationUS))
+	service.GET("reporting/gift-cards", api.IsAdminHandler(listGiftCards))
 
 	return nil
 }
@@ -37,15 +41,9 @@ func listProductPerformance(context api.InterfaceApplicationContext) (interface{
 	// `2006-01-02 15:04`
 	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
 	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	if startDate.IsZero() || endDate.IsZero() {
-		context.SetResponseStatusBadRequest()
-		msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-		return nil, env.ErrorNew("reporting", 6, "3ed77c0d-2c54-4401-9feb-6e1d04b8baef", msg)
-	}
-	if startDate.After(endDate) || startDate.Equal(endDate) {
-		context.SetResponseStatusBadRequest()
-		msg := "the start_date must come before the end_date"
-		return nil, env.ErrorNew("reporting", 6, "2eb9680c-d9a8-42ce-af63-fd6b0b742d0d", msg)
+	err := ValidateStartAndEndDate(startDate, endDate)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	foundOrders := order.GetOrdersCreatedBetween(startDate, endDate)
@@ -128,25 +126,6 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 
 	sortArg := utils.InterfaceToString(context.GetRequestArgument("sort"))
 
-	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
-	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
-	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
-
-	// Date range validation
-	if hasDateRange {
-		if startDate.IsZero() || endDate.IsZero() {
-			context.SetResponseStatusBadRequest()
-			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "88b6fe1f-0e2f-4e63-b0a4-2e767c27dfd8", msg)
-		}
-		if startDate.After(endDate) || startDate.Equal(endDate) {
-			context.SetResponseStatusBadRequest()
-			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "fb30b99c-0648-4219-8b9c-933edf9f7ed3", msg)
-		}
-	}
-
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
 	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
@@ -161,13 +140,10 @@ func listCustomerActivity(context api.InterfaceApplicationContext) (interface{},
 	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
 		env.LogError(errors.New("d6c9dd6d-40ed-4820-9197-fadea124e46c : " + err.Error()))
 	}
-	if hasDateRange {
-		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
-			env.LogError(errors.New("e1298ee1-9a10-47df-8404-908a4d9f4981 : " + err.Error()))
-		}
-		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
-			env.LogError(errors.New("4afb1a1c-b8c9-42db-9e38-4286cc914190 : " + err.Error()))
-		}
+
+	err := ApplyDateRangeFilter(context, oModel.GetDBCollection())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// This is the lite response StructListItem
@@ -255,25 +231,6 @@ func aggregateCustomerActivity(foundOrders []models.StructListItem) []CustomerAc
 func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, error) {
 	perfStart := time.Now()
 
-	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
-	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
-	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
-
-	// Date range validation
-	if hasDateRange {
-		if startDate.IsZero() || endDate.IsZero() {
-			context.SetResponseStatusBadRequest()
-			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "5731fd92-b2b1-44e7-8940-395575bca081", msg)
-		}
-		if startDate.After(endDate) || startDate.Equal(endDate) {
-			context.SetResponseStatusBadRequest()
-			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "d771dc9d-de2a-4e84-8d5e-9bd050cc5d2d", msg)
-		}
-	}
-
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
 	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
@@ -285,13 +242,10 @@ func listPaymentMethod(context api.InterfaceApplicationContext) (interface{}, er
 	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
 		env.LogError(errors.New("f7524ade-0983-45a6-9f31-ed11de180680 : " + err.Error()))
 	}
-	if hasDateRange {
-		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
-			env.LogError(errors.New("b4206d27-7f73-47de-9e7a-4afe0600886d : " + err.Error()))
-		}
-		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
-			env.LogError(errors.New("be1b13f1-db44-47b9-b6a5-a05253b100bf : " + err.Error()))
-		}
+
+	err := ApplyDateRangeFilter(context, oModel.GetDBCollection())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// This is the lite response StructListItem
@@ -389,25 +343,6 @@ func aggregateGeneral(foundOrders []models.StructListItem, keyNameMap map[string
 func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, error) {
 	perfStart := time.Now()
 
-	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
-	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
-	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
-
-	// Date range validation
-	if hasDateRange {
-		if startDate.IsZero() || endDate.IsZero() {
-			context.SetResponseStatusBadRequest()
-			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "48beae0f-f6fb-49f0-adff-1d0a2f8b5fff", msg)
-		}
-		if startDate.After(endDate) || startDate.Equal(endDate) {
-			context.SetResponseStatusBadRequest()
-			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "eb050c5e-6ee8-4d09-9869-1813b252d3aa", msg)
-		}
-	}
-
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
 	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
@@ -419,13 +354,10 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
 		env.LogError(errors.New("d98106a4-63f9-4f7d-b854-74c6af6a0a33 : " + err.Error()))
 	}
-	if hasDateRange {
-		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
-			env.LogError(errors.New("2e38dab2-dedb-4e91-9538-b9d732c90408 : " + err.Error()))
-		}
-		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
-			env.LogError(errors.New("eccd9296-fb5c-476b-ba05-efbbbb21a3b1 : " + err.Error()))
-		}
+
+	err := ApplyDateRangeFilter(context, oModel.GetDBCollection())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// This is the lite response StructListItem
@@ -453,25 +385,6 @@ func listShippingMethod(context api.InterfaceApplicationContext) (interface{}, e
 func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, error) {
 	perfStart := time.Now()
 
-	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
-	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
-	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
-
-	// Date range validation
-	if hasDateRange {
-		if startDate.IsZero() || endDate.IsZero() {
-			context.SetResponseStatusBadRequest()
-			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "8b9940cc-cc45-4ab8-af92-4f3cff0db5b1", msg)
-		}
-		if startDate.After(endDate) || startDate.Equal(endDate) {
-			context.SetResponseStatusBadRequest()
-			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "dd9fad29-4321-4951-976f-9204890437bd", msg)
-		}
-	}
-
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
 	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
@@ -483,13 +396,10 @@ func listLocationCountry(context api.InterfaceApplicationContext) (interface{}, 
 	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
 		env.LogError(errors.New("26dbf8cd-b884-4d2d-af4d-d0328ec4e24a : " + err.Error()))
 	}
-	if hasDateRange {
-		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
-			env.LogError(errors.New("267ae749-0c75-4845-bc45-799978671084 : " + err.Error()))
-		}
-		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
-			env.LogError(errors.New("c6c49618-49ab-4bf9-b123-6d2631ab3810 : " + err.Error()))
-		}
+
+	err := ApplyDateRangeFilter(context, oModel.GetDBCollection())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// This is the lite response StructListItem
@@ -562,25 +472,6 @@ func aggregateGeneralNested(foundOrders []models.StructListItem, aggKeyContainer
 func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error) {
 	perfStart := time.Now()
 
-	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
-	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
-	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
-	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
-
-	// Date range validation
-	if hasDateRange {
-		if startDate.IsZero() || endDate.IsZero() {
-			context.SetResponseStatusBadRequest()
-			msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
-			return nil, env.ErrorNew("reporting", 6, "2eb1c70a-3d37-46ab-91b1-9e6124685406", msg)
-		}
-		if startDate.After(endDate) || startDate.Equal(endDate) {
-			context.SetResponseStatusBadRequest()
-			msg := "the start_date must come before the end_date"
-			return nil, env.ErrorNew("reporting", 6, "bc431db2-77ea-45da-9e61-3ee156ec62b6", msg)
-		}
-	}
-
 	// Fetch orders
 	oModel, _ := order.GetOrderCollectionModel()
 	if err := oModel.ListAddExtraAttribute("created_at"); err != nil {
@@ -595,13 +486,10 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 	if err := oModel.ListAddExtraAttribute("grand_total"); err != nil {
 		env.LogError(errors.New("c2a7884f-30ec-46cf-9453-723fba5c4a72 : " + err.Error()))
 	}
-	if hasDateRange {
-		if err := oModel.GetDBCollection().AddFilter("created_at", ">=", startDate); err != nil {
-			env.LogError(errors.New("29e271f7-97c4-4be1-a758-4c5360591814 : " + err.Error()))
-		}
-		if err := oModel.GetDBCollection().AddFilter("created_at", "<", endDate); err != nil {
-			env.LogError(errors.New("8648b2b7-1450-4409-9324-17d7316d023c : " + err.Error()))
-		}
+
+	err := ApplyDateRangeFilter(context, oModel.GetDBCollection())
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	// This is the lite response StructListItem
@@ -624,4 +512,91 @@ func listLocationUS(context api.InterfaceApplicationContext) (interface{}, error
 		"perf_ms":         time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
 	}
 	return response, nil
+}
+
+// listGiftCards returns information about gift cards
+func listGiftCards(context api.InterfaceApplicationContext) (interface{}, error) {
+	perfStart := time.Now()
+
+	giftCardCollection, err := db.GetCollection(giftcard.ConstCollectionNameGiftCard)
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	err = ApplyDateRangeFilter(context, giftCardCollection)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	collectionRecords, err := giftCardCollection.Load()
+	if err != nil {
+		context.SetResponseStatusBadRequest()
+		return nil, env.ErrorDispatch(err)
+	}
+
+	var giftCards []map[string]interface{}
+	var total = 0.0
+	var count = 0
+
+	// get gift cards information
+	for _, item := range collectionRecords {
+		amount := utils.InterfaceToFloat64(item["amount"])
+		giftCardItem := map[string]interface{}{
+			"code":   utils.InterfaceToString(item["code"]),
+			"name":   utils.InterfaceToString(item["name"]),
+			"amount": amount,
+			"date":   utils.InterfaceToTime(item["created_at"]),
+		}
+		total = total + amount
+		count = count + 1
+		giftCards = append(giftCards, giftCardItem)
+	}
+
+	results := map[string]interface{}{
+		"aggregate_items": giftCards,
+		"total":      total,
+		"count":      count,
+		"perf_ms":    time.Now().Sub(perfStart).Seconds() * 1e3, // in milliseconds
+	}
+
+	return results, nil
+}
+
+func ApplyDateRangeFilter(context api.InterfaceApplicationContext, collection db.InterfaceDBCollection) error {
+	// Expecting dates in UTC, and adjusted for your timezone `2006-01-02 15:04`
+	startDate := utils.InterfaceToTime(context.GetRequestArgument("start_date"))
+	endDate := utils.InterfaceToTime(context.GetRequestArgument("end_date"))
+	hasDateRange := !startDate.IsZero() || !endDate.IsZero()
+
+	// Date range validation
+	if hasDateRange {
+		err := ValidateStartAndEndDate(startDate, endDate)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+
+		if err := collection.AddFilter("created_at", ">=", startDate); err != nil {
+			env.LogError(errors.New("30c49961-ab76-4eaa-a7ba-24d8aa591536 : " + err.Error()))
+		}
+		if err := collection.AddFilter("created_at", "<", endDate); err != nil {
+			env.LogError(errors.New("47403827-0a63-4067-bbb3-f00b85d6e775 : " + err.Error()))
+		}
+	}
+	return nil
+}
+
+// ValidateStartAndEndDate - date range validation
+func ValidateStartAndEndDate(startDate time.Time, endDate time.Time) error {
+	if startDate.IsZero() || endDate.IsZero() {
+		msg := "start_date or end_date missing from response, or not formatted in YYYY-MM-DD"
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "88b6fe1f-0e2f-4e63-b0a4-2e767c27dfd8", msg)
+	}
+
+	if startDate.After(endDate) || startDate.Equal(endDate) {
+		msg := "the start_date must come before the end_date"
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fb30b99c-0648-4219-8b9c-933edf9f7ed3", msg)
+	}
+
+	return nil
 }
