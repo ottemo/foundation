@@ -54,6 +54,7 @@ type InterfaceOrder interface {
 
 	AddItem(productID string, qty int, productOptions map[string]interface{}) (InterfaceOrderItem, error)
 	RemoveItem(itemIdx int) error
+	RemoveAllItems() error
 
 	CalculateTotals() error
 
