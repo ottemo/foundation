@@ -9,8 +9,12 @@ import (
 var (
 	locks      = make(map[uintptr]*syncMutex)
 	locksMutex sync.Mutex
+
+	scalarLocks      = make(map[interface{}]*scalarSyncMutex)
+	scalarLocksMutex sync.Mutex
 )
 
+//----------------------------------------------------------------------------------------------------------------------
 // syncMutex an extended variation of sync.Mutex
 type syncMutex struct {
 	index uintptr
@@ -130,6 +134,73 @@ func SyncUnlock(subject interface{}) error {
 	return nil
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+// scalarSyncMutex an extended variation of sync.Mutex which holds count of simultaneous references to it
+// and run callback if no more references left
+type scalarSyncMutex struct {
+	refs  int
+	mutex sync.Mutex
+}
+
+// Lock holds the lock on a mutex
+func (it *scalarSyncMutex) lock() {
+	it.refs++
+	it.mutex.Lock()
+}
+
+// Unlock releases the mutex lock
+func (it *scalarSyncMutex) unlock(callback func()) {
+	it.refs--
+	if it.refs == 0 && callback != nil {
+		callback()
+	}
+	it.mutex.Unlock()
+}
+
+// getSyncScalarMutext returns existing mutex or creates new if needed
+func getSyncScalarMutext(subject interface{}, createNew bool) *scalarSyncMutex {
+	scalarLocksMutex.Lock()
+	defer scalarLocksMutex.Unlock()
+
+	mutexPtr, present := scalarLocks[subject]
+	if present {
+		return mutexPtr
+	} else if createNew {
+		mutexPtr = new(scalarSyncMutex)
+		scalarLocks[subject] = mutexPtr
+		return mutexPtr
+	}
+
+	return nil
+}
+
+// ScalarSyncLock holds mutex on a given scalar subject.
+func SyncScalarLock(subject interface{}) error {
+	var mutexPtr = getSyncScalarMutext(subject, true)
+	mutexPtr.lock()
+
+	return nil
+}
+
+// ScalarSyncUnlock releases mutex on a given scalar subject.
+// It forgets subject if no more refs exists.
+func SyncScalarUnlock(subject interface{}) error {
+	var mutexPtr = getSyncScalarMutext(subject, false)
+	if mutexPtr == nil {
+		return errors.New("can't get mutex for scalar " + subject.(string))
+	}
+
+	mutexPtr.unlock(func() {
+		scalarLocksMutex.Lock()
+		defer scalarLocksMutex.Unlock()
+
+		delete(scalarLocks, subject)
+	})
+
+	return nil
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 // pathItem represents the stack of (index, value, mutex) collected during path-walk on a tree like type value
 type pathItem struct {
 	parent *pathItem

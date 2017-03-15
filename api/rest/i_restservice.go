@@ -186,6 +186,10 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 			err = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c8a3bbf8-215f-4dff-b0e7-3d0d102ad02d", "Session init fail: "+err.Error())
 			_ = env.ErrorDispatch(err)
 		}
+
+		utils.SyncScalarLock(currentSession.GetID())
+		defer utils.SyncScalarUnlock(currentSession.GetID())
+
 		applicationContext.Session = currentSession
 
 		if utils.InterfaceToBool(env.ConfigGetValue(ConstConfigPathAPILogEnable)) {
