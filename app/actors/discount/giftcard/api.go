@@ -399,7 +399,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if row["_id"] != "" && row["_id"] != giftID {
+	if rowId, present := row["_id"]; rowId != "" && present && row["_id"] != giftID {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0f26ec81-e555-4856-89ed-e2b4e050c808", "Gift code must be unique")
 	}
