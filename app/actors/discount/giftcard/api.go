@@ -369,9 +369,9 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "recipient_mailbox", "code") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "recipient_mailbox", "code", "sku", "delivery_date", "recipient_mailbox", "recipient_name") {
 		context.SetResponseStatusBadRequest()
-		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or name or recipient_mailbox or sku or code have not been specified")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or recipient_mailbox or code or sku or delivery_date or recipient_mailbox or recipient_name have not been specified")
 	}
 
 	giftCard, err := GetGiftCardByID(giftID)
@@ -388,6 +388,10 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	customMessage := utils.InterfaceToString(requestData["message"])
 	recipientEmail := utils.InterfaceToString(requestData["recipient_mailbox"])
 	giftCardUniqueCode := utils.InterfaceToString(requestData["code"])
+	sku := utils.InterfaceToString(requestData["sku"])
+	delivery_date := utils.InterfaceToTime(requestData["delivery_date"])
+	recipient_mailbox := utils.InterfaceToString(requestData["recipient_mailbox"])
+	recipient_name := utils.InterfaceToString(requestData["recipient_name"])
 
 	row, err := getGiftCardByCode(giftCardUniqueCode)
 	if err != nil {
@@ -408,15 +412,20 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	if utils.InterfaceToString(requestData["status"]) == ConstGiftCardStatusCancelled {
 		giftCard["status"] = ConstGiftCardStatusCancelled
 	}
+
 	giftCard["code"] = giftCardUniqueCode
 	giftCard["amount"] = giftCardAmount
 	giftCard["message"] = customMessage
 	giftCard["recipient_mailbox"] = recipientEmail
+	giftCard["sku"] = sku
+	giftCard["delivery_date"] = delivery_date
+	giftCard["recipient_mailbox"] = recipient_mailbox
+	giftCard["recipient_name"] = recipient_name
 
 	_, err = giftCardCollection.Save(giftCard)
 	if err != nil {
 		context.SetResponseStatusBadRequest()
-		return false, env.ErrorDispatch(err)
+		return nil, env.ErrorDispatch(err)
 	}
 
 	return giftCard, nil
