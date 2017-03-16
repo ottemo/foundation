@@ -369,7 +369,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "recipient_mailbox", "code", "sku", "delivery_date", "recipient_mailbox", "recipient_name") {
+	if !utils.KeysInMapAndNotBlank(requestData, "amount", "message", "recipient_mailbox", "code", "sku", "delivery_date", "recipient_mailbox", "name") {
 		context.SetResponseStatusBadRequest()
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "237a4b72-2373-4e65-a546-4194a35e3d82", "amount or message or recipient_mailbox or code or sku or delivery_date or recipient_mailbox or recipient_name have not been specified")
 	}
@@ -391,7 +391,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	sku := utils.InterfaceToString(requestData["sku"])
 	delivery_date := utils.InterfaceToTime(requestData["delivery_date"])
 	recipient_mailbox := utils.InterfaceToString(requestData["recipient_mailbox"])
-	recipient_name := utils.InterfaceToString(requestData["recipient_name"])
+	name := utils.InterfaceToString(requestData["name"])
 
 	row, err := getGiftCardByCode(giftCardUniqueCode)
 	if err != nil {
@@ -420,7 +420,7 @@ func Edit(context api.InterfaceApplicationContext) (interface{}, error) {
 	giftCard["sku"] = sku
 	giftCard["delivery_date"] = delivery_date
 	giftCard["recipient_mailbox"] = recipient_mailbox
-	giftCard["recipient_name"] = recipient_name
+	giftCard["name"] = name
 
 	_, err = giftCardCollection.Save(giftCard)
 	if err != nil {
