@@ -1,7 +1,5 @@
 FROM gliderlabs/alpine
 
-RUN apk add --no-cache bash
-
 RUN mkdir -pv /home/ottemo/media
 RUN mkdir -pv /home/ottemo/foundation
 RUN mkdir -pv /home/ottemo/foundation/var/log

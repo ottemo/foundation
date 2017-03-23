@@ -32,6 +32,7 @@ if [ -n "$SECURE_COOKIE" ] ; then
 else
   echo "secure_cookie=false" >> ottemo.ini
 fi
+# ssl cert can be placed to nfs share or mounted as secret into container on kubernetes
 if [ -n "$SSL_CERT" ] ; then
   echo "ssl.cert=$SSL_CERT" >> ottemo.ini
 fi

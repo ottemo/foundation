@@ -8,6 +8,7 @@ cd $FOUNDATIONREPO
 
 date=$(date +%Y%m%d-%H%M%S)
 branch=$(git branch| awk '{print $2}')
+branch=$(echo $branch|sed 's/ /_/g')
 IMAGE="gcr.io/ottemo-kube/foundation:${branch}-${date}"
 
 echo "build foundation executable with golang:1.6 docker image"
