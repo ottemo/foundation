@@ -98,6 +98,17 @@ func (it *DefaultOrder) AddItem(productID string, qty int, productOptions map[st
 	return newOrderItem, nil
 }
 
+// RemoveAllItems removes all items from current order, or returns error
+func (it *DefaultOrder) RemoveAllItems() error {
+	for itemIdx := range it.Items {
+		err := it.RemoveItem(itemIdx)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
+	return nil
+}
+
 // RemoveItem removes line item from current order, or returns error
 func (it *DefaultOrder) RemoveItem(itemIdx int) error {
 	if orderItem, present := it.Items[itemIdx]; present {
