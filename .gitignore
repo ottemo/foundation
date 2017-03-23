@@ -13,6 +13,7 @@ tags
 tmp
 release
 var
+vendor
 .vagrant
 .vscode
 kg-media
@@ -38,6 +39,7 @@ foundation
 *.sublime-project
 *.sublime-workspace
 *.iml
+glide.lock
 
 # test dbs
 db/sqlite/test/ottemo.db
