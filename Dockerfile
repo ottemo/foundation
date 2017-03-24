@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine
+FROM alpine:3.5
 
 RUN mkdir -pv /home/ottemo/media
 RUN mkdir -pv /home/ottemo/foundation
