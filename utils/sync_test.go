@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
+	"sync"
 )
 
 //func BenchmarkPtrMapAccess(b *testing.B) {
@@ -227,4 +229,33 @@ func TestSyncSet(t *testing.T) {
 		<-finished
 		routines--
 	}
+}
+
+func TestScalarSyncSet(t *testing.T) {
+	var tests = []interface{}{"A", "B", "B", "B", "B", "B", "B", "A"}
+	var wg sync.WaitGroup
+	wg.Add(len(tests))
+
+	for _, test := range(tests) {
+		go func(scalar interface{}){
+			defer wg.Done()
+			var err error
+
+			err = SyncScalarLock(scalar)
+			if err != nil {
+				t.Error(err)
+			}
+
+			time.Sleep(time.Second)
+
+			err = SyncScalarUnlock(scalar)
+			if err != nil {
+				t.Error(err)
+			}
+		}(test)
+	}
+
+	wg.Wait()
+
+	fmt.Println("TestScalarSyncSet DONE")
 }
