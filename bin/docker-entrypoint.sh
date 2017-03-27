@@ -23,7 +23,12 @@ if [ -n "$MONGOUSER" ] ; then
 fi
 uri="$uri$MONGOHOST/$MONGODB"
 
-echo "media.fsmedia.folder=/home/ottemo/media" > ottemo.ini
+if [ -n "$MEDIAFOLDER" ] ; then
+  echo "media.fsmedia.folder=$MEDIAFOLDER" > ottemo.ini
+else
+  echo "media.fsmedia.folder=/home/ottemo/media" > ottemo.ini
+fi
+
 echo "mongodb.db=$MONGODB" >> ottemo.ini
 echo "mongodb.uri=$uri" >> ottemo.ini
 
