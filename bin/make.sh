@@ -68,6 +68,10 @@ TAGS=$(echo $TAGS| sed 's/,/ /g')
 TAGS="-tags '$TAGS'"
 fi
 
+# install glide to $GOPATH and project dependencies
+go get github.com/Masterminds/glide
+$GOPATH/bin/glide install
+
 CMD="go get $TAGS $OTTEMOPKG"
 eval $CMD
 
