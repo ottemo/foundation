@@ -72,8 +72,5 @@ fi
 go get github.com/Masterminds/glide
 $GOPATH/bin/glide install
 
-CMD="go get $TAGS $OTTEMOPKG"
-eval $CMD
-
 CMD="go build -a $TAGS $LDFLAGS $OTTEMOPKG"
 eval CGO_ENABLED=0 GOOS=linux $CMD
