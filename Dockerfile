@@ -1,5 +1,7 @@
 FROM alpine:3.5
 
+RUN apk add --no-cache ca-certificates
+
 RUN mkdir -pv /home/ottemo/media
 RUN mkdir -pv /home/ottemo/foundation
 RUN mkdir -pv /home/ottemo/foundation/var/log
