@@ -29,22 +29,15 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 	}
 
 	// old method - HTTP specific
-	if request, ok := request.(*http.Request); ok {
+	if _, ok := request.(*http.Request); ok {
 		responseWriter := context.GetResponseWriter()
 		if responseWriter, ok := responseWriter.(http.ResponseWriter); ok {
-			// check session-cookie
-			cookie, err := request.Cookie(ConstSessionCookieName)
-			if err == nil {
-				// looking for cookie-based session
-				sessionID := cookie.Value
-
+			// check session-cookie or header
+			if sessionID := context.GetRequestSetting(ConstSessionCookieName); sessionID != nil {
+				sessionID := utils.InterfaceToString(sessionID)
 				sessionInstance, err := currentSessionService.Get(sessionID, true)
 				if err == nil {
 					return sessionInstance, nil
-				}
-			} else {
-				if err != http.ErrNoCookie {
-					return nil, err
 				}
 			}
 
@@ -58,7 +51,7 @@ func StartSession(context InterfaceApplicationContext) (InterfaceSession, error)
 			// - expires in 1 year
 			// - Domain defaults to the full subdomain path
 			cookieExpires := time.Now().Add(365 * 24 * time.Hour)
-			cookie = &http.Cookie{
+			var cookie = &http.Cookie{
 				Name:     ConstSessionCookieName,
 				Value:    result.GetID(),
 				Path:     "/",

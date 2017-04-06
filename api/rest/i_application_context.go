@@ -77,7 +77,7 @@ func (it *DefaultRestApplicationContext) GetRequestSetting(name string) interfac
 		return value.Value
 	}
 
-	if value, present := it.Request.Header[name]; present {
+	if value, present := it.Request.Header[http.CanonicalHeaderKey(name)]; present {
 		if len(value) > 1 {
 			return value
 		}
