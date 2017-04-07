@@ -137,11 +137,6 @@ func (it *DefaultCartItem) ValidateProduct() error {
 		}
 	}
 
-	err := cartProduct.ApplyOptions(it.GetOptions())
-	if err != nil {
-		return err
-	}
-
 	allowOversell := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathOversell))
 	if !allowOversell && product.GetRegisteredStock() != nil {
 		if qty := utils.InterfaceToInt(cartProduct.Get("qty")); qty < it.GetQty() {

@@ -1,30 +1,29 @@
-############################################################
-# Dockerfile to build Ottemo Foundation
-# Based on Ubuntu
-############################################################
+FROM alpine:3.5
 
-# Use the latest official ubuntu base image from docker hub
-FROM ubuntu:latest
+RUN apk add --no-cache ca-certificates
 
-RUN apt-get update
-RUN apt-get -y install bzr git golang-go gcc
-WORKDIR /opt/ottemo/go
-RUN mkdir -pv /opt/ottemo/go/src/github.com/ottemo
-RUN mkdir -pv /opt/ottemo/go/bin
-RUN mkdir -pv /opt/ottemo/go/pkg
-RUN mkdir -pv /opt/ottemo/media
+RUN mkdir -pv /home/ottemo/media
+RUN mkdir -pv /home/ottemo/foundation
+RUN mkdir -pv /home/ottemo/foundation/var/log
+RUN mkdir -pv /home/ottemo/foundation/var/session
 
-RUN git clone https://ottemo-dev:freshbox111222333@github.com/ottemo/foundation.git /opt/ottemo/go/src/github.com/ottemo/foundation
-RUN echo "media.fsmedia.folder=/opt/ottemo/media" >> /opt/ottemo/go/bin/ottemo.ini
-RUN echo "mongodb.db=ottemo-demo" >> /opt/ottemo/go/bin/ottemo.ini
-RUN echo "mongodb.uri=mongodb://ottemo:ottemo2014@candidate.42.mongolayer.com:10243,candidate.43.mongolayer.com:10327/ottemo-demo" >> /opt/ottemo/go/bin/ottemo.ini
+COPY foundation /home/ottemo/foundation/
 
-ENV GOPATH /opt/ottemo/go
-RUN cd /opt/ottemo/go/src/github.com/ottemo/foundation && go get -t 
-RUN cd $GOPATH/src/github.com/ottemo/foundation && go get gopkg.in/mgo.v2
-cd $GOPATH/src/github.com/ottemo/foundation && go get gopkg.in/mgo.v2/bson
-RUN cd /opt/ottemo/go/src/github.com/ottemo/foundation && go build -tags mongo
+# create links for proper logging
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/cron.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/events.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/paypal.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/rest.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/subscription.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/mongo.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/events.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/models.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/usps.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/product
+RUN ln -sf /dev/stderr /home/ottemo/foundation/var/log/errors.log
+
+COPY bin/docker-entrypoint.sh /home/ottemo/foundation/
 
 EXPOSE 3000
-WORKDIR /opt/ottemo/go/bin
-CMD ./foundation
+WORKDIR /home/ottemo/foundation
+CMD ./docker-entrypoint.sh

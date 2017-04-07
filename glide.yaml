@@ -1,0 +1,44 @@
+package: github.com/ottemo/foundation
+import:
+- package: github.com/Pallinder/go-randomdata
+- package: github.com/Sirupsen/logrus
+  version: v0.11.5
+- package: github.com/avator/authorizecim
+- package: github.com/bradfitz/gomemcache
+  subpackages:
+  - memcache
+- package: github.com/bshuster-repo/logrus-logstash-hook
+- package: github.com/dchest/captcha
+- package: github.com/disintegration/imaging
+  version: v1.1.0
+- package: github.com/drhodes/golorem
+- package: github.com/fiorix/go-redis
+  subpackages:
+  - redis
+- package: github.com/go-sql-driver/mysql
+  version: v1.3
+- package: github.com/gorhill/cronexpr
+  version: 1.0.0
+- package: github.com/julienschmidt/httprouter
+  version: v1.1
+- package: github.com/lionelbarrow/braintree-go
+  version: 0.9.0
+- package: github.com/mxk/go-sqlite
+  subpackages:
+  - sqlite3
+- package: github.com/stripe/stripe-go
+  version: v19.15.0
+  subpackages:
+  - card
+  - charge
+  - customer
+- package: github.com/vaughan0/go-ini
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
+- package: gopkg.in/xmlpath.v1
+testImport:
+- package: github.com/stretchr/testify
+  version: v1.1.4
+  subpackages:
+  - assert

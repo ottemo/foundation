@@ -781,11 +781,9 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 	}
 
 	// remove order items, and add new from current cart with new description
-	for index := range checkoutOrder.GetItems() {
-		err := checkoutOrder.RemoveItem(index + 1)
-		if err != nil {
-			return nil, env.ErrorDispatch(err)
-		}
+	err := checkoutOrder.RemoveAllItems()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
 	}
 
 	orderDescription := ""
@@ -809,7 +807,7 @@ func (it *DefaultCheckout) Submit() (interface{}, error) {
 		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f30e65ba-e0a4-4198-960a-0a0d1392dbb4", err.Error())
 	}
 
-	err := checkoutOrder.CalculateTotals()
+	err = checkoutOrder.CalculateTotals()
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
