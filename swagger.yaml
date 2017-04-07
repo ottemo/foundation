@@ -1,26 +1,92 @@
 swagger: "2.0"
+
 info:
   description: "Package foundation represents default Ottemo e-commerce product application entry point."
   version: "0.0.1"
   title: "Foundation API"
   termsOfService: "http://subject.to.change"
+
   contact:
     email: "subject@to.change"
+
   license:
     name: "Example 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+
 host: "localhost:3000"
+
 schemes:
 - "http"
 - "https"
+
 consumes:
 - "application/json"
+
 produces:
 - "application/json"
+
 paths:
-# /app/email {POST}
-# /app/location {GET}
-# /app/location {POST}
+
+  /app/email:
+    post:
+      tags:
+        - app
+      description: creates a new email message via a POST from the Contact Us form
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - formLocation
+          properties:
+            formLocation:
+              type: string
+              description: Web page(?) where form is located
+            email:
+              type: string
+          additionalProperties:
+            type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/location:
+    get:
+      tags:
+        - app
+      description: return a time zone of session
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - app
+      description: validate time zone and set it to session
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          description: One of parameters should be set
+          properties:
+            timeZone:
+              type: string
+            time_zone:
+              type: string
+            time:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /app/login {GET}
 # /app/login {POST}
 # /app/logout {GET}
@@ -33,6 +99,7 @@ paths:
     post:
       tags:
         - blog
+      description: creates blog post by provided data
       security:
         - OTTEMOSESSION: []
       parameters:
@@ -245,6 +312,7 @@ paths:
     post:
       tags:
       - auth
+      description: makes login for a current visit
       parameters:
         - in: body
           name: body
@@ -268,6 +336,7 @@ paths:
     get:
       tags:
         - auth
+      description: makes logout for current visit
       security:
         - OTTEMOSESSION: []
       responses:
@@ -346,7 +415,7 @@ definitions:
     properties:
       _id:
         type: string
-      identifier: 
+      identifier:
         type: string
       published:
         type: boolean
