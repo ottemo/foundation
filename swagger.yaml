@@ -1,0 +1,374 @@
+swagger: "2.0"
+info:
+  description: "Package foundation represents default Ottemo e-commerce product application entry point."
+  version: "0.0.1"
+  title: "Foundation API"
+  termsOfService: "http://subject.to.change"
+  contact:
+    email: "subject@to.change"
+  license:
+    name: "Example 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost:3000"
+schemes:
+- "http"
+- "https"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+# /app/email {POST}
+# /app/location {GET}
+# /app/location {POST}
+# /app/login {GET}
+# /app/login {POST}
+# /app/logout {GET}
+# /app/rights {GET}
+# /app/status {GET}
+# /authorizenet/receipt {POST}
+# /authorizenet/relay {POST}
+
+  /blog/post:
+    post:
+      tags:
+        - blog
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/BlogPostModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/BlogPostModelHash'
+        403:
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+# /blog/post/:id {DELETE}
+# /blog/post/:id {GET}
+# /blog/post/:id {PUT}
+# /blog/posts {GET}
+# /blog/posts/attributes {GET}
+# /cart {GET}
+# /cart/coupons {POST}
+# /cart/coupons/:code {DELETE}
+# /cart/giftcards/:giftcode {DELETE}
+# /cart/giftcards/:giftcode {POST}
+# /cart/item {POST}
+# /cart/item/:itemIdx {DELETE}
+# /cart/item/:itemIdx/:qty {PUT}
+# /categories {GET}
+# /categories/attributes {GET}
+# /categories/tree {GET}
+# /category {POST}
+# /category/:categoryID {DELETE}
+# /category/:categoryID {GET}
+# /category/:categoryID {PUT}
+# /category/:categoryID/layers {GET}
+# /category/:categoryID/media/:mediaType {GET}
+# /category/:categoryID/media/:mediaType/:mediaName {DELETE}
+# /category/:categoryID/media/:mediaType/:mediaName {GET}
+# /category/:categoryID/media/:mediaType/:mediaName {POST}
+# /category/:categoryID/mediapath/:mediaType {GET}
+# /category/:categoryID/product/:productID {DELETE}
+# /category/:categoryID/product/:productID {POST}
+# /category/:categoryID/products {GET}
+# /checkout {GET}
+# /checkout {PUT}
+# /checkout/billing/address {PUT}
+# /checkout/payment/method/:method {PUT}
+# /checkout/payment/methods {GET}
+# /checkout/shipping/address {PUT}
+# /checkout/shipping/method/:method/:rate {PUT}
+# /checkout/shipping/methods {GET}
+# /checkout/submit {POST}
+# /cms/block {POST}
+# /cms/block/:blockID {DELETE}
+# /cms/block/:blockID {GET}
+# /cms/block/:blockID {PUT}
+# /cms/blocks {GET}
+# /cms/blocks/attributes {GET}
+# /cms/media {GET}
+# /cms/media {POST}
+# /cms/media/:mediaName {DELETE}
+# /cms/media/:mediaName/:mediaType {DELETE}
+# /cms/media/:mediaType {GET}
+# /cms/page {POST}
+# /cms/page/:pageID {DELETE}
+# /cms/page/:pageID {GET}
+# /cms/page/:pageID {PUT}
+# /cms/pages {GET}
+# /cms/pages/attributes {GET}
+# /config/groups {GET}
+# /config/item/:path {GET}
+# /config/value/:path {DELETE}
+# /config/value/:path {GET}
+# /config/value/:path {POST}
+# /config/value/:path {PUT}
+# /config/values {GET}
+# /config/values/refresh {GET}
+# /coupons {GET}
+# /coupons {POST}
+# /coupons/:id {DELETE}
+# /coupons/:id {GET}
+# /coupons/:id {PUT}
+# /cron/schedule {GET}
+# /cron/task {GET}
+# /cron/task {POST}
+# /cron/task/:taskIndex {PUT}
+# /cron/task/disable/:taskIndex {GET}
+# /cron/task/enable/:taskIndex {GET}
+# /cron/task/run/:taskIndex {GET}
+# /csv/coupons {GET}
+# /csv/coupons {POST}
+# /emma/contact {POST}
+# /friend/captcha {GET}
+# /friend/email {POST}
+# /giftcard {POST}
+# /giftcard/:id/history {GET}
+# /giftcards {GET}
+# /giftcards/:giftcode {GET}
+# /impex/export/:model {GET}
+# /impex/import {POST}
+# /impex/import/:model {POST}
+# /impex/import/status {GET}
+# /impex/models {GET}
+# /impex/test/import {POST}
+# /impex/test/mapping {POST}
+# /media {GET}
+# /order/:orderID {DELETE}
+# /order/:orderID {GET}
+# /order/:orderID {PUT}
+# /order/:orderID/emailOrderConfirmation {GET}
+# /order/:orderID/emailShipStatus {GET}
+# /order/:orderID/emailTrackingCode {POST}
+# /orders {GET}
+# /orders/attributes {GET}
+# /orders/exportToCSV {POST}
+# /orders/setStatus {POST}
+# /patch/options {GET}
+# /paypal/cancel {GET}
+# /paypal/success {GET}
+# /product {POST}
+# /product/:productID {DELETE}
+# /product/:productID {GET}
+# /product/:productID {PUT}
+# /product/:productID/media/:mediaType {GET}
+# /product/:productID/media/:mediaType/:mediaName {DELETE}
+# /product/:productID/media/:mediaType/:mediaName {GET}
+# /product/:productID/media/:mediaType/:mediaName {POST}
+# /product/:productID/media/:mediaType/:mediaName {PUT}
+# /product/:productID/mediapath/:mediaType {GET}
+# /product/:productID/related {GET}
+# /product/:productID/stock {POST}
+# /products {GET}
+# /products/attribute {POST}
+# /products/attribute/:attribute {DELETE}
+# /products/attribute/:attribute {PUT}
+# /products/attributes {GET}
+# /proxy.html {GET}
+# /ratedreview/:productID/:stars {POST}
+# /rating/:productID {GET}
+# /reporting/customer-activity {GET}
+# /reporting/gift-cards {GET}
+# /reporting/location-country {GET}
+# /reporting/location-us {GET}
+# /reporting/payment-method {GET}
+# /reporting/product-performance {GET}
+# /reporting/shipping-method {GET}
+# /review/:productID {POST}
+# /review/:reviewID {DELETE}
+# /review/:reviewID {GET}
+# /review/:reviewID {PUT}
+# /reviews {GET}
+# /rts/bestsellers {GET}
+# /rts/conversion {GET}
+# /rts/sales {GET}
+# /rts/sales/detail/:from/:to {GET}
+# /rts/visit {POST}
+# /rts/visits {GET}
+# /rts/visits/detail/:from/:to {GET}
+# /saleprice {POST}
+# /saleprice/:id {DELETE}
+# /saleprice/:id {GET}
+# /saleprice/:id {PUT}
+# /saleprices {GET}
+# /seo/attributes {GET}
+# /seo/canonical/:id {GET}
+# /seo/item {POST}
+# /seo/item/:itemID {DELETE}
+# /seo/item/:itemID {PUT}
+# /seo/items {GET}
+# /seo/sitemap {GET}
+# /seo/sitemap/sitemap.xml {GET}
+# /seo/url {GET}
+# /seo/url/:url {GET}
+# /shipstation {GET}
+# /shipstation {POST}
+# /stock/:productID {DELETE}
+# /stock/:productID {GET}
+# /stock/:productID/:qty {POST}
+# /stock/:productID/:qty {PUT}
+# /subscriptional/checkout {GET}
+# /subscriptions {GET}
+# /subscriptions/:id {GET}
+# /subscriptions/:id {PUT}
+# /swatch/media {GET}
+# /swatch/media {POST}
+# /swatch/media/:mediaName {DELETE}
+# /swatch/media/extention {GET}
+# /taxes/csv {GET}
+# /taxes/csv {POST}
+# /trustpilot/products/summaries {GET}
+# /update/subscriptions {GET}
+# /visit {GET}
+# /visit {PUT}
+# /visit/address {POST}
+# /visit/address/:addressID {DELETE}
+# /visit/address/:addressID {GET}
+# /visit/address/:addressID {PUT}
+# /visit/addresses {GET}
+
+  /visit/login:
+    post:
+      tags:
+      - auth
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+# /visit/login-facebook {POST}
+# /visit/login-google {POST}
+
+  /visit/logout:
+    get:
+      tags:
+        - auth
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+# /visit/order/:orderID {GET}
+# /visit/orders {GET}
+# /visit/subscriptions {GET}
+# /visit/subscriptions/:id {PUT}
+# /visit/tokens {GET}
+# /visit/tokens {POST}
+# /visit/tokens/:tokenID {DELETE}
+# /visit/tokens/default {POST}
+# /visitor {POST}
+# /visitor/:visitorID {DELETE}
+# /visitor/:visitorID {GET}
+# /visitor/:visitorID {PUT}
+# /visitor/:visitorID/address {POST}
+# /visitor/:visitorID/address/:addressID {DELETE}
+# /visitor/:visitorID/address/:addressID {PUT}
+# /visitor/:visitorID/addresses {GET}
+# /visitors {GET}
+# /visitors/address/:addressID {DELETE}
+# /visitors/address/:addressID {GET}
+# /visitors/address/:addressID {PUT}
+# /visitors/addresses/attributes {GET}
+# /visitors/attribute {POST}
+# /visitors/attribute/:attribute {DELETE}
+# /visitors/attribute/:attribute {PUT}
+# /visitors/attributes {GET}
+# /visitors/available {POST}
+# /visitors/forgot-password/:email {GET}
+# /visitors/guests {GET}
+# /visitors/invalidate/:email {GET}
+# /visitors/mail {POST}
+# /visitors/register {POST}
+# /visitors/reset-password {POST}
+# /visitors/validate/:key {GET}
+
+securityDefinitions:
+  OTTEMOSESSION:
+    type: apiKey
+    name: OTTEMOSESSION
+    in: header
+
+definitions:
+
+  ApiResponse:
+    type: object
+    properties:
+      error:
+        type: object
+        properties:
+          code:
+            type: string
+          level:
+            type: integer
+          message:
+            type: string
+      redirect:
+        type: string
+
+  ApiResponseWithResultObject:
+    allOf:
+    - $ref: '#/definitions/ApiResponse'
+    - type: object
+      properties:
+        result:
+          type: object
+
+  BlogPostModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      identifier: 
+        type: string
+      published:
+        type: boolean
+      title:
+        type: string
+      excerpt:
+        type: string
+      content:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      featured_image:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+
+externalDocs:
+  description: "Find out more about Ottemo"
+  url: "http://ottemo.io"
