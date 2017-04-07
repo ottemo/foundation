@@ -268,6 +268,12 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 		return nil, env.ErrorDispatch(err)
 	}
 
+	// attributeCode retrieve data from one attribute only
+	attributeCode := context.GetRequestArgument("attributeCode")
+	if attributeCode == "" {
+		attributeCode = ""
+	}
+
 	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8-373a-4247-a81e-fbbe39a7fe74", "category is not available")
 	}
@@ -295,7 +301,7 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 	}
 
 	for _, productAttribute := range productAttributesInfo {
-		if productAttribute.IsLayered {
+		if (productAttribute.IsLayered && (attributeCode == "" || attributeCode == productAttribute.Attribute)) {
 			distinctValues, _ := productsDBCollection.Distinct(productAttribute.Attribute)
 			result[productAttribute.Attribute] = distinctValues
 		}
