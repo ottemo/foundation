@@ -1,0 +1,36 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Package foundation represents default Ottemo e-commerce product application entry point",
+    "title": "Ottemo API",
+    "contact": {
+      "email": "foo@bar.com"
+    },
+    "version": "0.0.1"
+  },
+  "host": "localhost:3000",
+  "paths": {
+    "/visit/login": {
+      "get": {
+        "description": "Parameters:\nname: body\nin: body\nschema:\ntype: object\nproperties:\nemail:\ntype: string",
+        "summary": "Visitor login",
+        "operationId": "visitLogin",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ApiResponse"
+          }
+        }
+      }
+    }
+  }
+}
