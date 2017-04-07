@@ -270,9 +270,6 @@ func APIGetCategoryLayers(context api.InterfaceApplicationContext) (interface{},
 
 	// attributeCode retrieve data from one attribute only
 	attributeCode := context.GetRequestArgument("attributeCode")
-	if attributeCode == "" {
-		attributeCode = ""
-	}
 
 	if !api.IsAdminSession(context) && !categoryModel.GetEnabled() {
 		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "d46dadf8-373a-4247-a81e-fbbe39a7fe74", "category is not available")
