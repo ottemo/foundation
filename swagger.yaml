@@ -478,21 +478,392 @@ paths:
                   items:
                     $ref: '#/definitions/StructAttributeInfo'
 
-# /cart {GET}
-# /cart/coupons {POST}
-# /cart/coupons/:code {DELETE}
-# /cart/giftcards/:giftcode {DELETE}
-# /cart/giftcards/:giftcode {POST}
-# /cart/item {POST}
-# /cart/item/:itemIdx {DELETE}
-# /cart/item/:itemIdx/:qty {PUT}
-# /categories {GET}
-# /categories/attributes {GET}
-# /categories/tree {GET}
-# /category {POST}
-# /category/:categoryID {DELETE}
-# /category/:categoryID {GET}
-# /category/:categoryID {PUT}
+  /cart:
+    get:
+      tags:
+        - cart
+      description: returns get cart related information
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    visitor_id:
+                      type: string
+                    cart_info:
+                      type: object
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                          idx:
+                            type: integer
+                          gty:
+                            type: integer
+                          pid:
+                            type: string
+                          options:
+                            type: object
+                          product:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              sku:
+                                type: string
+                              price:
+                                type: number
+                              weight:
+                                type: number
+                              options:
+                                type: object
+                              image:
+                                type: object
+
+  /cart/coupons:
+    post:
+      tags:
+        - cart
+        - coupon
+      description: Apply will add the coupon code to the current checkout
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - code
+          properties:
+            code:
+              type: string
+      responses:
+        200:
+          description: Coupon applied
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/coupons/{code}:
+    delete:
+      tags:
+        - cart
+        - coupon
+      description: >
+        will remove the coupon code and its value from the current checkout.
+        use a "*" as the coupon code to revert all discounts.
+      parameters:
+      - name: code
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/giftcards/{giftcode}:
+    delete:
+      tags:
+        - giftcard
+      description: removes the application of the gift card value from the current checkout
+      parameters:
+      - name: giftcode
+        in: path
+        required: true
+        type: string
+        description: use "*" as giftcard code to 'remove' all giftcard discounts
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - giftcard
+      description: applies the provided gift card to current checkout
+      parameters:
+      - name: giftcode
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/item:
+    post:
+      tags:
+        - cart
+      description: adds specified product to cart
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - pid
+          properties:
+            pid:
+              type: string
+              description: product ID
+            qty:
+              type: integer
+            options:
+              type: object
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+
+  /cart/item/{itemIdx}:
+    delete:
+      tags:
+        - cart
+      description: removes specified item from cart item from cart
+      parameters:
+      - name: itemIdx
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/item/{itemIdx}/{qty}:
+    put:
+      tags:
+        - cart
+      description: changes qty and/or option for cart item
+      parameters:
+      - name: itemIdx
+        in: path
+        required: true
+        type: string
+      - name: qty
+        in: path
+        required: true
+        type: integer
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /categories:
+    get:
+      tags:
+        - category
+      description: returns a list of available categories
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: >
+            Processed.
+            Could return:
+              - list of items
+              - count
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      ID:
+                        type: string
+                      Name:
+                        type: string
+                      Desc:
+                        type: string
+                      Extra:
+                        type: string
+                      Image:
+                        type: string
+                      Images:
+                        type: array
+                        items:
+                          type: object
+
+  /categories/attributes:
+    get:
+      tags:
+        - category
+      description: returns a list of category attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /categories/tree:
+    get:
+      tags:
+        - category
+      description: returns categories parent/child relation map
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      child:
+                        type: array
+                        items:
+                          type: object
+                          description: id, name, child[...]
+
+  /category:
+    post:
+      tags:
+        - category
+      description: creates a new category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CategoryModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
+  /category/{categoryID}:
+    delete:
+      tags:
+        - category
+      description: deletes existing category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - category
+      description: return specified category information
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
+    put:
+      tags:
+        - category
+      description: modifies existing category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CategoryModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
 # /category/:categoryID/layers {GET}
 # /category/:categoryID/media/:mediaType {GET}
 # /category/:categoryID/media/:mediaType/:mediaName {DELETE}
@@ -502,6 +873,7 @@ paths:
 # /category/:categoryID/product/:productID {DELETE}
 # /category/:categoryID/product/:productID {POST}
 # /category/:categoryID/products {GET}
+
 # /checkout {GET}
 # /checkout {PUT}
 # /checkout/billing/address {PUT}
@@ -511,6 +883,7 @@ paths:
 # /checkout/shipping/method/:method/:rate {PUT}
 # /checkout/shipping/methods {GET}
 # /checkout/submit {POST}
+
 # /cms/block {POST}
 # /cms/block/:blockID {DELETE}
 # /cms/block/:blockID {GET}
@@ -787,6 +1160,28 @@ definitions:
       updated_at:
         type: string
         format: date-time
+
+  CategoryModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      enabled:
+        type: boolean
+      description:
+        type: string
+      image:
+        type: string
+      parent_id:
+        type: string
+      name:
+        type: string
+      product_ids:
+        type: array
+        items:
+          type: string
+      path:
+        type: string
 
   StructAttributeInfo:
     type: object
