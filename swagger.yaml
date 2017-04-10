@@ -864,15 +864,234 @@ paths:
                 result:
                   $ref: '#/definitions/CategoryModelHash'
 
-# /category/:categoryID/layers {GET}
-# /category/:categoryID/media/:mediaType {GET}
-# /category/:categoryID/media/:mediaType/:mediaName {DELETE}
-# /category/:categoryID/media/:mediaType/:mediaName {GET}
-# /category/:categoryID/media/:mediaType/:mediaName {POST}
-# /category/:categoryID/mediapath/:mediaType {GET}
-# /category/:categoryID/product/:productID {DELETE}
-# /category/:categoryID/product/:productID {POST}
-# /category/:categoryID/products {GET}
+  /category/{categoryID}/layers:
+    get:
+      tags:
+        - category
+      description: enumerates category attributes and their possible values which is used for layered navigation
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  description: each property value is an array
+
+  /category/{categoryID}/media/{mediaType}:
+    get:
+      tags:
+        - category
+      description: returns list of media files assigned to specified category
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /category/{categoryID}/media/{mediaType}/{mediaName}:
+    delete:
+      tags:
+        - category
+      description: removes media content from specified category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - category
+      description: returns media contents for a category (file assigned to a category)
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed. On success case not a JSON data returns, but media file.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - category
+      description: uploads and assigns media file send in request for a specified category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/mediapath/{mediaType}:
+    get:
+      tags:
+        - category
+      description: returns relative path to category media files within media library
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: returns relative path to category media files within media library
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/product/{productID}:
+    delete:
+      tags:
+        - category
+      description: adds product to category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - category
+      description: removes product from category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/products:
+    get:
+      tags:
+        - category
+      description: returns category related products
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: TODO
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  description: TODO "image" property
+                  items:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/ProductModelHash'
+                      - type: object
+                        properties:
+                          image:
+                            type: array
+                            items:
+                              type: object
 
 # /checkout {GET}
 # /checkout {PUT}
@@ -1182,6 +1401,36 @@ definitions:
           type: string
       path:
         type: string
+
+  ProductModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      enabled:
+        type: string
+      sku:
+        type: string
+      name:
+        type: string
+      short_description:
+        type: string
+      description:
+        type: string
+      default_image:
+        type: string
+      price:
+        type: string
+      weight:
+        type: string
+      options:
+        type: string
+      visible:
+        type: string
+      related_pids:
+        type: string
+    additionalProperties:
+      type: object
 
   StructAttributeInfo:
     type: object
