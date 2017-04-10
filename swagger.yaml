@@ -87,13 +87,249 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /app/login {GET}
-# /app/login {POST}
-# /app/logout {GET}
-# /app/rights {GET}
-# /app/status {GET}
-# /authorizenet/receipt {POST}
-# /authorizenet/relay {POST}
+  /app/login:
+    get:
+      tags:
+        - auth
+      description: login application with root rights
+      parameters:
+      - name: login
+        in: query
+        type: string
+        required: true
+      - name: password
+        in: query
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - auth
+      description: login application with root rights
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              login:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/logout:
+    get:
+      tags:
+        - auth
+      description: logout application - session data clear
+      responses:
+        200:
+          description: processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/rights:
+    get:
+      tags:
+        - app
+      description: function to get info about current rights
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                is_admin:
+                  type: boolean
+              additionalProperties:
+                type: string
+
+  /app/status:
+    get:
+      tags:
+        - app
+      description: function to get info about current application status
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                Ottemo:
+                  type: string
+                Ottemo.VersionMajor:
+                  type: integer
+                Ottemo.VersionMinor:
+                  type: integer
+                Ottemo.BuildTags:
+                  type: string
+                Ottemo.BuildNumber:
+                  type: string
+                Ottemo.BuildDate:
+                  type: string
+                Ottemo.BuildBranch:
+                  type: string
+                Ottemo.BuildHash:
+                  type: string
+                Ottemo.DBEngine:
+                  type: string
+                Ottemo.DBConnected:
+                  type: string
+                Ottemo.DBName:
+                  type: string
+                StartTime:
+                  type: string
+                Uptime:
+                  type: integer
+                GO:
+                  type: string
+                NumGoroutine:
+                  type: integer
+                NumCPU:
+                  type: integer
+                memStats.Alloc:
+                  type: integer
+                memStats.TotalAlloc:
+                  type: integer
+                memStats.Sys:
+                  type: integer
+                memStats.Lookups:
+                  type: integer
+                memStats.Mallocs:
+                  type: integer
+                memStats.Frees:
+                  type: integer
+                memStats.HeapAlloc:
+                  type: integer
+                memStats.HeapSys:
+                  type: integer
+                memStats.HeapIdle:
+                  type: integer
+                memStats.HeapInuse:
+                  type: integer
+                memStats.HeapReleased:
+                  type: integer
+                memStats.HeapObjects:
+                  type: integer
+                memStats.StackInuse:
+                  type: integer
+                memStats.StackSys:
+                  type: integer
+                memStats.MSpanInuse:
+                  type: integer
+                memStats.MSpanSys:
+                  type: integer
+                memStats.MCacheInuse:
+                  type: integer
+                memStats.MCacheSys:
+                  type: integer
+                memStats.BuckHashSys:
+                  type: integer
+                memStats.GCSys:
+                  type: integer
+                memStats.OtherSys:
+                  type: integer
+                memStats.NextGC:
+                  type: integer
+                memStats.LastGC:
+                  type: integer
+                memStats.PauseTotalNs:
+                  type: integer
+                memStats.NumGC:
+                  type: integer
+                memStats.EnableGC:
+                  type: boolean
+                memStats.DebugGC:
+                  type: boolean
+
+  /authorizenet/receipt:
+    post:
+      tags:
+        - authorizenet
+        - payment
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              x_response_code:
+                type: string
+              x_session:
+                type: string
+              x_card_type:
+                type: string
+              x_account_number:
+                type: string
+              x_amount:
+                type: string
+              x_trans_id:
+                type: string
+      description: >
+        processes Authorize.net receipt response
+        can be used for redirecting customer to it on exit from authorize.net
+      responses:
+        200:
+          description: >
+            Processed.
+            Positive result could contains:
+              - DeclineHTML
+              - StructRestRedirect:
+                - Result: object
+                - Location: redirectURL
+                - DoRedirect: boolean
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /authorizenet/relay:
+    post:
+      tags:
+        - authorizenet
+        - payment
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              x_response_code:
+                type: string
+              x_session:
+                type: string
+              x_card_type:
+                type: string
+              x_account_number:
+                type: string
+              x_amount:
+                type: string
+              x_trans_id:
+                type: string
+      description: processes Authorize.net relay response
+      responses:
+        200:
+          description: >
+            Processed.
+            Positive result could contains:
+              - DeclineHTML
+              - ReceiptHTML
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
   /blog/post:
     post:
@@ -123,11 +359,125 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /blog/post/:id {DELETE}
-# /blog/post/:id {GET}
-# /blog/post/:id {PUT}
-# /blog/posts {GET}
-# /blog/posts/attributes {GET}
+  /blog/post/{id}:
+    delete:
+      tags:
+        - blog
+      description: deletes post by id
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - blog
+      description: returns post by id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  allOf:
+                  - $ref: '#/definitions/BlogPostModelHash'
+                  - type: object
+                    properties:
+                      extra:
+                        type: object
+                        properties:
+                          next:
+                            $ref: '#/definitions/BlogPostModelHash'
+                          prev:
+                            $ref: '#/definitions/BlogPostModelHash'
+
+    put:
+      tags:
+        - blog
+      description: updates post by id
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BlogPostModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/BlogPostModelHash'
+
+  /blog/posts:
+    get:
+      tags:
+        - blog
+      description: returns list of posts or count
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: >
+            Processed.
+            Could return:
+              - list of BlogPostModelHash
+              - count
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /blog/posts/attributes:
+    get:
+      tags:
+        - blog
+      description: returns a list of blog post attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
 # /cart {GET}
 # /cart/coupons {POST}
 # /cart/coupons/:code {DELETE}
@@ -437,6 +787,38 @@ definitions:
       updated_at:
         type: string
         format: date-time
+
+  StructAttributeInfo:
+    type: object
+    properties:
+      Model:
+        type: string
+      Collection:
+        type: string
+      Attribute:
+        type: string
+      Type:
+        type: string
+      Label:
+        type: string
+      IsRequired:
+        type: boolean
+      IsStatic:
+        type: boolean
+      Group:
+        type: string
+      Editors:
+        type: string
+      Options:
+        type: string
+      Default:
+        type: string
+      Validators:
+        type: string
+      IsLayered:
+        type: boolean
+      IsPublic:
+        type: boolean
 
 externalDocs:
   description: "Find out more about Ottemo"
