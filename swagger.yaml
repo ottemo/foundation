@@ -1617,24 +1617,325 @@ paths:
   #                       type: string
 
 
-# /cms/page {POST}
+  /cms/page:
+    post:
+      tags:
+        - cms
+      description: creates a new CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsPageModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsPageModelHash'
 
-# /cms/page/:pageID {DELETE}
-# /cms/page/:pageID {GET}
-# /cms/page/:pageID {PUT}
+  /cms/page/{pageID}:
+    delete:
+      tags:
+        - cms
+      description: deletes specified CMS page
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /cms/pages {GET}
+    get:
+      tags:
+        - cms
+      description: return specified CMS page information
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/CmsPageModelHash'
+                      - type: object
+                        properties:
+                          evaluated:
+                            type: string
+                            description: >
+                              CMS page content can be a text template,
+                              so "evaluated" field in response is that template evaluation result
 
-# /cms/pages/attributes {GET}
+    put:
+      tags:
+        - cms
+      description: updates existing CMS page
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsPageModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsPageModelHash'
 
-# /config/groups {GET}
-# /config/item/:path {GET}
-# /config/value/:path {DELETE}
-# /config/value/:path {GET}
-# /config/value/:path {POST}
-# /config/value/:path {PUT}
-# /config/values {GET}
-# /config/values/refresh {GET}
+  /cms/pages:
+    get:
+      tags:
+        - cms
+      description: >
+        returns a list of existing CMS pages
+        - if "action" parameter is set to "count" result value will be just a number of list items
+      parameters:
+      - in: query
+        name: action
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /cms/pages/attributes:
+    get:
+      tags:
+        - cms
+      description: returns a list of CMS page attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /config/groups:
+    get:
+      tags:
+        - config
+      description: API to get value information about config items with type [ConstConfigTypeGroup]
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructConfigItem'
+
+  /config/item/{path}:
+    get:
+      tags:
+        - config
+      description: API to get value information about item(s) matching path
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructConfigItem'
+
+
+  /config/value/{path}:
+    delete:
+      tags:
+        - config
+      description: API used to remove config item from system
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - config
+      description: >
+        API used to get value of particular item in config
+        - path should be without any wildcard
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+
+    post:
+      tags:
+        - config
+      description: API used to add new config Item to a config system
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/StructConfigItem'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/StructConfigItem'
+
+    put:
+      tags:
+        - config
+      description: >
+        API used to set value of particular item in config
+        - path should be without any wildcard
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            value:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+
+
+  /config/values:
+    get:
+      tags:
+        - config
+      description: API to get value information about config items with type [ConstConfigTypeGroup]
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: array
+              items:
+                type: string
+
+  /config/values/refresh:
+    get:
+      tags:
+        - config
+      description: API used to re-load config from DB
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /coupons {GET}
 # /coupons {POST}
 # /coupons/:id {DELETE}
@@ -1951,67 +2252,86 @@ definitions:
       updated_at:
         type: string
 
-  OrderModelHash:
+  CmsPageModelHash:
     type: object
     properties:
       _id:
         type: string
-      increment_id:
+      enabled:
+        type: boolean
+      identifier:
         type: string
-      status:
+      title:
         type: string
-      visitor_id:
+      content:
         type: string
-      session_id:
-        type: string
-      cart_id:
-        type: string
-      customer_email:
-        type: string
-      customer_name:
-        type: string
-      shipping_address:
-        type: object
-      billing_address:
-        type: object
-      payment_method:
-        type: string
-      shipping_method:
-        type: string
-      subtotal:
-        type: number
-      discount:
-        type: number
-      tax_amount:
-        type: number
-      shipping_amount:
-        type: number
-      grand_total:
-        type: number
-      taxes:
-        type: array
-        items:
-          $ref: '#/definitions/StructTaxRate'
-      discounts:
-        type: array
-        items:
-          $ref: '#/definitions/StructDiscount'
       created_at:
         type: string
       updated_at:
         type: string
-      description:
-        type: string
-      payment_info:
-        type: object
-      custom_info:
-        type: object
-      shipping_info:
-        type: object
-      notes:
-        type: array
-        items:
-          type: string
+
+  # Not used directly
+  # OrderModelHash:
+  #   type: object
+  #   properties:
+  #     _id:
+  #       type: string
+  #     increment_id:
+  #       type: string
+  #     status:
+  #       type: string
+  #     visitor_id:
+  #       type: string
+  #     session_id:
+  #       type: string
+  #     cart_id:
+  #       type: string
+  #     customer_email:
+  #       type: string
+  #     customer_name:
+  #       type: string
+  #     shipping_address:
+  #       type: object
+  #     billing_address:
+  #       type: object
+  #     payment_method:
+  #       type: string
+  #     shipping_method:
+  #       type: string
+  #     subtotal:
+  #       type: number
+  #     discount:
+  #       type: number
+  #     tax_amount:
+  #       type: number
+  #     shipping_amount:
+  #       type: number
+  #     grand_total:
+  #       type: number
+  #     taxes:
+  #       type: array
+  #       items:
+  #         $ref: '#/definitions/StructTaxRate'
+  #     discounts:
+  #       type: array
+  #       items:
+  #         $ref: '#/definitions/StructDiscount'
+  #     created_at:
+  #       type: string
+  #     updated_at:
+  #       type: string
+  #     description:
+  #       type: string
+  #     payment_info:
+  #       type: object
+  #     custom_info:
+  #       type: object
+  #     shipping_info:
+  #       type: object
+  #     notes:
+  #       type: array
+  #       items:
+  #         type: string
 
   ProductModelHash:
     type: object
@@ -2075,15 +2395,36 @@ definitions:
       IsPublic:
         type: boolean
 
-  StructDiscount:
+  StructConfigItem:
     type: object
     properties:
-      Name:
+      Path:
         type: string
-      Code:
+      Value:
+        type: object
+      Type:
         type: string
-      Amount:
-        type: number
+      Editor:
+        type: string
+      Options:
+        type: object
+      Label:
+        type: string
+      Description:
+        type: string
+      Image:
+        type: string
+
+  # Not used directly
+  # StructDiscount:
+  #   type: object
+  #   properties:
+  #     Name:
+  #       type: string
+  #     Code:
+  #       type: string
+  #     Amount:
+  #       type: number
 
   StructListItem:
     type: object
@@ -2119,15 +2460,16 @@ definitions:
       PerItem:
         type: object
 
-  StructRestRedirect:
-    type: object
-    properties:
-      Result:
-        type: object
-      Location:
-        type: string
-      DoRedirect:
-        type: boolean
+  # Not used directly
+  # StructRestRedirect:
+  #   type: object
+  #   properties:
+  #     Result:
+  #       type: object
+  #     Location:
+  #       type: string
+  #     DoRedirect:
+  #       type: boolean
 
   StructShippingRate:
     type: object
@@ -2139,15 +2481,16 @@ definitions:
       Price:
         type: number
 
-  StructTaxRate:
-    type: object
-    properties:
-      Name:
-        type: string
-      Code:
-        type: string
-      Amount:
-        type: number
+  # Not used directly
+  # StructTaxRate:
+  #   type: object
+  #   properties:
+  #     Name:
+  #       type: string
+  #     Code:
+  #       type: string
+  #     Amount:
+  #       type: number
 
 externalDocs:
   description: "Find out more about Ottemo"
