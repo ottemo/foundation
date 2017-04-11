@@ -1072,7 +1072,7 @@ paths:
         - count
       responses:
         200:
-          description: TODO
+          description: Processed
           schema:
             type: object
             allOf:
@@ -1081,7 +1081,6 @@ paths:
               properties:
                 result:
                   type: array
-                  description: TODO "image" property
                   items:
                     type: object
                     allOf:
@@ -1093,33 +1092,401 @@ paths:
                             items:
                               type: object
 
-# /checkout {GET}
-# /checkout {PUT}
-# /checkout/billing/address {PUT}
-# /checkout/payment/method/:method {PUT}
-# /checkout/payment/methods {GET}
-# /checkout/shipping/address {PUT}
-# /checkout/shipping/method/:method/:rate {PUT}
-# /checkout/shipping/methods {GET}
-# /checkout/submit {POST}
+  /checkout:
+    get:
+      tags:
+        - checkout
+      description: returns information related to current checkkout
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                billing_address:
+                  $ref: '#/definitions/AddressModelHash'
+                shipping_address:
+                  type: object
+                  allOf:
+                    - $ref: '#/definitions/AddressModelHash'
+                    - type: object
+                      properties:
+                        notes:
+                          type: string
+                payment_method_name:
+                  type: string
+                payment_method_code:
+                  type: string
+                shipping_method_name:
+                  type: string
+                shipping_method_code:
+                  type: string
+                shipping_rate:
+                  $ref: '#/definitions/StructShippingRate'
+                shipping_amount:
+                  type: number
+                discounts:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructPriceAdjustment'
+                discount_amount:
+                  type: number
+                taxes:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructPriceAdjustment'
+                tax_amount:
+                  type: number
+                subtotal:
+                  type: number
+                grandtotal:
+                  type: number
+                info:
+                  type: object
 
-# /cms/block {POST}
-# /cms/block/:blockID {DELETE}
-# /cms/block/:blockID {GET}
-# /cms/block/:blockID {PUT}
-# /cms/blocks {GET}
-# /cms/blocks/attributes {GET}
+    put:
+      tags:
+        - checkout
+      description: allows to specify and assign to checkout extra information
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+
+
+  /checkout/billing/address:
+    put:
+      tags:
+        - checkout
+      description: specifies billing address for a current checkout
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /checkout/payment/method/{method}:
+    put:
+      tags:
+        - checkout
+      description: assigns payment method to current checkout
+      parameters:
+      - in: path
+        name: method
+        required: true
+        type: string
+        description: payment methos Code
+      - in: body
+        name: body
+        description: checkout Info
+        schema:
+          type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /checkout/payment/methods:
+    get:
+      tags:
+        - checkout
+      description: returns currently available payment methods
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Name:
+                        type: string
+                      Code:
+                        type: string
+                      Type:
+                        type: string
+                      Tokenable:
+                        type: boolean
+
+  /checkout/shipping/address:
+    put:
+      tags:
+        - checkout
+      description: specifies shipping address for a current checkout
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+            - $ref: '#/definitions/AddressModelHash'
+            - type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /checkout/shipping/method/{method}/{rate}:
+    put:
+      tags:
+        - checkout
+      description: assigns shipping method and shipping rate to current checkout
+      parameters:
+      - in: path
+        name: method
+        required: true
+        description: shipping method Code
+        type: string
+      - in: path
+        name: rate
+        required: true
+        description: shipping rate Code
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /checkout/shipping/methods:
+    get:
+      tags:
+        - checkout
+      description: returns currently available shipping methods
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Name:
+                        type: string
+                      Code:
+                        type: string
+                      Rates:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StructShippingRate'
+
+  /checkout/submit:
+    post:
+      tags:
+        - checkout
+      description: >
+        Submits current checkout and creates a new order base on it.
+        Could return:
+          - StructRestRedirect
+          - OrderHashMap with orderItems
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cms/block:
+    post:
+      tags:
+        - cms
+      description: creates a new CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsBlockModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsBlockModelHash'
+
+  /cms/block/{blockID}:
+    delete:
+      tags:
+        - cms
+      description: deletes existing CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - cms
+      description: return specified CMS block information
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/CmsBlockModelHash'
+                      - type: object
+                        properties:
+                          evaluated:
+                            type: string
+                            description: CMS block content can be a text template, so "evaluated" field in response is that template evaluation result
+
+    put:
+      tags:
+        - cms
+      description: updates existing CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsBlockModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsBlockModelHash'
+
+  /cms/blocks:
+    get:
+      tags:
+        - cms
+      description: returns a list of existing CMS blocks
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /cms/blocks/attributes:
+    get:
+      tags:
+        - cms
+      description: returns a list of CMS block attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
 # /cms/media {GET}
 # /cms/media {POST}
+
 # /cms/media/:mediaName {DELETE}
+
 # /cms/media/:mediaName/:mediaType {DELETE}
+
 # /cms/media/:mediaType {GET}
+
 # /cms/page {POST}
+
 # /cms/page/:pageID {DELETE}
 # /cms/page/:pageID {GET}
 # /cms/page/:pageID {PUT}
+
 # /cms/pages {GET}
+
 # /cms/pages/attributes {GET}
+
 # /config/groups {GET}
 # /config/item/:path {GET}
 # /config/value/:path {DELETE}
@@ -1352,6 +1719,34 @@ definitions:
         result:
           type: object
 
+  AddressModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      company:
+        type: string
+      address_line1:
+        type: string
+      address_line2:
+        type: string
+      country:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      phone:
+        type: string
+      zip_code:
+        type: string
+
   BlogPostModelHash:
     type: object
     properties:
@@ -1401,6 +1796,82 @@ definitions:
           type: string
       path:
         type: string
+
+  CmsBlockModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      identifier:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+
+  OrderModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      increment_id:
+        type: string
+      status:
+        type: string
+      visitor_id:
+        type: string
+      session_id:
+        type: string
+      cart_id:
+        type: string
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      shipping_address:
+        type: object
+      billing_address:
+        type: object
+      payment_method:
+        type: string
+      shipping_method:
+        type: string
+      subtotal:
+        type: number
+      discount:
+        type: number
+      tax_amount:
+        type: number
+      shipping_amount:
+        type: number
+      grand_total:
+        type: number
+      taxes:
+        type: array
+        items:
+          $ref: '#/definitions/StructTaxRate'
+      discounts:
+        type: array
+        items:
+          $ref: '#/definitions/StructDiscount'
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      description:
+        type: string
+      payment_info:
+        type: object
+      custom_info:
+        type: object
+      shipping_info:
+        type: object
+      notes:
+        type: array
+        items:
+          type: string
 
   ProductModelHash:
     type: object
@@ -1463,6 +1934,80 @@ definitions:
         type: boolean
       IsPublic:
         type: boolean
+
+  StructDiscount:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
+
+  StructListItem:
+    type: object
+    properties:
+      ID:
+        type: string
+      Name:
+        type: string
+      Image:
+        type: string
+      Desc:
+        type: string
+      Extra:
+        type: object
+
+  StructPriceAdjustment:
+    type: object
+    properties:
+      Code:
+        type: string
+      Name:
+        type: string
+      Priority:
+        type: number
+      Amount:
+        type: number
+      IsPercent:
+        type: boolean
+      Labels:
+        type: array
+        items:
+          type: string
+      PerItem:
+        type: object
+
+  StructRestRedirect:
+    type: object
+    properties:
+      Result:
+        type: object
+      Location:
+        type: string
+      DoRedirect:
+        type: boolean
+
+  StructShippingRate:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Price:
+        type: number
+
+  StructTaxRate:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
 
 externalDocs:
   description: "Find out more about Ottemo"
