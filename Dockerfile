@@ -19,6 +19,7 @@ RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/mongo.log
 RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/events.log
 RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/models.log
 RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/usps.log
+RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/impex.log
 RUN ln -sf /dev/stdout /home/ottemo/foundation/var/log/product
 RUN ln -sf /dev/stderr /home/ottemo/foundation/var/log/errors.log
 
