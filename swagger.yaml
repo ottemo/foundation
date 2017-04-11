@@ -1936,11 +1936,129 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /coupons {GET}
-# /coupons {POST}
-# /coupons/:id {DELETE}
-# /coupons/:id {GET}
-# /coupons/:id {PUT}
+  /coupons:
+    get:
+      tags:
+        - coupons
+      description: returns a list registered coupons and is an protected resource that requires authentication to access.
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: array
+              items:
+                type: object
+
+    post:
+      tags:
+        - coupons
+      description: >
+        will generate a new coupon code when supplied the following required keys,
+        they are not required to match.
+          - "name" is the desired reference key for the coupon
+          - "code" is the text visitors must enter to apply a coupon in checkout
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CouponHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+
+  /coupons/{id}:
+    delete:
+      tags:
+        - coupons
+      description: deletes specified coupon item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+    get:
+      tags:
+        - coupons
+      description: returns a coupon with the specified ID
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+        500:
+          description: Internal Server Error
+
+    put:
+      tags:
+        - coupons
+      description: updates existing coupon specified in the request argument
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CouponHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
 # /cron/schedule {GET}
 # /cron/task {GET}
 # /cron/task {POST}
@@ -2268,6 +2386,30 @@ definitions:
       created_at:
         type: string
       updated_at:
+        type: string
+
+  CouponHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      code:
+        type: string
+      name:
+        type: string
+      amount:
+        type: number
+      percent:
+        type: number
+      times:
+        type: integer
+      since:
+        type: string
+      until:
+        type: string
+      limits:
+        type: string
+      target:
         type: string
 
   # Not used directly
