@@ -1400,7 +1400,9 @@ paths:
                         properties:
                           evaluated:
                             type: string
-                            description: CMS block content can be a text template, so "evaluated" field in response is that template evaluation result
+                            description: >
+                              CMS block content can be a text template,
+                              so "evaluated" field in response is that template evaluation result
 
     put:
       tags:
@@ -1468,14 +1470,152 @@ paths:
                   items:
                     $ref: '#/definitions/StructAttributeInfo'
 
-# /cms/media {GET}
-# /cms/media {POST}
+  /cms/media:
+    get:
+      tags:
+        - cms
+      description: returns list of media files from media
+      parameters:
+      - in: query
+        name: mediaType
+        type: string
+        description: >
+          - if mediaType is empty - all types will be used
+          - if mediaType is explicit value - only this value will be used
+          - if mediaType is list of types separated by comma - only these types will be shown
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      url:
+                        type: string
+                      created_at:
+                        type: string
+                      type:
+                        type: string
 
-# /cms/media/:mediaName {DELETE}
+    post:
+      tags:
+        - cms
+      description: >
+        uploads images to the media
+        - media file should be provided in "file" field with full name
+        - the mediaType of files are detected automatically
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: string
 
-# /cms/media/:mediaName/:mediaType {DELETE}
+  /cms/media/{mediaName}:
+    delete:
+      tags:
+        - cms
+      description: removes media from storage
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /cms/media/:mediaType {GET}
+  /cms/media/{mediaName}/{mediaType}:
+    delete:
+      tags:
+        - cms
+      description: removes media from storage
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  # Swagger Error
+  # Equivalent path already exists: /cms/media/{mediaName}
+  # /cms/media/{mediaType}:
+  #   get:
+  #     tags:
+  #       - cms
+  #     description: returns list of media files from media
+  #     parameters:
+  #     - in: path
+  #       name: mediaType
+  #       type: string
+  #       required: true
+  #       description: >
+  #         - if mediaType is empty - all types will be used
+  #         - if mediaType is explicit value - only this value will be used
+  #         - if mediaType is list of types separated by comma - only these types will be shown
+  #     responses:
+  #       200:
+  #         description: Processed
+  #         schema:
+  #           type: object
+  #           allOf:
+  #           - $ref: '#/definitions/ApiResponse'
+  #           - type: object
+  #             properties:
+  #               result:
+  #                 type: array
+  #                 items:
+  #                   type: object
+  #                   properties:
+  #                     id:
+  #                       type: string
+  #                     name:
+  #                       type: string
+  #                     url:
+  #                       type: string
+  #                     created_at:
+  #                       type: string
+  #                     type:
+  #                       type: string
+
 
 # /cms/page {POST}
 
