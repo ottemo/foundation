@@ -2059,15 +2059,193 @@ paths:
         500:
           description: Internal Server Error
 
-# /cron/schedule {GET}
-# /cron/task {GET}
-# /cron/task {POST}
-# /cron/task/:taskIndex {PUT}
-# /cron/task/disable/:taskIndex {GET}
-# /cron/task/enable/:taskIndex {GET}
-# /cron/task/run/:taskIndex {GET}
+  /cron/schedule:
+    get:
+      tags:
+        - cron
+      description: get information about current schedules
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task:
+    get:
+      tags:
+        - cron
+      description: return scheduler registered tasks (functions that are available to execute)
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+    post:
+      tags:
+        - cron
+      description: >
+        createTask with request params;
+        in request params required are time or cronExpr for creating different type of tasks
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            CronExpr:
+              type: string
+            Time:
+              type: string
+            TaskName:
+              type: string
+            repeat:
+              type: string
+            params:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronSchedule'
+
+  /cron/task/{taskIndex}:
+    put:
+      tags:
+        - cron
+      description: updateTask update scheduler task
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            expr:
+              type: string
+            time:
+              type: string
+            task:
+              type: string
+            repeat:
+              type: string
+            params:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cron/task/disable/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: make schedule inactive
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task/enable/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: make schedule active
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task/run/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: allows to execute task of schedule without updating of it
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            useTaskParams:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /csv/coupons {GET}
 # /csv/coupons {POST}
+
 # /emma/contact {POST}
 # /friend/captcha {GET}
 # /friend/email {POST}
@@ -2411,6 +2589,44 @@ definitions:
         type: string
       target:
         type: string
+
+  CronSchedule:
+    type: object
+    properties:
+      CronExpr:
+        type: string
+      TaskName:
+        type: string
+      expr:
+        type: string
+      Time:
+        type: string
+      task:
+        type: string
+      Repeat:
+        type: boolean
+      Params:
+        type: object
+      active:
+        type: boolean
+      scheduler:
+        type: object
+
+  CronScheduleHash:
+    type: object
+    properties:
+      expr:
+        type: string
+      time:
+        type: string
+      task:
+        type: string
+      repeat:
+        type: boolean
+      params:
+        type: object
+      active:
+        type: boolean
 
   # Not used directly
   # OrderModelHash:
