@@ -1939,7 +1939,7 @@ paths:
   /coupons:
     get:
       tags:
-        - coupons
+        - coupon
       description: returns a list registered coupons and is an protected resource that requires authentication to access.
       security:
         - OTTEMOSESSION: []
@@ -1956,7 +1956,7 @@ paths:
 
     post:
       tags:
-        - coupons
+        - coupon
       description: >
         will generate a new coupon code when supplied the following required keys,
         they are not required to match.
@@ -1984,7 +1984,7 @@ paths:
   /coupons/{id}:
     delete:
       tags:
-        - coupons
+        - coupon
       description: deletes specified coupon item
       security:
         - OTTEMOSESSION: []
@@ -2005,7 +2005,7 @@ paths:
 
     get:
       tags:
-        - coupons
+        - coupon
       description: returns a coupon with the specified ID
       security:
         - OTTEMOSESSION: []
@@ -2030,7 +2030,7 @@ paths:
 
     put:
       tags:
-        - coupons
+        - coupon
       description: updates existing coupon specified in the request argument
       security:
         - OTTEMOSESSION: []
@@ -2243,16 +2243,204 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /csv/coupons {GET}
-# /csv/coupons {POST}
+  /csv/coupons:
+    get:
+      tags:
+        - coupon
+        - csv
+      description: returns a csv file with the current coupons and their configuration
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /emma/contact {POST}
-# /friend/captcha {GET}
-# /friend/email {POST}
-# /giftcard {POST}
-# /giftcard/:id/history {GET}
-# /giftcards {GET}
+    post:
+      tags:
+        - coupon
+        - csv
+      description: will overwrite and replace the current coupon configuration with the uploaded CSV
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /emma/contact:
+    post:
+      tags:
+        - emma
+      description: return message, after add contact
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            group_ids:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /friend/captcha:
+    get:
+      tags:
+        - friendmail
+      description: will generate a captcha for use in a form
+      parameters:
+      - in: query
+        name: json
+        type: string
+        required: false
+        description: will return image as base64 in result:{captcha}
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /friend/email:
+    post:
+      tags:
+        - friendmail
+      description: sends an email to a friend
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            captcha:
+              type: string
+            friend_email:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /giftcard:
+    post:
+      tags:
+        - giftcard
+      description: send giftcard by admin
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            amount:
+              type: string
+            message:
+              type: string
+            name:
+              type: string
+            recipient_mailbox:
+              type: string
+            sku:
+              type: string
+            delivery_date:
+              type: string
+            code:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+
+  /giftcard/{id}/history:
+    get:
+      tags:
+        - giftcard
+      description: returns a history of gift cards for the admin in the context passed
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                      amount:
+                        type: number
+                      transaction_date:
+                        type: string
+        400:
+          description: Bad Request
+
+  /giftcards:
+    get:
+      tags:
+        - giftcard
+      description: returns a list of gift cards for the visitor id in the context passed
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
 # /giftcards/:giftcode {GET}
+
 # /impex/export/:model {GET}
 # /impex/import {POST}
 # /impex/import/:model {POST}
