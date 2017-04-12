@@ -2439,7 +2439,31 @@ paths:
         500:
           description: Internal Server Error
 
-# /giftcards/:giftcode {GET}
+  /giftcards/{giftcode}:
+    get:
+      tags:
+        - giftcard
+      description: returns the gift card and related info
+      parameters:
+      - in: path
+        name: giftcode
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+        400:
+          description: Bad Request
 
 # /impex/export/:model {GET}
 # /impex/import {POST}
@@ -2448,17 +2472,285 @@ paths:
 # /impex/models {GET}
 # /impex/test/import {POST}
 # /impex/test/mapping {POST}
-# /media {GET}
-# /order/:orderID {DELETE}
-# /order/:orderID {GET}
-# /order/:orderID {PUT}
-# /order/:orderID/emailOrderConfirmation {GET}
-# /order/:orderID/emailShipStatus {GET}
-# /order/:orderID/emailTrackingCode {POST}
-# /orders {GET}
-# /orders/attributes {GET}
-# /orders/exportToCSV {POST}
-# /orders/setStatus {POST}
+
+  /media:
+    get:
+      tags:
+        - media
+      description: will resize all images if the params of the request contain 'resizeAll' with a value of true
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: resizeAll
+        required: false
+        type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /order/{orderID}:
+    delete:
+      tags:
+        - order
+      description: deletes existing purchase order
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - order
+      description: return specified purchase order information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                    - $ref: '#/definitions/OrderModelHash'
+                    - type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            $ref: '#/definitions/OrderItem'
+
+    put:
+      tags:
+        - order
+      description: update existing purchase order
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/OrderModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/OrderModelHash'
+
+  /order/{orderID}/emailOrderConfirmation:
+    get:
+      tags:
+        - order
+      description: will send out an order confirmation email to the visitor specficied in the orderID
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Errror
+
+  /order/{orderID}/emailShipStatus:
+    get:
+      tags:
+        - order
+      description: will send the visitor a shipping confirmation email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Errror
+
+  /order/{orderID}/emailTrackingCode:
+    post:
+      tags:
+        - order
+      description: updates order with shipping tracking information and sends a shipping status email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            carrier:
+              type: string
+            tracking_number:
+              type: string
+            tracking_url:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Errror
+
+  /orders:
+    get:
+      tags:
+        - order
+      description: returns a list of existing purchase orders
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /orders/attributes:
+    get:
+      tags:
+        - order
+      description: returns a list of purchase order attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /orders/exportToCSV:
+    post:
+      tags:
+        - order
+        - csv
+      description: returns a list of orders in CSV format
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            orders:
+              type: string
+              description: comma separated list of order IDs
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /orders/setStatus:
+    post:
+      tags:
+        - order
+      description: will change orders to the state included in the status request variable
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - declined
+              - new
+              - pending
+              - processed
+              - completed
+              - cancelled
+            order_id:
+              type: string
+              description: comma separated list of order IDs
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
 # /patch/options {GET}
 # /paypal/cancel {GET}
 # /paypal/success {GET}
@@ -2816,68 +3108,89 @@ definitions:
       active:
         type: boolean
 
-  # Not used directly
-  # OrderModelHash:
-  #   type: object
-  #   properties:
-  #     _id:
-  #       type: string
-  #     increment_id:
-  #       type: string
-  #     status:
-  #       type: string
-  #     visitor_id:
-  #       type: string
-  #     session_id:
-  #       type: string
-  #     cart_id:
-  #       type: string
-  #     customer_email:
-  #       type: string
-  #     customer_name:
-  #       type: string
-  #     shipping_address:
-  #       type: object
-  #     billing_address:
-  #       type: object
-  #     payment_method:
-  #       type: string
-  #     shipping_method:
-  #       type: string
-  #     subtotal:
-  #       type: number
-  #     discount:
-  #       type: number
-  #     tax_amount:
-  #       type: number
-  #     shipping_amount:
-  #       type: number
-  #     grand_total:
-  #       type: number
-  #     taxes:
-  #       type: array
-  #       items:
-  #         $ref: '#/definitions/StructTaxRate'
-  #     discounts:
-  #       type: array
-  #       items:
-  #         $ref: '#/definitions/StructDiscount'
-  #     created_at:
-  #       type: string
-  #     updated_at:
-  #       type: string
-  #     description:
-  #       type: string
-  #     payment_info:
-  #       type: object
-  #     custom_info:
-  #       type: object
-  #     shipping_info:
-  #       type: object
-  #     notes:
-  #       type: array
-  #       items:
-  #         type: string
+  OrderModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      increment_id:
+        type: string
+      status:
+        type: string
+      visitor_id:
+        type: string
+      session_id:
+        type: string
+      cart_id:
+        type: string
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      shipping_address:
+        $ref: '#/definitions/AddressModelHash'
+      billing_address:
+        $ref: '#/definitions/AddressModelHash'
+      payment_method:
+        type: string
+      shipping_method:
+        type: string
+      subtotal:
+        type: number
+      discount:
+        type: number
+      tax_amount:
+        type: number
+      shipping_amount:
+        type: number
+      grand_total:
+        type: number
+      taxes:
+        type: array
+        items:
+          $ref: '#/definitions/StructTaxRate'
+      discounts:
+        type: array
+        items:
+          $ref: '#/definitions/StructDiscount'
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      description:
+        type: string
+      payment_info:
+        type: object
+      custom_info:
+        type: object
+      shipping_info:
+        type: object
+      notes:
+        type: array
+        items:
+          type: string
+
+  OrderItem:
+    type: object
+    properties:
+      OrderID:
+        type: string
+      ProductID:
+        type: string
+      Qty:
+        type: integer
+      Name:
+        type: string
+      Sku:
+        type: string
+      ShortDescription:
+        type: string
+      Price:
+        type: number
+      Weight:
+        type: number
+      Options:
+        type: object
 
   ProductModelHash:
     type: object
@@ -2961,16 +3274,15 @@ definitions:
       Image:
         type: string
 
-  # Not used directly
-  # StructDiscount:
-  #   type: object
-  #   properties:
-  #     Name:
-  #       type: string
-  #     Code:
-  #       type: string
-  #     Amount:
-  #       type: number
+  StructDiscount:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
 
   StructListItem:
     type: object
@@ -3006,7 +3318,7 @@ definitions:
       PerItem:
         type: object
 
-  # Not used directly
+  # Not used
   # StructRestRedirect:
   #   type: object
   #   properties:
@@ -3027,16 +3339,15 @@ definitions:
       Price:
         type: number
 
-  # Not used directly
-  # StructTaxRate:
-  #   type: object
-  #   properties:
-  #     Name:
-  #       type: string
-  #     Code:
-  #       type: string
-  #     Amount:
-  #       type: number
+  StructTaxRate:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
 
 externalDocs:
   description: "Find out more about Ottemo"
