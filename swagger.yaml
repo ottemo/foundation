@@ -3281,13 +3281,291 @@ paths:
                   result:
                     $ref: '#/definitions/ReviewModelHash'
 
-# /reporting/customer-activity {GET}
-# /reporting/gift-cards {GET}
-# /reporting/location-country {GET}
-# /reporting/location-us {GET}
-# /reporting/payment-method {GET}
-# /reporting/product-performance {GET}
-# /reporting/shipping-method {GET}
+  /reporting/customer-activity:
+    get:
+      tags:
+        - reporting
+      description: customer activity
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: limit
+        in: query
+        type: string
+        required: false
+      - name: sort
+        in: query
+        type: string
+        required: false
+        enum:
+        - total_orders
+        - total_sales
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/CustomerActivityItemHash'
+                      meta:
+                        type: object
+                        properties:
+                          limit:
+                            type: integer
+                          count:
+                            type: integer
+                      perf_ms:
+                        type: integer
+
+  /reporting/gift-cards:
+    get:
+      tags:
+        - reporting
+      description: gift cards
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            name:
+                              type: string
+                            amount:
+                              type: number
+                            date:
+                              type: string
+                      total:
+                        type: integer
+                      count:
+                        type: integer
+                      perf_ms:
+                        type: integer
+        400:
+          description: Bad Request
+
+  /reporting/location-country:
+    get:
+      tags:
+        - reporting
+      description: order locations
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/location-us:
+    get:
+      tags:
+        - reporting
+      description: list aggregate sales by state for sales in the US
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/payment-method:
+    get:
+      tags:
+        - reporting
+      description: payment method
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/product-performance:
+    get:
+      tags:
+        - reporting
+      description: returns product performance information by date range
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: true
+        format: "2006-01-02 15:04"
+      - name: end_date
+        in: query
+        type: string
+        required: true
+        format: "2006-01-02 15:04"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/ProductPerfItemHash'
+                      total_sales:
+                        type: number
+                      total_items:
+                        type: integer
+                      total_orders:
+                        type: integer
+
+  /reporting/shipping-method:
+    get:
+      tags:
+        - reporting
+      description: shipping method
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+        format: "2006-01-02 15:04"
+      - name: end_date
+        in: query
+        type: string
+        required: false
+        format: "2006-01-02 15:04"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
 
   # Duplicate path to /review/{reviewID}:
   # /review/{productID}:
@@ -3741,6 +4019,24 @@ definitions:
       active:
         type: boolean
 
+  CustomerActivityItemHash:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      total_sales:
+        type: number
+      total_orders:
+        type: integer
+      average_sales:
+        type: number
+      earliest_purchase:
+        type: string
+      latest_purchase:
+        type: string
+
   OrderModelHash:
     type: object
     properties:
@@ -3855,6 +4151,18 @@ definitions:
     additionalProperties:
       type: object
 
+  ProductPerfItemHash:
+    type: object
+    properties:
+      name:
+        type: string
+      sku:
+        type: string
+      gross_sales:
+        type: number
+      units_sold:
+        type: integer
+
   ReviewModelHash:
     type: object
     properties:
@@ -3874,6 +4182,20 @@ definitions:
         type: string
       approved:
         type: boolean
+
+  StatItemHash:
+    type: object
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+      total_sales:
+        type: number
+      total_orders:
+        type: integer
+      avg_sales:
+        type: number
 
   StructAttributeInfo:
     type: object
