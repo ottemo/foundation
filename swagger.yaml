@@ -3697,13 +3697,234 @@ paths:
                     items:
                       $ref: '#/definitions/ReviewModelHash'
 
-# /rts/bestsellers {GET}
-# /rts/conversion {GET}
-# /rts/sales {GET}
-# /rts/sales/detail/:from/:to {GET}
-# /rts/visit {POST}
-# /rts/visits {GET}
-# /rts/visits/detail/:from/:to {GET}
+  /rts/bestsellers:
+    get:
+      tags:
+        - rts
+      description: returns information about bestsellers for some period
+      parameters:
+      - in: query
+        name: period
+        type: string
+        required: false
+        enum:
+        - yesterday
+        - week
+        - month
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pid:
+                          type: string
+                        name:
+                          type: string
+                        count:
+                          type: integer
+                        image:
+                          type: string
+
+  /rts/conversion:
+    get:
+      tags:
+        - rts
+      description: returns site conversion information
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      totalVisitors:
+                        type: integer
+                      addedToCart:
+                        type: integer
+                      visitCheckout:
+                        type: integer
+                      setPayment:
+                        type: integer
+                      purchased:
+                        type: integer
+
+  /rts/sales:
+    get:
+      tags:
+        - rts
+      description: returns information about sales in the recent period, taking into account time zone
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      sales:
+                        type: object
+                        properties:
+                          today:
+                            type: number
+                          yesterday:
+                            type: number
+                          week:
+                            type: number
+                          monthToDate:
+                            type: number
+                      orders:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+
+  /rts/sales/detail/{from}/{to}:
+    get:
+      tags:
+        - rts
+      description: returns site sales information for a specified period
+      parameters:
+      - in: path
+        name: from
+        required: true
+        type: string
+        format: "2006-01-02"
+      - in: path
+        name: to
+        required: true
+        type: string
+        format: "2006-01-02"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: integer
+
+  /rts/visit:
+    post:
+      tags:
+        - rts
+      description: registers request for a statistics
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            path:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /rts/visits:
+    get:
+      tags:
+        - rts
+      description: returns site visit information for a specified local day
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      total:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+                      unique:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+
+  /rts/visits/detail/{from}/{to}:
+    get:
+      tags:
+        - rts
+      description: returns detailed site visit information for a specified period
+      parameters:
+      - in: path
+        name: from
+        required: true
+        type: string
+        format: "2006-01-02"
+      - in: path
+        name: to
+        required: true
+        type: string
+        format: "2006-01-02"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: integer
+
 # /saleprice {POST}
 # /saleprice/:id {DELETE}
 # /saleprice/:id {GET}
