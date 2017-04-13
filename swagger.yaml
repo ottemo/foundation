@@ -3929,7 +3929,45 @@ paths:
 # /saleprice/:id {DELETE}
 # /saleprice/:id {GET}
 # /saleprice/:id {PUT}
-# /saleprices {GET}
+
+  /saleprices:
+    get:
+      tags:
+        - saleprice
+      description: returns list of all registered sale price promotions scheduled.
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      - in: query
+        name: extra
+        required: true
+        type: string
+        description: put these separated by comma attributes of sale price to Extra item field
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
 # /seo/attributes {GET}
 # /seo/canonical/:id {GET}
 # /seo/item {POST}
