@@ -2751,26 +2751,471 @@ paths:
         500:
           description: Internal Server Error
 
+# Deprecated
 # /patch/options {GET}
-# /paypal/cancel {GET}
-# /paypal/success {GET}
-# /product {POST}
-# /product/:productID {DELETE}
-# /product/:productID {GET}
-# /product/:productID {PUT}
+
+  /paypal/cancel:
+    get:
+      tags:
+        - paypal
+      description: processes PayPal decline response
+      parameters:
+      - in: query
+        name: token
+        required: true
+        type: string
+      - in: query
+        name: PayerID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
+
+  /paypal/success:
+    get:
+      tags:
+        - paypal
+      description: processes PayPal receipt response
+      parameters:
+      - in: query
+        name: token
+        required: true
+        type: string
+      - in: query
+        name: PayerID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
+
+  /product:
+    post:
+      tags:
+        - product
+      description: creates a new product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ProductModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+  /product/{productID}:
+    delete:
+      tags:
+        - product
+      description: deletes existing product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - product
+      description: return specified product information
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+    put:
+      tags:
+        - product
+      description: creates a new product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ProductModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+# DEPRECATED
 # /product/:productID/media/:mediaType {GET}
-# /product/:productID/media/:mediaType/:mediaName {DELETE}
-# /product/:productID/media/:mediaType/:mediaName {GET}
-# /product/:productID/media/:mediaType/:mediaName {POST}
-# /product/:productID/media/:mediaType/:mediaName {PUT}
+
+  /product/{productID}/media/{mediaType}/{mediaName}:
+    delete:
+      tags:
+        - product
+      description: removes media content from specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    # DEPRECATED
+    # get:
+
+    post:
+      tags:
+        - product
+      description: uploads and assigns media file send in request for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - product
+      description: renames media file for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            newMediaName:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+# DEPRECATED
 # /product/:productID/mediapath/:mediaType {GET}
-# /product/:productID/related {GET}
-# /product/:productID/stock {POST}
-# /products {GET}
-# /products/attribute {POST}
-# /products/attribute/:attribute {DELETE}
-# /products/attribute/:attribute {PUT}
-# /products/attributes {GET}
+
+  /product/{productID}/related:
+    get:
+      tags:
+        - product
+      description: returns related products list for a given product
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/ProductModelHash'
+
+  /product/{productID}/stock:
+    post:
+      tags:
+        - product
+        - stock
+      description: returns available stock qty for particular product-options pair
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            options:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: integer
+
+  /products:
+    get:
+      tags:
+        - product
+      description: returns a list of available products
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      allOf:
+                      - $ref: '#/definitions/StructListItem'
+                      - type: object
+                        properties:
+                          Images:
+                            type: array
+                            items:
+                              type: object
+
+  /products/attribute:
+    post:
+      tags:
+        - product
+      description: >
+        creates a new custom attribute for a product model.
+        time expensive: update all products with default value
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            Attribute:
+              type: string
+            Label:
+              type: string
+            type:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /products/attribute/{attribute}:
+    delete:
+      tags:
+        - product
+      description: removes existing custom attribute of a product model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - product
+      description: updates existing custom attribute of product model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            label:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /products/attributes:
+    get:
+      tags:
+        - product
+      description: returns a list of product attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
 # /proxy.html {GET}
 # /ratedreview/:productID/:stars {POST}
 # /rating/:productID {GET}
@@ -3198,7 +3643,7 @@ definitions:
       _id:
         type: string
       enabled:
-        type: string
+        type: boolean
       sku:
         type: string
       name:
@@ -3210,13 +3655,13 @@ definitions:
       default_image:
         type: string
       price:
-        type: string
+        type: number
       weight:
-        type: string
+        type: number
       options:
-        type: string
+        type: object
       visible:
-        type: string
+        type: boolean
       related_pids:
         type: string
     additionalProperties:
@@ -3318,16 +3763,15 @@ definitions:
       PerItem:
         type: object
 
-  # Not used
-  # StructRestRedirect:
-  #   type: object
-  #   properties:
-  #     Result:
-  #       type: object
-  #     Location:
-  #       type: string
-  #     DoRedirect:
-  #       type: boolean
+  StructRestRedirect:
+    type: object
+    properties:
+      Result:
+        type: object
+      Location:
+        type: string
+      DoRedirect:
+        type: boolean
 
   StructShippingRate:
     type: object
