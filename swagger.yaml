@@ -3216,9 +3216,71 @@ paths:
                   items:
                     $ref: '#/definitions/StructAttributeInfo'
 
-# /proxy.html {GET}
-# /ratedreview/:productID/:stars {POST}
-# /rating/:productID {GET}
+  /proxy.html:
+    get:
+      tags:
+        - xdomain
+      description: will enable the usage of xdomain instead of CORS for legacy browsers
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /ratedreview/{productID}/{stars}:
+    post:
+      tags:
+        - product
+        - review
+      description: creates a new review for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        type: string
+        required: true
+      - name: stars
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+  /rating/{productID}:
+    get:
+      tags:
+        - product
+        - review
+      description: returns rating info for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
 # /reporting/customer-activity {GET}
 # /reporting/gift-cards {GET}
 # /reporting/location-country {GET}
@@ -3226,11 +3288,137 @@ paths:
 # /reporting/payment-method {GET}
 # /reporting/product-performance {GET}
 # /reporting/shipping-method {GET}
-# /review/:productID {POST}
-# /review/:reviewID {DELETE}
-# /review/:reviewID {GET}
-# /review/:reviewID {PUT}
-# /reviews {GET}
+
+  # Duplicate path to /review/{reviewID}:
+  # /review/{productID}:
+  #   post:
+  #     tags:
+  #       - product
+  #       - review
+  #     description: creates a new review for a specified product
+  #     security:
+  #       - OTTEMOSESSION: []
+  #     parameters:
+  #     - name: productID
+  #       in: path
+  #       type: string
+  #       required: true
+  #     responses:
+  #       200:
+  #         description: Processed
+  #         schema:
+  #           type: object
+  #           allOf:
+  #             - $ref: '#/definitions/ApiResponse'
+  #             - type: object
+  #               properties:
+  #                 result:
+  #                   $ref: '#/definitions/ReviewModelHash'
+
+  /review/{reviewID}:
+    delete:
+      tags:
+        - product
+        - review
+      description: deletes existing review
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - product
+        - review
+      description: returns an existing review for owner or admin
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+    put:
+      tags:
+        - product
+        - review
+      description: updates an existing review
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ReviewModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+  /reviews:
+    get:
+      tags:
+        - product
+        - review
+      description: returns a list of reviews for specified products
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        type: string
+        required: false
+        enum:
+        - count
+      - in: query
+        name: product_id
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/ReviewModelHash'
+
 # /rts/bestsellers {GET}
 # /rts/conversion {GET}
 # /rts/sales {GET}
@@ -3666,6 +3854,26 @@ definitions:
         type: string
     additionalProperties:
       type: object
+
+  ReviewModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      product_id:
+        type: string
+      visitor_id:
+        type: string
+      username:
+        type: string
+      rating:
+        type: string
+      review:
+        type: string
+      created_at:
+        type: string
+      approved:
+        type: boolean
 
   StructAttributeInfo:
     type: object
