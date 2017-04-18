@@ -4059,16 +4059,237 @@ paths:
                     items:
                       $ref: '#/definitions/StructListItem'
 
-# /seo/attributes {GET}
-# /seo/canonical/:id {GET}
-# /seo/item {POST}
-# /seo/item/:itemID {DELETE}
-# /seo/item/:itemID {PUT}
-# /seo/items {GET}
-# /seo/sitemap {GET}
-# /seo/sitemap/sitemap.xml {GET}
-# /seo/url {GET}
-# /seo/url/:url {GET}
+  /seo/attributes:
+    get:
+      tags:
+        - seo
+      description: returns a list of seo item attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /seo/canonical/{id}:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified id
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+
+  /seo/item:
+    post:
+      tags:
+        - seo
+      description: creates a new SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SEOItemModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /seo/item/{itemID}:
+    delete:
+      tags:
+        - seo
+      description: deletes specified SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: itemID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Error
+
+    put:
+      tags:
+        - seo
+      description: updates existing SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: itemID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SEOItemModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
+  /seo/items:
+    get:
+      tags:
+        - seo
+      description: returns a list registered SEO records
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructListItem'
+        500:
+          description: Internal Server Error
+
+  /seo/sitemap:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - seo
+      description: generates a new sitemap based on SEO records
+      responses:
+        200:
+          description: Processed
+        500:
+          description: Internal Server Error
+
+  /seo/sitemap/sitemap.xml:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - seo
+      description: returns SEO records based sitemap (auto re-generating it if needed)
+      responses:
+        200:
+          description: Processed
+        500:
+          description: Internal Server Error
+
+  /seo/url:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified url
+      parameters:
+      - in: query
+        name: url
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
+  /seo/url/{url}:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified url
+      parameters:
+      - in: path
+        name: url
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
 # /shipstation {GET}
 # /shipstation {POST}
 # /stock/:productID {DELETE}
@@ -4545,6 +4766,24 @@ definitions:
       end_datetime:
         type: string
       start_datetime:
+        type: string
+
+  SEOItemModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      url:
+        type: string
+      rewrite:
+        type: string
+      type:
+        type: string
+      title:
+        type: string
+      meta_keywords:
+        type: string
+      meta_description:
         type: string
 
   StatItemHash:
