@@ -4370,10 +4370,100 @@ paths:
         400:
           description: Bad Request
 
-# /stock/:productID {DELETE}
-# /stock/:productID {GET}
-# /stock/:productID/:qty {POST}
-# /stock/:productID/:qty {PUT}
+  /stock/{productID}:
+    delete:
+      tags:
+      - stock
+      description: deletes stock records for a product-options pair
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - stock
+      description: returns stock information for particular product
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /stock/{productID}/{qty}:
+    post:
+      tags:
+      - stock
+      description: sets amount qty for a particular product-options pair
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: path
+        name: qty
+        required: true
+        type: integer
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+      - stock
+      description: >
+        increases qty on particular product-options pair for a delta value
+        - product id and delta should be specified in "productID" and "qty" arguments
+        - negative delta will decrease amount
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: path
+        name: qty
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /subscriptional/checkout {GET}
 # /subscriptions {GET}
 # /subscriptions/:id {GET}
