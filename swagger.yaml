@@ -4290,8 +4290,86 @@ paths:
         500:
           description: Internal Server Error
 
-# /shipstation {GET}
-# /shipstation {POST}
+  /shipstation:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - shipstation
+      description: >
+        Handler for getting a list of orders.
+        Should return any orders that were modified within the date range
+        regardless of the order status.
+      security:
+      - BasicShipstation: []
+      parameters:
+      - in: query
+        name: action
+        required: true
+        type: string
+        enum:
+        - export
+      - in: query
+        name: start_date
+        required: true
+        type: string
+        description: format '01/02/2006 15:04'
+      - in: query
+        name: end_date
+        required: true
+        type: string
+        description: format '01/02/2006 15:04'
+      responses:
+        200:
+          description: Processed
+
+    post:
+      produces:
+      - "text/xml"
+      tags:
+        - shipstation
+      description: >
+        An endpoint for shipstation to hit that will update the order with some shipment tracking info
+        and then send off an email update.
+      security:
+      - BasicShipstation: []
+      parameters:
+      - in: query
+        name: action
+        required: true
+        type: string
+        enum:
+        - shipnotify
+        description: The value will always be "shipnotify" when sending shipping notifications.
+      - in: query
+        name: order_number
+        required: true
+        type: string
+        description: This is the order's unique identifier.
+      - in: query
+        name: carrier
+        required: true
+        type: string
+        description: >
+          USPS, UPS, FedEx, DHL, Other, DHLGlobalMail, UPSMI, BrokersWorldWide, FedExInternationalMailService, CanadaPost, FedExCanada, OnTrac, Newgistics, FirstMile, Globegistics, LoneStar, Asendia, RoyalMail, APC, AccessWorldwide, AustraliaPost, DHLCanada, IMEX
+      - in: query
+        name: service
+        required: true
+        type: string
+        description: This will be the name of the shipping service that was used to ship the order.
+      - in: query
+        name: tracking_number
+        required: true
+        type: string
+        description: This is the tracking number for the package.
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+
 # /stock/:productID {DELETE}
 # /stock/:productID {GET}
 # /stock/:productID/:qty {POST}
@@ -4392,6 +4470,8 @@ securityDefinitions:
     type: apiKey
     name: OTTEMOSESSION
     in: header
+  BasicShipstation:
+    type: basic
 
 definitions:
 
