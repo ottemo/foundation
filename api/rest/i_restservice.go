@@ -386,7 +386,7 @@ func (it DefaultRestService) ServeHTTP(responseWriter http.ResponseWriter, reque
 	responseWriter.Header().Set("Access-Control-Allow-Origin", request.Header.Get("Origin"))
 	responseWriter.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
 	responseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
-	responseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type, Cookie, X-Referer, Content-Length, Accept-Encoding, X-CSRF-Token, "+api.ConstSessionCookieName)
+	responseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type, Cookie, X-Referer, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, "+api.ConstSessionCookieName)
 
 	responseWriter.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
 	responseWriter.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
