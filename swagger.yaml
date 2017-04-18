@@ -4561,10 +4561,91 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /swatch/media {GET}
-# /swatch/media {POST}
-# /swatch/media/:mediaName {DELETE}
-# /swatch/media/extention {GET}
+  /swatch/media:
+    get:
+      tags:
+      - swatch
+      description: returns list of media files from media storage
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        url:
+                          type: string
+                        created_at:
+                          type: string
+                        type:
+                          type: string
+
+    post:
+      tags:
+      - swatch
+      description: >
+        uploads images to the media
+        - media file should be provided in "file" field with full name
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /swatch/media/{mediaName}:
+    delete:
+      tags:
+      - swatch
+      description: removes image from media
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /swatch/media/extention:
+    get:
+      tags:
+      - swatch
+      description: returns default media extention. This value is necessary to select image by name "swatchType-swatchValue.extention" list returned from "listAllSwatches".
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /taxes/csv {GET}
 # /taxes/csv {POST}
 # /trustpilot/products/summaries {GET}
