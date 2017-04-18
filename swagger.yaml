@@ -4464,10 +4464,103 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /subscriptional/checkout {GET}
-# /subscriptions {GET}
-# /subscriptions/:id {GET}
-# /subscriptions/:id {PUT}
+  /subscriptional/checkout:
+    get:
+      tags:
+      - subscription
+      description: provide check is current checkout allows to create new subscription
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /subscriptions:
+    get:
+      tags:
+      - subscription
+      description: returns a list of subscriptions for visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /subscriptions/{id}:
+    get:
+      tags:
+      - subscription
+      description: return specified subscription information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/SubscriptionModelHash'
+                      - type: object
+                        properties:
+                          payment_method_name:
+                            type: string
+                          shipping_method_name:
+                            type: string
+
+    put:
+      tags:
+      - subscription
+      description: allows to change status of subscription for visitor and for administrator
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
 # /swatch/media {GET}
 # /swatch/media {POST}
 # /swatch/media/:mediaName {DELETE}
@@ -5086,6 +5179,22 @@ definitions:
       Price:
         type: number
 
+  StructSubscriptionItemHash:
+    type: object
+    properties:
+      product_id:
+        type: string
+      options:
+        type: object
+      qty:
+        type: integer
+      name:
+        type: string
+      sku:
+        type: string
+      price:
+        type: number
+
   StructTaxRate:
     type: object
     properties:
@@ -5095,6 +5204,48 @@ definitions:
         type: string
       Amount:
         type: number
+
+  SubscriptionModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      order_id:
+        type: string
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/StructSubscriptionItemHash'
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      status:
+        type: string
+      period:
+        type: integer
+      shipping_address:
+        type: object
+      billing_address:
+        type: object
+      shipping_method:
+        type: string
+      shipping_rate:
+        $ref: '#/definitions/StructShippingRate'
+      payment_instrument:
+        type: object
+      action_date:
+        type: string
+      last_submit:
+        type: string
+      updated_at:
+        type: string
+      created_at:
+        type: string
+      info:
+        type: object
 
 externalDocs:
   description: "Find out more about Ottemo"
