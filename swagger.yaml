@@ -4646,17 +4646,256 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /taxes/csv {GET}
-# /taxes/csv {POST}
-# /trustpilot/products/summaries {GET}
-# /update/subscriptions {GET}
-# /visit {GET}
-# /visit {PUT}
-# /visit/address {POST}
-# /visit/address/:addressID {DELETE}
-# /visit/address/:addressID {GET}
-# /visit/address/:addressID {PUT}
-# /visit/addresses {GET}
+  /taxes/csv:
+    get:
+      produces:
+      - "text.csv"
+      tags:
+      - tax
+      - csv
+      description: returns csv file with currently used tax rates
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+      - tax
+      - csv
+      description: replaces currently used discount coupons with data from provided in csv file
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /trustpilot/products/summaries:
+    get:
+      tags:
+      - trustpilot
+      description: >
+        Makes a request to Trustpilot api to obtain a list of reviews summaries for every product, caches the response.
+          - https://developers.trustpilot.com/product-reviews-api#Get product reviews summaries list
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        403:
+          description: Forbidden
+        500:
+          description: Internal Server Error
+
+  /update/subscriptions:
+    get:
+      tags:
+      - subscription
+      description: >
+        allows run and update info of all existing subscriptions.
+          - if id is provided in request it is used to filter category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: id
+        required: false
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit:
+    get:
+      tags:
+      - visit
+      description: returns current visit related information.
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    facebook_id:
+                      type: string
+                    google_id:
+                      type: string
+                    is_admin:
+                      type: boolean
+
+    put:
+      tags:
+      - visit
+      description: >
+        updates existing visitor.
+          - visitor id should be specified in "visitorID" argument
+          - visitor attributes should be specified in content
+      parameters:
+      - in: query
+        name: visitorID
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/VisitorModelHash'
+
+  /visit/address:
+    post:
+      tags:
+      - visit
+      description: creates a new visitor address
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/AddressModelHash'
+          - type: object
+            properties:
+              visitor_id:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visit/address/{addressID}:
+    delete:
+      tags:
+      - visit
+      description: deletes existing visitor address
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visit
+      description: returns visitor address information
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+    put:
+      tags:
+      - visit
+      description: updates existing visitor address
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visit/addresses:
+    get:
+      tags:
+      - visit
+      description: >
+        returns visitor address information
+          - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - in: query
+        name: visitorID
+        required: false
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
 
   /visit/login:
     post:
@@ -4679,8 +4918,45 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /visit/login-facebook {POST}
-# /visit/login-google {POST}
+  /visit/login-facebook:
+    post:
+      tags:
+      - auth
+      description: makes login and/or registration via Facebook
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+            user_id:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/login-google:
+    post:
+      tags:
+      - auth
+      description: associates the specified email address with a Google account
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
   /visit/logout:
     get:
@@ -4695,14 +4971,70 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /visit/order/:orderID {GET}
-# /visit/orders {GET}
+  /visit/order/{orderID}:
+    get:
+      tags:
+      - visit
+      - order
+      description: returns current visitor order details for specified order.
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                    - $ref: '#/definitions/OrderModelHash'
+                    - type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            $ref: '#/definitions/OrderItem'
+        400:
+          description: Bad Request
+
+  /visit/orders:
+    get:
+      tags:
+      - visit
+      - order
+      description: returns list of orders related to current visitor.
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
 # /visit/subscriptions {GET}
 # /visit/subscriptions/:id {PUT}
 # /visit/tokens {GET}
 # /visit/tokens {POST}
 # /visit/tokens/:tokenID {DELETE}
 # /visit/tokens/default {POST}
+
 # /visitor {POST}
 # /visitor/:visitorID {DELETE}
 # /visitor/:visitorID {GET}
@@ -5327,6 +5659,54 @@ definitions:
         type: string
       info:
         type: object
+
+  VisitorCardModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      holder:
+        type: string
+      payment:
+        type: string
+      type:
+        type: string
+      number:
+        type: string
+      expiration_date:
+        type: string
+      created_at:
+        type: string
+      token_updated:
+        type: string
+      token_id:
+        type: string
+      customer_id:
+        type: string
+
+  VisitorModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      is_admin:
+        type: boolean
+      created_at:
+        type: string
+      billing_address:
+        $ref: '#/definitions/AddressModelHash'
+      shipping_address:
+        $ref: '#/definitions/AddressModelHash'
+      token:
+        $ref: '#/definitions/VisitorCardModelHash'
 
 externalDocs:
   description: "Find out more about Ottemo"
