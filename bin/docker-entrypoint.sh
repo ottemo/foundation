@@ -24,6 +24,9 @@ fi
 uri="$uri$MONGOHOST/$MONGODB"
 
 if [ -n "$MEDIAFOLDER" ] ; then
+  mkdir -p $MEDIAFOLDER
+  mkdir -p /home/ottemo/
+  ln -s $MEDIAFOLDER /home/ottemo/media
   echo "media.fsmedia.folder=$MEDIAFOLDER" > ottemo.ini
 else
   echo "media.fsmedia.folder=/home/ottemo/media" > ottemo.ini
