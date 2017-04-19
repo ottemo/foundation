@@ -5028,12 +5028,156 @@ paths:
         500:
           description: Internal Server Error
 
-# /visit/subscriptions {GET}
-# /visit/subscriptions/:id {PUT}
-# /visit/tokens {GET}
-# /visit/tokens {POST}
-# /visit/tokens/:tokenID {DELETE}
-# /visit/tokens/default {POST}
+  /visit/subscriptions:
+    get:
+      tags:
+      - visit
+      - subscription
+      description: returns a list of subscriptions for visitor.
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/SubscriptionModelHash'
+
+  /visit/subscriptions/{id}:
+    put:
+      tags:
+      - visit
+      - subscription
+      description: allows to change status of subscription for visitor and for administrator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/tokens:
+    get:
+      tags:
+      - visit
+      - token
+      description: >
+        return a list of existing tokens for visitor
+          - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - name: visitorID
+        in: query
+        type: string
+        required: false
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+    post:
+      tags:
+      - visit
+      - token
+      description: >
+        creates a request body for posting credit card info to payment system with 0 amount payment for obtaining token on this card and saving it for visitor
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            payment_method:
+              type: string
+            cc:
+              type: object
+            holder:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorCardModelHash'
+
+  /visit/tokens/{tokenID}:
+    delete:
+      tags:
+      - visit
+      - token
+      description: deletes credit card token by provided token_id
+      parameters:
+      - name: tokenID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/tokens/default:
+    post:
+      tags:
+      - visit
+      - token
+      description: set default credit card token by provided token_id
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            tokenID:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
 
 # /visitor {POST}
 # /visitor/:visitorID {DELETE}
