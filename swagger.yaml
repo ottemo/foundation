@@ -5538,9 +5538,120 @@ paths:
                   items:
                     $ref: '#/definitions/StructAttributeInfo'
 
-# /visitors/attribute {POST}
-# /visitors/attribute/:attribute {DELETE}
-# /visitors/attribute/:attribute {PUT}
+  /visitors/attribute:
+    post:
+      tags:
+        - visitor
+      description: >
+        creates a new custom attribute for a visitor model.
+        time expensive: update all visitors with default value.
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            Attribute:
+              type: string
+            Label:
+              type: string
+            type:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /visitors/attribute/{attribute}:
+    delete:
+      tags:
+        - visitor
+      description: >
+        removes existing custom attribute of a visitor model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - visitor
+      description: >
+        updates existing custom attribute of visitor model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            label:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
 
   /visitors/attributes:
     get:
@@ -5564,14 +5675,209 @@ paths:
                     $ref: '#/definitions/StructAttributeInfo'
 
 
-# /visitors/available {POST}
-# /visitors/forgot-password/:email {GET}
-# /visitors/guests {GET}
-# /visitors/invalidate/:email {GET}
-# /visitors/mail {POST}
-# /visitors/register {POST}
-# /visitors/reset-password {POST}
-# /visitors/validate/:key {GET}
+  /visitors/available:
+    post:
+      tags:
+        - visitor
+      description: is email address is available
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: boolean
+
+  /visitors/forgot-password/{email}:
+    get:
+      tags:
+        - visitor
+      description: changes and sends a new password to visitor e-mail
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: email
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/guests:
+    get:
+      tags:
+        - visitor
+      description: returns list of guests GROUP(ed) BY customer_email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      guests:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            customer_email:
+                              type: string
+                            customer_name:
+                              type: string
+
+  /visitors/invalidate/{email}:
+    get:
+      tags:
+        - visitor
+      description: invalidate visitor by email, sends a new verification key to email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: email
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/mail:
+    post:
+      tags:
+        - visitor
+      description: sends email to specified visitors
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            subject:
+              type: string
+            content:
+              type: string
+            visitor_ids:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/register:
+    post:
+      tags:
+      - visitor
+      description: creates a new visitor, sends verification link to visitor email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/VisitorModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitors/reset-password:
+    post:
+      tags:
+      - visitor
+      description: update visitor password by using verification key from email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            key:
+              type: string
+            password:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: string
+
+  /visitors/validate/{key}:
+    get:
+      tags:
+      - visitor
+      description: validates visitors by a key which sends after registration
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: key
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
 
 securityDefinitions:
   OTTEMOSESSION:
