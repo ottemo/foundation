@@ -2465,13 +2465,158 @@ paths:
         400:
           description: Bad Request
 
-# /impex/export/:model {GET}
-# /impex/import {POST}
-# /impex/import/:model {POST}
-# /impex/import/status {GET}
-# /impex/models {GET}
-# /impex/test/import {POST}
-# /impex/test/mapping {POST}
+  /impex/export/{model}:
+    get:
+      produces:
+      - "text/csv"
+      tags:
+      - import
+      - export
+      - impex
+      description: API used export specific model data from system
+      parameters:
+      - in: path
+        name: model
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import:
+    post:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to process csv file script in impex format
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import/{model}:
+    post:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used import data to system
+      parameters:
+      - in: path
+        name: model
+        type: string
+        required: true
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import/status:
+    get:
+      tags:
+      - import
+      - export
+      - impex
+      description: API for getting status of current import
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    name:
+                      type: string
+                    size:
+                      type: integer
+                    position:
+                      type: integer
+
+  /impex/models:
+    get:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to list available models for Impex system
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /impex/test/import:
+    post:
+      produces:
+      - "text/plain"
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to test csv file before import
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/test/mapping:
+    post:
+      produces:
+      - "text/plain"
+      tags:
+      - import
+      - export
+      - impex
+      description: API to test conversion from csv to json / map[string]interface{}
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
 
   /media:
     get:
