@@ -5179,23 +5179,391 @@ paths:
           schema:
             $ref: '#/definitions/ApiResponseWithResultObject'
 
-# /visitor {POST}
-# /visitor/:visitorID {DELETE}
-# /visitor/:visitorID {GET}
-# /visitor/:visitorID {PUT}
-# /visitor/:visitorID/address {POST}
-# /visitor/:visitorID/address/:addressID {DELETE}
-# /visitor/:visitorID/address/:addressID {PUT}
-# /visitor/:visitorID/addresses {GET}
-# /visitors {GET}
-# /visitors/address/:addressID {DELETE}
-# /visitors/address/:addressID {GET}
-# /visitors/address/:addressID {PUT}
-# /visitors/addresses/attributes {GET}
+  /visitor:
+    post:
+      tags:
+      - visitor
+      description: creates a new visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitor/{visitorID}:
+    delete:
+      tags:
+      - visitor
+      description: deletes existing visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visitor
+      description: returns visitor information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+    put:
+      tags:
+      - visitor
+      description: updates existing visitor
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitor/{visitorID}/address:
+    post:
+      tags:
+      - visitor
+      - address
+      description: creates a new visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/AddressModelHash'
+
+  /visitor/{visitorID}/address/{addressID}:
+    delete:
+      tags:
+      - visitor
+      - address
+      description: deletes existing visitor address
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+      - visitor
+      - address
+      description: updates existing visitor address
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/AddressModelHash'
+
+  /visitor/{visitorID}/addresses:
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns visitor addresses list
+        - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /visitors:
+    get:
+      tags:
+      - visitor
+      description: returns a list of existing visitors
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /visitors/address/{addressID}:
+    delete:
+      tags:
+      - visitor
+      - address
+      description: deletes existing visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns visitor address information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+    put:
+      tags:
+      - visitor
+      - address
+      description: updates existing visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visitors/addresses/attributes:
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns a list of visitor address attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
 # /visitors/attribute {POST}
 # /visitors/attribute/:attribute {DELETE}
 # /visitors/attribute/:attribute {PUT}
-# /visitors/attributes {GET}
+
+  /visitors/attributes:
+    get:
+      tags:
+      - visitor
+      description: returns a list of visitor attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+
 # /visitors/available {POST}
 # /visitors/forgot-password/:email {GET}
 # /visitors/guests {GET}
