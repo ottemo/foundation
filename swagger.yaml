@@ -1903,6 +1903,9 @@ paths:
             allOf:
             - $ref: '#/definitions/ApiResponse'
             - type: object
+              properties:
+                result:
+                  type: object
 
 
   /config/values:
@@ -1919,9 +1922,12 @@ paths:
             type: object
             allOf:
             - $ref: '#/definitions/ApiResponse'
-            - type: array
-              items:
-                type: string
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
 
   /config/values/refresh:
     get:
@@ -1950,9 +1956,12 @@ paths:
             type: object
             allOf:
             - $ref: '#/definitions/ApiResponse'
-            - type: array
-              items:
-                type: object
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
 
     post:
       tags:
