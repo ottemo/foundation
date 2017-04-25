@@ -1,0 +1,6685 @@
+swagger: "2.0"
+
+info:
+  description: "Package foundation represents default Ottemo e-commerce product application entry point."
+  version: "0.0.1"
+  title: "Foundation API"
+  termsOfService: "http://subject.to.change"
+
+  contact:
+    email: "subject@to.change"
+
+  license:
+    name: "Example 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+
+host: "localhost:3000"
+
+schemes:
+- "http"
+- "https"
+
+consumes:
+- "application/json"
+
+produces:
+- "application/json"
+
+paths:
+
+  /app/email:
+    post:
+      tags:
+        - app
+      description: creates a new email message via a POST from the Contact Us form
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - formLocation
+          properties:
+            formLocation:
+              type: string
+              description: Web page(?) where form is located
+            email:
+              type: string
+          additionalProperties:
+            type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/location:
+    get:
+      tags:
+        - app
+      description: return a time zone of session
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - app
+      description: validate time zone and set it to session
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          description: One of parameters should be set
+          properties:
+            timeZone:
+              type: string
+            time_zone:
+              type: string
+            time:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/login:
+    get:
+      tags:
+        - auth
+      description: login application with root rights
+      parameters:
+      - name: login
+        in: query
+        type: string
+        required: true
+      - name: password
+        in: query
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - auth
+      description: login application with root rights
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              login:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/logout:
+    get:
+      tags:
+        - auth
+      description: logout application - session data clear
+      responses:
+        200:
+          description: processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /app/rights:
+    get:
+      tags:
+        - app
+      description: function to get info about current rights
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                is_admin:
+                  type: boolean
+              additionalProperties:
+                type: string
+
+  /app/status:
+    get:
+      tags:
+        - app
+      description: function to get info about current application status
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                Ottemo:
+                  type: string
+                Ottemo.VersionMajor:
+                  type: integer
+                Ottemo.VersionMinor:
+                  type: integer
+                Ottemo.BuildTags:
+                  type: string
+                Ottemo.BuildNumber:
+                  type: string
+                Ottemo.BuildDate:
+                  type: string
+                Ottemo.BuildBranch:
+                  type: string
+                Ottemo.BuildHash:
+                  type: string
+                Ottemo.DBEngine:
+                  type: string
+                Ottemo.DBConnected:
+                  type: string
+                Ottemo.DBName:
+                  type: string
+                StartTime:
+                  type: string
+                Uptime:
+                  type: integer
+                GO:
+                  type: string
+                NumGoroutine:
+                  type: integer
+                NumCPU:
+                  type: integer
+                memStats.Alloc:
+                  type: integer
+                memStats.TotalAlloc:
+                  type: integer
+                memStats.Sys:
+                  type: integer
+                memStats.Lookups:
+                  type: integer
+                memStats.Mallocs:
+                  type: integer
+                memStats.Frees:
+                  type: integer
+                memStats.HeapAlloc:
+                  type: integer
+                memStats.HeapSys:
+                  type: integer
+                memStats.HeapIdle:
+                  type: integer
+                memStats.HeapInuse:
+                  type: integer
+                memStats.HeapReleased:
+                  type: integer
+                memStats.HeapObjects:
+                  type: integer
+                memStats.StackInuse:
+                  type: integer
+                memStats.StackSys:
+                  type: integer
+                memStats.MSpanInuse:
+                  type: integer
+                memStats.MSpanSys:
+                  type: integer
+                memStats.MCacheInuse:
+                  type: integer
+                memStats.MCacheSys:
+                  type: integer
+                memStats.BuckHashSys:
+                  type: integer
+                memStats.GCSys:
+                  type: integer
+                memStats.OtherSys:
+                  type: integer
+                memStats.NextGC:
+                  type: integer
+                memStats.LastGC:
+                  type: integer
+                memStats.PauseTotalNs:
+                  type: integer
+                memStats.NumGC:
+                  type: integer
+                memStats.EnableGC:
+                  type: boolean
+                memStats.DebugGC:
+                  type: boolean
+
+  /authorizenet/receipt:
+    post:
+      tags:
+        - authorizenet
+        - payment
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              x_response_code:
+                type: string
+              x_session:
+                type: string
+              x_card_type:
+                type: string
+              x_account_number:
+                type: string
+              x_amount:
+                type: string
+              x_trans_id:
+                type: string
+      description: >
+        processes Authorize.net receipt response
+        can be used for redirecting customer to it on exit from authorize.net
+      responses:
+        200:
+          description: >
+            Processed.
+            Positive result could contains:
+              - DeclineHTML
+              - StructRestRedirect:
+                - Result: object
+                - Location: redirectURL
+                - DoRedirect: boolean
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /authorizenet/relay:
+    post:
+      tags:
+        - authorizenet
+        - payment
+      parameters:
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              x_response_code:
+                type: string
+              x_session:
+                type: string
+              x_card_type:
+                type: string
+              x_account_number:
+                type: string
+              x_amount:
+                type: string
+              x_trans_id:
+                type: string
+      description: processes Authorize.net relay response
+      responses:
+        200:
+          description: >
+            Processed.
+            Positive result could contains:
+              - DeclineHTML
+              - ReceiptHTML
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /blog/post:
+    post:
+      tags:
+        - blog
+      description: creates blog post by provided data
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/BlogPostModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/BlogPostModelHash'
+        403:
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /blog/post/{id}:
+    delete:
+      tags:
+        - blog
+      description: deletes post by id
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - blog
+      description: returns post by id
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  allOf:
+                  - $ref: '#/definitions/BlogPostModelHash'
+                  - type: object
+                    properties:
+                      extra:
+                        type: object
+                        properties:
+                          next:
+                            $ref: '#/definitions/BlogPostModelHash'
+                          prev:
+                            $ref: '#/definitions/BlogPostModelHash'
+
+    put:
+      tags:
+        - blog
+      description: updates post by id
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/BlogPostModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/BlogPostModelHash'
+
+  /blog/posts:
+    get:
+      tags:
+        - blog
+      description: returns list of posts or count
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: >
+            Processed.
+            Could return:
+              - list of BlogPostModelHash
+              - count
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /blog/posts/attributes:
+    get:
+      tags:
+        - blog
+      description: returns a list of blog post attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /cart:
+    get:
+      tags:
+        - cart
+      description: returns get cart related information
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    visitor_id:
+                      type: string
+                    cart_info:
+                      type: object
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          _id:
+                            type: string
+                          idx:
+                            type: integer
+                          gty:
+                            type: integer
+                          pid:
+                            type: string
+                          options:
+                            type: object
+                          product:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              sku:
+                                type: string
+                              price:
+                                type: number
+                              weight:
+                                type: number
+                              options:
+                                type: object
+                              image:
+                                type: object
+
+  /cart/coupons:
+    post:
+      tags:
+        - cart
+        - coupon
+      description: Apply will add the coupon code to the current checkout
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - code
+          properties:
+            code:
+              type: string
+      responses:
+        200:
+          description: Coupon applied
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/coupons/{code}:
+    delete:
+      tags:
+        - cart
+        - coupon
+      description: >
+        will remove the coupon code and its value from the current checkout.
+        use a "*" as the coupon code to revert all discounts.
+      parameters:
+      - name: code
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/giftcards/{giftcode}:
+    delete:
+      tags:
+        - giftcard
+      description: removes the application of the gift card value from the current checkout
+      parameters:
+      - name: giftcode
+        in: path
+        required: true
+        type: string
+        description: use "*" as giftcard code to 'remove' all giftcard discounts
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - giftcard
+      description: applies the provided gift card to current checkout
+      parameters:
+      - name: giftcode
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/item:
+    post:
+      tags:
+        - cart
+      description: adds specified product to cart
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          required:
+          - pid
+          properties:
+            pid:
+              type: string
+              description: product ID
+            qty:
+              type: integer
+            options:
+              type: object
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+
+  /cart/item/{itemIdx}:
+    delete:
+      tags:
+        - cart
+      description: removes specified item from cart item from cart
+      parameters:
+      - name: itemIdx
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cart/item/{itemIdx}/{qty}:
+    put:
+      tags:
+        - cart
+      description: changes qty and/or option for cart item
+      parameters:
+      - name: itemIdx
+        in: path
+        required: true
+        type: string
+      - name: qty
+        in: path
+        required: true
+        type: integer
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /categories:
+    get:
+      tags:
+        - category
+      description: returns a list of available categories
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: >
+            Processed.
+            Could return:
+              - list of items
+              - count
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      ID:
+                        type: string
+                      Name:
+                        type: string
+                      Desc:
+                        type: string
+                      Extra:
+                        type: string
+                      Image:
+                        type: string
+                      Images:
+                        type: array
+                        items:
+                          type: object
+
+  /categories/attributes:
+    get:
+      tags:
+        - category
+      description: returns a list of category attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /categories/tree:
+    get:
+      tags:
+        - category
+      description: returns categories parent/child relation map
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      child:
+                        type: array
+                        items:
+                          type: object
+                          description: id, name, child[...]
+
+  /category:
+    post:
+      tags:
+        - category
+      description: creates a new category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CategoryModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
+  /category/{categoryID}:
+    delete:
+      tags:
+        - category
+      description: deletes existing category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - category
+      description: return specified category information
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
+    put:
+      tags:
+        - category
+      description: modifies existing category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CategoryModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CategoryModelHash'
+
+  /category/{categoryID}/layers:
+    get:
+      tags:
+        - category
+      description: enumerates category attributes and their possible values which is used for layered navigation
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  description: each property value is an array
+
+  /category/{categoryID}/media/{mediaType}:
+    get:
+      tags:
+        - category
+      description: returns list of media files assigned to specified category
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /category/{categoryID}/media/{mediaType}/{mediaName}:
+    delete:
+      tags:
+        - category
+      description: removes media content from specified category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - category
+      description: returns media contents for a category (file assigned to a category)
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed. On success case not a JSON data returns, but media file.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - category
+      description: uploads and assigns media file send in request for a specified category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/mediapath/{mediaType}:
+    get:
+      tags:
+        - category
+      description: returns relative path to category media files within media library
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: mediaType
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: returns relative path to category media files within media library
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/product/{productID}:
+    delete:
+      tags:
+        - category
+      description: adds product to category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - category
+      description: removes product from category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /category/{categoryID}/products:
+    get:
+      tags:
+        - category
+      description: returns category related products
+      parameters:
+      - name: categoryID
+        in: path
+        required: true
+        type: string
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/ProductModelHash'
+                      - type: object
+                        properties:
+                          image:
+                            type: array
+                            items:
+                              type: object
+
+  /checkout:
+    get:
+      tags:
+        - checkout
+      description: returns information related to current checkkout
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                billing_address:
+                  $ref: '#/definitions/AddressModelHash'
+                shipping_address:
+                  type: object
+                  allOf:
+                    - $ref: '#/definitions/AddressModelHash'
+                    - type: object
+                      properties:
+                        notes:
+                          type: string
+                payment_method_name:
+                  type: string
+                payment_method_code:
+                  type: string
+                shipping_method_name:
+                  type: string
+                shipping_method_code:
+                  type: string
+                shipping_rate:
+                  $ref: '#/definitions/StructShippingRate'
+                shipping_amount:
+                  type: number
+                discounts:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructPriceAdjustment'
+                discount_amount:
+                  type: number
+                taxes:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructPriceAdjustment'
+                tax_amount:
+                  type: number
+                subtotal:
+                  type: number
+                grandtotal:
+                  type: number
+                info:
+                  type: object
+
+    put:
+      tags:
+        - checkout
+      description: allows to specify and assign to checkout extra information
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+
+
+  /checkout/billing/address:
+    put:
+      tags:
+        - checkout
+      description: specifies billing address for a current checkout
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /checkout/payment/method/{method}:
+    put:
+      tags:
+        - checkout
+      description: assigns payment method to current checkout
+      parameters:
+      - in: path
+        name: method
+        required: true
+        type: string
+        description: payment methos Code
+      - in: body
+        name: body
+        description: checkout Info
+        schema:
+          type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /checkout/payment/methods:
+    get:
+      tags:
+        - checkout
+      description: returns currently available payment methods
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Name:
+                        type: string
+                      Code:
+                        type: string
+                      Type:
+                        type: string
+                      Tokenable:
+                        type: boolean
+
+  /checkout/shipping/address:
+    put:
+      tags:
+        - checkout
+      description: specifies shipping address for a current checkout
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+            - $ref: '#/definitions/AddressModelHash'
+            - type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /checkout/shipping/method/{method}/{rate}:
+    put:
+      tags:
+        - checkout
+      description: assigns shipping method and shipping rate to current checkout
+      parameters:
+      - in: path
+        name: method
+        required: true
+        description: shipping method Code
+        type: string
+      - in: path
+        name: rate
+        required: true
+        description: shipping rate Code
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /checkout/shipping/methods:
+    get:
+      tags:
+        - checkout
+      description: returns currently available shipping methods
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Name:
+                        type: string
+                      Code:
+                        type: string
+                      Rates:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StructShippingRate'
+
+  /checkout/submit:
+    post:
+      tags:
+        - checkout
+      description: >
+        Submits current checkout and creates a new order base on it.
+        Could return:
+          - StructRestRedirect
+          - OrderHashMap with orderItems
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cms/block:
+    post:
+      tags:
+        - cms
+      description: creates a new CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsBlockModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsBlockModelHash'
+
+  /cms/block/{blockID}:
+    delete:
+      tags:
+        - cms
+      description: deletes existing CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - cms
+      description: return specified CMS block information
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/CmsBlockModelHash'
+                      - type: object
+                        properties:
+                          evaluated:
+                            type: string
+                            description: >
+                              CMS block content can be a text template,
+                              so "evaluated" field in response is that template evaluation result
+
+    put:
+      tags:
+        - cms
+      description: updates existing CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: blockID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsBlockModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsBlockModelHash'
+
+  /cms/blocks:
+    get:
+      tags:
+        - cms
+      description: returns a list of existing CMS blocks
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /cms/blocks/attributes:
+    get:
+      tags:
+        - cms
+      description: returns a list of CMS block attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /cms/media:
+    get:
+      tags:
+        - cms
+      description: returns list of media files from media
+      parameters:
+      - in: query
+        name: mediaType
+        type: string
+        description: >
+          - if mediaType is empty - all types will be used
+          - if mediaType is explicit value - only this value will be used
+          - if mediaType is list of types separated by comma - only these types will be shown
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      url:
+                        type: string
+                      created_at:
+                        type: string
+                      type:
+                        type: string
+
+    post:
+      tags:
+        - cms
+      description: >
+        uploads images to the media
+        - media file should be provided in "file" field with full name
+        - the mediaType of files are detected automatically
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: string
+
+  /cms/media/{mediaName}:
+    delete:
+      tags:
+        - cms
+      description: removes media from storage
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cms/media/{mediaName}/{mediaType}:
+    delete:
+      tags:
+        - cms
+      description: removes media from storage
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  # Swagger Error
+  # Equivalent path already exists: /cms/media/{mediaName}
+  # /cms/media/{mediaType}:
+  #   get:
+  #     tags:
+  #       - cms
+  #     description: returns list of media files from media
+  #     parameters:
+  #     - in: path
+  #       name: mediaType
+  #       type: string
+  #       required: true
+  #       description: >
+  #         - if mediaType is empty - all types will be used
+  #         - if mediaType is explicit value - only this value will be used
+  #         - if mediaType is list of types separated by comma - only these types will be shown
+  #     responses:
+  #       200:
+  #         description: Processed
+  #         schema:
+  #           type: object
+  #           allOf:
+  #           - $ref: '#/definitions/ApiResponse'
+  #           - type: object
+  #             properties:
+  #               result:
+  #                 type: array
+  #                 items:
+  #                   type: object
+  #                   properties:
+  #                     id:
+  #                       type: string
+  #                     name:
+  #                       type: string
+  #                     url:
+  #                       type: string
+  #                     created_at:
+  #                       type: string
+  #                     type:
+  #                       type: string
+
+
+  /cms/page:
+    post:
+      tags:
+        - cms
+      description: creates a new CMS block
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsPageModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsPageModelHash'
+
+  /cms/page/{pageID}:
+    delete:
+      tags:
+        - cms
+      description: deletes specified CMS page
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - cms
+      description: return specified CMS page information
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/CmsPageModelHash'
+                      - type: object
+                        properties:
+                          evaluated:
+                            type: string
+                            description: >
+                              CMS page content can be a text template,
+                              so "evaluated" field in response is that template evaluation result
+
+    put:
+      tags:
+        - cms
+      description: updates existing CMS page
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: pageID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/CmsPageModelHash'
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/CmsPageModelHash'
+
+  /cms/pages:
+    get:
+      tags:
+        - cms
+      description: >
+        returns a list of existing CMS pages
+        - if "action" parameter is set to "count" result value will be just a number of list items
+      parameters:
+      - in: query
+        name: action
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /cms/pages/attributes:
+    get:
+      tags:
+        - cms
+      description: returns a list of CMS page attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /config/groups:
+    get:
+      tags:
+        - config
+      description: API to get value information about config items with type [ConstConfigTypeGroup]
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructConfigItem'
+
+  /config/item/{path}:
+    get:
+      tags:
+        - config
+      description: API to get value information about item(s) matching path
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructConfigItem'
+
+
+  /config/value/{path}:
+    delete:
+      tags:
+        - config
+      description: API used to remove config item from system
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - config
+      description: >
+        API used to get value of particular item in config
+        - path should be without any wildcard
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+
+    post:
+      tags:
+        - config
+      description: API used to add new config Item to a config system
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/StructConfigItem'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/StructConfigItem'
+
+    put:
+      tags:
+        - config
+      description: >
+        API used to set value of particular item in config
+        - path should be without any wildcard
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: path
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            value:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+
+
+  /config/values:
+    get:
+      tags:
+        - config
+      description: API to get value information about config items with type [ConstConfigTypeGroup]
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /config/values/refresh:
+    get:
+      tags:
+        - config
+      description: API used to re-load config from DB
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /coupons:
+    get:
+      tags:
+        - coupon
+      description: returns a list registered coupons and is an protected resource that requires authentication to access.
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+
+    post:
+      tags:
+        - coupon
+      description: >
+        will generate a new coupon code when supplied the following required keys,
+        they are not required to match.
+          - "name" is the desired reference key for the coupon
+          - "code" is the text visitors must enter to apply a coupon in checkout
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CouponHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+
+  /coupons/{id}:
+    delete:
+      tags:
+        - coupon
+      description: deletes specified coupon item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+    get:
+      tags:
+        - coupon
+      description: returns a coupon with the specified ID
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+        500:
+          description: Internal Server Error
+
+    put:
+      tags:
+        - coupon
+      description: updates existing coupon specified in the request argument
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/CouponHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CouponHash'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /cron/schedule:
+    get:
+      tags:
+        - cron
+      description: get information about current schedules
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task:
+    get:
+      tags:
+        - cron
+      description: return scheduler registered tasks (functions that are available to execute)
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+    post:
+      tags:
+        - cron
+      description: >
+        createTask with request params;
+        in request params required are time or cronExpr for creating different type of tasks
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            CronExpr:
+              type: string
+            Time:
+              type: string
+            TaskName:
+              type: string
+            repeat:
+              type: string
+            params:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronSchedule'
+
+  /cron/task/{taskIndex}:
+    put:
+      tags:
+        - cron
+      description: updateTask update scheduler task
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            expr:
+              type: string
+            time:
+              type: string
+            task:
+              type: string
+            repeat:
+              type: string
+            params:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /cron/task/disable/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: make schedule inactive
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task/enable/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: make schedule active
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/CronScheduleHash'
+
+  /cron/task/run/{taskIndex}:
+    get:
+      tags:
+        - cron
+      description: allows to execute task of schedule without updating of it
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: taskIndex
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            useTaskParams:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /csv/coupons:
+    get:
+      tags:
+        - coupon
+        - csv
+      description: returns a csv file with the current coupons and their configuration
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+        - coupon
+        - csv
+      description: will overwrite and replace the current coupon configuration with the uploaded CSV
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /emma/contact:
+    post:
+      tags:
+        - emma
+      description: return message, after add contact
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            group_ids:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /friend/captcha:
+    get:
+      tags:
+        - friendmail
+      description: will generate a captcha for use in a form
+      parameters:
+      - in: query
+        name: json
+        type: string
+        required: false
+        description: will return image as base64 in result:{captcha}
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /friend/email:
+    post:
+      tags:
+        - friendmail
+      description: sends an email to a friend
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            captcha:
+              type: string
+            friend_email:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /giftcard:
+    post:
+      tags:
+        - giftcard
+      description: send giftcard by admin
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            amount:
+              type: string
+            message:
+              type: string
+            name:
+              type: string
+            recipient_mailbox:
+              type: string
+            sku:
+              type: string
+            delivery_date:
+              type: string
+            code:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+
+  /giftcard/{id}/history:
+    get:
+      tags:
+        - giftcard
+      description: returns a history of gift cards for the admin in the context passed
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                      amount:
+                        type: number
+                      transaction_date:
+                        type: string
+        400:
+          description: Bad Request
+
+  /giftcards:
+    get:
+      tags:
+        - giftcard
+      description: returns a list of gift cards for the visitor id in the context passed
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /giftcards/{giftcode}:
+    get:
+      tags:
+        - giftcard
+      description: returns the gift card and related info
+      parameters:
+      - in: path
+        name: giftcode
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: object
+        400:
+          description: Bad Request
+
+  /impex/export/{model}:
+    get:
+      produces:
+      - "text/csv"
+      tags:
+      - import
+      - export
+      - impex
+      description: API used export specific model data from system
+      parameters:
+      - in: path
+        name: model
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import:
+    post:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to process csv file script in impex format
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import/{model}:
+    post:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used import data to system
+      parameters:
+      - in: path
+        name: model
+        type: string
+        required: true
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/import/status:
+    get:
+      tags:
+      - import
+      - export
+      - impex
+      description: API for getting status of current import
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                    name:
+                      type: string
+                    size:
+                      type: integer
+                    position:
+                      type: integer
+
+  /impex/models:
+    get:
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to list available models for Impex system
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /impex/test/import:
+    post:
+      produces:
+      - "text/plain"
+      tags:
+      - import
+      - export
+      - impex
+      description: API used to test csv file before import
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /impex/test/mapping:
+    post:
+      produces:
+      - "text/plain"
+      tags:
+      - import
+      - export
+      - impex
+      description: API to test conversion from csv to json / map[string]interface{}
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+
+  /media:
+    get:
+      tags:
+        - media
+      description: will resize all images if the params of the request contain 'resizeAll' with a value of true
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: resizeAll
+        required: false
+        type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /order/{orderID}:
+    delete:
+      tags:
+        - order
+      description: deletes existing purchase order
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - order
+      description: return specified purchase order information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                    - $ref: '#/definitions/OrderModelHash'
+                    - type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            $ref: '#/definitions/OrderItem'
+
+    put:
+      tags:
+        - order
+      description: update existing purchase order
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/OrderModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/OrderModelHash'
+
+  /order/{orderID}/emailOrderConfirmation:
+    get:
+      tags:
+        - order
+      description: will send out an order confirmation email to the visitor specficied in the orderID
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Errror
+
+  /order/{orderID}/emailShipStatus:
+    get:
+      tags:
+        - order
+      description: will send the visitor a shipping confirmation email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Errror
+
+  /order/{orderID}/emailTrackingCode:
+    post:
+      tags:
+        - order
+      description: updates order with shipping tracking information and sends a shipping status email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            carrier:
+              type: string
+            tracking_number:
+              type: string
+            tracking_url:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Errror
+
+  /orders:
+    get:
+      tags:
+        - order
+      description: returns a list of existing purchase orders
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /orders/attributes:
+    get:
+      tags:
+        - order
+      description: returns a list of purchase order attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /orders/exportToCSV:
+    post:
+      tags:
+        - order
+        - csv
+      description: returns a list of orders in CSV format
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            orders:
+              type: string
+              description: comma separated list of order IDs
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /orders/setStatus:
+    post:
+      tags:
+        - order
+      description: will change orders to the state included in the status request variable
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+              - declined
+              - new
+              - pending
+              - processed
+              - completed
+              - cancelled
+            order_id:
+              type: string
+              description: comma separated list of order IDs
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+# Deprecated
+# /patch/options {GET}
+
+  /paypal/cancel:
+    get:
+      tags:
+        - paypal
+      description: processes PayPal decline response
+      parameters:
+      - in: query
+        name: token
+        required: true
+        type: string
+      - in: query
+        name: PayerID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
+
+  /paypal/success:
+    get:
+      tags:
+        - paypal
+      description: processes PayPal receipt response
+      parameters:
+      - in: query
+        name: token
+        required: true
+        type: string
+      - in: query
+        name: PayerID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
+
+  /product:
+    post:
+      tags:
+        - product
+      description: creates a new product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ProductModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+  /product/{productID}:
+    delete:
+      tags:
+        - product
+      description: deletes existing product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - product
+      description: return specified product information
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+    put:
+      tags:
+        - product
+      description: creates a new product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ProductModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ProductModelHash'
+
+# DEPRECATED
+# /product/:productID/media/:mediaType {GET}
+
+  /product/{productID}/media/{mediaType}/{mediaName}:
+    delete:
+      tags:
+        - product
+      description: removes media content from specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    # DEPRECATED
+    # get:
+
+    post:
+      tags:
+        - product
+      description: uploads and assigns media file send in request for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - product
+      description: renames media file for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: productID
+        type: string
+        required: true
+      - in: path
+        name: mediaType
+        type: string
+        required: true
+      - in: path
+        name: mediaName
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            newMediaName:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+# DEPRECATED
+# /product/:productID/mediapath/:mediaType {GET}
+
+  /product/{productID}/related:
+    get:
+      tags:
+        - product
+      description: returns related products list for a given product
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/ProductModelHash'
+
+  /product/{productID}/stock:
+    post:
+      tags:
+        - product
+        - stock
+      description: returns available stock qty for particular product-options pair
+      parameters:
+      - name: productID
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            options:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: integer
+
+  /products:
+    get:
+      tags:
+        - product
+      description: returns a list of available products
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      allOf:
+                      - $ref: '#/definitions/StructListItem'
+                      - type: object
+                        properties:
+                          Images:
+                            type: array
+                            items:
+                              type: object
+
+  /products/attribute:
+    post:
+      tags:
+        - product
+      description: >
+        creates a new custom attribute for a product model.
+        time expensive: update all products with default value
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            Attribute:
+              type: string
+            Label:
+              type: string
+            type:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /products/attribute/{attribute}:
+    delete:
+      tags:
+        - product
+      description: removes existing custom attribute of a product model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - product
+      description: updates existing custom attribute of product model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            label:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /products/attributes:
+    get:
+      tags:
+        - product
+      description: returns a list of product attributes
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /proxy.html:
+    get:
+      tags:
+        - xdomain
+      description: will enable the usage of xdomain instead of CORS for legacy browsers
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /ratedreview/{productID}/{stars}:
+    post:
+      tags:
+        - product
+        - review
+      description: creates a new review for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        type: string
+        required: true
+      - name: stars
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+  /rating/{productID}:
+    get:
+      tags:
+        - product
+        - review
+      description: returns rating info for a specified product
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: productID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+  /reporting/customer-activity:
+    get:
+      tags:
+        - reporting
+      description: customer activity
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: limit
+        in: query
+        type: string
+        required: false
+      - name: sort
+        in: query
+        type: string
+        required: false
+        enum:
+        - total_orders
+        - total_sales
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/CustomerActivityItemHash'
+                      meta:
+                        type: object
+                        properties:
+                          limit:
+                            type: integer
+                          count:
+                            type: integer
+                      perf_ms:
+                        type: integer
+
+  /reporting/gift-cards:
+    get:
+      tags:
+        - reporting
+      description: gift cards
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            name:
+                              type: string
+                            amount:
+                              type: number
+                            date:
+                              type: string
+                      total:
+                        type: integer
+                      count:
+                        type: integer
+                      perf_ms:
+                        type: integer
+        400:
+          description: Bad Request
+
+  /reporting/location-country:
+    get:
+      tags:
+        - reporting
+      description: order locations
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/location-us:
+    get:
+      tags:
+        - reporting
+      description: list aggregate sales by state for sales in the US
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/payment-method:
+    get:
+      tags:
+        - reporting
+      description: payment method
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+      - name: end_date
+        in: query
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  /reporting/product-performance:
+    get:
+      tags:
+        - reporting
+      description: returns product performance information by date range
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: true
+        format: "2006-01-02 15:04"
+      - name: end_date
+        in: query
+        type: string
+        required: true
+        format: "2006-01-02 15:04"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/ProductPerfItemHash'
+                      total_sales:
+                        type: number
+                      total_items:
+                        type: integer
+                      total_orders:
+                        type: integer
+
+  /reporting/shipping-method:
+    get:
+      tags:
+        - reporting
+      description: shipping method
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: start_date
+        in: query
+        type: string
+        required: false
+        format: "2006-01-02 15:04"
+      - name: end_date
+        in: query
+        type: string
+        required: false
+        format: "2006-01-02 15:04"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      aggregate_items:
+                        type: array
+                        items:
+                          $ref: '#/definitions/StatItemHash'
+                      total_sales:
+                        type: number
+                      perf_ms:
+                        type: integer
+
+  # Duplicate path to /review/{reviewID}:
+  # /review/{productID}:
+  #   post:
+  #     tags:
+  #       - product
+  #       - review
+  #     description: creates a new review for a specified product
+  #     security:
+  #       - OTTEMOSESSION: []
+  #     parameters:
+  #     - name: productID
+  #       in: path
+  #       type: string
+  #       required: true
+  #     responses:
+  #       200:
+  #         description: Processed
+  #         schema:
+  #           type: object
+  #           allOf:
+  #             - $ref: '#/definitions/ApiResponse'
+  #             - type: object
+  #               properties:
+  #                 result:
+  #                   $ref: '#/definitions/ReviewModelHash'
+
+  /review/{reviewID}:
+    delete:
+      tags:
+        - product
+        - review
+      description: deletes existing review
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - product
+        - review
+      description: returns an existing review for owner or admin
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+    put:
+      tags:
+        - product
+        - review
+      description: updates an existing review
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: reviewID
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/ReviewModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/ReviewModelHash'
+
+  /reviews:
+    get:
+      tags:
+        - product
+        - review
+      description: returns a list of reviews for specified products
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        type: string
+        required: false
+        enum:
+        - count
+      - in: query
+        name: product_id
+        type: string
+        required: false
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/ReviewModelHash'
+
+  /rts/bestsellers:
+    get:
+      tags:
+        - rts
+      description: returns information about bestsellers for some period
+      parameters:
+      - in: query
+        name: period
+        type: string
+        required: false
+        enum:
+        - yesterday
+        - week
+        - month
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pid:
+                          type: string
+                        name:
+                          type: string
+                        count:
+                          type: integer
+                        image:
+                          type: string
+
+  /rts/conversion:
+    get:
+      tags:
+        - rts
+      description: returns site conversion information
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      totalVisitors:
+                        type: integer
+                      addedToCart:
+                        type: integer
+                      visitCheckout:
+                        type: integer
+                      setPayment:
+                        type: integer
+                      purchased:
+                        type: integer
+
+  /rts/sales:
+    get:
+      tags:
+        - rts
+      description: returns information about sales in the recent period, taking into account time zone
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      sales:
+                        type: object
+                        properties:
+                          today:
+                            type: number
+                          yesterday:
+                            type: number
+                          week:
+                            type: number
+                          monthToDate:
+                            type: number
+                      orders:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+
+  /rts/sales/detail/{from}/{to}:
+    get:
+      tags:
+        - rts
+      description: returns site sales information for a specified period
+      parameters:
+      - in: path
+        name: from
+        required: true
+        type: string
+        format: "2006-01-02"
+      - in: path
+        name: to
+        required: true
+        type: string
+        format: "2006-01-02"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: integer
+
+  /rts/visit:
+    post:
+      tags:
+        - rts
+      description: registers request for a statistics
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            path:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /rts/visits:
+    get:
+      tags:
+        - rts
+      description: returns site visit information for a specified local day
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      total:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+                      unique:
+                        type: object
+                        properties:
+                          today:
+                            type: integer
+                          yesterday:
+                            type: integer
+                          week:
+                            type: integer
+                          monthToDate:
+                            type: integer
+
+  /rts/visits/detail/{from}/{to}:
+    get:
+      tags:
+        - rts
+      description: returns detailed site visit information for a specified period
+      parameters:
+      - in: path
+        name: from
+        required: true
+        type: string
+        format: "2006-01-02"
+      - in: path
+        name: to
+        required: true
+        type: string
+        format: "2006-01-02"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: integer
+
+  /saleprice:
+    post:
+      tags:
+        - saleprice
+      description: store new Sale Price
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/SalePriceModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SalePriceModelHash'
+        400:
+          description: Bad Request
+
+  /saleprice/{id}:
+    delete:
+      tags:
+        - saleprice
+      description: deletes specified sale price
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+        - saleprice
+      description: store new Sale Price
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SalePriceModelHash'
+
+    put:
+      tags:
+        - saleprice
+      description: updates sale price
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/SalePriceModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SalePriceModelHash'
+        400:
+          description: Bad Request
+
+  /saleprices:
+    get:
+      tags:
+        - saleprice
+      description: returns list of all registered sale price promotions scheduled.
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      - in: query
+        name: extra
+        required: true
+        type: string
+        description: put these separated by comma attributes of sale price to Extra item field
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /seo/attributes:
+    get:
+      tags:
+        - seo
+      description: returns a list of seo item attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /seo/canonical/{id}:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified id
+      parameters:
+      - in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+
+  /seo/item:
+    post:
+      tags:
+        - seo
+      description: creates a new SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SEOItemModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /seo/item/{itemID}:
+    delete:
+      tags:
+        - seo
+      description: deletes specified SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: itemID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        500:
+          description: Internal Server Error
+
+    put:
+      tags:
+        - seo
+      description: updates existing SEO item
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: itemID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/SEOItemModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
+  /seo/items:
+    get:
+      tags:
+        - seo
+      description: returns a list registered SEO records
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructListItem'
+        500:
+          description: Internal Server Error
+
+  /seo/sitemap:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - seo
+      description: generates a new sitemap based on SEO records
+      responses:
+        200:
+          description: Processed
+        500:
+          description: Internal Server Error
+
+  /seo/sitemap/sitemap.xml:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - seo
+      description: returns SEO records based sitemap (auto re-generating it if needed)
+      responses:
+        200:
+          description: Processed
+        500:
+          description: Internal Server Error
+
+  /seo/url:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified url
+      parameters:
+      - in: query
+        name: url
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
+  /seo/url/{url}:
+    get:
+      tags:
+        - seo
+      description: returns SEO item for a specified url
+      parameters:
+      - in: path
+        name: url
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/SEOItemModelHash'
+        500:
+          description: Internal Server Error
+
+  /shipstation:
+    get:
+      produces:
+      - "text/xml"
+      tags:
+        - shipstation
+      description: >
+        Handler for getting a list of orders.
+        Should return any orders that were modified within the date range
+        regardless of the order status.
+      security:
+      - BasicShipstation: []
+      parameters:
+      - in: query
+        name: action
+        required: true
+        type: string
+        enum:
+        - export
+      - in: query
+        name: start_date
+        required: true
+        type: string
+        description: format '01/02/2006 15:04'
+      - in: query
+        name: end_date
+        required: true
+        type: string
+        description: format '01/02/2006 15:04'
+      responses:
+        200:
+          description: Processed
+
+    post:
+      produces:
+      - "text/xml"
+      tags:
+        - shipstation
+      description: >
+        An endpoint for shipstation to hit that will update the order with some shipment tracking info
+        and then send off an email update.
+      security:
+      - BasicShipstation: []
+      parameters:
+      - in: query
+        name: action
+        required: true
+        type: string
+        enum:
+        - shipnotify
+        description: The value will always be "shipnotify" when sending shipping notifications.
+      - in: query
+        name: order_number
+        required: true
+        type: string
+        description: This is the order's unique identifier.
+      - in: query
+        name: carrier
+        required: true
+        type: string
+        description: >
+          USPS, UPS, FedEx, DHL, Other, DHLGlobalMail, UPSMI, BrokersWorldWide, FedExInternationalMailService, CanadaPost, FedExCanada, OnTrac, Newgistics, FirstMile, Globegistics, LoneStar, Asendia, RoyalMail, APC, AccessWorldwide, AustraliaPost, DHLCanada, IMEX
+      - in: query
+        name: service
+        required: true
+        type: string
+        description: This will be the name of the shipping service that was used to ship the order.
+      - in: query
+        name: tracking_number
+        required: true
+        type: string
+        description: This is the tracking number for the package.
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        400:
+          description: Bad Request
+
+  /stock/{productID}:
+    delete:
+      tags:
+      - stock
+      description: deletes stock records for a product-options pair
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - stock
+      description: returns stock information for particular product
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /stock/{productID}/{qty}:
+    post:
+      tags:
+      - stock
+      description: sets amount qty for a particular product-options pair
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: path
+        name: qty
+        required: true
+        type: integer
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+      - stock
+      description: >
+        increases qty on particular product-options pair for a delta value
+        - product id and delta should be specified in "productID" and "qty" arguments
+        - negative delta will decrease amount
+      parameters:
+      - in: path
+        name: productID
+        required: true
+        type: string
+      - in: path
+        name: qty
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            otpions:
+              type: object
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /subscriptional/checkout:
+    get:
+      tags:
+      - subscription
+      description: provide check is current checkout allows to create new subscription
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /subscriptions:
+    get:
+      tags:
+      - subscription
+      description: returns a list of subscriptions for visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /subscriptions/{id}:
+    get:
+      tags:
+      - subscription
+      description: return specified subscription information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                      - $ref: '#/definitions/SubscriptionModelHash'
+                      - type: object
+                        properties:
+                          payment_method_name:
+                            type: string
+                          shipping_method_name:
+                            type: string
+
+    put:
+      tags:
+      - subscription
+      description: allows to change status of subscription for visitor and for administrator
+      parameters:
+      - name: id
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /swatch/media:
+    get:
+      tags:
+      - swatch
+      description: returns list of media files from media storage
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        url:
+                          type: string
+                        created_at:
+                          type: string
+                        type:
+                          type: string
+
+    post:
+      tags:
+      - swatch
+      description: >
+        uploads images to the media
+        - media file should be provided in "file" field with full name
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    type: string
+
+  /swatch/media/{mediaName}:
+    delete:
+      tags:
+      - swatch
+      description: removes image from media
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: mediaName
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /swatch/media/extention:
+    get:
+      tags:
+      - swatch
+      description: returns default media extention. This value is necessary to select image by name "swatchType-swatchValue.extention" list returned from "listAllSwatches".
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /taxes/csv:
+    get:
+      produces:
+      - "text.csv"
+      tags:
+      - tax
+      - csv
+      description: returns csv file with currently used tax rates
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    post:
+      tags:
+      - tax
+      - csv
+      description: replaces currently used discount coupons with data from provided in csv file
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: file
+        in: formData
+        type: file
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /trustpilot/products/summaries:
+    get:
+      tags:
+      - trustpilot
+      description: >
+        Makes a request to Trustpilot api to obtain a list of reviews summaries for every product, caches the response.
+          - https://developers.trustpilot.com/product-reviews-api#Get product reviews summaries list
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+        403:
+          description: Forbidden
+        500:
+          description: Internal Server Error
+
+  /update/subscriptions:
+    get:
+      tags:
+      - subscription
+      description: >
+        allows run and update info of all existing subscriptions.
+          - if id is provided in request it is used to filter category
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: id
+        required: false
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit:
+    get:
+      tags:
+      - visit
+      description: returns current visit related information.
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  type: object
+                  properties:
+                    facebook_id:
+                      type: string
+                    google_id:
+                      type: string
+                    is_admin:
+                      type: boolean
+
+    put:
+      tags:
+      - visit
+      description: >
+        updates existing visitor.
+          - visitor id should be specified in "visitorID" argument
+          - visitor attributes should be specified in content
+      parameters:
+      - in: query
+        name: visitorID
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/VisitorModelHash'
+
+  /visit/address:
+    post:
+      tags:
+      - visit
+      description: creates a new visitor address
+      parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/AddressModelHash'
+          - type: object
+            properties:
+              visitor_id:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visit/address/{addressID}:
+    delete:
+      tags:
+      - visit
+      description: deletes existing visitor address
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visit
+      description: returns visitor address information
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+    put:
+      tags:
+      - visit
+      description: updates existing visitor address
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponseWithResultObject'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visit/addresses:
+    get:
+      tags:
+      - visit
+      description: >
+        returns visitor address information
+          - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - in: query
+        name: visitorID
+        required: false
+        type: string
+      responses:
+        200:
+          description: Processed.
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /visit/login:
+    post:
+      tags:
+      - auth
+      description: makes login for a current visit
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/login-facebook:
+    post:
+      tags:
+      - auth
+      description: makes login and/or registration via Facebook
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+            user_id:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/login-google:
+    post:
+      tags:
+      - auth
+      description: associates the specified email address with a Google account
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            access_token:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/logout:
+    get:
+      tags:
+        - auth
+      description: makes logout for current visit
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/order/{orderID}:
+    get:
+      tags:
+      - visit
+      - order
+      description: returns current visitor order details for specified order.
+      parameters:
+      - in: path
+        name: orderID
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    allOf:
+                    - $ref: '#/definitions/OrderModelHash'
+                    - type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            $ref: '#/definitions/OrderItem'
+        400:
+          description: Bad Request
+
+  /visit/orders:
+    get:
+      tags:
+      - visit
+      - order
+      description: returns list of orders related to current visitor.
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /visit/subscriptions:
+    get:
+      tags:
+      - visit
+      - subscription
+      description: returns a list of subscriptions for visitor.
+      parameters:
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/SubscriptionModelHash'
+
+  /visit/subscriptions/{id}:
+    put:
+      tags:
+      - visit
+      - subscription
+      description: allows to change status of subscription for visitor and for administrator
+      parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/tokens:
+    get:
+      tags:
+      - visit
+      - token
+      description: >
+        return a list of existing tokens for visitor
+          - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - name: visitorID
+        in: query
+        type: string
+        required: false
+      - name: action
+        in: query
+        type: string
+        enum:
+        - count
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+    post:
+      tags:
+      - visit
+      - token
+      description: >
+        creates a request body for posting credit card info to payment system with 0 amount payment for obtaining token on this card and saving it for visitor
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            payment_method:
+              type: string
+            cc:
+              type: object
+            holder:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorCardModelHash'
+
+  /visit/tokens/{tokenID}:
+    delete:
+      tags:
+      - visit
+      - token
+      description: deletes credit card token by provided token_id
+      parameters:
+      - name: tokenID
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visit/tokens/default:
+    post:
+      tags:
+      - visit
+      - token
+      description: set default credit card token by provided token_id
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            tokenID:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitor:
+    post:
+      tags:
+      - visitor
+      description: creates a new visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitor/{visitorID}:
+    delete:
+      tags:
+      - visitor
+      description: deletes existing visitor
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visitor
+      description: returns visitor information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+    put:
+      tags:
+      - visitor
+      description: updates existing visitor
+      parameters:
+      - in: path
+        name: visitorID
+        type: string
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          allOf:
+          - $ref: '#/definitions/VisitorModelHash'
+          - type: object
+            properties:
+              password:
+                type: string
+              old_password:
+                type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitor/{visitorID}/address:
+    post:
+      tags:
+      - visitor
+      - address
+      description: creates a new visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/AddressModelHash'
+
+  /visitor/{visitorID}/address/{addressID}:
+    delete:
+      tags:
+      - visitor
+      - address
+      description: deletes existing visitor address
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+      - visitor
+      - address
+      description: updates existing visitor address
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/AddressModelHash'
+
+  /visitor/{visitorID}/addresses:
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns visitor addresses list
+        - if visitorID was specified - using this otherwise, taking current visitor
+      parameters:
+      - in: path
+        name: visitorID
+        required: true
+        type: string
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /visitors:
+    get:
+      tags:
+      - visitor
+      description: returns a list of existing visitors
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: action
+        required: false
+        type: string
+        enum:
+        - count
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/StructListItem'
+
+  /visitors/address/{addressID}:
+    delete:
+      tags:
+      - visitor
+      - address
+      description: deletes existing visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns visitor address information
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+    put:
+      tags:
+      - visitor
+      - address
+      description: updates existing visitor address
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: addressID
+        required: true
+        type: string
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/AddressModelHash'
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  $ref: '#/definitions/AddressModelHash'
+
+  /visitors/addresses/attributes:
+    get:
+      tags:
+      - visitor
+      - address
+      description: returns a list of visitor address attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /visitors/attribute:
+    post:
+      tags:
+        - visitor
+      description: >
+        creates a new custom attribute for a visitor model.
+        time expensive: update all visitors with default value.
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            Attribute:
+              type: string
+            Label:
+              type: string
+            type:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /visitors/attribute/{attribute}:
+    delete:
+      tags:
+        - visitor
+      description: >
+        removes existing custom attribute of a visitor model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+    put:
+      tags:
+        - visitor
+      description: >
+        updates existing custom attribute of visitor model
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: attribute
+        in: path
+        required: true
+        type: string
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            label:
+              type: string
+            group:
+              type: string
+            editors:
+              type: string
+            options:
+              type: string
+            default:
+              type: string
+            validators:
+              type: string
+            required:
+              type: boolean
+            layered:
+              type: boolean
+            public:
+              type: boolean
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+  /visitors/attributes:
+    get:
+      tags:
+      - visitor
+      description: returns a list of visitor attributes
+      security:
+        - OTTEMOSESSION: []
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+            - $ref: '#/definitions/ApiResponse'
+            - type: object
+              properties:
+                result:
+                  type: array
+                  items:
+                    $ref: '#/definitions/StructAttributeInfo'
+
+
+  /visitors/available:
+    post:
+      tags:
+        - visitor
+      description: is email address is available
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: boolean
+
+  /visitors/forgot-password/{email}:
+    get:
+      tags:
+        - visitor
+      description: changes and sends a new password to visitor e-mail
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - name: email
+        in: path
+        type: string
+        required: true
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/guests:
+    get:
+      tags:
+        - visitor
+      description: returns list of guests GROUP(ed) BY customer_email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: query
+        name: limit
+        required: false
+        type: string
+        description: limits rows returned in format "limit=start,count"
+      responses:
+        200:
+          description: Processed
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      guests:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            customer_email:
+                              type: string
+                            customer_name:
+                              type: string
+
+  /visitors/invalidate/{email}:
+    get:
+      tags:
+        - visitor
+      description: invalidate visitor by email, sends a new verification key to email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: email
+        required: true
+        type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/mail:
+    post:
+      tags:
+        - visitor
+      description: sends email to specified visitors
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            subject:
+              type: string
+            content:
+              type: string
+            visitor_ids:
+              type: string
+      responses:
+        200:
+          description: Processed
+          schema:
+            $ref: '#/definitions/ApiResponseWithResultObject'
+
+  /visitors/register:
+    post:
+      tags:
+      - visitor
+      description: creates a new visitor, sends verification link to visitor email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          $ref: '#/definitions/VisitorModelHash'
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/definitions/VisitorModelHash'
+
+  /visitors/reset-password:
+    post:
+      tags:
+      - visitor
+      description: update visitor password by using verification key from email
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            key:
+              type: string
+            password:
+              type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    type: string
+
+  /visitors/validate/{key}:
+    get:
+      tags:
+      - visitor
+      description: validates visitors by a key which sends after registration
+      security:
+        - OTTEMOSESSION: []
+      parameters:
+      - in: path
+        name: key
+        required: true
+        type: string
+      responses:
+        200:
+          description: "Processed"
+          schema:
+            type: object
+            allOf:
+              - $ref: '#/definitions/ApiResponse'
+              - type: object
+                properties:
+                  result:
+                    $ref: '#/definitions/StructRestRedirect'
+
+securityDefinitions:
+  OTTEMOSESSION:
+    type: apiKey
+    name: OTTEMOSESSION
+    in: header
+  BasicShipstation:
+    type: basic
+
+definitions:
+
+  ApiResponse:
+    type: object
+    properties:
+      error:
+        type: object
+        properties:
+          code:
+            type: string
+          level:
+            type: integer
+          message:
+            type: string
+      redirect:
+        type: string
+
+  ApiResponseWithResultObject:
+    allOf:
+    - $ref: '#/definitions/ApiResponse'
+    - type: object
+      properties:
+        result:
+          type: object
+
+  AddressModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      company:
+        type: string
+      address_line1:
+        type: string
+      address_line2:
+        type: string
+      country:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      phone:
+        type: string
+      zip_code:
+        type: string
+
+  BlogPostModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      identifier:
+        type: string
+      published:
+        type: boolean
+      title:
+        type: string
+      excerpt:
+        type: string
+      content:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      featured_image:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+
+  CategoryModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      enabled:
+        type: boolean
+      description:
+        type: string
+      image:
+        type: string
+      parent_id:
+        type: string
+      name:
+        type: string
+      product_ids:
+        type: array
+        items:
+          type: string
+      path:
+        type: string
+
+  CmsBlockModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      identifier:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+
+  CmsPageModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      enabled:
+        type: boolean
+      identifier:
+        type: string
+      title:
+        type: string
+      content:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+
+  CouponHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      code:
+        type: string
+      name:
+        type: string
+      amount:
+        type: number
+      percent:
+        type: number
+      times:
+        type: integer
+      since:
+        type: string
+      until:
+        type: string
+      limits:
+        type: string
+      target:
+        type: string
+
+  CronSchedule:
+    type: object
+    properties:
+      CronExpr:
+        type: string
+      TaskName:
+        type: string
+      expr:
+        type: string
+      Time:
+        type: string
+      task:
+        type: string
+      Repeat:
+        type: boolean
+      Params:
+        type: object
+      active:
+        type: boolean
+      scheduler:
+        type: object
+
+  CronScheduleHash:
+    type: object
+    properties:
+      expr:
+        type: string
+      time:
+        type: string
+      task:
+        type: string
+      repeat:
+        type: boolean
+      params:
+        type: object
+      active:
+        type: boolean
+
+  CustomerActivityItemHash:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      total_sales:
+        type: number
+      total_orders:
+        type: integer
+      average_sales:
+        type: number
+      earliest_purchase:
+        type: string
+      latest_purchase:
+        type: string
+
+  OrderModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      increment_id:
+        type: string
+      status:
+        type: string
+      visitor_id:
+        type: string
+      session_id:
+        type: string
+      cart_id:
+        type: string
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      shipping_address:
+        $ref: '#/definitions/AddressModelHash'
+      billing_address:
+        $ref: '#/definitions/AddressModelHash'
+      payment_method:
+        type: string
+      shipping_method:
+        type: string
+      subtotal:
+        type: number
+      discount:
+        type: number
+      tax_amount:
+        type: number
+      shipping_amount:
+        type: number
+      grand_total:
+        type: number
+      taxes:
+        type: array
+        items:
+          $ref: '#/definitions/StructTaxRate'
+      discounts:
+        type: array
+        items:
+          $ref: '#/definitions/StructDiscount'
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      description:
+        type: string
+      payment_info:
+        type: object
+      custom_info:
+        type: object
+      shipping_info:
+        type: object
+      notes:
+        type: array
+        items:
+          type: string
+
+  OrderItem:
+    type: object
+    properties:
+      OrderID:
+        type: string
+      ProductID:
+        type: string
+      Qty:
+        type: integer
+      Name:
+        type: string
+      Sku:
+        type: string
+      ShortDescription:
+        type: string
+      Price:
+        type: number
+      Weight:
+        type: number
+      Options:
+        type: object
+
+  ProductModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      enabled:
+        type: boolean
+      sku:
+        type: string
+      name:
+        type: string
+      short_description:
+        type: string
+      description:
+        type: string
+      default_image:
+        type: string
+      price:
+        type: number
+      weight:
+        type: number
+      options:
+        type: object
+      visible:
+        type: boolean
+      related_pids:
+        type: string
+    additionalProperties:
+      type: object
+
+  ProductPerfItemHash:
+    type: object
+    properties:
+      name:
+        type: string
+      sku:
+        type: string
+      gross_sales:
+        type: number
+      units_sold:
+        type: integer
+
+  ReviewModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      product_id:
+        type: string
+      visitor_id:
+        type: string
+      username:
+        type: string
+      rating:
+        type: string
+      review:
+        type: string
+      created_at:
+        type: string
+      approved:
+        type: boolean
+
+  SalePriceModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      amount:
+        type: number
+      product_id:
+        type: string
+      end_datetime:
+        type: string
+      start_datetime:
+        type: string
+
+  SEOItemModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      url:
+        type: string
+      rewrite:
+        type: string
+      type:
+        type: string
+      title:
+        type: string
+      meta_keywords:
+        type: string
+      meta_description:
+        type: string
+
+  StatItemHash:
+    type: object
+    properties:
+      key:
+        type: string
+      name:
+        type: string
+      total_sales:
+        type: number
+      total_orders:
+        type: integer
+      avg_sales:
+        type: number
+
+  StructAttributeInfo:
+    type: object
+    properties:
+      Model:
+        type: string
+      Collection:
+        type: string
+      Attribute:
+        type: string
+      Type:
+        type: string
+      Label:
+        type: string
+      IsRequired:
+        type: boolean
+      IsStatic:
+        type: boolean
+      Group:
+        type: string
+      Editors:
+        type: string
+      Options:
+        type: string
+      Default:
+        type: string
+      Validators:
+        type: string
+      IsLayered:
+        type: boolean
+      IsPublic:
+        type: boolean
+
+  StructConfigItem:
+    type: object
+    properties:
+      Path:
+        type: string
+      Value:
+        type: object
+      Type:
+        type: string
+      Editor:
+        type: string
+      Options:
+        type: object
+      Label:
+        type: string
+      Description:
+        type: string
+      Image:
+        type: string
+
+  StructDiscount:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
+
+  StructListItem:
+    type: object
+    properties:
+      ID:
+        type: string
+      Name:
+        type: string
+      Image:
+        type: string
+      Desc:
+        type: string
+      Extra:
+        type: object
+
+  StructPriceAdjustment:
+    type: object
+    properties:
+      Code:
+        type: string
+      Name:
+        type: string
+      Priority:
+        type: number
+      Amount:
+        type: number
+      IsPercent:
+        type: boolean
+      Labels:
+        type: array
+        items:
+          type: string
+      PerItem:
+        type: object
+
+  StructRestRedirect:
+    type: object
+    properties:
+      Result:
+        type: object
+      Location:
+        type: string
+      DoRedirect:
+        type: boolean
+
+  StructShippingRate:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Price:
+        type: number
+
+  StructSubscriptionItemHash:
+    type: object
+    properties:
+      product_id:
+        type: string
+      options:
+        type: object
+      qty:
+        type: integer
+      name:
+        type: string
+      sku:
+        type: string
+      price:
+        type: number
+
+  StructTaxRate:
+    type: object
+    properties:
+      Name:
+        type: string
+      Code:
+        type: string
+      Amount:
+        type: number
+
+  SubscriptionModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      order_id:
+        type: string
+      items:
+        type: array
+        items:
+          $ref: '#/definitions/StructSubscriptionItemHash'
+      customer_email:
+        type: string
+      customer_name:
+        type: string
+      status:
+        type: string
+      period:
+        type: integer
+      shipping_address:
+        type: object
+      billing_address:
+        type: object
+      shipping_method:
+        type: string
+      shipping_rate:
+        $ref: '#/definitions/StructShippingRate'
+      payment_instrument:
+        type: object
+      action_date:
+        type: string
+      last_submit:
+        type: string
+      updated_at:
+        type: string
+      created_at:
+        type: string
+      info:
+        type: object
+
+  VisitorCardModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      visitor_id:
+        type: string
+      holder:
+        type: string
+      payment:
+        type: string
+      type:
+        type: string
+      number:
+        type: string
+      expiration_date:
+        type: string
+      created_at:
+        type: string
+      token_updated:
+        type: string
+      token_id:
+        type: string
+      customer_id:
+        type: string
+
+  VisitorModelHash:
+    type: object
+    properties:
+      _id:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      is_admin:
+        type: boolean
+      created_at:
+        type: string
+      billing_address:
+        $ref: '#/definitions/AddressModelHash'
+      shipping_address:
+        $ref: '#/definitions/AddressModelHash'
+      token:
+        $ref: '#/definitions/VisitorCardModelHash'
+
+externalDocs:
+  description: "Find out more about Ottemo"
+  url: "http://ottemo.io"
