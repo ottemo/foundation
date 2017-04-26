@@ -1,4 +1,5 @@
 media.fsmedia.folder=/Users/james/code/kg-media
-mongodb.db=kg-prod-1
-mongodb.uri=mongodb://localhost:27017/kg-prod-1
+mongodb.db=kg-staging-1
+mongodb.uri=mongodb://localhost:27017/kg-staging-1
 secure_cookie=false
+ssl.cert=compose.pem
