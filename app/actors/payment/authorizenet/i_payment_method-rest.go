@@ -424,6 +424,11 @@ func (it *RestMethod) ConnectToAuthorize() (bool, error) {
 	return AuthorizeCIM.TestConnection(), nil
 }
 
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *RestMethod) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fdb2f189-26b5-4551-80c2-cceb6bbf4496", "Not implemented")
+}
+
 // Capture makes payment method capture operation
 func (it *RestMethod) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "ebbac9ac-94e3-48f7-ae8a-8a562ee09907", "Not implemented")

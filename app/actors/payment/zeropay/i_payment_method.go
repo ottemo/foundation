@@ -6,6 +6,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // GetInternalName returns the name of the payment method
@@ -47,6 +48,11 @@ func (it *ZeroAmountPayment) Authorize(orderInstance order.InterfaceOrder, payme
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a1de8e4-94f8-4e8b-92fd-378b92d7d9fa", "Order amount above zero, please specify allowe payment method.")
 	}
 	return nil, nil
+}
+
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *ZeroAmountPayment) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8596a836-0351-475f-9ca5-4fab87c7a74a", "Not implemented")
 }
 
 // Capture makes payment method capture operation

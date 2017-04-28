@@ -227,9 +227,25 @@ func getCardParams(ccInfo map[string]interface{}, stripeCID string) (*stripe.Car
 	return cp, nil
 }
 
+// Delete saved card from the payment system.
+func (it *Payment) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	// Set our api key, applies to any http calls
+	stripe.Key = it.ConfigAPIKey()
+
+	card, err := card.Del(
+		token.GetToken(),
+		&stripe.CardParams{Customer: token.GetCustomerID()},
+	)
+	if err != nil {
+		return nil, env.ErrorNew(ConstErrorModule, 1, "05199a06-7bd4-49b6-9fb0-0f1589a9cd74", "called but not implemented")
+	}
+
+	return card, nil
+}
+
 // Capture is the payment method used to capture authorized funds.  **This method is for future use**
 func (it *Payment) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, 1, "05199a06-7bd4-49b6-9fb0-0f1589a9cd74", "called but not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, 1, "0cedd382-392d-4e06-86a9-83276c92de13", "called but not implemented")
 }
 
 // Refund is the payment method used to refund a visitor on behalf of a merchant. **This method is for future use**

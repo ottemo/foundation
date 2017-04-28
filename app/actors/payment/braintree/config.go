@@ -8,14 +8,14 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		return env.ErrorNew(constErrorModule, env.ConstErrorLevelStartStop, "f9aac1c6-781b-410f-916b-4c884c19bdfb", "internal error, unable to obtain environment configuration")
+		return env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "f9aac1c6-781b-410f-916b-4c884c19bdfb", "internal error, unable to obtain environment configuration")
 	}
 
 	// --------------------------------------
 	// General
 
 	err := config.RegisterItem(env.StructConfigItem{
-		Path:  constGeneralConfigPathGroup,
+		Path:  ConstGeneralConfigPathGroup,
 		Label: "Braintree General",
 		Type:  env.ConstConfigTypeGroup,
 	}, nil)
@@ -113,7 +113,7 @@ func setupConfig() error {
 		Editor: "line_text",
 	}, func(value interface{}) (interface{}, error) {
 		if utils.CheckIsBlank(value) {
-			return nil, env.ErrorNew(constErrorModule, env.ConstErrorLevelStartStop, "cc1f027c-6337-497e-a158-7d5842d50eae", "name in checkout can't be blank")
+			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "cc1f027c-6337-497e-a158-7d5842d50eae", "name in checkout can't be blank")
 		}
 		return value, nil
 	})
