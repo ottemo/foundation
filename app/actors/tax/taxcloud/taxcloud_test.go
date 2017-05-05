@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	testGateway = taxcloud.NewGateway(testAPILoginID, testAPIKey, nil)
+	testGateway = taxcloud.NewGateway(testAPILoginID, testAPIKey)
 )
 
 type testErrorProcessorType struct{}

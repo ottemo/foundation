@@ -1,5 +1,9 @@
 package taxcloud
 
+import (
+	"errors"
+)
+
 type MessageType int
 const (
 	MessageTypeError MessageType = iota
@@ -35,4 +39,15 @@ type ResponseMessage struct {
 	Message string
 }
 
+func (r *ResponseBase) check(body interface{}) error {
+	if r.ResponseType == MessageTypeError {
+		errorMsg := ""
+		for _, msg := range r.Messages {
+			errorMsg += msg.Message + "; "
+		}
+		return errors.New("3ccabeb8-a5b2-4b94-a2d5-f9ff95fee663: ERRORS response: " + errorMsg)
+	}
+
+	return nil
+}
 

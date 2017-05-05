@@ -13,13 +13,13 @@ type VerifiedAddress struct {
 }
 
 func (g *Gateway) VerifyAddress(address Address) (*VerifiedAddress, error) {
-	response, err := g.httpPost("VerifyAddress", address)
+	responsePtr, err := g.httpPost("VerifyAddress", address)
 	if err != nil {
 		return nil, errors.New("fcbbeef3-1388-4e27-b817-cb94beecadb6: " + err.Error())
 	}
 
 	var verifiedAddress VerifiedAddress
-	err = json.Unmarshal(response.body, &verifiedAddress)
+	err = json.Unmarshal(*responsePtr, &verifiedAddress)
 	if err != nil {
 		return nil, errors.New("27fab46b-8dd5-46f7-aeba-90154e684d80: " + err.Error())
 	}

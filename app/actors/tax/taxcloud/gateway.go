@@ -18,33 +18,25 @@ type ErrorProcessorInterface interface {
 
 // gateway is internal type. Stores API credentials and contains API methods
 type Gateway struct {
-	apiLoginID     string // This is your website's API ID
-	apiKey         string // This is your website's API KEY
+	apiLoginID string // This is your website's API ID
+	apiKey     string // This is your website's API KEY
 
-	errorProcessor ErrorProcessorInterface
-}
-
-// responseType is internal transport type
-type responseType struct {
-	statusCode int		// HTTP Response Status Code
-	body       []byte	// stores Response Body
+	ErrorProcessor *ErrorProcessorInterface
 }
 
 // NewGateway creates gateway for TaxCloud API methods
-func NewGateway(apiLoginID, apiKey string, errorProcessor ErrorProcessorInterface) *Gateway {
+func NewGateway(apiLoginID, apiKey string) *Gateway {
 	return &Gateway{
 		apiLoginID:     apiLoginID,
 		apiKey:         apiKey,
-		errorProcessor: errorProcessor,
 	}
 }
 
-// makeHttpPostJsonBody converts request msg to http json body
-func (g *Gateway) makeHttpPostJsonBody(jsonData interface{}) (*bytes.Buffer, error) {
-	// add API params to body
+// structToRequestParams1 converts params to map
+func (g *Gateway) structToRequestParams(data interface{}) (map[string]interface{}, error) {
 	var dataMap map[string]interface{}
 
-	marshaled, err := json.Marshal(jsonData)
+	marshaled, err := json.Marshal(data)
 	if err != nil {
 		return nil, errors.New("411b6fbf-3eb4-4752-96ac-0d29806abee0: " + err.Error())
 	}
@@ -52,27 +44,29 @@ func (g *Gateway) makeHttpPostJsonBody(jsonData interface{}) (*bytes.Buffer, err
 		return nil, errors.New("e0b13c72-5fb9-4577-98c9-aed38ae2026e: " + err.Error())
 	}
 
+	if dataMap == nil {
+		dataMap = map[string]interface{}{}
+	}
+
 	dataMap["apiLoginID"] = g.apiLoginID
 	dataMap["apiKey"] = g.apiKey
 
-	// create Buffer from data map
-	marshaled, err = json.Marshal(dataMap)
-	if err != nil {
-		return nil, errors.New("41aa4512-6fe0-4bf7-bada-f8afd40aac06:" + err.Error())
-	}
-	buf := bytes.NewBuffer(marshaled)
-
-	return buf, nil
+	return dataMap, nil
 }
 
 // httpPost executes POST to API
-func (g *Gateway) httpPost(operation string, data interface{}) (*responseType, error) {
-	body, err := g.makeHttpPostJsonBody(data)
+func (g *Gateway) httpPost(operation string, params interface{}) (*[]byte, error) {
+	requestParams, err := g.structToRequestParams(params)
 	if err != nil {
-		return nil, errors.New("255090c9-86ff-4315-a70f-6b2ca12e0738:" + err.Error())
+		return nil, err
 	}
 
-	request, err := http.NewRequest("POST", apiURL+"/"+operation, body)
+	marshaled, err := json.Marshal(requestParams)
+	if err != nil {
+		return nil, errors.New("41aa4512-6fe0-4bf7-bada-f8afd40aac06:" + err.Error())
+	}
+
+	request, err := http.NewRequest("POST", apiURL+"/"+operation, bytes.NewBuffer(marshaled))
 	if err != nil {
 		return nil, errors.New("483b7974-e9cd-406f-ae69-9481cea8a078:" + err.Error())
 	}
@@ -86,18 +80,16 @@ func (g *Gateway) httpPost(operation string, data interface{}) (*responseType, e
 
 	defer func(c io.ReadCloser) {
 		if err := c.Close(); err != nil {
-			g.errorProcessor.Process("8dcb8fe5-563b-4b1b-b3f6-f1d57bbcd2eb", err)
+			if g.ErrorProcessor != nil {
+				(*g.ErrorProcessor).Process("8dcb8fe5-563b-4b1b-b3f6-f1d57bbcd2eb", err)
+			}
 		}
 	}(httpResponse.Body)
 
-	response := responseType{
-		statusCode: httpResponse.StatusCode,
-	}
-
-	response.body, err = ioutil.ReadAll(httpResponse.Body)
+	responseBody, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
 		return nil, errors.New("be05564a-1e66-49b8-a049-2ba2c075bf13:" + err.Error())
 	}
 
-	return &response, nil
+	return &responseBody, nil
 }
