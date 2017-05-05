@@ -1,8 +1,8 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"fmt"
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 	"strconv"
 	"time"
 )
@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	testGateway = taxcloud.NewGateway(testAPILoginID, testAPIKey)
+	testGateway = gotaxcloud.NewGateway(testAPILoginID, testAPIKey)
 )
 
 type testErrorProcessorType struct{}

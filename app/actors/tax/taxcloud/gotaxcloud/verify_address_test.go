@@ -1,13 +1,13 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"testing"
 
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 )
 
 func TestValidateAddressImpossible(t *testing.T) {
-	_, err := testGateway.VerifyAddress(taxcloud.Address{
+	_, err := testGateway.VerifyAddress(gotaxcloud.Address{
 		Address1: "string",
 		Address2: "string",
 		City:     "string",
@@ -21,7 +21,7 @@ func TestValidateAddressImpossible(t *testing.T) {
 }
 
 func TestValidateAddressCorrection(t *testing.T) {
-	result, err := testGateway.VerifyAddress(taxcloud.Address{
+	result, err := testGateway.VerifyAddress(gotaxcloud.Address{
 		Address1: "162 East Avenue",
 		Address2: "Third Floor",
 		City:     "Wilton",

@@ -1,9 +1,9 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"testing"
 
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 )
 
 func TestLookup(t *testing.T) {
@@ -23,12 +23,12 @@ func TestLookup(t *testing.T) {
 	}
 }
 
-func doCorrectLookup(cartID, customerID string) (*taxcloud.LookupResponse, error) {
-	return testGateway.Lookup(taxcloud.LookupParams{
+func doCorrectLookup(cartID, customerID string) (*gotaxcloud.LookupResponse, error) {
+	return testGateway.Lookup(gotaxcloud.LookupParams{
 		CartID: cartID,
 		CustomerID: customerID,
 		DeliveredBySeller: false,
-		Origin: taxcloud.Address{
+		Origin: gotaxcloud.Address{
 			Address1: "11 Crandall Dr",
 			Address2: "",
 			City: "East Brunswick",
@@ -36,7 +36,7 @@ func doCorrectLookup(cartID, customerID string) (*taxcloud.LookupResponse, error
 			Zip5: "08816",
 			Zip4: "5613",
 		},
-		Destination: taxcloud.Address{
+		Destination: gotaxcloud.Address{
 			Address1: "9650 Ensworth St",
 			Address2: "",
 			City: "Las Vegas",
@@ -44,7 +44,7 @@ func doCorrectLookup(cartID, customerID string) (*taxcloud.LookupResponse, error
 			Zip5: "89123",
 			Zip4: "6545",
 		},
-		CartItems: []taxcloud.CartItem{
+		CartItems: []gotaxcloud.CartItem{
 			{
 				Index:0,
 				ItemID:"ITEM-UUID-0",

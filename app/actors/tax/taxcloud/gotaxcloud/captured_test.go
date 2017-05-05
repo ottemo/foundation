@@ -1,9 +1,9 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"testing"
 
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 )
 
 func TestCaptured(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCaptured(t *testing.T) {
 		t.Fatalf("unexpected error '%s'", err)
 	}
 
-	_, err = testGateway.Captured(taxcloud.CapturedRequestType{
+	_, err = testGateway.Captured(gotaxcloud.CapturedRequestType{
 		OrderID: orderID,
 	})
 	if err != nil {
@@ -33,7 +33,7 @@ func TestCaptured(t *testing.T) {
 }
 
 func TestCapturedWithError(t *testing.T) {
-	result, err := testGateway.Captured(taxcloud.CapturedRequestType{
+	result, err := testGateway.Captured(gotaxcloud.CapturedRequestType{
 		OrderID: "ORDER-UUID"+getUniqueStr(),
 	})
 	if err == nil {

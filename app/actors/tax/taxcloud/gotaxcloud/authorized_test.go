@@ -1,10 +1,10 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 )
 
 func TestAuthorized(t *testing.T) {
@@ -26,8 +26,8 @@ func TestAuthorized(t *testing.T) {
 	}
 }
 
-func doAuthorized(cartID, customerID, orderID string) (*taxcloud.ResponseBase, error) {
-	return testGateway.Authorized(taxcloud.AuthorizedParams{
+func doAuthorized(cartID, customerID, orderID string) (*gotaxcloud.ResponseBase, error) {
+	return testGateway.Authorized(gotaxcloud.AuthorizedParams{
 		CartID:         cartID,
 		CustomerID:     customerID,
 		OrderID:        orderID,

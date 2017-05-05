@@ -1,8 +1,8 @@
-package taxcloud_test
+package gotaxcloud_test
 
 import (
 	"testing"
-	"github.com/ottemo/foundation/app/actors/tax/taxcloud"
+	"github.com/ottemo/foundation/app/actors/tax/taxcloud/gotaxcloud"
 )
 
 func TestGetTICs(t *testing.T) {
@@ -36,7 +36,7 @@ func TestGetTICGroups(t *testing.T) {
 }
 
 func TestGetTICsByUnknownGroup(t *testing.T) {
-	result, err := testGateway.GetTICsByGroup(taxcloud.GetTICsByGroupParams{
+	result, err := testGateway.GetTICsByGroup(gotaxcloud.GetTICsByGroupParams{
 		GroupID: 1, // non real value
 	})
 	if err != nil {
@@ -58,7 +58,7 @@ func TestGetTICsByGroup(t *testing.T) {
 		t.Fatalf("unexpected error '%s'", err)
 	}
 
-	tics, err := testGateway.GetTICsByGroup(taxcloud.GetTICsByGroupParams{
+	tics, err := testGateway.GetTICsByGroup(gotaxcloud.GetTICsByGroupParams{
 		GroupID: groups.TICGroups[0].GroupID,
 	})
 	if err != nil {

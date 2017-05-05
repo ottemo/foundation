@@ -1,4 +1,4 @@
-package taxcloud
+package gotaxcloud
 
 import (
 	"errors"
