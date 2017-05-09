@@ -236,8 +236,9 @@ func (it *Payment) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interfac
 		token.GetToken(),
 		&stripe.CardParams{Customer: token.GetCustomerID()},
 	)
+
 	if err != nil {
-		return nil, env.ErrorNew(ConstErrorModule, 1, "05199a06-7bd4-49b6-9fb0-0f1589a9cd74", "called but not implemented")
+		return nil, env.ErrorNew(ConstErrorModule, 1, "05199a06-7bd4-49b6-9fb0-0f1589a9cd74", err.Error())
 	}
 
 	return card, nil

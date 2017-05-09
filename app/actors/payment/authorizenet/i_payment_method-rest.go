@@ -99,9 +99,8 @@ func (it *RestMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 				"transactionID":      paymentID,                          // transactionID
 				"creditCardLastFour": numberString[len(numberString)-4:], // number
 				"creditCardType":     cardType,                           // type
-				//"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
-				"creditCardExp": expDate,
-				"customerID":    profileID, // customer_id
+				"creditCardExp":      expDate,
+				"customerID":         profileID, // customer_id
 			}
 			return result, nil
 		}
@@ -317,6 +316,7 @@ func (it *RestMethod) CreatePaymentProfile(paymentInfo map[string]interface{}, p
 
 		env.Log("authorizenet.log", env.ConstLogPrefixInfo, "New Credit Card was added: "+
 			"BILLNAME - "+billingName+", "+
+			"Profile ID - "+profileID+", "+
 			"Billing ID - "+paymentID)
 
 	} else {
@@ -424,9 +424,16 @@ func (it *RestMethod) ConnectToAuthorize() (bool, error) {
 	return AuthorizeCIM.TestConnection(), nil
 }
 
-// Delete saved card from the payment system.  **This method is for future use**
+// Delete saved card from the payment system.
 func (it *RestMethod) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
-	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fdb2f189-26b5-4551-80c2-cceb6bbf4496", "Not implemented")
+
+	status := AuthorizeCIM.DeleteCustomerPaymentProfile(token.GetCustomerID(), token.GetToken())
+
+	if status != true {
+		return nil, env.ErrorNew(ConstErrorModule, 1, "05199a06-7bd4-49b6-9fb0-0f1589a9cd74", "There was an issue delete a credit card from the user account")
+	}
+
+	return status, nil
 }
 
 // Capture makes payment method capture operation
