@@ -163,11 +163,9 @@ func (it *RestMethod) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 			//"transactionID":      response["transId"].(string), // transactionID
 			"creditCardLastFour": strings.Replace(response["accountNumber"].(string), "XXXX", "", -1), // number
 			"creditCardType":     response["accountType"].(string),                                    // type
-			//"creditCardExp":      utils.InterfaceToString(ccInfo["expire_year"]) + "-" + utils.InterfaceToString(ccInfo["expire_month"]), // expiration_date
-			"creditCardExp": expDate,
-			"customerID":    profileID, // customer_id
-			//"tokenID":            paymentID, // token_id
-			"transactionID": paymentID, // token_id
+			"creditCardExp":      expDate,
+			"customerID":         profileID, // customer_id
+			"transactionID":      paymentID, // token_id
 		}
 
 		if !creditCardOk {
