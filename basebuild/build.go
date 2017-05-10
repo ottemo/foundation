@@ -45,6 +45,8 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/discount/giftcard"  // Gift Cards
 	_ "github.com/ottemo/foundation/app/actors/discount/saleprice" // Sale Price
 	_ "github.com/ottemo/foundation/app/actors/tax"                // Tax Rates
+	_ "github.com/ottemo/foundation/app/actors/tax/taxable"        // Taxable product attribute processing
+	_ "github.com/ottemo/foundation/app/actors/tax/taxcloud"       // TaxCloud
 
 	_ "github.com/ottemo/foundation/app/actors/reporting" // Reporting
 	_ "github.com/ottemo/foundation/app/actors/rts"       // Real Time Statistics service
