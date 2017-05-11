@@ -316,5 +316,22 @@ Total: ${{.Order.grand_total}}<br />`,
 		return env.ErrorDispatch(err)
 	}
 
+	// Tax
+	//---------
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        checkout.ConstConfigPathTaxGroup,
+		Value:       nil,
+		Type:        env.ConstConfigTypeGroup,
+		Editor:      "",
+		Options:     nil,
+		Label:       "Tax",
+		Description: "Tax methods related group",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	return nil
 }

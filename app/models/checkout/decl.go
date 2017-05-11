@@ -28,6 +28,8 @@ const (
 	ConstConfigPathPaymentOriginAddressline2 = "payment.origin.addressline2"
 	ConstConfigPathPaymentOriginZip          = "payment.origin.zip"
 
+	ConstConfigPathTaxGroup                  = "tax"
+
 	ConstPaymentActionTypeKey         = "actionType"
 	ConstPaymentActionTypeCreateToken = "createToken"
 	ConstPaymentActionTypeUseToken    = "useToken"

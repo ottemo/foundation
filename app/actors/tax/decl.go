@@ -12,6 +12,9 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelActor
 
 	ConstPriorityValue = 2.50
+
+	ConstConfigPathGroup = "tax.default"
+	ConstConfigPathEnabled = "tax.default.enabled"
 )
 
 var priority float64
