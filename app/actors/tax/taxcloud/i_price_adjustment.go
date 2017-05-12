@@ -13,19 +13,23 @@ import (
 	"github.com/ottemo/foundation/app/models/checkout"
 )
 
-func (it *DefaultTaxCloud) GetName() string {
+// GetName returns name of current tax implementation
+func (it *TaxCloudPriceAdjustment) GetName() string {
 	return "Tax Cloud"
 }
 
-func (it *DefaultTaxCloud) GetCode() string {
+// GetCode returns code of current tax implementation
+func (it *TaxCloudPriceAdjustment) GetCode() string {
 	return "tax_cloud"
 }
 
-func (it *DefaultTaxCloud) GetPriority() []float64 {
+// GetPriority returns the code of the tax implementation
+func (it *TaxCloudPriceAdjustment) GetPriority() []float64 {
 	return []float64{ConstPriorityValue}
 }
 
-func (it *DefaultTaxCloud) Calculate(checkoutInstance checkout.InterfaceCheckout, currentPriority float64) []checkout.StructPriceAdjustment {
+// Calculate returns a taxes for a given checkout
+func (it *TaxCloudPriceAdjustment) Calculate(checkoutInstance checkout.InterfaceCheckout, currentPriority float64) []checkout.StructPriceAdjustment {
 	result := []checkout.StructPriceAdjustment{}
 
 	if currentPriority != ConstPriorityValue {
@@ -35,7 +39,7 @@ func (it *DefaultTaxCloud) Calculate(checkoutInstance checkout.InterfaceCheckout
 
 	config := env.GetConfig()
 	if config == nil {
-		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "de222130-0683-4b03-b3df-cbea18e819b2", "can't obtain config")
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "de222130-0683-4b03-b3df-cbea18e819b2", "can't obtain config")
 		// empty
 		return result
 	}
@@ -45,7 +49,12 @@ func (it *DefaultTaxCloud) Calculate(checkoutInstance checkout.InterfaceCheckout
 		return result
 	}
 
-	destinationAddress := getDestinationAddress(checkoutInstance)
+	destinationAddressPtr, err := getDestinationAddress(checkoutInstance)
+	if err != nil {
+		// empty
+		return result
+	}
+
 	originAddressPtr, err := getOriginAddress()
 	if err != nil {
 		// empty
@@ -80,7 +89,7 @@ func (it *DefaultTaxCloud) Calculate(checkoutInstance checkout.InterfaceCheckout
 		return result
 	}
 
-	verifiedDestinationAddressPtr, err := gateway.VerifyAddress(destinationAddress)
+	verifiedDestinationAddressPtr, err := gateway.VerifyAddress(*destinationAddressPtr)
 	if err != nil {
 		// empty
 		return result
@@ -118,22 +127,28 @@ func (it *DefaultTaxCloud) Calculate(checkoutInstance checkout.InterfaceCheckout
 	return result
 }
 
-func getDestinationAddress(checkoutInstance checkout.InterfaceCheckout) gotaxcloud.Address {
+// getDestinationAddress converts shipping address to tax cloud representation
+func getDestinationAddress(checkoutInstance checkout.InterfaceCheckout) (*gotaxcloud.Address, error) {
 	address := checkoutInstance.GetShippingAddress()
 
-	return gotaxcloud.Address{
+	if address == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "896ff24c-8220-4e52-99c6-cc0e81b8fe72", "no checkout shipping address")
+	}
+
+	return &gotaxcloud.Address{
 		Address1: address.GetAddressLine1(),
 		Address2: address.GetAddressLine2(),
 		City:     address.GetCity(),
 		State:    address.GetState(),
 		Zip5:     address.GetZipCode(),
-	}
+	}, nil
 }
 
+// getOriginAddress composes tax cloud address from internal configuration data
 func getOriginAddress() (*gotaxcloud.Address, error) {
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "de222130-0683-4b03-b3df-cbea18e819b2", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "6d292b5b-043a-4c85-8d30-822b4e21ab38", "can't obtain config")
 		// empty
 		return nil, err
 	}
@@ -147,6 +162,7 @@ func getOriginAddress() (*gotaxcloud.Address, error) {
 	}, nil
 }
 
+// getCartItems populates tax cloud CartItem list from checkout cart items
 func getCartItems(checkoutInstance checkout.InterfaceCheckout) []gotaxcloud.CartItem {
 	result := []gotaxcloud.CartItem{}
 
@@ -158,12 +174,24 @@ func getCartItems(checkoutInstance checkout.InterfaceCheckout) []gotaxcloud.Cart
 		grandTotal := checkoutInstance.GetItemSpecificTotal(cartItem.GetIdx(), checkout.ConstLabelGrandTotal)
 		itemsGrandTotal += grandTotal
 		price := grandTotal / float64(cartItem.GetQty())
+		tic := ConstDefaultTicID
+		product := cartItem.GetProduct()
+		if product != nil {
+			var attributesInfo = product.GetAttributesInfo()
+			if attributesInfo != nil {
+				for _, attributeInfo := range attributesInfo {
+					if attributeInfo.Attribute == ConstTicIdAttribute {
+						tic = utils.InterfaceToInt(product.Get(ConstTicIdAttribute))
+					}
+				}
+			}
+		}
 		result = append(result, gotaxcloud.CartItem{
 			Index:  idx, //idx should be 0-based
 			ItemID: cartItem.GetProductID(),
 			Price:  price,
 			Qty:    cartItem.GetQty(),
-			TIC:    0,
+			TIC:    tic,
 		})
 	}
 
@@ -203,7 +231,7 @@ func getCartItems(checkoutInstance checkout.InterfaceCheckout) []gotaxcloud.Cart
 							ItemID: result[i].ItemID,
 							Price:  utils.RoundPrice(result[i].Price + grandTotalDiff),
 							Qty:    1,
-							TIC:    0,
+							TIC:    result[i].TIC,
 						})
 						result[i].Qty -= 1
 						break
