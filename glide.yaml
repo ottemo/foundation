@@ -8,6 +8,7 @@ import:
   subpackages:
   - memcache
 - package: github.com/bshuster-repo/logrus-logstash-hook
+  version: 0.3
 - package: github.com/dchest/captcha
 - package: github.com/disintegration/imaging
   version: v1.1.0
