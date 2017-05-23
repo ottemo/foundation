@@ -2,16 +2,26 @@ package stock
 
 import (
 	"github.com/ottemo/foundation/api"
-	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/db"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/app/models"
+	"github.com/ottemo/foundation/app/models/stock"
 )
 
 // init makes package self-initialization routine
 func init() {
 
 	instance := new(DefaultStock)
-	var _ product.InterfaceStock = instance
+	var _ stock.InterfaceStock = instance
+	if err := models.RegisterModel(stock.ConstModelNameStock, instance); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+
+	stockCollectionInstance := new(DefaultStockCollection)
+	var _ stock.InterfaceStockCollection = stockCollectionInstance
+	if err := models.RegisterModel(stock.ConstModelNameStockCollection, stockCollectionInstance); err != nil {
+		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "42552c35-a4ef-40e6-aa38-5d69d4e92578", err.Error())
+	}
 
 	stockDelegate = new(StockDelegate)
 	api.RegisterOnRestServiceStart(setupAPI)
