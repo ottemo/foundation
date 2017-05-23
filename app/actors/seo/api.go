@@ -28,7 +28,6 @@ func setupAPI() error {
 	service.GET("seo/attributes", api.IsAdminHandler(APIListSeoAttributes))
 
 	service.GET("seo/url", APIGetSEOItem)
-	service.GET("seo/url/:url", APIGetSEOItem)
 	service.GET("seo/canonical/:id", APIGetSEOItemByID)
 
 	service.GET("seo/sitemap", APIGenerateSitemap)
