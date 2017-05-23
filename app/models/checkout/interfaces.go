@@ -99,6 +99,7 @@ type InterfacePaymentMethod interface {
 	IsTokenable(checkoutInstance InterfaceCheckout) bool
 
 	Authorize(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)
+	DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error)
 	Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)
 	Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)
 	Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error)

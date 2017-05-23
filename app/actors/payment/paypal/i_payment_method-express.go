@@ -13,6 +13,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // GetInternalName returns the name of the payment method
@@ -140,6 +141,12 @@ func (it *Express) Authorize(orderInstance order.InterfaceOrder, paymentInfo map
 		Location: redirectGateway,
 	}, nil
 }
+
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *Express) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "fd76ec12-99fd-45e9-9c21-be75ac490654", "Not implemented")
+}
+
 
 // Capture payment method capture operation
 func (it *Express) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {

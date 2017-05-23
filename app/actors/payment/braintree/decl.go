@@ -20,7 +20,7 @@ const (
 	// --------------------------------------
 	// General
 
-	constGeneralConfigPathGroup       = "payment.braintreeGeneral"
+	ConstGeneralConfigPathGroup       = "payment.braintreeGeneral"
 	ConstGeneralConfigPathEnvironment = "payment.braintreeGeneral.environment"
 	ConstGeneralConfigPathMerchantID  = "payment.braintreeGeneral.merchantID"
 	ConstGeneralConfigPathPublicKey   = "payment.braintreeGeneral.publicKey"
@@ -29,8 +29,8 @@ const (
 	ConstEnvironmentSandbox    = string(braintree.Sandbox)
 	ConstEnvironmentProduction = string(braintree.Production)
 
-	constErrorModule = "payment/braintree"
-	constErrorLevel  = env.ConstErrorLevelActor
+	ConstErrorModule = "payment/braintree"
+	ConstErrorLevel = env.ConstErrorLevelActor
 
 	constLogStorage = "braintree.log"
 

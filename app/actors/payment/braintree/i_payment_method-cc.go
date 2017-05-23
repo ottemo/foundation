@@ -49,7 +49,7 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	action, _ := paymentInfo[checkout.ConstPaymentActionTypeKey]
 	creditCardInfo, present := paymentInfo["cc"]
 	if !present {
-		return nil, env.ErrorNew(constErrorModule, constErrorLevel, "0e18570c-e35d-404f-a408-6c9fb4ecfabc", "credit card information has not been set")
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0e18570c-e35d-404f-a408-6c9fb4ecfabc", "credit card information has not been set")
 	}
 
 	creditCardInfoMap := utils.InterfaceToMap(creditCardInfo)
@@ -57,12 +57,12 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 	if utils.InterfaceToString(action) == checkout.ConstPaymentActionTypeCreateToken {
 		visitorInfo, present := paymentInfo["extra"]
 		if !present {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "297dfae9-e7c2-41b1-bc54-4f9924d19ae1", "visitor information has not been set")
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "297dfae9-e7c2-41b1-bc54-4f9924d19ae1", "visitor information has not been set")
 		}
 
 		creditCardPtr, err := braintreeRegisterCardForVisitor(utils.InterfaceToMap(visitorInfo), creditCardInfoMap)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "unable to create credit card: "+err.Error())
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "c11c22bf-05ed-432b-b094-0fb0606eb0f1", "unable to create credit card: "+err.Error())
 		}
 
 		return braintreeCardToAuthorizeResult(*creditCardPtr, (*creditCardPtr).CustomerId)
@@ -74,33 +74,38 @@ func (it *CreditCardMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 		var err error
 		transactionPtr, err = chargeRegisteredVisitor(orderInstance, creditCard)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "f7f75a44-1b59-41e7-92fd-d75371f46575", "unable to charge registered visitor: "+err.Error())
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f7f75a44-1b59-41e7-92fd-d75371f46575", "unable to charge registered visitor: "+err.Error())
 		}
 	} else {
 		var err error
 		transactionPtr, err = chargeGuestVisitor(orderInstance, creditCardInfoMap)
 		if err != nil {
-			return nil, env.ErrorNew(constErrorModule, constErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "unable to charge guest visitor: "+err.Error())
+			return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "df4593b7-4bb0-46f2-a44e-b80488408dc2", "unable to charge guest visitor: "+err.Error())
 		}
 	}
 
 	return braintreeCardToAuthorizeResult(*transactionPtr.CreditCard, transactionPtr.Customer.Id)
 }
 
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *CreditCardMethod) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "035052da-95bf-4161-b068-07ebe78c93af", "Not implemented")
+}
+
 // Capture makes payment method capture operation
 // - at time of implementation this method is not used anywhere
 func (it *CreditCardMethod) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "772bc737-f025-4c81-a85a-c10efb67e1b3", " Capture method not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "772bc737-f025-4c81-a85a-c10efb67e1b3", " Capture method not implemented")
 }
 
 // Refund will return funds on the given order
 // - at time of implementation this method is not used anywhere
 func (it *CreditCardMethod) Refund(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "26febf8b-7e26-44d4-bfb4-e9b29126fe5a", "Refund method not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "26febf8b-7e26-44d4-bfb4-e9b29126fe5a", "Refund method not implemented")
 }
 
 // Void will mark the order and capture as void
 // - at time of implementation this method is not used anywhere
 func (it *CreditCardMethod) Void(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
-	return nil, env.ErrorNew(constErrorModule, constErrorLevel, "561e0cc8-3bee-4ec4-bf80-585fa566abd4", "Void method not implemented")
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "561e0cc8-3bee-4ec4-bf80-585fa566abd4", "Void method not implemented")
 }

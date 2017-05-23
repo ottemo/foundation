@@ -211,10 +211,31 @@ func APIDeleteToken(context api.InterfaceApplicationContext) (interface{}, error
 
 	// list operation
 	//---------------
-	visitorCardModel, err := visitor.GetVisitorCardModelAndSetID(tokenID)
+	visitorCardModel, err := visitor.LoadVisitorCardByID(tokenID)
 	if err != nil {
 		return nil, env.ErrorDispatch(err)
 	}
+
+	var paymentMethod checkout.InterfacePaymentMethod
+
+	for _, payment := range checkout.GetRegisteredPaymentMethods() {
+		if payment.GetCode() == visitorCardModel.GetPaymentMethodCode() {
+			if !payment.IsTokenable(nil) {
+				return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "6dbebc95-ebb9-4bc7-85d4-ab568612a2a5", "Cannot save selected Credit Card.")
+			}
+			paymentMethod = payment
+		}
+	}
+
+	if paymentMethod == nil {
+		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4275ab4c-0755-433a-aad4-64d289540e66", "Provided payment method does not exist.")
+	}
+
+	_, err = paymentMethod.DeleteSavedCard(visitorCardModel)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
 	if err := visitorCardModel.Delete(); err != nil {
 		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "f4a1d8e4-4f05-4d8b-8ea2-dbcf520350fa", "unable to delete visitor card: " + err.Error())
 	}

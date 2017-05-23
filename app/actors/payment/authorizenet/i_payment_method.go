@@ -15,6 +15,7 @@ import (
 
 	"github.com/ottemo/foundation/app/models/checkout"
 	"github.com/ottemo/foundation/app/models/order"
+	"github.com/ottemo/foundation/app/models/visitor"
 )
 
 // GetInternalName returns the name of the payment method
@@ -131,6 +132,11 @@ func (it *DirectPostMethod) Authorize(orderInstance order.InterfaceOrder, paymen
 		"Order ID - "+utils.InterfaceToString(orderInstance.GetID()))
 
 	return api.StructRestRedirect{Result: htmlText, Location: utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathFoundationURL)) + "authorizenet/relay"}, nil
+}
+
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *DirectPostMethod) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d1c3bec3-954e-48ad-aaaf-e3052c4d5262", "Not implemented")
 }
 
 // Capture makes payment method capture operation

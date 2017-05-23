@@ -204,6 +204,11 @@ func (it *PayFlowAPI) Authorize(orderInstance order.InterfaceOrder, paymentInfo 
 	return orderPaymentInfo, nil
 }
 
+// Delete saved card from the payment system.  **This method is for future use**
+func (it *PayFlowAPI) DeleteSavedCard(token visitor.InterfaceVisitorCard) (interface{}, error) {
+	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "e6916fcd-a8aa-45bf-84a7-d20122d7a943", "Not implemented")
+}
+
 // Capture payment method capture operation
 func (it *PayFlowAPI) Capture(orderInstance order.InterfaceOrder, paymentInfo map[string]interface{}) (interface{}, error) {
 	return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2dc38587-de12-4bdf-9468-a4cef846afe5", "Not implemented")
