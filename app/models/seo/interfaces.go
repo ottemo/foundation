@@ -7,7 +7,8 @@ import (
 
 // Package global constants
 const (
-	ConstModelNameSEOItem = "SEOItem"
+	ConstModelNameSEOItem            = "SEOItem"
+	ConstModelNameSEOItemCollection  = "SEOCollection"
 
 	ConstErrorModule = "seo"
 	ConstErrorLevel  = env.ConstErrorLevelModel
@@ -33,6 +34,7 @@ type InterfaceSEOItem interface {
 	models.InterfaceModel
 	models.InterfaceObject
 	models.InterfaceStorable
+	models.InterfaceListable
 }
 
 // InterfaceSEOCollection represents interface to access business layer implementation of SEO items collection
