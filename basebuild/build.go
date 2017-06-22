@@ -56,6 +56,7 @@ import (
 	_ "github.com/ottemo/foundation/app/actors/other/emma"        // Emma integration
 	_ "github.com/ottemo/foundation/app/actors/other/shipstation" // Shipstation integration
 	_ "github.com/ottemo/foundation/app/actors/other/trustpilot"  // TrustPilot integration
+	_ "github.com/ottemo/foundation/app/actors/other/vantagepoint"  // VantagePoint integration
 
 	_ "github.com/ottemo/foundation/app/actors/blog"             // Blog module
 )
