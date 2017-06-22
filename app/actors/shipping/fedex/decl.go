@@ -72,6 +72,7 @@ const (
 	ConstConfigPathPackaging      = "shipping.fedex.packaging"
 	ConstConfigPathAllowCountries = "shipping.fedex.allow_countries"
 	ConstConfigPathDropoff        = "shipping.fedex.dropoff"
+	ConstConfigPathResidential    = "shipping.fedex.residential"
 
 	ConstConfigPathDebugLog = "shipping.fedex.debug_log"
 
