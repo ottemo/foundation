@@ -90,6 +90,7 @@ func (a *uploadsProcessor) Process() error {
 			return a.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "606b6a0b-ba97-44ce-b901-2a3deba64482", err.Error())
 		}
 
+		// TODO: check config period setting
 		if err := a.storage.Archive(fileName); err != nil {
 			return a.env.ErrorDispatch(err)
 		}

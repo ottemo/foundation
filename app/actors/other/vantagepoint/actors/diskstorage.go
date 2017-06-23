@@ -69,7 +69,12 @@ func (s *Disk) Archive(fileName string) error {
 		env.ErrorDispatch(err)
 	}
 
-	return os.Remove(s.getFullFileName(fileName))
+	// TODO: uncomment
+	//if err := os.Remove(s.getFullFileName(fileName)); err != nil {
+	//	env.ErrorDispatch(err)
+	//}
+
+	return nil
 }
 
 func (s *Disk) GetReadCloser(fileName string) (io.ReadCloser, error) {

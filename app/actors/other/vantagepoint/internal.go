@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"time"
 	"github.com/ottemo/foundation/utils"
-	"io"
-	"fmt"
 )
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -57,15 +55,6 @@ func (it *fileNameType) GetSortValue(fileName string) (string, error) {
 
 // -------------------------------------------------------------------------------------------------------------------
 
-type tmpDataProcessor struct {}
-
-func (it *tmpDataProcessor) Process(reader io.Reader) error {
-	fmt.Println("tmpDataProcessor) Process")
-	return nil
-}
-
-// -------------------------------------------------------------------------------------------------------------------
-
 func CheckNewUploads(params map[string]interface{}) error {
 	config := env.GetConfig()
 	if config == nil {
@@ -85,7 +74,12 @@ func CheckNewUploads(params map[string]interface{}) error {
 		return env.ErrorDispatch(err)
 	}
 
-	processor, err := actors.NewUploadsProcessor(&envType{}, storagePtr, &fileNameType{}, &tmpDataProcessor{})
+	inventoryProcessorPtr, err := actors.NewInventoryProcessor()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	processor, err := actors.NewUploadsProcessor(&envType{}, storagePtr, &fileNameType{}, inventoryProcessorPtr)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
