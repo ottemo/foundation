@@ -3,11 +3,19 @@ package vantagepoint
 import (
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/app"
+	"github.com/ottemo/foundation/db"
 )
 
 func init() {
-	app.OnAppStart(onAppStart)
 	env.RegisterOnConfigStart(setupConfig)
+
+	db.RegisterOnDatabaseStart(onDatabaseStart)
+}
+
+func onDatabaseStart() error {
+	app.OnAppStart(onAppStart)
+
+	return nil
 }
 
 func onAppStart() error {
@@ -17,5 +25,3 @@ func onAppStart() error {
 
 	return nil
 }
-
-

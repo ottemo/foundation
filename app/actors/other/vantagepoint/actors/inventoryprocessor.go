@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/app/models/product"
 )
 
 type inventoryProcessor struct {
@@ -60,7 +61,51 @@ func (it *inventoryProcessor) processRecord(record []string) error {
 			item[key] = record[idx]
 		}
 	}
-	fmt.Println(utils.InterfaceToString(item))
+
+	if err := it.updateInventoryBySku(item["sku"], item["qty"]); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	return nil
+}
+
+func (it *inventoryProcessor) updateInventoryBySku(sku, qty string) error {
+	fmt.Println("inventoryProcessor) updateProductInventory === START ===")
+	collection, err := product.GetProductCollectionModel()
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	if err := collection.ListFilterAdd("sku", "=", sku); err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	products := collection.ListProducts()
+	fmt.Println("products", utils.InterfaceToString(products))
+
+	if len(products) > 1 {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8bf1294-539f-4cad-adb0-362b878e30eb", "morethen one product with sku "+sku)
+	} else if len(products) == 0 {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d491f656-d477-4e7b-9912-2682b12ac34b", "no products with sku "+sku)
+	} else {
+		productID := products[0].GetID()
+
+		return it.updateProductInventory(productID, qty)
+	}
+
+	fmt.Println("inventoryProcessor) updateProductInventory === DONE ===")
+	return nil
+}
+
+func (it *inventoryProcessor) updateProductInventory(productID, qty string) error {
+	stockManager := product.GetRegisteredStock()
+	if stockManager != nil {
+		options := stockManager.GetProductOptions(productID)
+
+		_ = options
+
+		// TODO what if have options, but not configurable?
+	}
 
 	return nil
 }
