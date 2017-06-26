@@ -57,6 +57,21 @@ Total: ${{.Order.grand_total}}<br />`,
 		return env.ErrorDispatch(err)
 	}
 
+	err = config.RegisterItem(env.StructConfigItem{
+		Path: 	     checkout.ConstConfigPathSendOrderConfirmEmailToMerchant,
+		Value:       false,
+		Type:        env.ConstConfigTypeBoolean,
+		Editor:      "boolean",
+		Options:     "",
+		Label:       "Send order confirmation e-mail to store owner:",
+		Description: "Should confirmation email copy be send to store owner",
+		Image:       "",
+	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
 	// Payment
 	//--------
 	err = config.RegisterItem(env.StructConfigItem{

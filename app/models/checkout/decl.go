@@ -6,9 +6,10 @@ import "github.com/ottemo/foundation/env"
 const (
 	ConstCheckoutModelName = "Checkout"
 
-	ConstConfigPathGroup             = "general.checkout"
-	ConstConfigPathConfirmationEmail = "general.checkout.order_confirmation_email"
-	ConstConfigPathOversell          = "general.checkout.oversell"
+	ConstConfigPathGroup                            = "general.checkout"
+	ConstConfigPathConfirmationEmail                = "general.checkout.order_confirmation_email"
+	ConstConfigPathSendOrderConfirmEmailToMerchant  = "general.checkout.send_order_confirm_email_to_merchant"
+	ConstConfigPathOversell                         = "general.checkout.oversell"
 
 	ConstConfigPathShippingGroup              = "shipping"
 	ConstConfigPathShippingOriginGroup        = "shipping.origin"
@@ -45,14 +46,14 @@ const (
 	ConstCalculateTargetShipping   = 2.0
 	ConstCalculateTargetGrandTotal = 3.0
 
-	ConstLabelSubtotal           = "ST"
-	ConstLabelShipping           = "SP"
-	ConstLabelGrandTotal         = "GT"
-	ConstLabelGiftCard           = "GC"
-	ConstLabelGiftCardAdjustment = "GCA"
+	ConstLabelSubtotal            = "ST"
+	ConstLabelShipping            = "SP"
+	ConstLabelGrandTotal          = "GT"
+	ConstLabelGiftCard            = "GC"
+	ConstLabelGiftCardAdjustment  = "GCA"
 	ConstLabelSalePriceAdjustment = "SPA"
-	ConstLabelDiscount           = "D"
-	ConstLabelTax                = "T"
+	ConstLabelDiscount            = "D"
+	ConstLabelTax                 = "T"
 
 	ConstDiscountObjectCart = "cart"
 
