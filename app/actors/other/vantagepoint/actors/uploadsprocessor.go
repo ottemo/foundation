@@ -82,12 +82,12 @@ func NewUploadsProcessor(env EnvInterface, storage StorageInterface, fileName Fi
 func (a *uploadsProcessor) Process() error {
 	fileNames, err := a.prepareFileNames()
 	if err != nil {
-		return a.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "40f3e176-337d-4055-a4db-dfc200820a13", err.Error())
+		return a.env.ErrorDispatch(err)
 	}
 
 	for _, fileName := range(fileNames) {
 		if err = a.processFile(fileName); err != nil {
-			return a.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "606b6a0b-ba97-44ce-b901-2a3deba64482", err.Error())
+			return a.env.ErrorDispatch(err)
 		}
 
 		// TODO: check config period setting
