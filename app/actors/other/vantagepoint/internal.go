@@ -64,16 +64,15 @@ func CheckNewUploads(params map[string]interface{}) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "383a1377-cf4b-40f9-af4a-dae7e4992fce", "can't obtain config")
 	}
 
-	if !utils.InterfaceToBool(config.GetValue(ConstConfigPathVantagePointEnabled)) && false { //TODO remove false
+	if !utils.InterfaceToBool(config.GetValue(ConstConfigPathVantagePointEnabled)) {
 		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "40f3e176-337d-4055-a4db-dfc200820a13", "VantagePoint CheckNewUploads called but not enabled")
 		return nil
 	}
 
 	localEnv := envType{}
 
-	//func NewUploadsProcessor(env EnvInterface, storage StorageInterface, fileName FileNameInterface, dataProcessor DataProcessorInterface) (uploadsProcessor, error) {
 	// TODO: use config value
-	var path = "./vantagepoint/" //utils.InterfaceToBool(config.GetValue(ConstConfigPathVantagePointUploadPath))
+	path := utils.InterfaceToString(config.GetValue(ConstConfigPathVantagePointUploadPath))
 	storagePtr, err := actors.NewDiskStorage(path, &localEnv)
 	if err != nil {
 		return env.ErrorDispatch(err)
