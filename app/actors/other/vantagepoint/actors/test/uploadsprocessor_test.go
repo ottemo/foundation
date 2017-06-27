@@ -1,17 +1,19 @@
 package test
 
 import (
-	"testing"
-	"github.com/ottemo/foundation/env"
-	"fmt"
 	"errors"
-	"strings"
-	"regexp"
+	"fmt"
 	"io"
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/ottemo/foundation/env"
+
 	"github.com/ottemo/foundation/app/actors/other/vantagepoint/actors"
 )
 
-type testConfig struct {}
+type testConfig struct{}
 
 func (c *testConfig) RegisterItem(Item env.StructConfigItem, Validator env.FuncConfigValueValidator) error {
 	return nil
@@ -53,15 +55,15 @@ var config = &testConfig{}
 
 // --------------------------------------------------------------------------------------------------------------------
 
-type testEnv struct {}
+type testEnv struct{}
 
 func (e *testEnv) ErrorDispatch(err error) error {
 	fmt.Println("ERROR", err)
 	return err
 }
 func (e *testEnv) ErrorNew(module string, level int, code string, message string) error {
-	fmt.Println(code, message)
-	return errors.New(code+" "+message)
+	fmt.Println("ERROR NEW", code, message)
+	return errors.New(code + " " + message)
 }
 func (e *testEnv) GetConfig() env.InterfaceConfig {
 	return config
@@ -75,7 +77,7 @@ type testReadCloser struct {
 	io.Reader
 }
 
-func (c *testReadCloser) Read(b []byte) (n int, err error){
+func (c *testReadCloser) Read(b []byte) (n int, err error) {
 	n, err = strings.NewReader("String value").Read(b)
 	return n, err
 }
@@ -104,7 +106,7 @@ func (s *testStorage) GetReadCloser(fileName string) (io.ReadCloser, error) {
 
 // --------------------------------------------------------------------------------------------------------------------
 
-type testFileName struct {}
+type testFileName struct{}
 
 func (c *testFileName) getPattern() string {
 	return strings.ToLower("^Prefix-(\\d+)-(\\d+)-(\\d+).csv$")
@@ -138,7 +140,7 @@ func (d *testDataProcessor) Process(reader io.Reader) error {
 
 // --------------------------------------------------------------------------------------------------------------------
 
-func TestProcess(t *testing.T) {
+func TestUploadsProcessorProcess(t *testing.T) {
 	storagePtr := &testStorage{}
 	processor, err := actors.NewUploadsProcessor(&testEnv{}, storagePtr, &testFileName{}, &testDataProcessor{})
 	if err != nil {
