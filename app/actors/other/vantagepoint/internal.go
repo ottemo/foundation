@@ -1,12 +1,14 @@
 package vantagepoint
 
 import (
-	"github.com/ottemo/foundation/app/actors/other/vantagepoint/actors"
-	"github.com/ottemo/foundation/env"
 	"strings"
 	"regexp"
 	"time"
+
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/env"
+
+	"github.com/ottemo/foundation/app/actors/other/vantagepoint/actors"
 )
 
 // -------------------------------------------------------------------------------------------------------------------
@@ -53,6 +55,7 @@ func (it *fileNameType) GetSortValue(fileName string) (string, error) {
 	return utils.InterfaceToString(fileTime.Unix()), nil
 }
 
+
 // -------------------------------------------------------------------------------------------------------------------
 
 func CheckNewUploads(params map[string]interface{}) error {
@@ -66,20 +69,22 @@ func CheckNewUploads(params map[string]interface{}) error {
 		return nil
 	}
 
+	localEnv := envType{}
+
 	//func NewUploadsProcessor(env EnvInterface, storage StorageInterface, fileName FileNameInterface, dataProcessor DataProcessorInterface) (uploadsProcessor, error) {
 	// TODO: use config value
 	var path = "./vantagepoint/" //utils.InterfaceToBool(config.GetValue(ConstConfigPathVantagePointUploadPath))
-	storagePtr, err := actors.NewDiskStorage(path)
+	storagePtr, err := actors.NewDiskStorage(path, &localEnv)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	inventoryProcessorPtr, err := actors.NewInventoryProcessor()
+	inventoryProcessorPtr, err := actors.NewInventoryCSV(&localEnv)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
 
-	processor, err := actors.NewUploadsProcessor(&envType{}, storagePtr, &fileNameType{}, inventoryProcessorPtr)
+	processor, err := actors.NewUploadsProcessor(&localEnv, storagePtr, &fileNameType{}, inventoryProcessorPtr)
 	if err != nil {
 		return env.ErrorDispatch(err)
 	}
