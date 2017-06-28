@@ -5,11 +5,13 @@ import "github.com/ottemo/foundation/env"
 const (
 	ConstErrorModule = "vantagepoint"
 	ConstErrorLevel  = env.ConstErrorLevelActor
+	ConstLogStorage  = "vantagepoint.log"
 
-	ConstConfigPathVantagePoint = "general.vantagepoint"
-	ConstConfigPathVantagePointEnabled = "general.vantagepoint.enabled"
-	ConstConfigPathVantagePointUploadPath = "general.vantagepoint.upload.path"
-	ConstConfigPathVantagePointUploadFileMask = "general.vantagepoint.upload.filemask"
+	ConstConfigPathVantagePoint                = "general.vantagepoint"
+	ConstConfigPathVantagePointScheduleEnabled = "general.vantagepoint.schedule.enabled"
+	ConstConfigPathVantagePointScheduleHour    = "general.vantagepoint.schedule.hour"
+	ConstConfigPathVantagePointUploadPath      = "general.vantagepoint.upload.path"
+	ConstConfigPathVantagePointUploadFileMask  = "general.vantagepoint.upload.filemask"
 
 	ConstSchedulerTaskName = "vantagePointCheckNewUploads"
 )
@@ -17,4 +19,3 @@ const (
 type UploadProcessorInterface interface {
 	Process() error
 }
-

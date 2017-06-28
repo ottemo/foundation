@@ -8,12 +8,9 @@ import (
 func setupConfig() error {
 	config := env.GetConfig()
 	if config == nil {
-		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "6056d1bc-e76d-4f14-8a62-f9d219743a47", "can't obtain config")
+		err := env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0a7d5958-395e-4691-b943-237054a0b561", "can't obtain config")
 		return env.ErrorDispatch(err)
 	}
-
-	// Trust pilot config elements
-	//----------------------------
 
 	err := config.RegisterItem(env.StructConfigItem{
 		Path:        ConstConfigPathVantagePoint,
@@ -31,12 +28,12 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:        ConstConfigPathVantagePointEnabled,
+		Path:        ConstConfigPathVantagePointScheduleEnabled,
 		Value:       false,
 		Type:        env.ConstConfigTypeBoolean,
 		Editor:      "boolean",
 		Options:     nil,
-		Label:       "Enable Vantage Point integration",
+		Label:       "Enable Vantage Point scheduled update",
 		Description: "",
 		Image:       "",
 	}, nil)
@@ -55,6 +52,27 @@ func setupConfig() error {
 		Description: "Path to uploaded files",
 		Image:       "",
 	}, nil)
+
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	validateScheduleHour := func(value interface{}) (interface{}, error) {
+		_ = setScheduleHour(value)
+
+		return value, nil
+	}
+
+	err = config.RegisterItem(env.StructConfigItem{
+		Path:        ConstConfigPathVantagePointScheduleHour,
+		Value:       "0",
+		Type:        env.ConstConfigTypeVarchar,
+		Editor:      "select",
+		Options:     hoursList,
+		Label:       "Schedule hour",
+		Description: "The hour for update inventory task execution",
+		Image:       "",
+	}, env.FuncConfigValueValidator(validateScheduleHour))
 
 	if err != nil {
 		return env.ErrorDispatch(err)

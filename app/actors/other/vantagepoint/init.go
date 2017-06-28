@@ -1,15 +1,17 @@
 package vantagepoint
 
 import (
-	"github.com/ottemo/foundation/env"
 	"github.com/ottemo/foundation/app"
 	"github.com/ottemo/foundation/db"
+	"github.com/ottemo/foundation/env"
 )
 
 func init() {
-	env.RegisterOnConfigStart(setupConfig)
+	initHoursList()
 
 	db.RegisterOnDatabaseStart(onDatabaseStart)
+
+	env.RegisterOnConfigStart(setupConfig)
 }
 
 func onDatabaseStart() error {
@@ -19,8 +21,8 @@ func onDatabaseStart() error {
 }
 
 func onAppStart() error {
-	if err := CheckNewUploads(make(map[string]interface{})); err != nil {
-		return env.ErrorDispatch(err)
+	if err := scheduleCheckNewUploads(); err != nil {
+		_ = env.ErrorDispatch(err)
 	}
 
 	return nil
