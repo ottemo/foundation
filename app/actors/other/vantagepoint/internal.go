@@ -59,14 +59,11 @@ func (it *fileNameType) GetSortValue(fileName string) (string, error) {
 // -------------------------------------------------------------------------------------------------------------------
 
 func CheckNewUploads(params map[string]interface{}) error {
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "check new uploads")
+
 	config := env.GetConfig()
 	if config == nil {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "383a1377-cf4b-40f9-af4a-dae7e4992fce", "can't obtain config")
-	}
-
-	if !utils.InterfaceToBool(config.GetValue(ConstConfigPathVantagePointEnabled)) {
-		_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "40f3e176-337d-4055-a4db-dfc200820a13", "VantagePoint CheckNewUploads called but not enabled")
-		return nil
 	}
 
 	localEnv := envType{}
