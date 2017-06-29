@@ -93,7 +93,7 @@ func (it *inventoryCSV) updateInventoryBySku(sku string, qty int) error {
 	products := collection.ListProducts()
 
 	if len(products) > 1 {
-		return it.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8bf1294-539f-4cad-adb0-362b878e30eb", "morethen one product with sku "+sku)
+		return it.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "a8bf1294-539f-4cad-adb0-362b878e30eb", "more then one product with sku "+sku)
 	} else if len(products) == 0 {
 		return it.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "d491f656-d477-4e7b-9912-2682b12ac34b", "no products with sku "+sku)
 	} else {
@@ -152,26 +152,26 @@ func (it *inventoryCSV) updateInventoryForOptions(optionProductID string, qty in
 
 		selectedOptions := map[string]interface{}{}
 
-		for _, optionInterface := range options {
-			option := utils.InterfaceToMap(optionInterface)
+		for _, option := range options {
+			optionMap := utils.InterfaceToMap(option)
 
-			if !utils.StrKeysInMap(option, "key", "options") {
+			if !utils.StrKeysInMap(optionMap, "key", "options") {
 				continue
 			}
 
-			optionKey := utils.InterfaceToString(option["key"])
-			optionOptionsInterface := option["options"]
-			optionOptions := utils.InterfaceToMap(optionOptionsInterface)
+			optionKey := utils.InterfaceToString(optionMap["key"])
+			optionOptions := optionMap["options"]
+			optionOptionsMap := utils.InterfaceToMap(optionOptions)
 
-			for _, optionsOptionsInterface := range optionOptions {
-				optionsOptions := utils.InterfaceToMap(optionsOptionsInterface)
+			for _, optionsOptions := range optionOptionsMap {
+				optionsOptionsMap := utils.InterfaceToMap(optionsOptions)
 
-				if !utils.StrKeysInMap(option, "key", "_ids") {
+				if !utils.StrKeysInMap(optionsOptionsMap, "key", "_ids") {
 					continue
 				}
 
-				optionsOptionKey := optionsOptions["key"]
-				_ids := optionsOptions["_ids"]
+				optionsOptionKey := optionsOptionsMap["key"]
+				_ids := optionsOptionsMap["_ids"]
 
 				if utils.IsInArray(optionProductID, _ids) {
 					selectedOptions[optionKey] = optionsOptionKey
