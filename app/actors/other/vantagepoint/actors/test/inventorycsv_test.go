@@ -56,13 +56,13 @@ func testProductQuantity(t *testing.T, sku string, expectedQty int) error {
 		t.Fatal(err)
 	}
 
-	stock := product.GetRegisteredStock()
-	if stock == nil {
+	stockMgr := product.GetRegisteredStock()
+	if stockMgr == nil {
 		t.Fatal("stock is undefined")
 	}
 
 	for _, productModel := range products {
-		qty := stock.GetProductQty(productModel.GetID(), map[string]interface{}{})
+		qty := stockMgr.GetProductQty(productModel.GetID(), map[string]interface{}{})
 		if qty != expectedQty {
 			t.Errorf("sku [%s] qty [%d] expected [%d]", sku, qty, expectedQty)
 		}
