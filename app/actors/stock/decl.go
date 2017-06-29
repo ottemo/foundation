@@ -6,6 +6,7 @@ import (
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/app/models/product"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/db"
 )
 
 // Package global constants
@@ -50,7 +51,18 @@ const (
 //
 //	When the product going to be deleted, it removes all the records.
 
-type DefaultStock struct{}
+type DefaultStock struct{
+	id string
+	options string
+	product_id string
+	qty int
+}
+
+// DefaultStockCollection is a default implementer of InterfaceStockCollection
+type DefaultStockCollection struct {
+	listCollection     db.InterfaceDBCollection
+	listExtraAtributes []string
+}
 
 // StockDelegate type implements InterfaceAttributesDelegate and have handles
 // on InterfaceStorable methods which should have call-back on model method call

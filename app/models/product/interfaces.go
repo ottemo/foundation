@@ -57,11 +57,15 @@ type InterfaceProductCollection interface {
 }
 
 // InterfaceStock represents interface to access business layer implementation of stock management
-type InterfaceStock interface {
-	SetProductQty(productID string, options map[string]interface{}, qty int) error
-	GetProductQty(productID string, options map[string]interface{}) int
-	GetProductOptions(productID string) []map[string]interface{}
-
-	RemoveProductQty(productID string, options map[string]interface{}) error
-	UpdateProductQty(productID string, options map[string]interface{}, deltaQty int) error
-}
+//type InterfaceStock interface {
+//	SetProductQty(productID string, options map[string]interface{}, qty int) error
+//	GetProductQty(productID string, options map[string]interface{}) int
+//	GetProductOptions(productID string) []map[string]interface{}
+//
+//	RemoveProductQty(productID string, options map[string]interface{}) error
+//	UpdateProductQty(productID string, options map[string]interface{}, deltaQty int) error
+//
+//	models.InterfaceModel
+//	models.InterfaceObject
+//	models.InterfaceStorable
+//}
