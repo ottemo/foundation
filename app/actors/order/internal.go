@@ -128,5 +128,15 @@ func (it DefaultOrder) SendOrderConfirmationEmail() error {
 		return env.ErrorDispatch(err)
 	}
 
+	shouldSendToStoreOwner := utils.InterfaceToBool(env.ConfigGetValue(checkout.ConstConfigPathSendOrderConfirmEmailToMerchant))
+	if shouldSendToStoreOwner {
+		// sending the email notification copy to merchant
+		merchantEmail := utils.InterfaceToString(env.ConfigGetValue(app.ConstConfigPathStoreEmail))
+		err = app.SendMail(merchantEmail, subject, confirmationEmail)
+		if err != nil {
+			return env.ErrorDispatch(err)
+		}
+	}
+
 	return nil
 }
