@@ -66,6 +66,22 @@ func (e *testEnv) GetConfig() env.InterfaceConfig {
 	return config
 }
 
+func (it *testEnv) LogError(message string) {
+	fmt.Println("LOG ERROR", message)
+}
+
+func (it *testEnv) LogWarn(message string) {
+	fmt.Println("LOG WARn", message)
+}
+
+func (it *testEnv) LogInfo(message string) {
+	fmt.Println("LOG INfo", message)
+}
+
+func (it *testEnv) LogDebug(message string) {
+	fmt.Println("LOG Debug", message)
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 
 var testReadClosed int

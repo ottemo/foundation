@@ -126,7 +126,11 @@ func (it *inventoryCSV) updateProductInventory(productID string, qty int) error 
 		return it.env.ErrorNew(ConstErrorModule, ConstErrorLevel, "2d65a05e-661c-439d-abaa-3f4f90f9f2a4", msg)
 	}
 
-	return stock.SetProductQty(productID, map[string]interface{}{}, qty)
+	if err := stock.SetProductQty(productID, map[string]interface{}{}, qty); err != nil {
+		return it.env.ErrorDispatch(err)
+	}
+
+	return nil
 }
 
 func (it *inventoryCSV) updateInventoryForOptions(optionProductID string, qty int) error {

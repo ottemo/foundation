@@ -23,6 +23,22 @@ func (it *envType) ErrorNew(module string, level int, code string, message strin
 	return env.ErrorNew(module, level, code, message)
 }
 
+func (it *envType) LogError(message string) {
+	env.Log(ConstLogStorage, env.ConstLogPrefixError, message)
+}
+
+func (it *envType) LogWarn(message string) {
+	env.Log(ConstLogStorage, env.ConstLogPrefixWarning, message)
+}
+
+func (it *envType) LogInfo(message string) {
+	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, message)
+}
+
+func (it *envType) LogDebug(message string) {
+	env.Log(ConstLogStorage, env.ConstLogPrefixDebug, message)
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 
 type fileNameType struct {}
@@ -59,7 +75,11 @@ func (it *fileNameType) GetSortValue(fileName string) (string, error) {
 // -------------------------------------------------------------------------------------------------------------------
 
 func CheckNewUploads(params map[string]interface{}) error {
+	// not required yet
+	_ = params
+
 	env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "check new uploads")
+	defer env.Log(ConstLogStorage, env.ConstLogPrefixInfo, "check new uploads done")
 
 	config := env.GetConfig()
 	if config == nil {
@@ -68,7 +88,6 @@ func CheckNewUploads(params map[string]interface{}) error {
 
 	localEnv := envType{}
 
-	// TODO: use config value
 	path := utils.InterfaceToString(config.GetValue(ConstConfigPathVantagePointUploadPath))
 	storagePtr, err := actors.NewDiskStorage(path, &localEnv)
 	if err != nil {

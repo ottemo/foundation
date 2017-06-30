@@ -15,6 +15,11 @@ type FileNameInterface interface {
 type EnvInterface interface {
 	ErrorDispatch(err error) error
 	ErrorNew(module string, level int, code string, message string) error
+
+	LogError(message string)
+	LogWarn(message string)
+	LogInfo(message string)
+	LogDebug(message string)
 }
 
 type StorageInterface interface {
@@ -90,7 +95,6 @@ func (a *uploadsProcessor) Process() error {
 			return a.env.ErrorDispatch(err)
 		}
 
-		// TODO: check config period setting
 		if err := a.storage.Archive(fileName); err != nil {
 			return a.env.ErrorDispatch(err)
 		}
@@ -131,11 +135,19 @@ func (a *uploadsProcessor) prepareFileNames() ([]string, error) {
 }
 
 func (a *uploadsProcessor) processFile(fileName string) error {
+	a.env.LogInfo("Process file: " + fileName)
+
 	readCloser, err := a.storage.GetReadCloser(fileName)
 	if err != nil {
 		return a.env.ErrorDispatch(err)
 	}
 	defer readCloser.Close()
 
-	return a.dataProcessor.Process(readCloser)
+	if err := a.dataProcessor.Process(readCloser); err != nil {
+		return a.env.ErrorDispatch(err)
+	}
+
+	a.env.LogInfo("File processed: " + fileName)
+
+	return nil
 }
