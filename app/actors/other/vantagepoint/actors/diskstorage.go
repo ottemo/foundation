@@ -70,10 +70,9 @@ func (it *Disk) Archive(fileName string) error {
 		return it.env.ErrorDispatch(err)
 	}
 
-	// TODO: uncomment
-	//if err := os.Remove(s.getFullFileName(fileName)); err != nil {
-	//	env.ErrorDispatch(err)
-	//}
+	if err := os.Remove(it.getFullFileName(fileName)); err != nil {
+		it.env.ErrorDispatch(err)
+	}
 
 	return nil
 }
