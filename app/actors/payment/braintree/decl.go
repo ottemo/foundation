@@ -40,7 +40,7 @@ const (
 	constLogStorage = "braintree.log"
 
 
-	constCCMethodCode         = "braintreeCC"           // Method code used in business logic
+	constCCMethodCode         = "braintree"           // Method code used in business logic
 	constCCMethodInternalName = "Braintree Credit Card" // Human readable name of payment method
 
 )
