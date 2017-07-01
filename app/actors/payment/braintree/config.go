@@ -81,20 +81,8 @@ func setupConfig() error {
 		return env.ErrorDispatch(err)
 	}
 
-	// --------------------------------------
-	// Credit Card
-
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:  constCCMethodConfigPathGroup,
-		Label: "Braintree Credit Card",
-		Type:  env.ConstConfigTypeGroup,
-	}, nil)
-	if err != nil {
-		return env.ErrorDispatch(err)
-	}
-
-	err = config.RegisterItem(env.StructConfigItem{
-		Path:   constCCMethodConfigPathEnabled,
+		Path:   ConstGeneralConfigPathEnabled,
 		Label:  "Enabled",
 		Type:   env.ConstConfigTypeBoolean,
 		Editor: "boolean",
@@ -106,7 +94,7 @@ func setupConfig() error {
 	}
 
 	err = config.RegisterItem(env.StructConfigItem{
-		Path:   constCCMethodConfigPathName,
+		Path:   ConstGeneralMethodConfigPathName,
 		Label:  "Name in checkout",
 		Value:  constCCMethodInternalName,
 		Type:   env.ConstConfigTypeVarchar,

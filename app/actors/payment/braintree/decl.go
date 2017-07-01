@@ -21,10 +21,15 @@ const (
 	// General
 
 	ConstGeneralConfigPathGroup       = "payment.braintreeGeneral"
+
+	ConstGeneralConfigPathEnabled = "payment.braintreeGeneral.enabled"
+	ConstGeneralMethodConfigPathName    = "payment.braintreeGeneral.name" // User customized name of the payment method
+
 	ConstGeneralConfigPathEnvironment = "payment.braintreeGeneral.environment"
 	ConstGeneralConfigPathMerchantID  = "payment.braintreeGeneral.merchantID"
 	ConstGeneralConfigPathPublicKey   = "payment.braintreeGeneral.publicKey"
 	ConstGeneralConfigPathPrivateKey  = "payment.braintreeGeneral.privateKey"
+
 
 	ConstEnvironmentSandbox    = string(braintree.Sandbox)
 	ConstEnvironmentProduction = string(braintree.Production)
@@ -34,12 +39,6 @@ const (
 
 	constLogStorage = "braintree.log"
 
-	// --------------------------------------
-	// Credit Card Method
-
-	constCCMethodConfigPathGroup   = "payment.braintreeCC"
-	constCCMethodConfigPathEnabled = "payment.braintreeCC.enabled"
-	constCCMethodConfigPathName    = "payment.braintreeCC.name" // User customized name of the payment method
 
 	constCCMethodCode         = "braintreeCC"           // Method code used in business logic
 	constCCMethodInternalName = "Braintree Credit Card" // Human readable name of payment method
