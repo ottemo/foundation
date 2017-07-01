@@ -54,7 +54,7 @@ var (
 // Package global constants
 const (
 	ConstShippingCode = "fedex"
-	ConstShippingName = "fedex"
+	ConstShippingName = "FedEx"
 
 	ConstConfigPathGroup = "shipping.fedex"
 

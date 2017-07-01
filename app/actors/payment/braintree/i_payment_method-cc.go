@@ -23,7 +23,7 @@ func (it *CreditCardMethod) GetInternalName() string {
 
 // GetName returns the user customized name of the payment method
 func (it *CreditCardMethod) GetName() string {
-	return utils.InterfaceToString(env.ConfigGetValue(constCCMethodConfigPathName))
+	return utils.InterfaceToString(env.ConfigGetValue(ConstGeneralMethodConfigPathName))
 }
 
 // GetType returns type of payment method according to "github.com/ottemo/foundation/app/models/checkout"
@@ -33,7 +33,7 @@ func (it *CreditCardMethod) GetType() string {
 
 // IsAllowed checks for payment method applicability
 func (it *CreditCardMethod) IsAllowed(checkoutInstance checkout.InterfaceCheckout) bool {
-	return utils.InterfaceToBool(env.ConfigGetValue(constCCMethodConfigPathEnabled))
+	return utils.InterfaceToBool(env.ConfigGetValue(ConstGeneralConfigPathEnabled))
 }
 
 // IsTokenable returns possibility to save token for this payment method
