@@ -11,7 +11,7 @@ import (
 
 // GetName returns name of shipping method
 func (it *ShippingMethod) GetName() string {
-	return utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName))
+	return ConstShippingName
 }
 
 // GetCode returns code of shipping method
@@ -29,8 +29,11 @@ func (it *ShippingMethod) GetRates(checkoutObject checkout.InterfaceCheckout) []
 
 	result := []checkout.StructShippingRate{}
 
-	if len(additionalRates) > 0 {
-		for _, shippingRate := range additionalRates {
+	if len(flatRates) < 1 {
+		_ = env.ErrorNew(ConstErrorModule, env.ConstErrorLevelStartStop, "8945e737-c264-47cb-a68a-c112aafdfccb", "Unable to parse rates or no rates have been configured")
+
+	} else {
+		for _, shippingRate := range flatRates {
 			shippingRates := utils.InterfaceToMap(shippingRate)
 			if rateIsAllowed(shippingRates, checkoutObject) {
 				result = append(result, checkout.StructShippingRate{
@@ -40,21 +43,12 @@ func (it *ShippingMethod) GetRates(checkoutObject checkout.InterfaceCheckout) []
 				})
 			}
 		}
-
-		if len(result) > 0 {
-			return result
-		}
 	}
 
-	return []checkout.StructShippingRate{
-		checkout.StructShippingRate{
-			Code:  "default",
-			Name:  utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName)),
-			Price: utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathAmount)),
-		}}
+	return result
 }
 
-// rateIsAllowed used to check rate for allowed by additional rules and presense of main keys
+// rateIsAllowed used to check rate for allowed by additional rules and presence of main keys
 func rateIsAllowed(shippingRate map[string]interface{}, checkoutObject checkout.InterfaceCheckout) bool {
 
 	if len(shippingRate) > 3 {
@@ -95,7 +89,7 @@ func rateIsAllowed(shippingRate map[string]interface{}, checkoutObject checkout.
 // GetAllRates returns an unfiltered list of all supported shipping rates using the Flat Rate method.
 func (it ShippingMethod) GetAllRates() []checkout.StructShippingRate {
 	result := []checkout.StructShippingRate{}
-	for _, shippingRate := range additionalRates {
+	for _, shippingRate := range flatRates {
 		shippingRates := utils.InterfaceToMap(shippingRate)
 		rate := checkout.StructShippingRate{
 			Code:  utils.InterfaceToString(shippingRates["code"]),
@@ -105,13 +99,5 @@ func (it ShippingMethod) GetAllRates() []checkout.StructShippingRate {
 		result = append(result, rate)
 	}
 
-	defaultRate := checkout.StructShippingRate{
-		Code: "default",
-		Name: "Default",
-		// Name:  utils.InterfaceToString(env.ConfigGetValue(ConstConfigPathName)),
-		Price: utils.InterfaceToFloat64(env.ConfigGetValue(ConstConfigPathAmount)),
-	}
-
-	result = append(result, defaultRate)
 	return result
 }

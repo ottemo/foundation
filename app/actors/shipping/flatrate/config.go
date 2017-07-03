@@ -40,56 +40,11 @@ func setupConfig() error {
 			return env.ErrorDispatch(err)
 		}
 
-		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathAmount,
-			Value:       10,
-			Type:        env.ConstConfigTypeInteger,
-			Editor:      "money",
-			Options:     nil,
-			Label:       "Amount",
-			Description: "price of shipping",
-			Image:       "",
-		}, nil)
-
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathName,
-			Value:       "Flat Rate",
-			Type:        env.ConstConfigTypeVarchar,
-			Editor:      "line_text",
-			Options:     nil,
-			Label:       "Name",
-			Description: "shipping name displayed in checkout",
-			Image:       "",
-		}, nil)
-
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
-		err = config.RegisterItem(env.StructConfigItem{
-			Path:        ConstConfigPathDays,
-			Value:       0,
-			Type:        env.ConstConfigTypeInteger,
-			Editor:      "integer",
-			Options:     nil,
-			Label:       "Ship days",
-			Description: "amount of days for shipping",
-			Image:       "",
-		}, nil)
-
-		if err != nil {
-			return env.ErrorDispatch(err)
-		}
-
 		// validateNewRates validate structure of new shipping rates
 		validateNewRates := func(newRatesValues interface{}) (interface{}, error) {
 
 			if utils.InterfaceToString(newRatesValues) == "[]" || newRatesValues == nil || utils.InterfaceToString(newRatesValues) == "" {
-				additionalRates = make([]interface{}, 0)
+				flatRates = make([]interface{}, 0)
 				return newRatesValues, nil
 			}
 
@@ -147,7 +102,7 @@ func setupConfig() error {
 				rate["code"] = rateCode
 				rates = append(rates, rate)
 			}
-			additionalRates = rates
+			flatRates = rates
 
 			return newRatesValues, nil
 		}
@@ -155,7 +110,7 @@ func setupConfig() error {
 		// grouping rules config setup
 		//----------------------------
 		err = config.RegisterItem(env.StructConfigItem{
-			Path:    ConstConfigPathAdditionalRates,
+			Path:    ConstConfigPathRates,
 			Value:   `[]`,
 			Type:    env.ConstConfigTypeJSON,
 			Editor:  "multiline_text",
@@ -165,7 +120,7 @@ func setupConfig() error {
 [
 	{"title": "State Shipping",         "code": "State", "price": 4.99},
 	{"title": "Expedited Shipping",     "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
-	{"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Kanada"},
+	{"title": "International Shipping", "code": "international_shipping", "price": 18, "banned_countries": "Qatar, Mexico, Indonesia", "allowed_countries":"Canada"},
 	...
 ]
 make it "[]" to use default method any of additional params such as "banned_countries", "price_from" etc. will be limiting parameters (banned country) `,

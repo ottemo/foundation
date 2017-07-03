@@ -22,12 +22,12 @@ func init() {
 // onAppStart makes module initialization on application startup
 func onAppStart() error {
 
-	rules, err := utils.DecodeJSONToArray(env.ConfigGetValue(ConstConfigPathAdditionalRates))
+	rules, err := utils.DecodeJSONToArray(env.ConfigGetValue(ConstConfigPathRates))
 	if err != nil {
 		rules = make([]interface{}, 0)
 	}
 
-	additionalRates = rules
+	flatRates = rules
 
 	return nil
 }

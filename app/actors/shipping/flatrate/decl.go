@@ -9,16 +9,12 @@ import (
 // Package global constants
 const (
 	ConstShippingCode = "flat_rate"
-	ConstShippingName = "FlatRate"
+	ConstShippingName = "Flat Rate"
 
 	ConstConfigPathGroup = "shipping.flat_rate"
 
 	ConstConfigPathEnabled = "shipping.flat_rate.enabled"
-	ConstConfigPathAmount  = "shipping.flat_rate.amount"
-	ConstConfigPathName    = "shipping.flat_rate.name"
-	ConstConfigPathDays    = "shipping.flat_rate.days"
-
-	ConstConfigPathAdditionalRates = "shipping.flat_rate.additional_rates"
+	ConstConfigPathRates = "shipping.flat_rate.rates"
 
 	ConstErrorModule = "shipping/flatrate"
 	ConstErrorLevel  = env.ConstErrorLevelActor
@@ -26,7 +22,7 @@ const (
 
 // Package global variables
 var (
-	additionalRates []interface{}
+	flatRates []interface{}
 )
 
 // ShippingMethod is a implementer of InterfaceShippingMethod for a "Flat Rate" shipping method
