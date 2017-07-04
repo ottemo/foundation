@@ -115,8 +115,8 @@ func setupConfig() error {
 			Type:    env.ConstConfigTypeJSON,
 			Editor:  "multiline_text",
 			Options: "",
-			Label:   "Additional rates",
-			Description: `flat rate additional shipping rates, pattern:
+			Label:   "Shipping Rates",
+			Description: `shipping rates, pattern:
 [
 	{"title": "State Shipping",         "code": "State", "price": 4.99},
 	{"title": "Expedited Shipping",     "code": "expedited_shipping", "price": 8, "price_from": 50, "price_to": 160},
