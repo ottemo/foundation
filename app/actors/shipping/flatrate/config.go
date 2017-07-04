@@ -17,7 +17,7 @@ func setupConfig() error {
 			Editor:      "",
 			Options:     nil,
 			Label:       "Flat Rate",
-			Description: "static amount stipping method",
+			Description: "flat rate shipping method",
 			Image:       "",
 		}, nil)
 
