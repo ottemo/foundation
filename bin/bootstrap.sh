@@ -1,3 +1,4 @@
+# TODO: update this old bootstrap script for setting up foundation the first time in /opt dir
 apt-get -y install bzr
 apt-get -y install git
 apt-get -y install golang-go
@@ -11,12 +12,12 @@ mkdir -pv /opt/ottemo/media
 
 export GOPATH=/opt/ottemo/go
 
-git clone https://ottemo-dev:freshbox111222333@github.com/ottemo/foundation.git /opt/ottemo/go/src/github.com/ottemo/foundation
+git clone https://github.com/ottemo/foundation /opt/ottemo/go/src/github.com/ottemo/foundation
 
 cd $GOPATH/bin
 echo "media.fsmedia.folder=/opt/ottemo/media" >> ottemo.ini
 echo "mongodb.db=ottemo-demo" >> ottemo.ini
-echo "mongodb.uri=mongodb://ottemo:ottemo2014@candidate.42.mongolayer.com:10243,candidate.43.mongolayer.com:10327/ottemo-demo" >> ottemo.ini
+echo "mongodb.uri=mongodb://DB_USER:DB_PASSWROD@MONGO_DB_URI:27017/ottemo" >> ottemo.ini
 
 cd $GOPATH/src/github.com/ottemo/foundation && go get -t
 cd $GOPATH/src/github.com/ottemo/foundation && go get gopkg.in/mgo.v2

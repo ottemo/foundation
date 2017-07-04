@@ -2,16 +2,16 @@ swagger: "2.0"
 
 info:
   description: "Package foundation represents default Ottemo e-commerce product application entry point."
-  version: "0.0.1"
-  title: "Foundation API"
+  version: "1.4.2"
+  title: "Ottemo Foundation API"
   termsOfService: "http://subject.to.change"
 
   contact:
     email: "subject@to.change"
 
   license:
-    name: "Example 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+    name: "Mozilla Public License 2.0"
+    url: "https://github.com/ottemo/foundation/blob/master/LICENSE.md"
 
 host: "localhost:3000"
 
