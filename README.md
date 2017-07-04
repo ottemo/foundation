@@ -1,7 +1,7 @@
 Ottemo
 =========
 
-[![Build Status](http://jenkins.ottemo.io/buildStatus/icon?job=build_storefront_docker_image)](http://jenkins.ottemo.io/job/build_foundation_docker_image/)
+[![Build Status](http://jenkins.ottemo.io/buildStatus/icon?job=build_foundation_docker_image)](http://jenkins.ottemo.io/job/build_foundation_docker_image/)
 
 a small, wicked fast ecommerce platform built for gophers
 
