@@ -1,8 +1,8 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2017 The Ottemo Authors. All rights reserved.
 
 /*
-Package foundation represents default Ottemo e-commerce product application entry point. This package contains main()
-function which is the start point of assembled application.
+Package foundation represents the Ottemo e-commerce application entry point. This package contains the go main()
+function which assembles the server application.
 
   Example:
     go build github.com/ottemo/foundation
