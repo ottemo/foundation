@@ -248,7 +248,7 @@ func (it *DefaultConfig) GetItemsInfo(Path string) []env.StructConfigItem {
 
 		configItem := env.StructConfigItem{
 			Path:  utils.InterfaceToString(record["path"]),
-			Value: it.GetValue(utils.InterfaceToString(record["path"])),
+			Value: record["value"],
 
 			Type: utils.InterfaceToString(record["type"]),
 
