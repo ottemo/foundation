@@ -202,11 +202,11 @@ func (it *DefaultConfig) GetGroupItems() []env.StructConfigItem {
 
 	for _, record := range records {
 
+		valueType := utils.InterfaceToString(record["type"])
+		valuePath := utils.InterfaceToString(record["path"])
 		configItem := env.StructConfigItem{
-			Path:  utils.InterfaceToString(record["path"]),
-			Value: record["value"],
-
-			Type: utils.InterfaceToString(record["type"]),
+			Path: valuePath,
+			Type: valueType,
 
 			Editor:  utils.InterfaceToString(record["editor"]),
 			Options: record["options"],
@@ -216,7 +216,12 @@ func (it *DefaultConfig) GetGroupItems() []env.StructConfigItem {
 
 			Image: utils.InterfaceToString(record["image"]),
 		}
-		configItem.Value = db.ConvertTypeFromDbToGo(configItem.Value, configItem.Type)
+
+		if valueType == env.ConstConfigTypeSecret {
+			configItem.Value = it.GetValue(valuePath)
+		} else {
+			configItem.Value = db.ConvertTypeFromDbToGo(record["value"], valueType)
+		}
 
 		result = append(result, configItem)
 	}
@@ -246,11 +251,11 @@ func (it *DefaultConfig) GetItemsInfo(Path string) []env.StructConfigItem {
 
 	for _, record := range records {
 
+		valueType := utils.InterfaceToString(record["type"])
+		valuePath := utils.InterfaceToString(record["path"])
 		configItem := env.StructConfigItem{
-			Path:  utils.InterfaceToString(record["path"]),
-			Value: record["value"],
-
-			Type: utils.InterfaceToString(record["type"]),
+			Path: valuePath,
+			Type: valueType,
 
 			Editor:  utils.InterfaceToString(record["editor"]),
 			Options: record["options"],
@@ -260,7 +265,12 @@ func (it *DefaultConfig) GetItemsInfo(Path string) []env.StructConfigItem {
 
 			Image: utils.InterfaceToString(record["image"]),
 		}
-		configItem.Value = db.ConvertTypeFromDbToGo(configItem.Value, configItem.Type)
+
+		if valueType == env.ConstConfigTypeSecret {
+			configItem.Value = it.GetValue(valuePath)
+		} else {
+			configItem.Value = db.ConvertTypeFromDbToGo(record["value"], valueType)
+		}
 
 		result = append(result, configItem)
 	}
