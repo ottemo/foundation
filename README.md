@@ -12,7 +12,7 @@ coming....
 
 ## License
 
-[Mozilla Publice License 2.0](https://github.com/ottemo/foundation/blob/master/LICENSE.md)
+[Mozilla Publice License 2.0](https://github.com/ottemo/foundation/blob/master/LICENSE)
 
 ## Terms and Conditions
 
