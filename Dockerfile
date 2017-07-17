@@ -1,6 +1,6 @@
 FROM alpine:3.5
 
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates gawk
 
 RUN mkdir -pv /home/ottemo/foundation
 RUN mkdir -pv /home/ottemo/foundation/var/log
