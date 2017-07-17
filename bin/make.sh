@@ -4,7 +4,7 @@ WORKDIR=`pwd`
 OTTEMODIR="$(cd "$(dirname "$0")" && pwd)"
 OTTEMOPKG="github.com/ottemo/foundation"
 
-if [[ "$OSTYPE" == "darwin"*  ]]; then
+if [[ "$OSTYPE" == "darwin"*  ]] || [ -f /etc/alpine-release ] || [ -f /.dockerenv ] ; then
     AWK=gawk
 else
     AWK=awk
