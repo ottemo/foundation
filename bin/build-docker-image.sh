@@ -61,7 +61,7 @@ else
 fi
 
 echo "build alpine based foundation container"
-docker build -t $IMAGE -t gcr.io/ottemo-kube/foundation .
+docker build -t $IMAGE -t gcr.io/ottemo-kube/foundation:latest .
 if [ $? -ne 0 ]; then
   echo "error in build foundation alpine based container"
   exit 2
@@ -73,7 +73,7 @@ if [ $? -ne 0 ]; then
   exit 2
 fi
 
-gcloud docker -- push gcr.io/ottemo-kube/foundation
+gcloud docker -- push gcr.io/ottemo-kube/foundation:latest
 if [ $? -ne 0 ]; then
   echo "error in push latest foundation image tag"
   exit 2
