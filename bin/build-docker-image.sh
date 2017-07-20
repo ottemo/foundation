@@ -21,7 +21,8 @@ done
 
 indocker="${indocker:-false}"
 
-GOIMAGE="gcr.io/ottemo-kube/golang:1.7.5-latest" # images that used to build foundation binary
+GOIMAGE="ottemo/golang:1.7.5" # images that used to build foundation binary
+FOUNDATIONIMAGE="ottemo/foundation"
 
 MYDIR=$(cd `dirname ${BASH_SOURCE[0]}` && pwd)
 FOUNDATIONREPO="$MYDIR/.."
@@ -29,9 +30,9 @@ cd $FOUNDATIONREPO
 
 if ! [ -n "$version" ] ; then
   date=$(date +%Y%m%d-%H%M%S)
-  IMAGE="gcr.io/ottemo-kube/foundation:${date}"
+  IMAGE="${FOUNDATIONIMAGE}:${date}"
 else
-  IMAGE="gcr.io/ottemo-kube/foundation:$version"
+  IMAGE="${FOUNDATIONIMAGE}:$version"
 fi
 echo "use $IMAGE as image name"
 
@@ -61,19 +62,19 @@ else
 fi
 
 echo "build alpine based foundation container"
-docker build -t $IMAGE -t gcr.io/ottemo-kube/foundation:latest .
+docker build -t $IMAGE -t ${FOUNDATIONIMAGE}:latest .
 if [ $? -ne 0 ]; then
   echo "error in build foundation alpine based container"
   exit 2
 fi
 
-gcloud docker -- push $IMAGE
+docker push $IMAGE
 if [ $? -ne 0 ]; then
   echo "error in push image"
   exit 2
 fi
 
-gcloud docker -- push gcr.io/ottemo-kube/foundation:latest
+docker push ${FOUNDATIONIMAGE}:latest
 if [ $? -ne 0 ]; then
   echo "error in push latest foundation image tag"
   exit 2
