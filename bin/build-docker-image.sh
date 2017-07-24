@@ -28,11 +28,13 @@ MYDIR=$(cd `dirname ${BASH_SOURCE[0]}` && pwd)
 FOUNDATIONREPO="$MYDIR/.."
 cd $FOUNDATIONREPO
 
+BUILD=$(git rev-list origin/develop --count)
+
 if ! [ -n "$version" ] ; then
   date=$(date +%Y%m%d-%H%M%S)
-  IMAGE="${FOUNDATIONIMAGE}:${date}"
+  IMAGE="${FOUNDATIONIMAGE}:${date}-${BUILD}"
 else
-  IMAGE="${FOUNDATIONIMAGE}:$version"
+  IMAGE="${FOUNDATIONIMAGE}:${version}"
 fi
 echo "use $IMAGE as image name"
 
