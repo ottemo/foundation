@@ -2,6 +2,7 @@ Ottemo
 =========
 
 [![Build Status](http://jenkins.ottemo.io/buildStatus/icon?job=build_foundation_docker_image)](http://jenkins.ottemo.io/job/build_foundation_docker_image/)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3e068cd576494103aa411d21157d2a4d)](https://www.codacy.com/app/vastbinderj/foundation?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ottemo/foundation&amp;utm_campaign=Badge_Grade)
 
 a small, wicked fast ecommerce platform built for gophers
 
