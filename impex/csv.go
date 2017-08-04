@@ -72,6 +72,12 @@ func MapToCSV(input []map[string]interface{}, csvWriter *csv.Writer) error {
 					}
 				}
 				return result
+			} else if keyValueAsList, ok := keyValue.([]map[string]interface{}); ok {
+				var result []interface{}
+				for _, listValue := range keyValueAsList {
+					result = append(result, getPathValue(listValue, followingPath))
+				}
+				return result
 			} else if keyValueAsMap, ok := keyValue.(map[string]interface{}); ok {
 				return getPathValue(keyValueAsMap, followingPath)
 			}
