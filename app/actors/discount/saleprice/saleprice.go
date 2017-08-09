@@ -88,7 +88,11 @@ func (it *DefaultSalePrice) Set(attribute string, value interface{}) error {
 		}
 
 	case "end_datetime":
-		if err := it.SetEndDatetime(utils.InterfaceToTime(value)); err != nil {
+		srcValue := value
+		if strValue, ok := value.(string); ok {
+			srcValue = strings.Trim(strValue, "\"")
+		}
+		if err := it.SetEndDatetime(utils.InterfaceToTime(srcValue)); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "9a3b5962-a362-4bec-9d9a-ee7cbcdf6dfe", err.Error())
 		}
 
@@ -98,7 +102,11 @@ func (it *DefaultSalePrice) Set(attribute string, value interface{}) error {
 		}
 
 	case "start_datetime":
-		if err := it.SetStartDatetime(utils.InterfaceToTime(value)); err != nil {
+		srcValue := value
+		if strValue, ok := value.(string); ok {
+			srcValue = strings.Trim(strValue, "\"")
+		}
+		if err := it.SetStartDatetime(utils.InterfaceToTime(srcValue)); err != nil {
 			_ = env.ErrorNew(ConstErrorModule, ConstErrorLevel, "811a3d2e-93d5-4d42-b4ca-e710e1c4ec57", err.Error())
 		}
 	}

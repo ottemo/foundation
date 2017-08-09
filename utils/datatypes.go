@@ -590,15 +590,6 @@ func StringToInterface(value string) interface{} {
 
 	trimmedValue := strings.TrimSpace(value)
 
-	if result, err := strconv.ParseFloat(trimmedValue, 64); err == nil {
-		return result
-	}
-	if result, err := strconv.Atoi(trimmedValue); err == nil {
-		return result
-	}
-	if result, err := strconv.ParseBool(trimmedValue); err == nil {
-		return result
-	}
 	if strings.HasPrefix(trimmedValue, "[") && strings.HasSuffix(trimmedValue, "]") {
 		var result []interface{}
 		trimmedValue = strings.TrimPrefix(trimmedValue, "[")
@@ -613,10 +604,19 @@ func StringToInterface(value string) interface{} {
 			return result
 		}
 	}
+	if result, err := strconv.Atoi(trimmedValue); err == nil {
+		return result
+	}
+	if result, err := strconv.ParseFloat(trimmedValue, 64); err == nil {
+		return result
+	}
+	if result, err := strconv.ParseBool(trimmedValue); err == nil {
+		return result
+	}
 	if result := InterfaceToTime(trimmedValue); result != (time.Time{}) {
 		println(trimmedValue)
 		return result
 	}
 
-	return trimmedValue
+	return value
 }
