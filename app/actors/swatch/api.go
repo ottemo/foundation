@@ -9,6 +9,7 @@ import (
 
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -32,7 +33,22 @@ func listAllSwatches(context api.InterfaceApplicationContext) (interface{}, erro
 	// skip "unused parameter"
 	_ = context
 
-	return mediaStorage.ListMediaDetail(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType)
+	swatches, err := mediaStorage.ListMediaDetail(ConstStorageModel, ConstStorageObjectID, ConstStorageMediaType)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	for _, swatch := range swatches {
+		swatch["nameLowercased"] = strings.ToLower(utils.InterfaceToString(swatch["name"]))
+	}
+
+	swatchesSorted := utils.SortMapByKeys(swatches, false, "nameLowercased")
+
+	for _, swatch := range swatchesSorted {
+		delete(swatch, "nameLowercased")
+	}
+
+	return swatchesSorted, nil
 }
 
 // getDefaultExtention returns default media extention. This value is necessary to select image by name
