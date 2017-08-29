@@ -13,6 +13,9 @@ import (
 
 // init makes package self-initialization routine
 func init() {
+	importStatus.state = constImportStateIdle
+	importStatus.sessions = map[string]interface{}{}
+
 	api.RegisterOnRestServiceStart(setupAPI)
 
 	if err := RegisterImportCommand("IMPORT", new(ImportCmdImport)); err != nil {

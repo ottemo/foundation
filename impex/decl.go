@@ -14,6 +14,9 @@ const (
 	ConstErrorLevel  = env.ConstErrorLevelService
 
 	ConstLogFileName = "impex.log"
+
+	constImportStateIdle       = "idle"
+	constImportStateProcessing = "processing"
 )
 
 // Package global variables
@@ -58,8 +61,8 @@ var (
 	// set of models implementing InterfaceImpexModel
 	impexModels = make(map[string]InterfaceImpexModel)
 
-	// currently importing file information
-	importingFile *StructImportingFile
+	// currently importing process status
+	importStatus StructImportStatus
 )
 
 // ImportCmdAttributeAdd is a implementer of InterfaceImpexImportCmd
@@ -129,4 +132,12 @@ type StructImportingFile struct {
 	reader io.Reader
 	size   int64
 	name   string
+}
+
+// StructImportStatus holds current import status.
+// The result of import will be stored in "sessions" map per Session.
+type StructImportStatus struct {
+	file     *StructImportingFile
+	state    string
+	sessions map[string]interface{}
 }
