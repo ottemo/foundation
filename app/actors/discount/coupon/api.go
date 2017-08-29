@@ -12,6 +12,7 @@ import (
 	"github.com/ottemo/foundation/utils"
 
 	"github.com/ottemo/foundation/app/models/checkout"
+	"github.com/ottemo/foundation/impex"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -27,7 +28,9 @@ func setupAPI() error {
 	service.GET("coupons", api.IsAdminHandler(List))
 	service.POST("coupons", api.IsAdminHandler(Create))
 	service.GET("csv/coupons", api.IsAdminHandler(DownloadCSV))
-	service.POST("csv/coupons", api.IsAdminHandler(UploadCSV))
+	service.POST("csv/coupons", api.IsAdminHandler(
+		impex.ImportStartHandler(
+			api.APIAsyncHandler(UploadCSV, impex.ImportResultHandler))))
 	service.GET("coupons/:id", api.IsAdminHandler(GetByID))
 	service.PUT("coupons/:id", api.IsAdminHandler(UpdateByID))
 	service.DELETE("coupons/:id", api.IsAdminHandler(DeleteByID))

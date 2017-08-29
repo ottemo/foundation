@@ -21,41 +21,13 @@ func setupAPI() error {
 	service.GET("impex/models", restImpexListModels)
 	service.GET("impex/import/status", restImpexImportStatus)
 	service.GET("impex/export/:model", restImpexExportModel)
-	service.POST("impex/import/:model", importStartHandler(api.APIAsyncHandler(restImpexImportModel, importResultHandler)))
-	service.POST("impex/import", importStartHandler(api.APIAsyncHandler(restImpexImport, importResultHandler)))
+	service.POST("impex/import/:model", ImportStartHandler(api.APIAsyncHandler(restImpexImportModel, ImportResultHandler)))
+	service.POST("impex/import", ImportStartHandler(api.APIAsyncHandler(restImpexImport, ImportResultHandler)))
 
 	service.POST("impex/test/import", restImpexTestImport)
 	service.POST("impex/test/mapping", restImpexTestCsvToMap)
 
 	return nil
-}
-
-// importStartHandler is a middleware to init importState for async "next" procedure.
-func importStartHandler(next api.FuncAPIHandler) api.FuncAPIHandler {
-	return func(context api.InterfaceApplicationContext) (interface{}, error) {
-		if importStatus.state != constImportStateIdle {
-			additionalMessage := ""
-			if importStatus.file != nil {
-				additionalMessage = " Currently processing " + importStatus.file.name
-			}
-			return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "4bec46b6-b6b0-4821-8978-44d0f051750d", "Another import is in progres."+additionalMessage)
-		} else {
-			importStatus.state = constImportStateProcessing
-			delete(importStatus.sessions, context.GetSession().GetID())
-			return next(context)
-		}
-	}
-}
-
-// importResultHandler will process import call's result
-// It return no values, because of async handler result processing.
-var importResultHandler = func(context api.InterfaceApplicationContext, result interface{}, err error) {
-	importStatus.state = constImportStateIdle
-
-	importStatus.sessions[context.GetSession().GetID()] = map[string]interface{}{
-		"result": result,
-		"err":    err,
-	}
 }
 
 // WEB REST API used to list available models for Impex system
