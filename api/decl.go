@@ -44,3 +44,7 @@ type StructRestRedirect struct {
 
 // FuncAPIHandler is an API handler callback function
 type FuncAPIHandler func(context InterfaceApplicationContext) (interface{}, error)
+
+// FuncAPIResultHandler is an API result handler callback function.
+// It suppesod to be called by async API handler like api.APIAsyncHandler.
+type FuncAPIResultHandler func(context InterfaceApplicationContext, result interface{}, err error)

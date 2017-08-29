@@ -148,6 +148,22 @@ func IsAdminSession(context InterfaceApplicationContext) bool {
 	return utils.InterfaceToBool(context.GetSession().Get(ConstSessionKeyAdminRights))
 }
 
+// APIAsyncHandler runs FuncAPIHandler in async.
+// If resultHandler declared, the result of call will be put to it.
+func APIAsyncHandler(nextHandler FuncAPIHandler, resultHandler FuncAPIResultHandler) FuncAPIHandler {
+	return func(context InterfaceApplicationContext) (interface{}, error) {
+		go (func(){
+			if resultHandler != nil {
+				result, err := nextHandler(context)
+				resultHandler(context, result, err)
+			} else {
+				nextHandler(context)
+			}
+		})()
+		return nil, nil
+	}
+}
+
 // GetRequestContentAsMap tries to represent HTTP request content in map[string]interface{} format
 func GetRequestContentAsMap(context InterfaceApplicationContext) (map[string]interface{}, error) {
 
