@@ -8,6 +8,7 @@ import (
 	"github.com/ottemo/foundation/env"
 
 	"github.com/ottemo/foundation/utils"
+	"github.com/ottemo/foundation/impex"
 )
 
 // setupAPI setups package related API endpoint routines
@@ -16,7 +17,9 @@ func setupAPI() error {
 	service := api.GetRestService()
 
 	service.GET("taxes/csv", api.IsAdminHandler(APIDownloadTaxCSV))
-	service.POST("taxes/csv", api.IsAdminHandler(APIUploadTaxCSV))
+	service.POST("taxes/csv", api.IsAdminHandler(
+		impex.ImportStartHandler(
+			api.AsyncHandler(APIUploadTaxCSV, impex.ImportResultHandler))))
 
 	return nil
 }

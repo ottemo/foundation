@@ -10,6 +10,7 @@ import (
 	"github.com/ottemo/foundation/api"
 	"github.com/ottemo/foundation/app/models"
 	"github.com/ottemo/foundation/env"
+	"github.com/ottemo/foundation/utils"
 )
 
 // setups package related API endpoint routines
@@ -20,8 +21,8 @@ func setupAPI() error {
 	service.GET("impex/models", restImpexListModels)
 	service.GET("impex/import/status", restImpexImportStatus)
 	service.GET("impex/export/:model", restImpexExportModel)
-	service.POST("impex/import/:model", restImpexImportModel)
-	service.POST("impex/import", restImpexImport)
+	service.POST("impex/import/:model", ImportStartHandler(api.AsyncHandler(restImpexImportModel, ImportResultHandler)))
+	service.POST("impex/import", ImportStartHandler(api.AsyncHandler(restImpexImport, ImportResultHandler)))
 
 	service.POST("impex/test/import", restImpexTestImport)
 	service.POST("impex/test/mapping", restImpexTestCsvToMap)
@@ -131,17 +132,24 @@ func restImpexImportStatus(context api.InterfaceApplicationContext) (interface{}
 
 	result := make(map[string]interface{})
 
-	result["status"] = "idle"
+	result["status"] = importStatus.state
 
-	if importingFile != nil {
-		result["status"] = "processing"
-		result["name"] = importingFile.name
-		result["size"] = importingFile.size
+	if importStatus.file != nil {
+		result["name"] = importStatus.file.name
+		result["size"] = importStatus.file.size
 
-		if seeker, ok := importingFile.reader.(io.Seeker); ok {
+		if seeker, ok := importStatus.file.reader.(io.Seeker); ok {
 			if position, err := seeker.Seek(0, 1); err == nil {
 				result["position"] = position
 			}
+		}
+	}
+
+	if importStatus.state == constImportStateIdle {
+		if importResult, present := importStatus.sessions[context.GetSession().GetID()]; present {
+			importResultMap := utils.InterfaceToMap(importResult)
+			result["importResult"] = importResultMap["result"]
+			result["importError"] = importResultMap["err"]
 		}
 	}
 
@@ -150,10 +158,6 @@ func restImpexImportStatus(context api.InterfaceApplicationContext) (interface{}
 
 // WEB REST API used import data to system
 func restImpexImportModel(context api.InterfaceApplicationContext) (interface{}, error) {
-
-	if importingFile != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12f978f5-3a90-438b-a3f4-475b34a97457", "Another import is in progres. Currently processing "+importingFile.name)
-	}
 
 	var commandLine string
 	exchangeDict := make(map[string]interface{})
@@ -171,11 +175,11 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 
 	for fileName, attachedFile := range context.GetRequestFiles() {
 
-		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+		importStatus.file = &StructImportingFile{reader: attachedFile, name: fileName}
 
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
-				importingFile.size = fileSize
+				importStatus.file.size = fileSize
 				_, _ = seeker.Seek(0, 0)
 			}
 		}
@@ -192,7 +196,7 @@ func restImpexImportModel(context api.InterfaceApplicationContext) (interface{},
 		filesProcessed++
 	}
 
-	importingFile = nil
+	importStatus.file = nil
 
 	return fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage), nil
 }
@@ -208,11 +212,11 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 	additionalMessage := ""
 	for fileName, attachedFile := range context.GetRequestFiles() {
 
-		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+		importStatus.file = &StructImportingFile{reader: attachedFile, name: fileName}
 
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
-				importingFile.size = fileSize
+				importStatus.file.size = fileSize
 				_, _ = seeker.Seek(0, 0)
 			}
 		}
@@ -228,7 +232,7 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 		filesProcessed++
 	}
 
-	importingFile = nil
+	importStatus.file = nil
 
 	return []byte(fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage)), nil
 }
@@ -236,19 +240,15 @@ func restImpexTestImport(context api.InterfaceApplicationContext) (interface{}, 
 // WEB REST API used to process csv file script in impex format
 func restImpexImport(context api.InterfaceApplicationContext) (interface{}, error) {
 
-	if importingFile != nil {
-		return nil, env.ErrorNew(ConstErrorModule, env.ConstErrorLevelAPI, "12f978f5-3a90-438b-a3f4-475b34a97888", "Another import is in progres. Currently processing "+importingFile.name)
-	}
-
 	filesProcessed := 0
 	additionalMessage := ""
 	for fileName, attachedFile := range context.GetRequestFiles() {
 
-		importingFile = &StructImportingFile{reader: attachedFile, name: fileName}
+		importStatus.file = &StructImportingFile{reader: attachedFile, name: fileName}
 
 		if seeker, ok := attachedFile.(io.Seeker); ok {
 			if fileSize, err := seeker.Seek(0, 2); err == nil {
-				importingFile.size = fileSize
+				importStatus.file.size = fileSize
 				_, _ = seeker.Seek(0, 0)
 			}
 		}
@@ -265,7 +265,7 @@ func restImpexImport(context api.InterfaceApplicationContext) (interface{}, erro
 		filesProcessed++
 	}
 
-	importingFile = nil
+	importStatus.file = nil
 
 	return fmt.Sprintf("%d file(s) processed %s", filesProcessed, additionalMessage), nil
 }
