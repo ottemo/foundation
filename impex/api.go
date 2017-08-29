@@ -21,8 +21,8 @@ func setupAPI() error {
 	service.GET("impex/models", restImpexListModels)
 	service.GET("impex/import/status", restImpexImportStatus)
 	service.GET("impex/export/:model", restImpexExportModel)
-	service.POST("impex/import/:model", ImportStartHandler(api.APIAsyncHandler(restImpexImportModel, ImportResultHandler)))
-	service.POST("impex/import", ImportStartHandler(api.APIAsyncHandler(restImpexImport, ImportResultHandler)))
+	service.POST("impex/import/:model", ImportStartHandler(api.AsyncHandler(restImpexImportModel, ImportResultHandler)))
+	service.POST("impex/import", ImportStartHandler(api.AsyncHandler(restImpexImport, ImportResultHandler)))
 
 	service.POST("impex/test/import", restImpexTestImport)
 	service.POST("impex/test/mapping", restImpexTestCsvToMap)

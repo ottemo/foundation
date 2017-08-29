@@ -19,7 +19,7 @@ func setupAPI() error {
 	service.GET("taxes/csv", api.IsAdminHandler(APIDownloadTaxCSV))
 	service.POST("taxes/csv", api.IsAdminHandler(
 		impex.ImportStartHandler(
-			api.APIAsyncHandler(APIUploadTaxCSV, impex.ImportResultHandler))))
+			api.AsyncHandler(APIUploadTaxCSV, impex.ImportResultHandler))))
 
 	return nil
 }

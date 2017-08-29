@@ -30,7 +30,7 @@ func setupAPI() error {
 	service.GET("csv/coupons", api.IsAdminHandler(DownloadCSV))
 	service.POST("csv/coupons", api.IsAdminHandler(
 		impex.ImportStartHandler(
-			api.APIAsyncHandler(UploadCSV, impex.ImportResultHandler))))
+			api.AsyncHandler(UploadCSV, impex.ImportResultHandler))))
 	service.GET("coupons/:id", api.IsAdminHandler(GetByID))
 	service.PUT("coupons/:id", api.IsAdminHandler(UpdateByID))
 	service.DELETE("coupons/:id", api.IsAdminHandler(DeleteByID))
