@@ -779,6 +779,10 @@ func (it *ImportCmdAttributeAdd) Init(args []string, exchange map[string]interfa
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "86b28a7b-10a6-41ec-9d59-ccd55bb63632", "attribute name was not specified, untill impex attribute add")
 	}
 
+	if _, present := namedArgs["--upsert"]; present {
+		it.upsert = true
+	}
+
 	attribute := models.StructAttributeInfo{
 		Model:      workingModel.GetModelName(),
 		Collection: modelAsCustomAttributesInterface.GetCustomAttributeCollectionName(),
@@ -832,6 +836,15 @@ func (it *ImportCmdAttributeAdd) Test(itemData map[string]interface{}, input int
 // Process is a ATTRIBUTE_ADD command processor
 func (it *ImportCmdAttributeAdd) Process(itemData map[string]interface{}, input interface{}, exchange map[string]interface{}) (interface{}, error) {
 	modelAsCustomAttributesInterface := it.model.(models.InterfaceCustomAttributes)
+
+	if it.upsert {
+		err := modelAsCustomAttributesInterface.EditAttribute(it.attribute.Attribute, it.attribute)
+
+		if err == nil {
+			return input, nil
+		}
+	}
+
 	err := modelAsCustomAttributesInterface.AddNewAttribute(it.attribute)
 	if err != nil {
 		return input, env.ErrorDispatch(err)

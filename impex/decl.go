@@ -70,6 +70,7 @@ var (
 type ImportCmdAttributeAdd struct {
 	model     models.InterfaceModel
 	attribute models.StructAttributeInfo
+	upsert    bool
 }
 
 // ImportCmdImport is a implementer of InterfaceImpexImportCmd
