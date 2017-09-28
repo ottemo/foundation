@@ -70,6 +70,7 @@ var (
 type ImportCmdAttributeAdd struct {
 	model     models.InterfaceModel
 	attribute models.StructAttributeInfo
+	upsert    bool
 }
 
 // ImportCmdImport is a implementer of InterfaceImpexImportCmd
@@ -93,6 +94,16 @@ type ImportCmdUpdate struct {
 	model      models.InterfaceModel
 	attributes map[string]bool
 	idKey      string
+}
+
+// ImportCmdUpsert is a implementer of InterfaceImpexImportCmd
+//  - command allows to update model item data in system by uniqueKeys or will insert new record
+//  - skipInsertErrors will continue processing in case of errors during insert
+type ImportCmdUpsert struct {
+	model      		models.InterfaceModel
+	attributes 		map[string]bool
+	uniqueKeys           	[]string
+	skipInsertErrors	bool
 }
 
 // ImportCmdDelete is a implementer of InterfaceImpexImportCmd

@@ -30,6 +30,9 @@ func init() {
 	if err := RegisterImportCommand("DELETE", new(ImportCmdDelete)); err != nil {
 		_ = env.ErrorDispatch(err)
 	}
+	if err := RegisterImportCommand("UPSERT", new(ImportCmdUpsert)); err != nil {
+		_ = env.ErrorDispatch(err)
+	}
 
 	if err := RegisterImportCommand("STORE", new(ImportCmdStore)); err != nil {
 		_ = env.ErrorDispatch(err)

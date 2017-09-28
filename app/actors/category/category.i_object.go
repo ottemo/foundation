@@ -151,6 +151,7 @@ func (it *DefaultCategory) Set(attribute string, value interface{}) error {
 		switch typedValue := value.(type) {
 
 		case []interface{}:
+			it.ProductIds = make([]string, 0)
 			for _, listItem := range typedValue {
 				productID, ok := listItem.(string)
 				if ok {
