@@ -53,7 +53,7 @@ func CheckModelImplements(modelName string, neededInterfaces []string) (models.I
 
 // ArgsGetAsNamed collects arguments into map, unnamed arguments will go as position index
 func ArgsGetAsNamed(args []string, includeIndexes bool) map[string]string {
-	return ArgsGetAsNamedBySeparators(args, includeIndexes, '=',':')
+	return ArgsGetAsNamedBySeparators(args, includeIndexes, '=', ':')
 }
 
 // ArgsGetAsNamedBySeparators collects arguments into map, unnamed arguments will go as position index
@@ -567,7 +567,7 @@ func (it *ImportCmdAlias) Process(itemData map[string]interface{}, input interfa
 func (it *ImportCmdMedia) Init(args []string, exchange map[string]interface{}) error {
 	const SKIP_ERRORS_ARG = "--skipErrors"
 
-	if len(args) > 1 && args[1] != SKIP_ERRORS_ARG{
+	if len(args) > 1 && args[1] != SKIP_ERRORS_ARG {
 		it.mediaField = args[1]
 	}
 
@@ -660,7 +660,7 @@ func (it *ImportCmdMedia) Process(itemData map[string]interface{}, input interfa
 				}
 
 				if response.StatusCode != 200 {
-					return srcPrevMediaName, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image " + srcMediaValue + " (Status: " + response.Status + ")")
+					return srcPrevMediaName, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "8fe36863-b82f-479b-ba96-73a5e4008f75", "can't get image "+srcMediaValue+" (Status: "+response.Status+")")
 				}
 
 				// updating media type if wasn't set
@@ -851,4 +851,135 @@ func (it *ImportCmdAttributeAdd) Process(itemData map[string]interface{}, input 
 	}
 
 	return input, nil
+}
+
+// Init is a UPSERT command initialization routine
+func (it *ImportCmdUpsert) Init(args []string, exchange map[string]interface{}) error {
+
+	workingModel, err := ArgsFindWorkingModel(args, []string{"InterfaceStorable", "InterfaceObject"})
+	if err != nil {
+		return env.ErrorDispatch(err)
+	}
+
+	it.model = workingModel
+	it.attributes = ArgsFindWorkingAttributes(args)
+
+	if it.model == nil {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "7058b4ca-7ccd-4748-8c4b-18d41fcd50a2", "UPSERT command have no assigned model to work on")
+	}
+
+	namedArgs := ArgsGetAsNamed(args, false)
+	if _, present := namedArgs["--skipInsertErrors"]; present {
+		it.skipInsertErrors = true
+	}
+
+	if value, present := namedArgs["--uniqueKeys"]; present {
+		it.uniqueKeys = strings.Split(value, ",")
+	} else {
+		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "3a04af09-faf7-4e9e-ab15-cc6fe86a30db", "UPSERT command have no unique keys")
+	}
+
+	return nil
+}
+
+// Test is a UPSERT command processor for test mode
+func (it *ImportCmdUpsert) Test(itemData map[string]interface{}, input interface{}, exchange map[string]interface{}) (interface{}, error) {
+
+	// preparing model
+	//-----------------
+	cmdModel, err := it.model.New()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	modelAsObject := cmdModel.(models.InterfaceObject)
+	modelAsStorable := cmdModel.(models.InterfaceStorable)
+	modelAsListable := cmdModel.(models.InterfaceListable)
+
+	collection := modelAsListable.GetCollection()
+
+	for _, key := range it.uniqueKeys {
+		collection.ListFilterAdd(key, "=", itemData[key])
+	}
+
+	modelList, err := collection.List()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+
+	if len(modelList) == 1 {
+		err = modelAsStorable.Load(utils.InterfaceToString(modelList[0].ID))
+		if err != nil {
+			_ = env.ErrorDispatch(err)
+		}
+	}
+
+	// filling model attributes
+	//--------------------------
+	for attribute, value := range itemData {
+		if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
+			if err := modelAsObject.Set(attribute, value); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+		}
+	}
+
+	return cmdModel, nil
+}
+
+// Process is a UPSERT command processor
+func (it *ImportCmdUpsert) Process(itemData map[string]interface{}, input interface{}, exchange map[string]interface{}) (interface{}, error) {
+
+	// preparing model
+	//-----------------
+	cmdModel, err := it.model.New()
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	modelAsObject := cmdModel.(models.InterfaceObject)
+	modelAsStorable := cmdModel.(models.InterfaceStorable)
+	modelAsListable := cmdModel.(models.InterfaceListable)
+
+	collection := modelAsListable.GetCollection()
+
+	for _, key := range it.uniqueKeys {
+		collection.ListFilterAdd(key, "=", itemData[key])
+	}
+
+	modelList, err := collection.List()
+	if err != nil {
+		_ = env.ErrorDispatch(err)
+	}
+
+	if len(modelList) == 1 {
+		err = modelAsStorable.Load(utils.InterfaceToString(modelList[0].ID))
+		if err != nil {
+			_ = env.ErrorDispatch(err)
+		}
+	}
+
+	// filling model attributes
+	//--------------------------
+	for attribute, value := range itemData {
+		if useAttribute, wasMentioned := it.attributes[attribute]; !wasMentioned || useAttribute {
+			if err := modelAsObject.Set(attribute, value); err != nil {
+				return nil, env.ErrorDispatch(err)
+			}
+		}
+	}
+
+	// storing model
+	//---------------
+	err = modelAsStorable.Save()
+	if err != nil {
+		err = env.ErrorDispatch(err)
+
+		if !it.skipInsertErrors {
+			return cmdModel, err
+		}
+	}
+
+	return cmdModel, nil
+
 }

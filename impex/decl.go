@@ -96,6 +96,16 @@ type ImportCmdUpdate struct {
 	idKey      string
 }
 
+// ImportCmdUpsert is a implementer of InterfaceImpexImportCmd
+//  - command allows to update model item data in system by uniqueKeys or will insert new record
+//  - skipInsertErrors will continue processing in case of errors during insert
+type ImportCmdUpsert struct {
+	model      		models.InterfaceModel
+	attributes 		map[string]bool
+	uniqueKeys           	[]string
+	skipInsertErrors	bool
+}
+
 // ImportCmdDelete is a implementer of InterfaceImpexImportCmd
 //  - command allows to delete model items from the system
 type ImportCmdDelete struct {
