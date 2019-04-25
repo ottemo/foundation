@@ -1,711 +1,436 @@
 package context
 
 import (
-	"fmt"
-	"runtime"
 	"sync"
+	"reflect"
+	"runtime"
 )
 
-// package constants
-const (
-	debugOutput = false
-)
+// proxies holds set of pass-through functions
+var proxies = [...] func(target func()) {
+	func(target func()) { target() }, // 00
+	func(target func()) { target() }, // 01
+	func(target func()) { target() }, // 02
+	func(target func()) { target() }, // 03
+	func(target func()) { target() }, // 04
+	func(target func()) { target() }, // 05
+	func(target func()) { target() }, // 06
+	func(target func()) { target() }, // 07
+	func(target func()) { target() }, // 08
+	func(target func()) { target() }, // 09
+	func(target func()) { target() }, // 0a
+	func(target func()) { target() }, // 0b
+	func(target func()) { target() }, // 0c
+	func(target func()) { target() }, // 0d
+	func(target func()) { target() }, // 0e
+	func(target func()) { target() }, // 0f
+	func(target func()) { target() }, // 10
+	func(target func()) { target() }, // 11
+	func(target func()) { target() }, // 12
+	func(target func()) { target() }, // 13
+	func(target func()) { target() }, // 14
+	func(target func()) { target() }, // 15
+	func(target func()) { target() }, // 16
+	func(target func()) { target() }, // 17
+	func(target func()) { target() }, // 18
+	func(target func()) { target() }, // 19
+	func(target func()) { target() }, // 1a
+	func(target func()) { target() }, // 1b
+	func(target func()) { target() }, // 1c
+	func(target func()) { target() }, // 1d
+	func(target func()) { target() }, // 1e
+	func(target func()) { target() }, // 1f
+	func(target func()) { target() }, // 20
+	func(target func()) { target() }, // 21
+	func(target func()) { target() }, // 22
+	func(target func()) { target() }, // 23
+	func(target func()) { target() }, // 24
+	func(target func()) { target() }, // 25
+	func(target func()) { target() }, // 26
+	func(target func()) { target() }, // 27
+	func(target func()) { target() }, // 28
+	func(target func()) { target() }, // 29
+	func(target func()) { target() }, // 2a
+	func(target func()) { target() }, // 2b
+	func(target func()) { target() }, // 2c
+	func(target func()) { target() }, // 2d
+	func(target func()) { target() }, // 2e
+	func(target func()) { target() }, // 2f
+	func(target func()) { target() }, // 30
+	func(target func()) { target() }, // 31
+	func(target func()) { target() }, // 32
+	func(target func()) { target() }, // 33
+	func(target func()) { target() }, // 34
+	func(target func()) { target() }, // 35
+	func(target func()) { target() }, // 36
+	func(target func()) { target() }, // 37
+	func(target func()) { target() }, // 38
+	func(target func()) { target() }, // 39
+	func(target func()) { target() }, // 3a
+	func(target func()) { target() }, // 3b
+	func(target func()) { target() }, // 3c
+	func(target func()) { target() }, // 3d
+	func(target func()) { target() }, // 3e
+	func(target func()) { target() }, // 3f
+	func(target func()) { target() }, // 40
+	func(target func()) { target() }, // 41
+	func(target func()) { target() }, // 42
+	func(target func()) { target() }, // 43
+	func(target func()) { target() }, // 44
+	func(target func()) { target() }, // 45
+	func(target func()) { target() }, // 46
+	func(target func()) { target() }, // 47
+	func(target func()) { target() }, // 48
+	func(target func()) { target() }, // 49
+	func(target func()) { target() }, // 4a
+	func(target func()) { target() }, // 4b
+	func(target func()) { target() }, // 4c
+	func(target func()) { target() }, // 4d
+	func(target func()) { target() }, // 4e
+	func(target func()) { target() }, // 4f
+	func(target func()) { target() }, // 50
+	func(target func()) { target() }, // 51
+	func(target func()) { target() }, // 52
+	func(target func()) { target() }, // 53
+	func(target func()) { target() }, // 54
+	func(target func()) { target() }, // 55
+	func(target func()) { target() }, // 56
+	func(target func()) { target() }, // 57
+	func(target func()) { target() }, // 58
+	func(target func()) { target() }, // 59
+	func(target func()) { target() }, // 5a
+	func(target func()) { target() }, // 5b
+	func(target func()) { target() }, // 5c
+	func(target func()) { target() }, // 5d
+	func(target func()) { target() }, // 5e
+	func(target func()) { target() }, // 5f
+	func(target func()) { target() }, // 60
+	func(target func()) { target() }, // 61
+	func(target func()) { target() }, // 62
+	func(target func()) { target() }, // 63
+	func(target func()) { target() }, // 64
+	func(target func()) { target() }, // 65
+	func(target func()) { target() }, // 66
+	func(target func()) { target() }, // 67
+	func(target func()) { target() }, // 68
+	func(target func()) { target() }, // 69
+	func(target func()) { target() }, // 6a
+	func(target func()) { target() }, // 6b
+	func(target func()) { target() }, // 6c
+	func(target func()) { target() }, // 6d
+	func(target func()) { target() }, // 6e
+	func(target func()) { target() }, // 6f
+	func(target func()) { target() }, // 70
+	func(target func()) { target() }, // 71
+	func(target func()) { target() }, // 72
+	func(target func()) { target() }, // 73
+	func(target func()) { target() }, // 74
+	func(target func()) { target() }, // 75
+	func(target func()) { target() }, // 76
+	func(target func()) { target() }, // 77
+	func(target func()) { target() }, // 78
+	func(target func()) { target() }, // 79
+	func(target func()) { target() }, // 7a
+	func(target func()) { target() }, // 7b
+	func(target func()) { target() }, // 7c
+	func(target func()) { target() }, // 7d
+	func(target func()) { target() }, // 7e
+	func(target func()) { target() }, // 7f
+	func(target func()) { target() }, // 80
+	func(target func()) { target() }, // 81
+	func(target func()) { target() }, // 82
+	func(target func()) { target() }, // 83
+	func(target func()) { target() }, // 84
+	func(target func()) { target() }, // 85
+	func(target func()) { target() }, // 86
+	func(target func()) { target() }, // 87
+	func(target func()) { target() }, // 88
+	func(target func()) { target() }, // 89
+	func(target func()) { target() }, // 8a
+	func(target func()) { target() }, // 8b
+	func(target func()) { target() }, // 8c
+	func(target func()) { target() }, // 8d
+	func(target func()) { target() }, // 8e
+	func(target func()) { target() }, // 8f
+	func(target func()) { target() }, // 90
+	func(target func()) { target() }, // 91
+	func(target func()) { target() }, // 92
+	func(target func()) { target() }, // 93
+	func(target func()) { target() }, // 94
+	func(target func()) { target() }, // 95
+	func(target func()) { target() }, // 96
+	func(target func()) { target() }, // 97
+	func(target func()) { target() }, // 98
+	func(target func()) { target() }, // 99
+	func(target func()) { target() }, // 9a
+	func(target func()) { target() }, // 9b
+	func(target func()) { target() }, // 9c
+	func(target func()) { target() }, // 9d
+	func(target func()) { target() }, // 9e
+	func(target func()) { target() }, // 9f
+	func(target func()) { target() }, // a0
+	func(target func()) { target() }, // a1
+	func(target func()) { target() }, // a2
+	func(target func()) { target() }, // a3
+	func(target func()) { target() }, // a4
+	func(target func()) { target() }, // a5
+	func(target func()) { target() }, // a6
+	func(target func()) { target() }, // a7
+	func(target func()) { target() }, // a8
+	func(target func()) { target() }, // a9
+	func(target func()) { target() }, // aa
+	func(target func()) { target() }, // ab
+	func(target func()) { target() }, // ac
+	func(target func()) { target() }, // ad
+	func(target func()) { target() }, // ae
+	func(target func()) { target() }, // af
+	func(target func()) { target() }, // b0
+	func(target func()) { target() }, // b1
+	func(target func()) { target() }, // b2
+	func(target func()) { target() }, // b3
+	func(target func()) { target() }, // b4
+	func(target func()) { target() }, // b5
+	func(target func()) { target() }, // b6
+	func(target func()) { target() }, // b7
+	func(target func()) { target() }, // b8
+	func(target func()) { target() }, // b9
+	func(target func()) { target() }, // ba
+	func(target func()) { target() }, // bb
+	func(target func()) { target() }, // bc
+	func(target func()) { target() }, // bd
+	func(target func()) { target() }, // be
+	func(target func()) { target() }, // bf
+	func(target func()) { target() }, // c0
+	func(target func()) { target() }, // c1
+	func(target func()) { target() }, // c2
+	func(target func()) { target() }, // c3
+	func(target func()) { target() }, // c4
+	func(target func()) { target() }, // c5
+	func(target func()) { target() }, // c6
+	func(target func()) { target() }, // c7
+	func(target func()) { target() }, // c8
+	func(target func()) { target() }, // c9
+	func(target func()) { target() }, // ca
+	func(target func()) { target() }, // cb
+	func(target func()) { target() }, // cc
+	func(target func()) { target() }, // cd
+	func(target func()) { target() }, // ce
+	func(target func()) { target() }, // cf
+	func(target func()) { target() }, // d0
+	func(target func()) { target() }, // d1
+	func(target func()) { target() }, // d2
+	func(target func()) { target() }, // d3
+	func(target func()) { target() }, // d4
+	func(target func()) { target() }, // d5
+	func(target func()) { target() }, // d6
+	func(target func()) { target() }, // d7
+	func(target func()) { target() }, // d8
+	func(target func()) { target() }, // d9
+	func(target func()) { target() }, // da
+	func(target func()) { target() }, // db
+	func(target func()) { target() }, // dc
+	func(target func()) { target() }, // dd
+	func(target func()) { target() }, // de
+	func(target func()) { target() }, // df
+	func(target func()) { target() }, // e0
+	func(target func()) { target() }, // e1
+	func(target func()) { target() }, // e2
+	func(target func()) { target() }, // e3
+	func(target func()) { target() }, // e4
+	func(target func()) { target() }, // e5
+	func(target func()) { target() }, // e6
+	func(target func()) { target() }, // e7
+	func(target func()) { target() }, // e8
+	func(target func()) { target() }, // e9
+	func(target func()) { target() }, // ea
+	func(target func()) { target() }, // eb
+	func(target func()) { target() }, // ec
+	func(target func()) { target() }, // ed
+	func(target func()) { target() }, // ee
+	func(target func()) { target() }, // ef
+	func(target func()) { target() }, // f0
+	func(target func()) { target() }, // f1
+	func(target func()) { target() }, // f2
+	func(target func()) { target() }, // f3
+	func(target func()) { target() }, // f4
+	func(target func()) { target() }, // f5
+	func(target func()) { target() }, // f6
+	func(target func()) { target() }, // f7
+	func(target func()) { target() }, // f8
+	func(target func()) { target() }, // f9
+	func(target func()) { target() }, // fa
+	func(target func()) { target() }, // fb
+	func(target func()) { target() }, // fc
+	func(target func()) { target() }, // fd
+	func(target func()) { target() }, // fe
+	func(target func()) { target() }, // ff
+}
 
-// package variables
-var (
-	contexts      = make(map[string]map[string]interface{})
-	contextsMutex sync.RWMutex
+// proxiesBase holds the length of proxies[] - it is context ID digit encoding base (0xff per function call in stack)
+var proxiesBase uint = uint(len(proxies))
 
-	proxies      = make(map[uintptr]uint)
-	proxyBase    uint
-	proxyStartPC uintptr
-)
+// proxiesDict is a decoding table for proxy functions (proxy function call in stack trace have appropriate numeric value)
+var proxiesDict map[uintptr]uint
 
-// init makes package initialization
+// proxiesStart the pointer to a function which starts the proxy calls
+var proxiesStart uintptr
+
+// contexts are the key-values maps which are accessible in any nested function after context creation call
+var contexts = make(map[uint]map[string]interface{})
+
+// contextsMutex synchronizes the access to contexts variable
+var contextsMutex sync.RWMutex
+
+// init performs the package self-initialization routine
 func init() {
+	proxiesStart = reflect.ValueOf(RunInContext).Pointer()
 
-	// determination of available proxies
-	var i uint
-	discoverProxy := func() {
-		pc, _, _, _ := runtime.Caller(1)
-
-		if _, present := proxies[pc]; !present {
-			proxies[pc] = i
-		} else {
-			pc, _, _, _ := runtime.Caller(2)
-			proxies[pc] = i - 1
-			i = 9999
-		}
+	proxiesDict = make(map[uintptr]uint)
+	for idx, val := range proxies {
+		proxiesDict[reflect.ValueOf(val).Pointer()] = uint(idx)
 	}
-	for i < 9999 {
-		proxy(i, discoverProxy)
-		i++
-	}
-	proxyBase = uint(len(proxies))
+	proxiesDict[reflect.ValueOf(proxyLoop).Pointer()] = proxiesBase
+}
 
-	// determination of proxy start point
-	discoverStartPC := func() {
-		// pointer to MakeContext func address,
-		// just after it call proxies comming
-		proxyStartPC, _, _, _ = runtime.Caller(2)
-	}
-	MakeContext(discoverStartPC)
-
-	// debug output
-	if debugOutput {
-		tmp := fmt.Sprintln("init proxies:")
-		for proxy, index := range proxies {
-			file, line := runtime.FuncForPC(proxy).FileLine(proxy)
-			tmp += fmt.Sprintf("%x=%x - %s:%d\n", index, proxy, file, line)
-		}
-		tmp += fmt.Sprintf("proxyStartPC = %x\n\n", proxyStartPC)
-		fmt.Println(tmp)
+// proxyLoop is the service recursive function for context ID value encoding
+func proxyLoop(target func (), i uint) {
+	i = i - proxiesBase
+	if i >= proxiesBase {
+		proxyLoop(target, i)
+	} else {
+		proxies[i](target)
 	}
 }
 
-// getCallStack returns current call stack excluding runtime and self pc's (program counters)
+// getCallStack returns array of current call stack function entries pointers
 func getCallStack(skip int) []uintptr {
 	pcSize := 100
 	pc := make([]uintptr, pcSize)
 
-	n := runtime.Callers(2+skip, pc)
+	n := runtime.Callers(skip, pc)
 	for n >= pcSize {
 		pcSize = pcSize * 10
 		pc = make([]uintptr, pcSize)
-		runtime.Callers(2+skip, pc)
+		runtime.Callers(skip, pc)
 	}
 
-	pcSize = n - 1
-	return pc[0 : n-1]
+	result := make([]uintptr, 0, n)
+	frames := runtime.CallersFrames(pc)
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
+		result = append(result, frame.Entry)
+		// prints the call stack - for debugging purposes
+		// fmt.Printf("%d:%d - %s:%d - %s\n", frame.PC, frame.Entry, frame.File, frame.Line, frame.Function)
+	}
+
+	return result
 }
 
-// MakeContext encodes new context index in current call-stack and then executes given target
-//   - so, all the internal routine within target func, and sub-calls will have own context
-//   - context is a map[string]interface{} where you can store any information
-//   - context map will be eliminated automatically after target func finish
-func MakeContext(target func()) {
+// GetContextId returns current identifier (positive number) or 0 if it does not exists
+func GetContextId() uint {
+	var contextsId uint
 
-	pc := getCallStack(1)
-
-	// converting to string
-	pcSource := ""
-	for _, caller := range pc {
-		pcSource += fmt.Sprintf("%x-", caller)
-	}
-
-	// looking for already in use contexts for stack
-	var proxyIndex uint
-	var contextKey string
-
-	for true {
-		contextKey = fmt.Sprintf("%s%d", pcSource, proxyIndex)
-
-		contextsMutex.Lock()
-		if _, present := contexts[contextKey]; present {
-			contextsMutex.Unlock()
-			proxyIndex++
-			continue
+	pointers := getCallStack(2)
+	for idx, ptr := range pointers {
+		if ptr == proxiesStart {
+			for idx--; idx > 0; idx-- {
+				if value, present := proxiesDict[pointers[idx]]; present {
+					contextsId += value
+				} else {
+					return contextsId + 1
+				}
+			}
 		}
+	}
+	return contextsId
+}
 
-		contexts[contextKey] = make(map[string]interface{})
-		contextsMutex.Unlock()
+// GetContextById returns context map by a given identifier or nil if it does not exists
+func GetContextById(id uint) map[string]interface{}  {
+	var result map[string]interface{} = nil
 
-		break
+	contextsMutex.Lock()
+	if value, present := contexts[id-1]; present {
+		result = value
+	}
+	contextsMutex.Unlock()
+
+	return result
+}
+
+// RunInContext executes given function within a new or given a "context"
+// i.e. context map will be accessible with the GetContext() call within given function or its sub-calls
+func RunInContext(target func(), context map[string]interface{}) map[string]interface{} {
+	if context == nil {
+		context = make(map[string]interface{})
 	}
 
-	if debugOutput {
-		debugLogValue := fmt.Sprintln("MakeContext:")
-		for _, x := range pc {
-			file, line := runtime.FuncForPC(x).FileLine(x)
-			debugLogValue += fmt.Sprintf("%x - %s:%d\n", x, file, line)
+	contextsMutex.Lock()
+	var contextsIdx uint
+	for ; true; contextsIdx++ {
+		if _, present := contexts[contextsIdx]; !present {
+			break
 		}
-		debugLogValue += fmt.Sprintln("making context: ", contextKey)
-		fmt.Println(debugLogValue)
 	}
+
+	contexts[contextsIdx] = context
+	contextsMutex.Unlock()
 
 	defer func() {
 		contextsMutex.Lock()
-		delete(contexts, contextKey)
+		delete(contexts, contextsIdx)
 		contextsMutex.Unlock()
 	}()
 
-	proxy(proxyIndex, target)
-}
-
-// GetContext - returns context assigned to current call-stack, or nil if no context
-func GetContext() map[string]interface{} {
-	pc := getCallStack(1)
-	pcSize := len(pc)
-
-	// looking for context beginning
-	var baseIndex int
-	for i := 0; i < pcSize; i++ {
-		if pc[i] == proxyStartPC {
-			baseIndex = i
-			break
-		}
+	if contextsIdx >= proxiesBase {
+		proxyLoop(target, contextsIdx)
+	} else {
+		proxies[contextsIdx](target)
 	}
-
-	// calculating context key
-	var proxyPosition uint
-	var proxyIndex uint
-
-	var pcSource string
-
-	for i := baseIndex - 1; i >= 0; i-- {
-		if digitValue, present := proxies[pc[i]]; present {
-			proxyIndex += digitValue
-			proxyPosition++
-		} else {
-			break
-		}
-	}
-
-	for i := baseIndex + 1; i < pcSize; i++ {
-		pcSource += fmt.Sprintf("%x-", pc[i])
-	}
-
-	contextKey := fmt.Sprintf("%s%d", pcSource, proxyIndex)
-
-	// if no context for this key, function will return nil
-	contextsMutex.Lock()
-	context := contexts[contextKey]
-	contextsMutex.Unlock()
-
-	if debugOutput {
-		debugLogValue := fmt.Sprintln("context lookup: ", contextKey)
-		for _, x := range pc {
-			file, line := runtime.FuncForPC(x).FileLine(x)
-			debugLogValue += fmt.Sprintf("%x - %s:%d\n", x, file, line)
-		}
-		debugLogValue += fmt.Sprint(context)
-		fmt.Println(debugLogValue)
-	}
-
 	return context
 }
 
-// proxy points - the place which makes unique pc for target function call
-//   - their amount specifies proxy base
-//   - the more proxy base you have, then less stack growing (so 3 stack calls can provide 0xff^3=16777216 contexts)
-func proxy(index uint, target func()) {
+// GetContextValue returns the value in current context or nil if context or value does not exists
+func GetContextValue(key string) interface{} {
+	contextId := GetContextId() - 1
 
-	switch index {
-	case 0x00:
-		target()
-	case 0x01:
-		target()
-	case 0x02:
-		target()
-	case 0x03:
-		target()
-	case 0x04:
-		target()
-	case 0x05:
-		target()
-	case 0x06:
-		target()
-	case 0x07:
-		target()
-	case 0x08:
-		target()
-	case 0x09:
-		target()
-	case 0x0a:
-		target()
-	case 0x0b:
-		target()
-	case 0x0c:
-		target()
-	case 0x0d:
-		target()
-	case 0x0e:
-		target()
-	case 0x0f:
-		target()
-	case 0x10:
-		target()
-	case 0x11:
-		target()
-	case 0x12:
-		target()
-	case 0x13:
-		target()
-	case 0x14:
-		target()
-	case 0x15:
-		target()
-	case 0x16:
-		target()
-	case 0x17:
-		target()
-	case 0x18:
-		target()
-	case 0x19:
-		target()
-	case 0x1a:
-		target()
-	case 0x1b:
-		target()
-	case 0x1c:
-		target()
-	case 0x1d:
-		target()
-	case 0x1e:
-		target()
-	case 0x1f:
-		target()
-	case 0x20:
-		target()
-	case 0x21:
-		target()
-	case 0x22:
-		target()
-	case 0x23:
-		target()
-	case 0x24:
-		target()
-	case 0x25:
-		target()
-	case 0x26:
-		target()
-	case 0x27:
-		target()
-	case 0x28:
-		target()
-	case 0x29:
-		target()
-	case 0x2a:
-		target()
-	case 0x2b:
-		target()
-	case 0x2c:
-		target()
-	case 0x2d:
-		target()
-	case 0x2e:
-		target()
-	case 0x2f:
-		target()
-	case 0x30:
-		target()
-	case 0x31:
-		target()
-	case 0x32:
-		target()
-	case 0x33:
-		target()
-	case 0x34:
-		target()
-	case 0x35:
-		target()
-	case 0x36:
-		target()
-	case 0x37:
-		target()
-	case 0x38:
-		target()
-	case 0x39:
-		target()
-	case 0x3a:
-		target()
-	case 0x3b:
-		target()
-	case 0x3c:
-		target()
-	case 0x3d:
-		target()
-	case 0x3e:
-		target()
-	case 0x3f:
-		target()
-	case 0x40:
-		target()
-	case 0x41:
-		target()
-	case 0x42:
-		target()
-	case 0x43:
-		target()
-	case 0x44:
-		target()
-	case 0x45:
-		target()
-	case 0x46:
-		target()
-	case 0x47:
-		target()
-	case 0x48:
-		target()
-	case 0x49:
-		target()
-	case 0x4a:
-		target()
-	case 0x4b:
-		target()
-	case 0x4c:
-		target()
-	case 0x4d:
-		target()
-	case 0x4e:
-		target()
-	case 0x4f:
-		target()
-	case 0x50:
-		target()
-	case 0x51:
-		target()
-	case 0x52:
-		target()
-	case 0x53:
-		target()
-	case 0x54:
-		target()
-	case 0x55:
-		target()
-	case 0x56:
-		target()
-	case 0x57:
-		target()
-	case 0x58:
-		target()
-	case 0x59:
-		target()
-	case 0x5a:
-		target()
-	case 0x5b:
-		target()
-	case 0x5c:
-		target()
-	case 0x5d:
-		target()
-	case 0x5e:
-		target()
-	case 0x5f:
-		target()
-	case 0x60:
-		target()
-	case 0x61:
-		target()
-	case 0x62:
-		target()
-	case 0x63:
-		target()
-	case 0x64:
-		target()
-	case 0x65:
-		target()
-	case 0x66:
-		target()
-	case 0x67:
-		target()
-	case 0x68:
-		target()
-	case 0x69:
-		target()
-	case 0x6a:
-		target()
-	case 0x6b:
-		target()
-	case 0x6c:
-		target()
-	case 0x6d:
-		target()
-	case 0x6e:
-		target()
-	case 0x6f:
-		target()
-	case 0x70:
-		target()
-	case 0x71:
-		target()
-	case 0x72:
-		target()
-	case 0x73:
-		target()
-	case 0x74:
-		target()
-	case 0x75:
-		target()
-	case 0x76:
-		target()
-	case 0x77:
-		target()
-	case 0x78:
-		target()
-	case 0x79:
-		target()
-	case 0x7a:
-		target()
-	case 0x7b:
-		target()
-	case 0x7c:
-		target()
-	case 0x7d:
-		target()
-	case 0x7e:
-		target()
-	case 0x7f:
-		target()
-	case 0x80:
-		target()
-	case 0x81:
-		target()
-	case 0x82:
-		target()
-	case 0x83:
-		target()
-	case 0x84:
-		target()
-	case 0x85:
-		target()
-	case 0x86:
-		target()
-	case 0x87:
-		target()
-	case 0x88:
-		target()
-	case 0x89:
-		target()
-	case 0x8a:
-		target()
-	case 0x8b:
-		target()
-	case 0x8c:
-		target()
-	case 0x8d:
-		target()
-	case 0x8e:
-		target()
-	case 0x8f:
-		target()
-	case 0x90:
-		target()
-	case 0x91:
-		target()
-	case 0x92:
-		target()
-	case 0x93:
-		target()
-	case 0x94:
-		target()
-	case 0x95:
-		target()
-	case 0x96:
-		target()
-	case 0x97:
-		target()
-	case 0x98:
-		target()
-	case 0x99:
-		target()
-	case 0x9a:
-		target()
-	case 0x9b:
-		target()
-	case 0x9c:
-		target()
-	case 0x9d:
-		target()
-	case 0x9e:
-		target()
-	case 0x9f:
-		target()
-	case 0xa0:
-		target()
-	case 0xa1:
-		target()
-	case 0xa2:
-		target()
-	case 0xa3:
-		target()
-	case 0xa4:
-		target()
-	case 0xa5:
-		target()
-	case 0xa6:
-		target()
-	case 0xa7:
-		target()
-	case 0xa8:
-		target()
-	case 0xa9:
-		target()
-	case 0xaa:
-		target()
-	case 0xab:
-		target()
-	case 0xac:
-		target()
-	case 0xad:
-		target()
-	case 0xae:
-		target()
-	case 0xaf:
-		target()
-	case 0xb0:
-		target()
-	case 0xb1:
-		target()
-	case 0xb2:
-		target()
-	case 0xb3:
-		target()
-	case 0xb4:
-		target()
-	case 0xb5:
-		target()
-	case 0xb6:
-		target()
-	case 0xb7:
-		target()
-	case 0xb8:
-		target()
-	case 0xb9:
-		target()
-	case 0xba:
-		target()
-	case 0xbb:
-		target()
-	case 0xbc:
-		target()
-	case 0xbd:
-		target()
-	case 0xbe:
-		target()
-	case 0xbf:
-		target()
-	case 0xc0:
-		target()
-	case 0xc1:
-		target()
-	case 0xc2:
-		target()
-	case 0xc3:
-		target()
-	case 0xc4:
-		target()
-	case 0xc5:
-		target()
-	case 0xc6:
-		target()
-	case 0xc7:
-		target()
-	case 0xc8:
-		target()
-	case 0xc9:
-		target()
-	case 0xca:
-		target()
-	case 0xcb:
-		target()
-	case 0xcc:
-		target()
-	case 0xcd:
-		target()
-	case 0xce:
-		target()
-	case 0xcf:
-		target()
-	case 0xd0:
-		target()
-	case 0xd1:
-		target()
-	case 0xd2:
-		target()
-	case 0xd3:
-		target()
-	case 0xd4:
-		target()
-	case 0xd5:
-		target()
-	case 0xd6:
-		target()
-	case 0xd7:
-		target()
-	case 0xd8:
-		target()
-	case 0xd9:
-		target()
-	case 0xda:
-		target()
-	case 0xdb:
-		target()
-	case 0xdc:
-		target()
-	case 0xdd:
-		target()
-	case 0xde:
-		target()
-	case 0xdf:
-		target()
-	case 0xe0:
-		target()
-	case 0xe1:
-		target()
-	case 0xe2:
-		target()
-	case 0xe3:
-		target()
-	case 0xe4:
-		target()
-	case 0xe5:
-		target()
-	case 0xe6:
-		target()
-	case 0xe7:
-		target()
-	case 0xe8:
-		target()
-	case 0xe9:
-		target()
-	case 0xea:
-		target()
-	case 0xeb:
-		target()
-	case 0xec:
-		target()
-	case 0xed:
-		target()
-	case 0xee:
-		target()
-	case 0xef:
-		target()
-	case 0xf0:
-		target()
-	case 0xf1:
-		target()
-	case 0xf2:
-		target()
-	case 0xf3:
-		target()
-	case 0xf4:
-		target()
-	case 0xf5:
-		target()
-	case 0xf6:
-		target()
-	case 0xf7:
-		target()
-	case 0xf8:
-		target()
-	case 0xf9:
-		target()
-	case 0xfa:
-		target()
-	case 0xfb:
-		target()
-	case 0xfc:
-		target()
-	case 0xfd:
-		target()
-	case 0xfe:
-		target()
-	case 0xff:
-		target()
-	}
+	contextsMutex.Lock()
+	defer func () {
+		contextsMutex.Unlock()
+	} ()
 
-	if index > 0xff {
-		proxy(index-0xff, target)
+	if context, present := contexts[contextId]; present {
+		if value, present := context[key]; present {
+			return value
+		}
 	}
+	return nil
+}
+
+// GetContext returns the context map associated to a current stack or nil of there are no context available
+func SetContextValue(key string, value interface{}) interface{} {
+	contextId := GetContextId() - 1
+	var result interface{}
+
+	contextsMutex.Lock()
+	defer func () {
+		contextsMutex.Unlock()
+	} ()
+
+	if context, present := contexts[contextId]; present {
+		if oldValue, present := context[key]; present {
+			result = oldValue
+		}
+		context[key] = value
+	}
+	return result
+}
+
+// GetContext returns the context map associated to a current stack or nil of there are no context available
+func GetContext() map[string]interface{} {
+	return GetContextById(GetContextId())
+}
+
+// MakeContext executes given function within a new context (alias for RunInContext)
+func MakeContext(target func()) {
+	RunInContext(target, nil)
 }
