@@ -44,7 +44,7 @@ The final step before running commerce for the first time is to configure a few 
 > cp ottemo.sample.ini ottemo.ini
 ```
 
-Now edit the file with your favorite editor. Here is a basice version of the file for MySQL. Change the values USER and PASSWORD according to the credentials you created when first setting up the empty database. 
+Now edit the file with your favorite editor. Here is a basic version of the file for MySQL. Change the values USER and PASSWORD according to the credentials you created when first setting up the empty database. 
 ```
 ; minimal settings for mysql driver
 db.mysql.db=commerce
@@ -60,7 +60,7 @@ media.resize.images.onfly=true
 secure_cookie=false
 
 ; to allow cross domain cookies set your desired domain (we do use cross domain cookies)
-xdomain.master=http://*.ottemo.dev/
+xdomain.master=http://*.local.dev/
 ```
 
 Now you may run commerce from the commandline
@@ -76,7 +76,7 @@ REST API Service [HTTPRouter] starting to listen on :3000
 2019-04-25T15:57:45Z DB connection established.
 ```
 
-Commerce will create a `var` folder which will contain logs folder and a session folder, since we didn't compile it to use redis for sessions. 
+Commerce will create a `var` folder which will contain logs folder and a session folder, since we didn't compile it to use redis for sessions, (which is typical for local development).
 
 
 ## License
