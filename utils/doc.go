@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package utils provides a set of functions you should use to reduce and standardize repeatable cross packages code. So, it

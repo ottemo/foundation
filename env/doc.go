@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package env represents environment services abstraction layer. It provides a set of interfaces and helpers to make

@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package mongo is a default mongoDB implementation for Ottemo. It provides "InterfaceDBEngine" implementation declared in

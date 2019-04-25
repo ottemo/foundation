@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package config is a default implementation of InterfaceConfig declared in "github.com/ottemo/commerce/env" package.

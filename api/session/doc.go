@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package session is a default implementation of a application Session manager. That package provides "InterfaceSessionService"

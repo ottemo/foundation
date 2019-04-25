@@ -1,4 +1,4 @@
-// Copyright 2015 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package eventbus is a default implementation of InterfaceEventBus declared in "github.com/ottemo/commerce/env" package.

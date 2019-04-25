@@ -1,4 +1,4 @@
-// Copyright 2017 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package commerce represents the Ottemo e-commerce application entry point. This package contains the go main()

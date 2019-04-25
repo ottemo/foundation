@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package rest is a default implementation of a RESTful server. That package provides "InterfaceRestService" functionality

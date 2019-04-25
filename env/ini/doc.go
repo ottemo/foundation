@@ -1,4 +1,4 @@
-// Copyright 2014 The Ottemo Authors. All rights reserved.
+// Copyright 2019 Ottemo. All rights reserved.
 
 /*
 Package ini is a default implementation of InterfaceIniConfig declared in "github.com/ottemo/commerce/env" package.

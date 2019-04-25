@@ -10,7 +10,7 @@ import (
 const (
 	ConstVersionMajor = 1
 	ConstVersionMinor = 4
-	ConstSprintNumber = 4
+	ConstSprintNumber = 5
 
 	ConstConfigPathGroup      = "general"
 	ConstConfigPathAppGroup   = "general.app"
@@ -19,7 +19,7 @@ const (
 
 	ConstConfigPathStorefrontURL = "general.app.storefront_url"
 	ConstConfigPathDashboardURL  = "general.app.dashboard_url"
-	ConstConfigPathcommerceURL = "general.app.commerce_url"
+	ConstConfigPathcommerceURL   = "general.app.commerce_url"
 
 	ConstConfigPathStoreName  = "general.store.name"
 	ConstConfigPathStoreEmail = "general.store.email"

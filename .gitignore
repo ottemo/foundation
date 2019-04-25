@@ -37,8 +37,6 @@ foundation
 commerce
 
 # Configuration files
-*.sublime-project
-*.sublime-workspace
 *.iml
 glide.lock
 
@@ -46,4 +44,5 @@ glide.lock
 db/sqlite/test/ottemo.db
 ottemo.db
 ottemo.ini
+ottemo.ini.bak
 .DS_Store
