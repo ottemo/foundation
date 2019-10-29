@@ -59,3 +59,18 @@ func LoadSEOItemByID(SEOItemID string) (InterfaceSEOItem, error) {
 
 	return SEOItemModel, nil
 }
+
+// GetProductCollectionModel retrieves current InterfaceProductCollection model implementation
+func GetSEOItemCollectionModel() (InterfaceSEOCollection, error) {
+	model, err := models.GetModel(ConstModelNameSEOItemCollection)
+	if err != nil {
+		return nil, env.ErrorDispatch(err)
+	}
+
+	stockModel, ok := model.(InterfaceSEOCollection)
+	if !ok {
+		return nil, env.ErrorNew(ConstErrorModule, ConstErrorLevel, "bc30efc8-fcad-4fe6-961d-b97208732376", "model "+model.GetImplementationName()+" is not 'InterfaceSEOCollection' capable")
+	}
+
+	return stockModel, nil
+}

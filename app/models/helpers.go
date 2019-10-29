@@ -142,9 +142,8 @@ func ApplyFilters(context api.InterfaceApplicationContext, collection db.Interfa
 				if attributeType != db.ConstTypeText && attributeType != db.ConstTypeID &&
 					!strings.Contains(attributeType, db.ConstTypeVarchar) &&
 					filterOperator == "like" {
-
-					filterOperator = "="
-				}
+						filterOperator = "="
+					}
 
 				if typedValue, err := utils.StringToType(attributeValue, attributeType); err == nil {
 					// fix for NULL db boolean values filter (perhaps should be part of DB adapter)

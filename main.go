@@ -51,6 +51,13 @@ func main() {
 
 	fmt.Println("Ottemo " + app.GetVerboseVersion())
 
+	go func() {
+		for _, engine := range env.GetDeclaredScriptEngines() {
+			engine.GetScriptInstance("main").Interact()
+			break
+		}
+	}()
+
 	// starting HTTP server
 	if err := app.Serve(); err != nil {
 		fmt.Println(err.Error())

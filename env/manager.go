@@ -17,6 +17,8 @@ var (
 	// variables to hold callback functions on configuration services startup
 	callbacksOnConfigStart    = []func() error{}
 	callbacksOnConfigIniStart = []func() error{}
+
+	declaredScripEngines = map[string]InterfaceScriptEngine{}
 )
 
 // RegisterOnConfigStart registers new callback on configuration service start
@@ -148,4 +150,27 @@ func GetScheduler() InterfaceScheduler {
 // ConfigEmptyValueValidator is a default validator function to accept any value
 func ConfigEmptyValueValidator(val interface{}) (interface{}, bool) {
 	return val, true
+}
+
+// GetModel returns registered in system model
+func GetScriptEngine(EngineName string) (InterfaceScriptEngine, error) {
+	if engine, present := declaredScripEngines[EngineName]; present {
+		return engine, nil
+	}
+	return nil, ErrorNew(ConstErrorModule, ConstErrorLevel, "5d49fd0d-1fed-47dc-8e72-2346f1e778c3", "Unable to find script engine with name '"+EngineName+"'")
+}
+
+
+// GetDeclaredScriptEngines returns all currently registered in system script engines
+func GetDeclaredScriptEngines() map[string]InterfaceScriptEngine {
+	return declaredScripEngines
+}
+
+// RegisterModel registers new model to system
+func RegisterScriptEngine(EngineName string, ScriptEngine InterfaceScriptEngine) error {
+	if _, present := declaredScripEngines[EngineName]; present {
+		return ErrorNew(ConstErrorModule, ConstErrorLevel, "278b6595-29cc-45d8-b599-0e03dae52a46", "Script engine with name '"+EngineName+"' has been already registered")
+	}
+	declaredScripEngines[EngineName] = ScriptEngine
+	return nil
 }

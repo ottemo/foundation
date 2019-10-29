@@ -13,6 +13,7 @@ import (
 	_ "github.com/ottemo/commerce/api/session"   // Session Management service
 	_ "github.com/ottemo/commerce/impex"         // Import/Export service
 	_ "github.com/ottemo/commerce/media/fsmedia" // Media Storage service
+	_ "github.com/ottemo/commerce/env/otto"      // Otto - JS like scripting language
 
 	_ "github.com/ottemo/commerce/app/actors/category"        // Category module
 	_ "github.com/ottemo/commerce/app/actors/cms"             // CMS Page/Block module
@@ -34,7 +35,7 @@ import (
 	// _ "github.com/ottemo/commerce/app/actors/payment/braintree"    // Braintree payment method
 	_ "github.com/ottemo/commerce/app/actors/payment/checkmo"      // "Check Money Order" payment method
 	_ "github.com/ottemo/commerce/app/actors/payment/paypal"       // PayPal payment method
-	_ "github.com/ottemo/commerce/app/actors/payment/stripe"       // Stripe payment method
+	// _ "github.com/ottemo/commerce/app/actors/payment/stripe"       // Stripe payment method
 
 	_ "github.com/ottemo/commerce/app/actors/shipping/fedex"      // FedEx
 	_ "github.com/ottemo/commerce/app/actors/shipping/flatrate"   // Flat Rate

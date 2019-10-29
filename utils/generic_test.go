@@ -2,6 +2,7 @@ package utils
 
 import (
 	"testing"
+	"fmt"
 )
 
 func TestMatchMapAValuesToMapB(t *testing.T) {
@@ -146,5 +147,34 @@ func TestStrToCamelCase(t *testing.T) {
 	str = "subtract_-_101_discount_amount"
 	if StrToCamelCase(str) != "subtract-101DiscountAmount" {
 		t.Error("case 2 fail")
+	}
+}
+
+func TestMapSetPathValue(t *testing.T) {
+	x := map[string]interface{} { }
+
+	if e := MapSetPathValue(x, "a.b.c.d.e.f", "something", false); e != nil {
+		t.Error(e)
+	}
+
+	if e := MapSetPathValue(x, "a.g", "something else", false); e != nil {
+		t.Error(e)
+	}
+
+
+	if value, _ := MapGetPathValue(x, "a.b.c.d.e.f"); value != "something" {
+		t.Error(fmt.Sprintf("test case 1 fail: %v != 'something'", value))
+	}
+
+	if e := MapSetPathValue(x, "a.b.c.d.e.f", nil, true); e != nil {
+		t.Error(e)
+	}
+
+	if value, _ := MapGetPathValue(x, "a.b.c.d.e.f"); value != nil {
+		t.Error(fmt.Sprintf("test case 2 fail: %v != nil", value))
+	}
+
+	if value, _ := MapGetPathValue(x, "a.g"); value != "something else" {
+		t.Error(fmt.Sprintf("test case 3 fail: %v != 'something else'", value))
 	}
 }

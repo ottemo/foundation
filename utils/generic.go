@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"math"
 	"reflect"
 	"regexp"
@@ -336,4 +338,67 @@ func StrToCamelCase(str string) string {
 	str = regexpSnakeToCamelCase.ReplaceAllStringFunc(str, operator)
 
 	return str
+}
+
+// MapGetPathValue returns the '.' separated 'path' key value within map[string]interface{}
+// (i.e. MapGetPathValue(x, "a.b.c") equals to expression x["a"]["b"]["c"])
+func MapGetPathValue(subject map[string]interface{}, key string) (interface{}, error) {
+	path := strings.Split(key, ".")
+	for i, x := range path {
+		if value, present := subject[x]; present {
+			if i == len(path) -1 {
+				return value, nil
+			}
+
+			if value, ok := value.(map[string]interface{}); ok {
+				subject = value
+			} else {
+				return nil, errors.New(fmt.Sprintf("path %s have incompatible type %T", path[0:i], value))
+			}
+		} else {
+			return nil, errors.New(fmt.Sprintf("path %v does not exist", path[0:i]))
+		}
+	}
+	return nil, nil
+}
+
+// MapSetPathValue puts the '.' separated 'path' key value into map[string]interface{}
+// (i.e. MapSetPathValue(x, "a.b.c", 10) equals to expression x["a"]["b"]["c"]=10)
+// if remove=true it removes the path keys within given map
+// (i.e. delete(x["a"]["b"], "c"); delete(x["a"], "b"); delete(x, "a"))
+func MapSetPathValue(subject map[string]interface{}, key string, value interface{}, remove bool) error {
+	var stack []map[string]interface{}
+	path := strings.Split(key, ".")
+
+	for i, x := range path {
+		stack = append(stack, subject)
+
+		if i == len(path) - 1 {
+			if remove {
+				delete(subject, x)
+				for i:=len(stack)-1; i > 0; i-- {
+					if len(stack[i]) == 0 {
+						delete(stack[i-1], path[i-1])
+					}
+				}
+			} else {
+				subject[x] = value
+			}
+		} else {
+			newSubject := map[string]interface{} {}
+
+			if value, present := subject[x]; present {
+				if value, ok := value.(map[string]interface{}); ok {
+					newSubject = value
+				} else {
+					newSubject["value"] = value
+					return errors.New(fmt.Sprintf("path %s have incompatible type %T", path[0:i], value))
+				}
+			}
+
+			subject[x] = newSubject
+			subject = newSubject
+		}
+	}
+	return nil
 }

@@ -10,7 +10,6 @@ func RegisterModel(ModelName string, Model InterfaceModel) error {
 		return env.ErrorNew(ConstErrorModule, ConstErrorLevel, "0300eb6b-08b8-497e-afd0-eda0ee358596", "The model with name '"+ModelName+"' has already been registered")
 	}
 	declaredModels[ModelName] = Model
-
 	return nil
 }
 

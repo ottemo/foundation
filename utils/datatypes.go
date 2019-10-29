@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"reflect"
 	"regexp"
@@ -619,4 +621,19 @@ func StringToInterface(value string) interface{} {
 	}
 
 	return value
+}
+
+// MakeUUID returns unique identifier based on a moment of call
+func MakeUUID() string {
+	timeStamp := strconv.FormatInt(time.Now().Unix(), 16)
+
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Reader.Read(randomBytes); err != nil {
+		return timeStamp
+	}
+
+	randomHex := make([]byte, 16)
+	hex.Encode(randomHex, randomBytes)
+
+	return timeStamp + string(randomHex)
 }

@@ -35,6 +35,10 @@ func (it *DefaultRestService) GetName() string {
 func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprouter.Handle {
 	// httprouter supposes other format of handler than we use, so we need wrapper
 	wrappedHandler := func(resp http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		if resp == nil && req == nil && params == nil {
+			it.RawHandler = handler
+			return
+		}
 
 		// catching API handler fails
 		defer func() {
@@ -130,9 +134,6 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 			content = newContent
 
-		// request contains POST text
-		case strings.Contains(contentType, "text/plain"):
-			fallthrough
 		default:
 			var body []byte
 
@@ -348,34 +349,46 @@ func (it *DefaultRestService) wrappedHandler(handler api.FuncAPIHandler) httprou
 
 // GET is a wrapper for the HTTP GET verb
 func (it *DefaultRestService) GET(resource string, handler api.FuncAPIHandler) {
-	path := "/" + resource
-	it.Router.GET(path, it.wrappedHandler(handler))
-
-	it.Handlers = append(it.Handlers, path+" {GET}")
+	it.RegisterAPI("GET", resource, handler)
 }
 
 // PUT is a wrapper for the HTTP PUT verb
 func (it *DefaultRestService) PUT(resource string, handler api.FuncAPIHandler) {
-	path := "/" + resource
-	it.Router.PUT(path, it.wrappedHandler(handler))
-
-	it.Handlers = append(it.Handlers, path+" {PUT}")
+	it.RegisterAPI("PUT", resource, handler)
 }
 
 // POST is a wrapper for the HTTP POST verb
 func (it *DefaultRestService) POST(resource string, handler api.FuncAPIHandler) {
-	path := "/" + resource
-	it.Router.POST(path, it.wrappedHandler(handler))
-
-	it.Handlers = append(it.Handlers, path+" {POST}")
+	it.RegisterAPI("POST", resource, handler)
 }
 
 // DELETE is a wrapper for the HTTP DELETE verb
 func (it *DefaultRestService) DELETE(resource string, handler api.FuncAPIHandler) {
-	path := "/" + resource
-	it.Router.DELETE(path, it.wrappedHandler(handler))
+	it.RegisterAPI("DELETE", resource, handler)
+}
 
-	it.Handlers = append(it.Handlers, path+" {DELETE}")
+// RegisterAPI registers API ahndler for a given resource
+func (it *DefaultRestService) RegisterAPI(method, resource string, handler api.FuncAPIHandler) {
+	path := resource
+	if !strings.HasPrefix("/", resource) {
+		path = "/" + resource
+	}
+
+	wrappedHandler := it.wrappedHandler(handler)
+	it.Router.Handle(method, path, wrappedHandler)
+	it.Handlers = append(it.Handlers, fmt.Sprintf("%s {%s}", path, method))
+}
+
+// GetHandler returns original handler function (before wrapping for httprouter.Handle)
+func (it *DefaultRestService) GetHandler(method string, resource string) api.FuncAPIHandler {
+	it.RawHandlerMutex.Lock()
+	defer it.RawHandlerMutex.Unlock()
+
+	if handle, _, _ := it.Router.Lookup(method, resource); handle != nil {
+		handle(nil, nil, nil)
+	}
+
+	return it.RawHandler
 }
 
 // ServeHTTP is an entry point for HTTP request, it takes control before request handled

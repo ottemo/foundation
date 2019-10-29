@@ -3,6 +3,7 @@ package rest
 import (
 	"io"
 	"net/http"
+	"sync"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/ottemo/commerce/api"
@@ -28,6 +29,9 @@ type DefaultRestService struct {
 	ListenOn string
 	Router   *httprouter.Router
 	Handlers []string
+
+	RawHandler api.FuncAPIHandler
+	RawHandlerMutex sync.RWMutex
 }
 
 // DefaultRestApplicationContext is a structure to hold API request related information

@@ -30,7 +30,9 @@ var (
 
 // DefaultSession is a default implementer of InterfaceSession declared in
 // "github.com/ottemo/commerce/api" package
-type DefaultSession string
+type DefaultSession struct {
+	id string
+}
 
 // DefaultSessionService is a basic implementer of InterfaceSessionService declared in
 // "github.com/ottemo/commerce/api" package

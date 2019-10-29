@@ -173,3 +173,20 @@ type StructConfigItem struct {
 
 	Image string
 }
+
+// InterfaceScript is an interface to interact with the scripting language
+type InterfaceScript interface {
+	GetID() string
+	Interact() error
+	Execute(code string) (interface{}, error)
+	Get(name string) (interface{}, error)
+	Set(name string, value interface{}) error
+}
+
+// InterfaceScriptEngine is an interface to interact the scripting engine
+type InterfaceScriptEngine interface {
+	GetScriptName() string
+	GetScriptInstance(in string) InterfaceScript
+	Get(name string) (interface{}, error)
+	Set(name string, value interface{}) error
+}

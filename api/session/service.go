@@ -253,7 +253,7 @@ func (it *DefaultSessionService) Get(sessionID string, create bool) (api.Interfa
 	}
 
 	if sessionInstance != nil {
-		resultSession = DefaultSession(sessionInstance.GetID())
+		resultSession = &DefaultSession {id: sessionInstance.GetID()}
 	}
 
 	return resultSession, resultError
@@ -279,7 +279,7 @@ func (it *DefaultSessionService) New() (api.InterfaceSession, error) {
 		return nil, env.ErrorDispatch(err)
 	}
 
-	return DefaultSession(sessionID), nil
+	return &DefaultSession {id: sessionID}, nil
 }
 
 // Touch updates session last modification time to current moment
